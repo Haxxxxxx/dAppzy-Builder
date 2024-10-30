@@ -25,6 +25,7 @@ const Div = ({ id }) => {
 
   return (
     <div
+      id={id}
       ref={divRef}
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}

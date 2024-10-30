@@ -18,16 +18,21 @@ const DisplayEditor = () => {
   // Load current styles when a new element is selected
   useEffect(() => {
     if (selectedElement) {
-      const styles = elements[selectedElement.id]?.styles || {};
-      setDisplay(styles.display || 'block');
-      setFlexDirection(styles.flexDirection || 'row');
-      setJustifyContent(styles.justifyContent || 'flex-start');
-      setAlignItems(styles.alignItems || 'stretch');
-      setFlexWrap(styles.flexWrap || 'nowrap');
-      setAlignContent(styles.alignContent || 'stretch');
-      setGridTemplateColumns(styles.gridTemplateColumns || '');
-      setGridTemplateRows(styles.gridTemplateRows || '');
+      const element = document.getElementById(selectedElement.id); // Get the DOM element by ID
+  
+      if (element) {
+      const computedStyles = getComputedStyle(element);
+      
+      setDisplay(computedStyles.display || 'block');
+      setFlexDirection(computedStyles.flexDirection || 'row');
+      setJustifyContent(computedStyles.justifyContent || 'flex-start');
+      setAlignItems(computedStyles.alignItems || 'stretch');
+      setFlexWrap(computedStyles.flexWrap || 'nowrap');
+      setAlignContent(computedStyles.alignContent || 'stretch');
+      setGridTemplateColumns(computedStyles.gridTemplateColumns || '');
+      setGridTemplateRows(computedStyles.gridTemplateRows || '');
     }
+  }
   }, [selectedElement, elements]);
 
   if (!selectedElement) return null;
@@ -102,7 +107,8 @@ const DisplayEditor = () => {
 
       {/* Flex-specific Properties */}
       {display === 'flex' && (
-        <div className="flex-properties">
+        <div className="flex-properties editor">
+          <hr></hr>
           <label>
             Flex Direction:
             <select value={flexDirection} onChange={handleFlexDirectionChange}>
@@ -161,7 +167,8 @@ const DisplayEditor = () => {
 
       {/* Grid-specific Properties */}
       {display === 'grid' && (
-        <div className="grid-properties">
+        <div className="grid-properties editor">
+          <hr></hr>
           <label>
             Grid Template Columns:
             <input

@@ -1,11 +1,12 @@
 // src/components/SpacingEditor.js
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { EditableContext } from '../context/EditableContext';
+import { debounce } from '../utils/debounce';
 
 const SpacingEditor = () => {
   const { selectedElement, updateStyles, elements } = useContext(EditableContext);
 
-  // Initialize margin and padding states or pull from the selected element’s styles
+  // Initialize margin and padding states
   const [marginTop, setMarginTop] = useState('');
   const [marginRight, setMarginRight] = useState('');
   const [marginBottom, setMarginBottom] = useState('');
@@ -15,22 +16,37 @@ const SpacingEditor = () => {
   const [paddingBottom, setPaddingBottom] = useState('');
   const [paddingLeft, setPaddingLeft] = useState('');
 
-  // Sync margin and padding properties when a new element is selected
+  // Debounced handler for updating styles
+  const debouncedUpdateStyle = useCallback(
+    debounce((id, styleKey, value) => {
+      updateStyles(id, { [styleKey]: value });
+    }, 200),
+    [updateStyles]
+  );
+
   useEffect(() => {
     if (selectedElement) {
-      const {
-        marginTop = '', marginRight = '', marginBottom = '', marginLeft = '',
-        paddingTop = '', paddingRight = '', paddingBottom = '', paddingLeft = '',
-      } = elements[selectedElement.id]?.styles || {};
+      const element = document.getElementById(selectedElement.id); // Get the DOM element by ID
 
-      setMarginTop(marginTop ? parseInt(marginTop, 10) : '');
-      setMarginRight(marginRight ? parseInt(marginRight, 10) : '');
-      setMarginBottom(marginBottom ? parseInt(marginBottom, 10) : '');
-      setMarginLeft(marginLeft ? parseInt(marginLeft, 10) : '');
-      setPaddingTop(paddingTop ? parseInt(paddingTop, 10) : '');
-      setPaddingRight(paddingRight ? parseInt(paddingRight, 10) : '');
-      setPaddingBottom(paddingBottom ? parseInt(paddingBottom, 10) : '');
-      setPaddingLeft(paddingLeft ? parseInt(paddingLeft, 10) : '');
+      const computedStyles = getComputedStyle(element);
+      
+      const marginTopValue = computedStyles.marginTop.split(',')[0].trim();
+      const marginRightValue = computedStyles.marginRight.split(',')[0].trim();
+      const marginBottomValue = computedStyles.marginBottom.split(',')[0].trim();
+      const marginLeftValue = computedStyles.marginLeft.split(',')[0].trim();
+      const paddingTopValue = computedStyles.paddingTop.split(',')[0].trim();
+      const paddingRightValue = computedStyles.paddingRight.split(',')[0].trim();
+      const paddingBottomValue = computedStyles.paddingBottom.split(',')[0].trim();
+      const paddingLeftValue = computedStyles.paddingLeft.split(',')[0].trim();
+
+      setMarginTop(marginTopValue.replace('px', ''));
+      setMarginRight(marginRightValue.replace('px', ''));
+      setMarginBottom(marginBottomValue.replace('px', ''));
+      setMarginLeft(marginLeftValue.replace('px', ''));
+      setPaddingTop(paddingTopValue.replace('px', ''));
+      setPaddingRight(paddingRightValue.replace('px', ''));
+      setPaddingBottom(paddingBottomValue.replace('px', ''));
+      setPaddingLeft(paddingLeftValue.replace('px', ''));
     }
   }, [selectedElement, elements]);
 
@@ -38,9 +54,9 @@ const SpacingEditor = () => {
 
   const { id } = selectedElement;
 
-  // Update functions for each margin and padding property
+  // Update functions for each margin and padding property with debouncing
   const handleSpacingChange = (type, value) => {
-    updateStyles(id, { [type]: `${value}px` });
+    debouncedUpdateStyle(id, type, `${value}px`);
   };
 
   return (

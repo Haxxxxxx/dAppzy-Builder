@@ -26,6 +26,7 @@ const Section = ({ id }) => {
   return (
     <section
       ref={sectionRef}
+      id={id}
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}

@@ -1,11 +1,13 @@
-// src/Texts/Heading.js
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 const Heading = ({ id }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const { content, styles, level } = elements[id] || {};
+  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
   const headingRef = useRef(null);
+
+  // Fetch the latest element data, including `level`, from `elements`
+  const elementData = findElementById(id, elements);
+  const { content, styles, level = 1 } = elementData || {}; // Use default level 1 if undefined
 
   const handleSelect = () => {
     setSelectedElement({ id, type: 'heading', level });
@@ -21,22 +23,23 @@ const Heading = ({ id }) => {
     if (selectedElement?.id === id && headingRef.current) {
       headingRef.current.focus();
     }
-  }, [selectedElement, id]);
+    console.log("Rendering Heading with level:", level); // Confirm the correct level
+  }, [selectedElement, id, level]);
 
-  // Render the appropriate heading level based on the `level` prop
-  const Tag = `h${level}`;
+  const Tag = `h${level}`; // Render the appropriate heading tag
 
   return (
     <Tag
       ref={headingRef}
       onClick={handleSelect}
+      id={id}
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
-      style={styles} // Apply dynamic styles here
+      style={styles}
     >
-        {content || 'New Heading'}
-        </Tag>
+      {content || 'New Heading'}
+    </Tag>
   );
 };
 

@@ -9,7 +9,7 @@ export const EditableProvider = ({ children }) => {
   const [elements, setElements] = useState(() => {
     const savedVersion = localStorage.getItem('elementsVersion');
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
-    
+
     if (Array.isArray(savedElements) && savedVersion === ELEMENTS_VERSION) {
       return savedElements;
     } else {
@@ -29,32 +29,27 @@ export const EditableProvider = ({ children }) => {
       type,
       content: type === 'button' ? 'Click Me' : `New ${type}`,
       styles: {},
+      level, // Store level directly if it's a heading
       children: [],
     };
-  
-    if (type === 'heading') newElement.level = level;
-  
+
     setElements((prevElements) => {
+      // Insert the new element at the specified index
       const newElements = [...prevElements];
-  
       if (index !== null && index >= 0 && index <= newElements.length) {
-        // Insert element at the specified index
-        newElements.splice(index, 0, newElement);
+        newElements.splice(index, 0, newElement); // Insert at specified index
       } else {
-        // Add to the end if index is not specified
-        newElements.push(newElement);
+        newElements.push(newElement); // Fallback to the end if index is null or invalid
       }
-  
-      // Save to localStorage for persistence
+
+      // Save to localStorage and update the state
       localStorage.setItem('editableElements', JSON.stringify(newElements));
       return newElements;
     });
+
+    return newId; // Return the ID of the new element for immediate selection
   };
-  
-  
-  
-  
-  
+
   const updateContent = (id, newContent) => {
     const updateElementContent = (elementsArray) =>
       elementsArray.map((el) =>
@@ -67,29 +62,22 @@ export const EditableProvider = ({ children }) => {
   };
 
   const updateStyles = (id, newStyles) => {
-    console.log("Updating styles for:", id, newStyles); // Debugging
-    
-    // Recursive update function to handle nested elements
+    console.log("Updating styles for:", id, newStyles);
+
     const updateElementStyles = (elementsArray) =>
       elementsArray.map((el) =>
         el.id === id
           ? { ...el, styles: { ...el.styles, ...newStyles } }
           : { ...el, children: updateElementStyles(el.children || []) }
       );
-  
+
     setElements((prevElements) => {
       const updatedElements = updateElementStyles(prevElements);
-      localStorage.setItem('editableElements', JSON.stringify(updatedElements)); // Save updated elements immediately
+      localStorage.setItem('editableElements', JSON.stringify(updatedElements));
       return updatedElements;
     });
   };
-  
-  useEffect(() => {
-    localStorage.setItem('editableElements', JSON.stringify(elements));
-    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
-  }, [elements]);
-  
-  // Helper function to find an element by ID, even if nested
+
   const findElementById = (id, elementsArray) => {
     for (const element of elementsArray) {
       if (element.id === id) {

@@ -6,6 +6,8 @@ import BorderEditor from '../Editors/BorderEditor';
 import SizeEditor from '../Editors/SizeEditor';
 import SpacingEditor from '../Editors/SpacingEditor';
 import DisplayEditor from '../Editors/DisplayEditor';
+import EffectEditor from '../Editors/EffectEditor';
+import ButtonEditor from '../Editors/ButtonEditor';
 
 const EditorPanel = () => {
   const { selectedElement, elements, updateStyles, setElements } = useContext(EditableContext);
@@ -68,6 +70,8 @@ const EditorPanel = () => {
       <SizeEditor />
       <SpacingEditor />
       <DisplayEditor />
+      <EffectEditor/>
+      <ButtonEditor/>
     </div>
   );
 };
