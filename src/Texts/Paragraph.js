@@ -4,11 +4,12 @@ import { EditableContext } from '../context/EditableContext';
 
 const Paragraph = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const { content, styles } = elements[id] || {};
+  const element = elements.find((el) => el.id === id); // Find element by ID
+  const { content = '', styles = {} } = element || {}; // Provide defaults to avoid undefined errors
   const paragraphRef = useRef(null);
 
   const handleSelect = () => {
-    setSelectedElement({ id, type: 'paragraph' });
+    setSelectedElement({ id, type: 'paragraph', styles }); // Pass current styles
   };
 
   const handleBlur = (e) => {
@@ -24,7 +25,7 @@ const Paragraph = ({ id }) => {
   }, [selectedElement, id]);
 
   return (
-    <div className="container"> {/* Container with defined width */}
+    <div className="container">
       <p
         ref={paragraphRef}
         onClick={handleSelect}
@@ -39,7 +40,7 @@ const Paragraph = ({ id }) => {
           overflowWrap: 'break-word',
         }}
       >
-        {content}
+        {content || 'New Paragraph'}
       </p>
     </div>
   );

@@ -1,14 +1,14 @@
-// src/Texts/Heading.js
+// src/Texts/Section.js
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
-const Heading = ({ id }) => {
+const Section = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const { content, styles, level } = elements[id] || {};
-  const headingRef = useRef(null);
+  const { content, styles } = elements[id] || {};
+  const sectionRef = useRef(null);
 
   const handleSelect = () => {
-    setSelectedElement({ id, type: 'heading', level });
+    setSelectedElement({ id, type: 'section' });
   };
 
   const handleBlur = (e) => {
@@ -18,26 +18,23 @@ const Heading = ({ id }) => {
   };
 
   useEffect(() => {
-    if (selectedElement?.id === id && headingRef.current) {
-      headingRef.current.focus();
+    if (selectedElement?.id === id && sectionRef.current) {
+      sectionRef.current.focus();
     }
   }, [selectedElement, id]);
 
-  // Render the appropriate heading level based on the `level` prop
-  const Tag = `h${level}`;
-
   return (
-    <Tag
-      ref={headingRef}
+    <section
+      ref={sectionRef}
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
-      style={styles} // Apply dynamic styles here
+      style={styles}
     >
-        {content || 'New Heading'}
-        </Tag>
+        {content || 'New Section'}
+        </section>
   );
 };
 
-export default Heading;
+export default Section;

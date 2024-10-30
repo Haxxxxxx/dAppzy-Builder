@@ -3,6 +3,9 @@ import React, { useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import Paragraph from './Paragraph';
 import Heading from './Heading';
+import Section from '../Elements/Section';
+import Div from '../Elements/Div';
+import Button from '../Elements/Button';
 import { useDrop } from 'react-dnd';
 
 const DropZone = ({ index, onDrop }) => {
@@ -29,33 +32,45 @@ const DropZone = ({ index, onDrop }) => {
 const ContentList = () => {
   const { elements, addNewElement } = useContext(EditableContext);
 
-  if (!elements || Object.keys(elements).length === 0) {
-    return <p>No content available. Please add some content.</p>;
-  }
-
   const handleDrop = (item, index) => {
-    addNewElement(item.type, item.level || 1, index);
+    const level = item.level || 1; // Default to level 1 if undefined
+    addNewElement(item.type, level, index);
   };
 
   return (
     <div className="content-list">
-      {Object.keys(elements).map((id, index) => {
-        const element = elements[id];
+      {elements.length === 0 && (
+        <p>Start adding elements by dragging from the sidebar.</p>
+      )}
+
+      {elements.map((element, index) => {
+        const renderElement = () => {
+          switch (element.type) {
+            case 'heading':
+              return <Heading id={element.id} level={element.level} />;
+            case 'paragraph':
+              return <Paragraph id={element.id} />;
+            case 'section':
+              return <Section id={element.id} />;
+            case 'div':
+              return <Div id={element.id} />;
+            case 'button':
+              return <Button id={element.id} />;
+            default:
+              return null;
+          }
+        };
+
         return (
-          <div key={id}>
-            {/* DropZone between each element */}
+          <div key={element.id} id={element.id}>
+            {renderElement()}
             <DropZone index={index} onDrop={handleDrop} />
-            {element.type === 'heading' ? (
-              <Heading id={id} level={element.level} />
-            ) : (
-              <Paragraph id={id} />
-            )}
+
           </div>
         );
       })}
-      
-      {/* DropZone at the end of the list */}
-      <DropZone index={Object.keys(elements).length} onDrop={handleDrop} />
+
+      <DropZone index={elements.length} onDrop={handleDrop} />
     </div>
   );
 };

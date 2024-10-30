@@ -1,9 +1,10 @@
 // src/components/TypographyEditor.js
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { EditableContext } from '../context/EditableContext';
+import { debounce } from '../utils/debounce';
 
 const TypographyEditor = () => {
-  const { selectedElement, updateStyles, elements } = useContext(EditableContext);
+  const { selectedElement, updateStyles, elements, findElementById } = useContext(EditableContext);
 
   // Initialize states for typography properties
   const [fontSize, setFontSize] = useState('');
@@ -11,48 +12,81 @@ const TypographyEditor = () => {
   const [letterSpacing, setLetterSpacing] = useState('');
   const [fontFamily, setFontFamily] = useState('');
 
+  // Debounced handler for updating styles
+  const debouncedUpdateStyle = useCallback(
+    debounce((id, styleKey, value) => {
+      updateStyles(id, { [styleKey]: value });
+    }, 200),
+    [updateStyles]
+  );
+
   useEffect(() => {
     if (selectedElement) {
-      const styles = elements[selectedElement.id]?.styles || {};
-      setFontSize(styles.fontSize ? parseInt(styles.fontSize, 10) : '');
-      setLineHeight(styles.lineHeight || '');
-      setLetterSpacing(styles.letterSpacing || '');
-      setFontFamily(styles.fontFamily || 'Arial');
+      const element = document.getElementById(selectedElement.id); // Get the DOM element by ID
+  
+      if (element) {
+        const computedStyles = getComputedStyle(element);
+  
+        // Parse font size and letter spacing
+        const fontSizeValue = computedStyles.fontSize ? parseFloat(computedStyles.fontSize) : '';
+        const letterSpacingValue = computedStyles.letterSpacing === 'normal' ? '' : parseFloat(computedStyles.letterSpacing) || '';
+  
+        // Handle line height; if it's "normal", we keep it as "normal"
+        const lineHeightValue = computedStyles.lineHeight === 'normal' ? 'normal' : parseFloat(computedStyles.lineHeight) || '';
+  
+        // Use only the primary font in the font family
+        const fontFamilyValue = computedStyles.fontFamily.split(',')[0].trim();
+  
+        console.log("Computed Values:");
+        console.log("Font Size:", fontSizeValue);
+        console.log("Letter Spacing:", letterSpacingValue);
+        console.log("Line Height:", lineHeightValue);
+        console.log("Font Family:", fontFamilyValue);
+  
+        // Set state with parsed values
+        setFontSize(fontSizeValue);
+        setLineHeight(lineHeightValue);
+        setLetterSpacing(letterSpacingValue);
+        setFontFamily(fontFamilyValue);
+      }
     }
-  }, [selectedElement, elements]);
+  }, [selectedElement]);
+  
+
+
+
+
 
   if (!selectedElement) return null;
 
-  const { id } = selectedElement;
-  const styles = elements[id]?.styles || {};
-
-  const handleStyleChange = (styleKey, value) => {
-    updateStyles(id, { [styleKey]: value });
-  };
+  // Retrieve the element by ID so that we can use its current styles as defaults
+  const element = findElementById(selectedElement.id, elements);
 
   const handleFontSizeChange = (e) => {
     const newSize = e.target.value;
     setFontSize(newSize);
-    handleStyleChange('fontSize', `${newSize}px`);
+    debouncedUpdateStyle(selectedElement.id, 'fontSize', `${newSize}px`);
   };
 
   const handleLineHeightChange = (e) => {
     const newLineHeight = e.target.value;
     setLineHeight(newLineHeight);
-    handleStyleChange('lineHeight', newLineHeight);
+    debouncedUpdateStyle(selectedElement.id, 'lineHeight', isNaN(newLineHeight) ? newLineHeight : `${newLineHeight}px`);
   };
 
   const handleLetterSpacingChange = (e) => {
     const newLetterSpacing = e.target.value;
     setLetterSpacing(newLetterSpacing);
-    handleStyleChange('letterSpacing', `${newLetterSpacing}px`);
+    debouncedUpdateStyle(selectedElement.id, 'letterSpacing', `${newLetterSpacing}px`);
   };
+
 
   const handleFontFamilyChange = (e) => {
     const newFontFamily = e.target.value;
     setFontFamily(newFontFamily);
-    handleStyleChange('fontFamily', newFontFamily);
+    updateStyles(selectedElement.id, { fontFamily: newFontFamily });
   };
+
 
   return (
     <div className="typography-editor editor">
@@ -63,17 +97,18 @@ const TypographyEditor = () => {
         Font Size:
         <input
           type="number"
-          value={fontSize}
-          onChange={handleFontSizeChange}
+          value={fontSize || ''} // Ensure a fallback to an empty string if undefined
+          onChange={(e) => handleFontSizeChange(e)}
         />
       </label>
+
 
       {/* Font Weight */}
       <label>
         Font Weight:
         <select
-          value={styles.fontWeight || 'normal'}
-          onChange={(e) => handleStyleChange('fontWeight', e.target.value)}
+          value={element?.styles.fontWeight || 'normal'}
+          onChange={(e) => updateStyles(selectedElement.id, { fontWeight: e.target.value })}
         >
           <option value="normal">Normal</option>
           <option value="bold">Bold</option>
@@ -85,16 +120,15 @@ const TypographyEditor = () => {
       {/* Font Family */}
       <label>
         Font Family:
-        <select
-          value={fontFamily}
-          onChange={handleFontFamilyChange}
-        >
+        <select value={fontFamily} onChange={handleFontFamilyChange}>
           <option value="Arial">Arial</option>
           <option value="Helvetica">Helvetica</option>
           <option value="Times New Roman">Times New Roman</option>
           <option value="Georgia">Georgia</option>
           <option value="Courier New">Courier New</option>
           <option value="Verdana">Verdana</option>
+          <option value="-apple-system">System Default</option>
+          {/* Add other options if needed */}
         </select>
       </label>
 
@@ -102,8 +136,8 @@ const TypographyEditor = () => {
       <label>
         Line Height:
         <input
-          type="number"
-          value={lineHeight}
+          type="text" // Use text if line-height can be "normal" or a number
+          value={lineHeight || ''}
           onChange={handleLineHeightChange}
         />
       </label>
@@ -113,7 +147,7 @@ const TypographyEditor = () => {
         Letter Spacing:
         <input
           type="number"
-          value={letterSpacing}
+          value={letterSpacing || ''} // Ensure a fallback to an empty string if undefined
           onChange={handleLetterSpacingChange}
         />
       </label>
@@ -123,8 +157,8 @@ const TypographyEditor = () => {
         Text Color:
         <input
           type="color"
-          value={styles.color || '#000000'}
-          onChange={(e) => handleStyleChange('color', e.target.value)}
+          value={element?.styles.color || '#000000'}
+          onChange={(e) => updateStyles(selectedElement.id, { color: e.target.value })}
         />
       </label>
 
@@ -132,8 +166,8 @@ const TypographyEditor = () => {
       <label>
         Text Alignment:
         <select
-          value={styles.textAlign || 'left'}
-          onChange={(e) => handleStyleChange('textAlign', e.target.value)}
+          value={element?.styles.textAlign || 'left'}
+          onChange={(e) => updateStyles(selectedElement.id, { textAlign: e.target.value })}
         >
           <option value="left">Left</option>
           <option value="center">Center</option>
@@ -146,8 +180,8 @@ const TypographyEditor = () => {
       <label>
         Text Decoration:
         <select
-          value={styles.textDecoration || 'none'}
-          onChange={(e) => handleStyleChange('textDecoration', e.target.value)}
+          value={element?.styles.textDecoration || 'none'}
+          onChange={(e) => updateStyles(selectedElement.id, { textDecoration: e.target.value })}
         >
           <option value="none">None</option>
           <option value="underline">Underline</option>
@@ -160,8 +194,8 @@ const TypographyEditor = () => {
       <label>
         Text Transform:
         <select
-          value={styles.textTransform || 'none'}
-          onChange={(e) => handleStyleChange('textTransform', e.target.value)}
+          value={element?.styles.textTransform || 'none'}
+          onChange={(e) => updateStyles(selectedElement.id, { textTransform: e.target.value })}
         >
           <option value="none">None</option>
           <option value="uppercase">Uppercase</option>

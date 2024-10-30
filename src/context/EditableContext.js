@@ -8,19 +8,12 @@ export const EditableProvider = ({ children }) => {
   const [selectedElement, setSelectedElement] = useState(null);
   const [elements, setElements] = useState(() => {
     const savedVersion = localStorage.getItem('elementsVersion');
-    const savedElements = localStorage.getItem('editableElements');
+    const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
     
-    if (savedElements && savedVersion === ELEMENTS_VERSION) {
-      return JSON.parse(savedElements);
+    if (Array.isArray(savedElements) && savedVersion === ELEMENTS_VERSION) {
+      return savedElements;
     } else {
-      const defaultElements = {
-        p1: { type: 'paragraph', content: 'This is the first paragraph.', styles: {} },
-        h1: { type: 'heading', level: 1, content: 'This is a Heading 1', styles: {} },
-        h2: { type: 'heading', level: 2, content: 'This is a Heading 2', styles: {} },
-      };
-      localStorage.setItem('editableElements', JSON.stringify(defaultElements));
-      localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
-      return defaultElements;
+      return [];
     }
   });
 
@@ -29,34 +22,111 @@ export const EditableProvider = ({ children }) => {
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
+  const addNewElement = (type, level = 1, parentId = null, index = null) => {
+    const newId = `element${Date.now()}`;
+    const newElement = {
+      id: newId,
+      type,
+      content: type === 'button' ? 'Click Me' : `New ${type}`,
+      styles: {}, // Initialize an empty styles object
+      children: [], // Initialize empty children array for nesting
+    };
+  
+    // Set level if the new element is a heading
+    if (type === 'heading') newElement.level = level;
+  
+    setElements((prevElements) => {
+      const newElements = [...prevElements];
+  
+      if (parentId) {
+        // Recursive function to add element to the parent
+        const addElementToParent = (elementsArray) => {
+          return elementsArray.map((element) => {
+            if (element.id === parentId) {
+              const updatedElement = { ...element };
+              if (index !== null) {
+                updatedElement.children.splice(index, 0, newElement);
+              } else {
+                updatedElement.children.push(newElement);
+              }
+              return updatedElement;
+            }
+            // Recurse into children if element has nested elements
+            if (element.children) {
+              return { ...element, children: addElementToParent(element.children) };
+            }
+            return element;
+          });
+        };
+        return addElementToParent(newElements);
+      } else {
+        // Add to root level if no parentId is specified
+        if (index !== null) {
+          newElements.splice(index, 0, newElement);
+        } else {
+          newElements.push(newElement);
+        }
+        return newElements;
+      }
+    });
+  };
+  
   const updateContent = (id, newContent) => {
-    setElements((prev) => ({ ...prev, [id]: { ...prev[id], content: newContent } }));
+    const updateElementContent = (elementsArray) =>
+      elementsArray.map((el) =>
+        el.id === id
+          ? { ...el, content: newContent }
+          : { ...el, children: updateElementContent(el.children || []) }
+      );
+
+    setElements((prevElements) => updateElementContent(prevElements));
   };
 
   const updateStyles = (id, newStyles) => {
-    setElements((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], styles: { ...prev[id].styles, ...newStyles } },
-    }));
+    console.log("Updating styles for:", id, newStyles); // Debugging
+    const updateElementStyles = (elementsArray) =>
+      elementsArray.map((el) =>
+        el.id === id
+          ? { ...el, styles: { ...el.styles, ...newStyles } }
+          : { ...el, children: updateElementStyles(el.children || []) }
+      );
+  
+    setElements((prevElements) => updateElementStyles(prevElements));
   };
-
-  const addNewElement = (type, level = 1, index = null) => {
-    const newId = `element${Date.now()}`; // Unique ID based on timestamp
-    const newElement = type === 'paragraph'
-      ? { type: 'paragraph', content: 'New paragraph', styles: {} }
-      : { type: 'heading', level, content: `New Heading ${level}`, styles: {} };
-
-    setElements((prevElements) => {
-      const entries = Object.entries(prevElements);
-      const newEntries = index !== null
-        ? [...entries.slice(0, index), [newId, newElement], ...entries.slice(index)]
-        : [...entries, [newId, newElement]];
-      return Object.fromEntries(newEntries);
-    });
+  
+  useEffect(() => {
+    localStorage.setItem('editableElements', JSON.stringify(elements));
+    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
+  }, [elements]);
+  
+  // Helper function to find an element by ID, even if nested
+  const findElementById = (id, elementsArray) => {
+    for (const element of elementsArray) {
+      if (element.id === id) {
+        return element;
+      }
+      if (element.children) {
+        const found = findElementById(id, element.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
   };
 
   return (
-    <EditableContext.Provider value={{ selectedElement, setSelectedElement, elements, updateContent, updateStyles, addNewElement }}>
+    <EditableContext.Provider
+      value={{
+        selectedElement,
+        setSelectedElement,
+        elements,
+        addNewElement,
+        updateContent,
+        updateStyles,
+        findElementById,
+      }}
+    >
       {children}
     </EditableContext.Provider>
   );

@@ -2,10 +2,10 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
 
-const DraggableElement = ({ type, level, label }) => {
+const DraggableElement = ({ type, label, level = null }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type, level },
+    item: { type, level }, // Pass level if specified
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -36,6 +36,9 @@ const NewElementPanel = () => {
       <DraggableElement type="paragraph" label="Paragraph" />
       <DraggableElement type="heading" level={1} label="Heading 1" />
       <DraggableElement type="heading" level={2} label="Heading 2" />
+      <DraggableElement type="section" label="Section" />
+      <DraggableElement type="div" label="Div" />
+      <DraggableElement type="button" label="Button" />
       {/* Add more draggable elements as needed */}
     </div>
   );
