@@ -1,38 +1,57 @@
-.App {
-  text-align: center;
+p {
+  word-wrap: break-word;       /* Forces long words to wrap to the next line */
+  white-space: normal;         /* Ensures text wraps within the container */
+  overflow-wrap: break-word;   /* Alternative for word-wrap; supported in most browsers */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+
+p[contentEditable="true"] {
+  outline: none;
+  border: 1px dashed #000; /* Optional: add a border to show editable state */
+  padding: 4px; /* Adjust as necessary */
+  margin: 0; /* Ensure there’s no margin that causes overlap */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.container {
+  width: 100%;             /* or use a specific width like 300px */
+  max-width: 500px;        /* Sets a maximum width to control wrapping */
+  overflow: hidden;        /* Ensures any overflowed content remains contained */
+  padding: 10px;           /* Optional padding for better readability */
+  box-sizing: border-box;  /* Ensures padding is included in total width */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.editor{
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.controls{
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* src/App.css */
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar styling */
+.sidebar {
+  text-align: left;
+  width: 25%;
+  min-width: 360px;
+  background-color: #f0f0f0; /* Light background for the sidebar */
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 1px solid #ddd;
+  overflow-y: auto; /* Scrollable if content overflows */
+}
+
+/* Main content area styling */
+.main-content {
+  width: 75%;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto; /* Scrollable if content overflows */
 }

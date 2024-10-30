@@ -1,24 +1,25 @@
-import logo from './logo.svg';
+// src/App.js
+import React from 'react';
+import { EditableProvider } from './context/EditableContext';
+import ContentList from './Texts/ContentList';
+import SideBar from './components/SideBar';
 import './App.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <EditableProvider>
+      <div className="app">
+        {/* Sidebar for Editor Panel and New Element Panel */}
+        <div className="sidebar">
+          <SideBar />
+        </div>
+
+        {/* Main Content Area for Paragraph and Heading List */}
+        <div className="main-content">
+          <ContentList />
+        </div>
+      </div>
+    </EditableProvider>
   );
 }
 
