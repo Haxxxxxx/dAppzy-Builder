@@ -1,18 +1,42 @@
 // src/components/NewElementPanel.js
-import React, { useContext } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import React from 'react';
+import { useDrag } from 'react-dnd';
+
+const DraggableElement = ({ type, level, label }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'ELEMENT',
+    item: { type, level },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={drag}
+      style={{
+        opacity: isDragging ? 0.5 : 1,
+        cursor: 'move',
+        padding: '8px',
+        margin: '4px 0',
+        backgroundColor: '#f0f0f0',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+      }}
+    >
+      {label}
+    </div>
+  );
+};
 
 const NewElementPanel = () => {
-  const { addNewElement } = useContext(EditableContext);
-
   return (
     <div>
       <h3>Create New Element</h3>
-      <button onClick={() => addNewElement('paragraph')}>Add Paragraph</button>
-      <button onClick={() => addNewElement('heading', 1)}>Add Heading 1</button>
-      <button onClick={() => addNewElement('heading', 2)}>Add Heading 2</button>
-      <button onClick={() => addNewElement('heading', 3)}>Add Heading 3</button>
-      {/* Add more buttons for other heading levels if needed */}
+      <DraggableElement type="paragraph" label="Paragraph" />
+      <DraggableElement type="heading" level={1} label="Heading 1" />
+      <DraggableElement type="heading" level={2} label="Heading 2" />
+      {/* Add more draggable elements as needed */}
     </div>
   );
 };

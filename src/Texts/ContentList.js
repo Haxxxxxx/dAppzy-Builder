@@ -3,6 +3,28 @@ import React, { useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import Paragraph from './Paragraph';
 import Heading from './Heading';
+import { useDrop } from 'react-dnd';
+
+const DropZone = ({ index, onDrop }) => {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: 'ELEMENT',
+    drop: (item) => onDrop(item, index),
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={drop}
+      style={{
+        height: '20px',
+        backgroundColor: isOver ? '#ddd' : 'transparent',
+        margin: '4px 0',
+      }}
+    />
+  );
+};
 
 const ContentList = () => {
   const { elements, addNewElement } = useContext(EditableContext);
@@ -11,8 +33,8 @@ const ContentList = () => {
     return <p>No content available. Please add some content.</p>;
   }
 
-  const handleAddElement = (index, type, level) => {
-    addNewElement(type, level, index);
+  const handleDrop = (item, index) => {
+    addNewElement(item.type, item.level || 1, index);
   };
 
   return (
@@ -21,11 +43,8 @@ const ContentList = () => {
         const element = elements[id];
         return (
           <div key={id}>
-            {/* Position marker for adding elements */}
-            <button onClick={() => handleAddElement(index, 'paragraph')}>Add Paragraph Here</button>
-            <button onClick={() => handleAddElement(index, 'heading', 1)}>Add Heading Here</button>
-
-            {/* Render the element based on its type */}
+            {/* DropZone between each element */}
+            <DropZone index={index} onDrop={handleDrop} />
             {element.type === 'heading' ? (
               <Heading id={id} level={element.level} />
             ) : (
@@ -35,9 +54,8 @@ const ContentList = () => {
         );
       })}
       
-      {/* Position marker at the end of the list */}
-      <button onClick={() => handleAddElement(Object.keys(elements).length, 'paragraph')}>Add Paragraph at End</button>
-      <button onClick={() => handleAddElement(Object.keys(elements).length, 'heading', 1)}>Add Heading at End</button>
+      {/* DropZone at the end of the list */}
+      <DropZone index={Object.keys(elements).length} onDrop={handleDrop} />
     </div>
   );
 };
