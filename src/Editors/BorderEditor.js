@@ -2,22 +2,36 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
+// Helper function to convert RGB color to hex
+const rgbToHex = (rgb) => {
+  const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
+  return result
+    ? `#${((1 << 24) + (parseInt(result[1]) << 16) + (parseInt(result[2]) << 8) + parseInt(result[3]))
+        .toString(16)
+        .slice(1)
+        .toUpperCase()}`
+    : rgb;
+};
+
 const BorderEditor = () => {
   const { selectedElement, updateStyles, elements } = useContext(EditableContext);
 
-  // Default border settings or pull existing border styles from the selected element
   const [borderWidth, setBorderWidth] = useState('');
-  const [borderStyle, setBorderStyle] = useState('solid');
-  const [borderColor, setBorderColor] = useState('#000000');
+  const [borderStyle, setBorderStyle] = useState('');
+  const [borderColor, setBorderColor] = useState('');
 
-  // Sync border properties when a new element is selected
   useEffect(() => {
     if (selectedElement) {
-      const { borderWidth = '', borderStyle = 'solid', borderColor = '#000000' } =
-        elements[selectedElement.id]?.styles || {};
-      setBorderWidth(borderWidth ? parseInt(borderWidth, 10) : '');
-      setBorderStyle(borderStyle);
-      setBorderColor(borderColor);
+      // Get the element's stored styles directly from elements array
+      const element = elements.find(el => el.id === selectedElement.id);
+
+      if (element) {
+        const { borderWidth = '0', borderStyle = 'none', borderColor = '#000000' } = element.styles || {};
+
+        setBorderWidth(borderWidth.replace('px', ''));
+        setBorderStyle(borderStyle);
+        setBorderColor(rgbToHex(borderColor));
+      }
     }
   }, [selectedElement, elements]);
 
@@ -25,7 +39,6 @@ const BorderEditor = () => {
 
   const { id } = selectedElement;
 
-  // Handle updates to the border styles
   const handleBorderWidthChange = (e) => {
     const newWidth = e.target.value;
     setBorderWidth(newWidth);
@@ -63,6 +76,7 @@ const BorderEditor = () => {
       <label>
         Border Style:
         <select value={borderStyle} onChange={handleBorderStyleChange}>
+          <option value="none">None</option>
           <option value="solid">Solid</option>
           <option value="dotted">Dotted</option>
           <option value="dashed">Dashed</option>
@@ -71,7 +85,6 @@ const BorderEditor = () => {
           <option value="ridge">Ridge</option>
           <option value="inset">Inset</option>
           <option value="outset">Outset</option>
-          <option value="none">None</option>
         </select>
       </label>
 

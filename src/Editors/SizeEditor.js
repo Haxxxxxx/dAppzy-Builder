@@ -5,18 +5,27 @@ import { EditableContext } from '../context/EditableContext';
 const SizeEditor = () => {
   const { selectedElement, updateStyles, elements } = useContext(EditableContext);
 
-  // Default size values or pull existing sizes from the selected element
+  // Initialize state for size properties
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
 
   // Sync size properties when a new element is selected
   useEffect(() => {
     if (selectedElement) {
-      const { width = '', height = '' } = elements[selectedElement.id]?.styles || {};
-      setWidth(width ? parseInt(width, 10) : '');
-      setHeight(height ? parseInt(height, 10) : '');
+      const element = document.getElementById(selectedElement.id); // Get the DOM element by ID
+      if (element) {
+        const computedStyles = getComputedStyle(element);
+        
+        // Extract the width and height values from computed styles
+        const widthValue = computedStyles.width ? parseFloat(computedStyles.width) : '';
+        const heightValue = computedStyles.height ? parseFloat(computedStyles.height) : '';
+
+        // Set initial values based on computed styles
+        setWidth(widthValue);
+        setHeight(heightValue);
+      }
     }
-  }, [selectedElement, elements]);
+  }, [selectedElement]);
 
   if (!selectedElement) return null;
 

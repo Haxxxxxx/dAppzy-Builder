@@ -26,7 +26,6 @@ const TypographyEditor = () => {
   
       if (element) {
         const computedStyles = getComputedStyle(element);
-  
         // Parse font size and letter spacing
         const fontSizeValue = computedStyles.fontSize ? parseFloat(computedStyles.fontSize) : '';
         const letterSpacingValue = computedStyles.letterSpacing === 'normal' ? '' : parseFloat(computedStyles.letterSpacing) || '';
@@ -36,12 +35,6 @@ const TypographyEditor = () => {
   
         // Use only the primary font in the font family
         const fontFamilyValue = computedStyles.fontFamily.split(',')[0].trim();
-  
-        console.log("Computed Values:");
-        console.log("Font Size:", fontSizeValue);
-        console.log("Letter Spacing:", letterSpacingValue);
-        console.log("Line Height:", lineHeightValue);
-        console.log("Font Family:", fontFamilyValue);
   
         // Set state with parsed values
         setFontSize(fontSizeValue);

@@ -25,11 +25,11 @@ const Paragraph = ({ id }) => {
   }, [selectedElement, id]);
 
   return (
-    <div className="container">
       <p
         ref={paragraphRef}
         onClick={handleSelect}
         contentEditable={selectedElement?.id === id}
+        id={id}
         onBlur={handleBlur}
         suppressContentEditableWarning={true}
         style={{
@@ -42,7 +42,6 @@ const Paragraph = ({ id }) => {
       >
         {content || 'New Paragraph'}
       </p>
-    </div>
   );
 };
 

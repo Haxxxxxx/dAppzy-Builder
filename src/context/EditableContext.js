@@ -22,54 +22,38 @@ export const EditableProvider = ({ children }) => {
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
-  const addNewElement = (type, level = 1, parentId = null, index = null) => {
+  const addNewElement = (type, level = 1, index = null) => {
     const newId = `element${Date.now()}`;
     const newElement = {
       id: newId,
       type,
       content: type === 'button' ? 'Click Me' : `New ${type}`,
-      styles: {}, // Initialize an empty styles object
-      children: [], // Initialize empty children array for nesting
+      styles: {},
+      children: [],
     };
   
-    // Set level if the new element is a heading
     if (type === 'heading') newElement.level = level;
   
     setElements((prevElements) => {
       const newElements = [...prevElements];
   
-      if (parentId) {
-        // Recursive function to add element to the parent
-        const addElementToParent = (elementsArray) => {
-          return elementsArray.map((element) => {
-            if (element.id === parentId) {
-              const updatedElement = { ...element };
-              if (index !== null) {
-                updatedElement.children.splice(index, 0, newElement);
-              } else {
-                updatedElement.children.push(newElement);
-              }
-              return updatedElement;
-            }
-            // Recurse into children if element has nested elements
-            if (element.children) {
-              return { ...element, children: addElementToParent(element.children) };
-            }
-            return element;
-          });
-        };
-        return addElementToParent(newElements);
+      if (index !== null && index >= 0 && index <= newElements.length) {
+        // Insert element at the specified index
+        newElements.splice(index, 0, newElement);
       } else {
-        // Add to root level if no parentId is specified
-        if (index !== null) {
-          newElements.splice(index, 0, newElement);
-        } else {
-          newElements.push(newElement);
-        }
-        return newElements;
+        // Add to the end if index is not specified
+        newElements.push(newElement);
       }
+  
+      // Save to localStorage for persistence
+      localStorage.setItem('editableElements', JSON.stringify(newElements));
+      return newElements;
     });
   };
+  
+  
+  
+  
   
   const updateContent = (id, newContent) => {
     const updateElementContent = (elementsArray) =>
@@ -84,6 +68,8 @@ export const EditableProvider = ({ children }) => {
 
   const updateStyles = (id, newStyles) => {
     console.log("Updating styles for:", id, newStyles); // Debugging
+    
+    // Recursive update function to handle nested elements
     const updateElementStyles = (elementsArray) =>
       elementsArray.map((el) =>
         el.id === id
@@ -91,7 +77,11 @@ export const EditableProvider = ({ children }) => {
           : { ...el, children: updateElementStyles(el.children || []) }
       );
   
-    setElements((prevElements) => updateElementStyles(prevElements));
+    setElements((prevElements) => {
+      const updatedElements = updateElementStyles(prevElements);
+      localStorage.setItem('editableElements', JSON.stringify(updatedElements)); // Save updated elements immediately
+      return updatedElements;
+    });
   };
   
   useEffect(() => {
