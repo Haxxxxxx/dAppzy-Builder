@@ -16,10 +16,11 @@ const ContentList = () => {
     if (item.type === 'heading') {
       setShowLevelSelector(true);
     } else {
-      const newId = addNewElement(item.type, 1, index, parentId);
+      const newId = addNewElement(item.type, 1, index, parentId); // Make sure parentId is being used correctly here
       setSelectedElement({ id: newId, type: item.type });
     }
   };
+  
 
   const handleLevelSelect = (level) => {
     const newId = addNewElement('heading', level);
@@ -29,8 +30,6 @@ const ContentList = () => {
 
   const renderElement = (element) => {
     const { id, type, children } = element;
-    console.log("Rendering element with key:", id, "and type:", type, "with children:", children, "children types: ", children.type);
-    
     const componentMap = {
       heading: <Heading id={id} />,
       paragraph: <Paragraph id={id} />,
@@ -39,28 +38,25 @@ const ContentList = () => {
       button: <Button id={id} />,
     };
   
+    console.log("Rendering element:", { id, type, children });
+  
     return (
       <div key={id}>
-        {componentMap[type]}
+        {componentMap[type] || <p>Unsupported element type</p>}
         {children && children.length > 0 && (
           <div className="nested-elements">
             {children.map((childId) => {
               const childElement = elements.find((el) => el.id === childId);
-              if (childElement) {
-                console.log("Rendering child inside parent with key:", childId);
-                return (
-                  <div key={childId}>
-                    {renderElement(childElement)}
-                  </div>
-                );
-              }
-              return null;
+              return childElement ? renderElement(childElement) : null;
             })}
           </div>
         )}
       </div>
     );
   };
+
+  
+  
   
   
 

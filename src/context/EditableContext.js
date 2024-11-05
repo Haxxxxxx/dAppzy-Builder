@@ -23,40 +23,46 @@ export const EditableProvider = ({ children }) => {
   }, [elements]);
 
   const addNewElement = (type, level = 1, index = null, parentId = null) => {
-    const newId = `element${Date.now()}`;
-    const newElement = {
-      id: newId,
-      type,
-      content: type === 'button' ? 'Click Me' : `New ${type}`,
-      styles: {},
-      level,
-      children: [],
-    };
-  
-    setElements((prevElements) => {
-      // Helper function to recursively find the parent and add the child
-      const addChildToParent = (elementsArray) => 
-        elementsArray.map((el) => {
-          if (el.id === parentId) {
-            // Add the entire new element object to the parent's children array
-            console.log(`Adding new child ${newId} to parent ${parentId}`);
-            return { ...el, children: [...el.children, newElement] };
-          } else if (el.children && el.children.length > 0) {
-            // Recurse to find the correct parent in the nested structure
-            return { ...el, children: addChildToParent(el.children) };
-          }
-          return el;
-        });
-  
-      const updatedElements = parentId ? addChildToParent(prevElements) : [...prevElements, newElement];
-      console.log("Updated elements with new child:", JSON.stringify(updatedElements, null, 2));
-  
-      localStorage.setItem('editableElements', JSON.stringify(updatedElements)); // Persist to local storage
-      return updatedElements;
-    });
-  
-    return newId;
+  const newId = `element${Date.now()}`;
+  const newElement = {
+    id: newId,
+    type,
+    content: type === 'button' ? 'Click Me' : `New ${type}`,
+    styles: {},
+    level,
+    children: [],
   };
+
+  const updatedElements = (elementsArray) => {
+    if (parentId === null) {
+      // Add as a root element
+      return [...elementsArray, newElement];
+    } else {
+      return elementsArray.map((el) => {
+        if (el.id === parentId) {
+          // Add the new child to the specific parent
+          return {
+            ...el,
+            children: [...el.children, newElement],
+          };
+        } else if (el.children && el.children.length > 0) {
+          // Recurse to find the correct parent
+          return {
+            ...el,
+            children: updatedElements(el.children),
+          };
+        }
+        return el;
+      });
+    }
+  };
+
+  setElements((prevElements) => updatedElements(prevElements));
+  return newId;
+};
+
+  
+  
   
   
 

@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useRef } from 'react';
+
+import React, { useContext, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import Paragraph from '../Texts/Paragraph';
 import Heading from '../Texts/Heading';
@@ -7,7 +8,7 @@ import Button from '../Elements/Button';
 import DropZone from '../utils/DropZone';
 
 const Div = ({ id }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements, addNewElement } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, elements, addNewElement } = useContext(EditableContext);
   const divElement = elements.find((el) => el.id === id);
   const { content, styles, children = [] } = divElement || {};
   const divRef = useRef(null);
@@ -17,15 +18,9 @@ const Div = ({ id }) => {
     setSelectedElement({ id, type: 'div' });
   };
 
-  // const handleBlur = (e) => {
-  //   if (selectedElement?.id === id) {
-  //     updateContent(id, e.target.innerText);
-  //   }
-  // };
-
-  const handleDrop = (item) => {
-    console.log(`Dropping item of type ${item.type} into Div with id ${id}`);
-    addNewElement(item.type, item.level || 1, null, id);
+  const handleDrop = (item, parentId) => {
+    console.log(`Dropping item of type ${item.type} into Div with id ${parentId}`);
+    addNewElement(item.type, item.level || 1, null, parentId);
   };
 
   const renderElement = (element) => {
@@ -39,18 +34,22 @@ const Div = ({ id }) => {
     };
 
     return (
-      <div key={id}>
+      <React.Fragment key={id} id={id} style={{ padding: '5px', border: type === 'div' ? '1px solid black' : undefined }}>
         {componentMap[type]}
-        {children && children.length > 0 && (
-          <div className="nested-elements">
-            {children.map((childElement) => (
-              <div key={childElement.id}>
-                {renderElement(childElement)}
-              </div>
-            ))}
+        {/* Render children with a consistent structure if the current element is a div or section */}
+        {children && children.length > 0 && (type === 'div' || type === 'section') && (
+          <div className="nested-elements" style={{ padding: '5px', marginLeft: '10px' }}>
+            {children.map((childElement) => renderElement(childElement))}
+
+            {/* DropZone to add new children for div or section, or at the same level for other types */}
+            {(type === 'div' || type === 'section') ? (
+              <DropZone onDrop={(item) => handleDrop(item, id)} parentId={id} />
+            ) : (
+              <DropZone onDrop={(item) => handleDrop(item, null)} parentId={null} />
+            )}
           </div>
         )}
-      </div>
+      </React.Fragment >
     );
   };
 
@@ -60,19 +59,14 @@ const Div = ({ id }) => {
       ref={divRef}
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}
-      // onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{ ...styles, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', margin: '10px 0' }}
     >
-      {content || 'New Div'}
-      <div className="nested-elements">
-        {children.map((childElement) => (
-          <div key={childElement.id}>
-            {renderElement(childElement)}
-          </div>
-        ))}
+      <div>New Div
+      {/* Render each child element */}
+      {children.map((childElement) => renderElement(childElement))}
+      <DropZone onDrop={(item) => handleDrop(item, id)} parentId={id} />
       </div>
-      <DropZone onDrop={handleDrop} />
     </div>
   );
 };

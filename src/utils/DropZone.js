@@ -1,10 +1,10 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
 
-const DropZone = ({ onDrop }) => {
+const DropZone = ({ onDrop, parentId }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'ELEMENT',
-    drop: (item) => onDrop(item), // Call onDrop with the item data
+    drop: (item) => onDrop(item, parentId),
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
@@ -14,13 +14,13 @@ const DropZone = ({ onDrop }) => {
     <div
       ref={drop}
       style={{
-        minHeight: '20px',
+        minHeight: '40px',
         backgroundColor: isOver ? 'lightgray' : 'transparent',
         border: '1px dashed #ccc',
-        margin: '5px 0',
+        margin: '10px 0',
       }}
     >
-      {isOver ? 'Release to drop' : ''}
+      {isOver ? 'Release to drop here' : ''}
     </div>
   );
 };
