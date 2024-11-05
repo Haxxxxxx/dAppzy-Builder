@@ -1,4 +1,3 @@
-// src/Texts/ContentList.js
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import Paragraph from './Paragraph';
@@ -12,59 +11,71 @@ import DropZone from '../utils/DropZone';
 const ContentList = () => {
   const { elements, addNewElement, setSelectedElement } = useContext(EditableContext);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
-  const [currentDropIndex, setCurrentDropIndex] = useState(null);
 
-  const handleDrop = (item, index) => {
+  const handleDrop = (item, index, parentId = null) => {
     if (item.type === 'heading') {
       setShowLevelSelector(true);
-      setCurrentDropIndex(index);
     } else {
-      const newId = addNewElement(item.type, 1, index);
+      const newId = addNewElement(item.type, 1, index, parentId);
       setSelectedElement({ id: newId, type: item.type });
     }
   };
 
   const handleLevelSelect = (level) => {
-    const newId = addNewElement('heading', level, currentDropIndex);
+    const newId = addNewElement('heading', level);
     setSelectedElement({ id: newId, type: 'heading', level });
     setShowLevelSelector(false);
-    console.log("Level Selected for the heading:", level);
   };
+
+  const renderElement = (element) => {
+    const { id, type, children } = element;
+    console.log("Rendering element with key:", id, "and type:", type, "with children:", children, "children types: ", children.type);
+    
+    const componentMap = {
+      heading: <Heading id={id} />,
+      paragraph: <Paragraph id={id} />,
+      section: <Section id={id} />,
+      div: <Div id={id} />,
+      button: <Button id={id} />,
+    };
+  
+    return (
+      <div key={id}>
+        {componentMap[type]}
+        {children && children.length > 0 && (
+          <div className="nested-elements">
+            {children.map((childId) => {
+              const childElement = elements.find((el) => el.id === childId);
+              if (childElement) {
+                console.log("Rendering child inside parent with key:", childId);
+                return (
+                  <div key={childId}>
+                    {renderElement(childElement)}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  
 
   return (
     <div className="content-list">
       {elements.length === 0 && <p>Start adding elements by dragging from the sidebar.</p>}
-
-      {elements.map((element, index) => {
-        const renderElement = () => {
-          switch (element.type) {
-            case 'heading':
-              return <Heading id={element.id} />;
-            case 'paragraph':
-              return <Paragraph id={element.id} />;
-            case 'section':
-              return <Section id={element.id} />;
-            case 'div':
-              return <Div id={element.id} />;
-            case 'button':
-              return <Button id={element.id} />;
-            default:
-              return null;
-          }
-        };
-
-        return (
-          <div key={element.id}>
-            <DropZone index={index} onDrop={handleDrop} />
-            {renderElement()}
-          </div>
-        );
-      })}
-
-      <DropZone index={elements.length} onDrop={handleDrop} />
+      {elements.map((element, index) => (
+        <div key={element.id}> {/* Ensure each root element has a unique key */}
+          {renderElement(element)}
+        </div>
+      ))}
+      <DropZone index={elements.length} onDrop={(item) => handleDrop(item, elements.length)} />
 
       {showLevelSelector && (
-        <HeadingLevelSelector onSelectLevel={handleLevelSelect} />
+        <HeadingLevelSelector onSelectLevel={(level) => handleLevelSelect(level)} />
       )}
     </div>
   );

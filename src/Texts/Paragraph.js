@@ -1,15 +1,15 @@
-// src/components/Paragraph.js
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 const Paragraph = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const element = elements.find((el) => el.id === id); // Find element by ID
-  const { content = '', styles = {} } = element || {}; // Provide defaults to avoid undefined errors
+  const element = elements.find((el) => el.id === id);
+  const { content = '', styles = {} } = element || {};
   const paragraphRef = useRef(null);
 
-  const handleSelect = () => {
-    setSelectedElement({ id, type: 'paragraph', styles }); // Pass current styles
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent the event from bubbling up to parent Div
+    setSelectedElement({ id, type: 'paragraph', styles });
   };
 
   const handleBlur = (e) => {
@@ -25,23 +25,23 @@ const Paragraph = ({ id }) => {
   }, [selectedElement, id]);
 
   return (
-      <p
-        ref={paragraphRef}
-        onClick={handleSelect}
-        contentEditable={selectedElement?.id === id}
-        id={id}
-        onBlur={handleBlur}
-        suppressContentEditableWarning={true}
-        style={{
-          ...styles,
-          wordWrap: 'break-word',
-          wordBreak: 'break-word',
-          whiteSpace: 'normal',
-          overflowWrap: 'break-word',
-        }}
-      >
-        {content || 'New Paragraph'}
-      </p>
+    <p
+      id={id}
+      ref={paragraphRef}
+      onClick={handleSelect}
+      contentEditable={selectedElement?.id === id}
+      onBlur={handleBlur}
+      suppressContentEditableWarning={true}
+      style={{
+        ...styles,
+        wordWrap: 'break-word',
+        wordBreak: 'break-word',
+        whiteSpace: 'normal',
+        overflowWrap: 'break-word',
+      }}
+    >
+      {content || 'New Paragraph'}
+    </p>
   );
 };
 

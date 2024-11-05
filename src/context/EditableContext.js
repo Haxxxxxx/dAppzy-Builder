@@ -22,33 +22,45 @@ export const EditableProvider = ({ children }) => {
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
-  const addNewElement = (type, level = 1, index = null) => {
+  const addNewElement = (type, level = 1, index = null, parentId = null) => {
     const newId = `element${Date.now()}`;
     const newElement = {
       id: newId,
       type,
       content: type === 'button' ? 'Click Me' : `New ${type}`,
       styles: {},
-      level, // Store level directly if it's a heading
+      level,
       children: [],
     };
-
+  
     setElements((prevElements) => {
-      // Insert the new element at the specified index
-      const newElements = [...prevElements];
-      if (index !== null && index >= 0 && index <= newElements.length) {
-        newElements.splice(index, 0, newElement); // Insert at specified index
-      } else {
-        newElements.push(newElement); // Fallback to the end if index is null or invalid
-      }
-
-      // Save to localStorage and update the state
-      localStorage.setItem('editableElements', JSON.stringify(newElements));
-      return newElements;
+      // Helper function to recursively find the parent and add the child
+      const addChildToParent = (elementsArray) => 
+        elementsArray.map((el) => {
+          if (el.id === parentId) {
+            // Add the entire new element object to the parent's children array
+            console.log(`Adding new child ${newId} to parent ${parentId}`);
+            return { ...el, children: [...el.children, newElement] };
+          } else if (el.children && el.children.length > 0) {
+            // Recurse to find the correct parent in the nested structure
+            return { ...el, children: addChildToParent(el.children) };
+          }
+          return el;
+        });
+  
+      const updatedElements = parentId ? addChildToParent(prevElements) : [...prevElements, newElement];
+      console.log("Updated elements with new child:", JSON.stringify(updatedElements, null, 2));
+  
+      localStorage.setItem('editableElements', JSON.stringify(updatedElements)); // Persist to local storage
+      return updatedElements;
     });
-
-    return newId; // Return the ID of the new element for immediate selection
+  
+    return newId;
   };
+  
+  
+
+
 
   const updateContent = (id, newContent) => {
     const updateElementContent = (elementsArray) =>

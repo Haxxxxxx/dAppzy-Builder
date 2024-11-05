@@ -1,27 +1,28 @@
-// DropZone.js
 import React from 'react';
 import { useDrop } from 'react-dnd';
 
-const DropZone = ({ index, onDrop }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
+const DropZone = ({ onDrop }) => {
+  const [{ isOver }, drop] = useDrop({
     accept: 'ELEMENT',
-    drop: (item) => onDrop(item, index),
+    drop: (item) => onDrop(item), // Call onDrop with the item data
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
-  }));
+  });
 
   return (
     <div
       ref={drop}
       style={{
-        height: '20px',
-        backgroundColor: isOver ? '#ddd' : 'transparent',
-        margin: '4px 0',
+        minHeight: '20px',
+        backgroundColor: isOver ? 'lightgray' : 'transparent',
+        border: '1px dashed #ccc',
+        margin: '5px 0',
       }}
-    />
+    >
+      {isOver ? 'Release to drop' : ''}
+    </div>
   );
 };
 
-// Export directly without wrapping in an object
 export default DropZone;
