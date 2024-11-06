@@ -20,10 +20,12 @@ const Paragraph = ({ id }) => {
 
   useEffect(() => {
     if (selectedElement?.id === id && paragraphRef.current) {
+      console.log('Focusing on paragraph:', id, selectedElement);
       paragraphRef.current.focus();
     }
+    console.log('Rendering Paragraph with id:', id, 'Content:', content); // Debug log
   }, [selectedElement, id]);
-
+  
   return (
     <p
       id={id}

@@ -1,7 +1,7 @@
 // src/App.js
 import React from 'react';
 import { EditableProvider } from './context/EditableContext';
-import ContentList from './Texts/ContentList';
+import ContentList from './components/ContentList'; 
 import SideBar from './components/SideBar';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';

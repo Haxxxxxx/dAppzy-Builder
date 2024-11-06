@@ -1,11 +1,10 @@
-// src/components/NewElementPanel.js
 import React from 'react';
 import { useDrag } from 'react-dnd';
 
 const DraggableElement = ({ type, label, level = null }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type, level }, // Pass level if specified
+    item: { type, level },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -33,13 +32,42 @@ const NewElementPanel = () => {
   return (
     <div>
       <h3>Create New Element</h3>
-      <DraggableElement type="paragraph" label="Paragraph" />
-      <DraggableElement type="heading" level={1} label="Heading 1" />
-      <DraggableElement type="heading" level={2} label="Heading 2" />
-      <DraggableElement type="section" label="Section" />
-      <DraggableElement type="div" label="Div" />
-      <DraggableElement type="button" label="Button" />
-      {/* Add more draggable elements as needed */}
+
+      {/* Text Elements Section */}
+      <div>
+        <h4>Text Elements</h4>
+        <DraggableElement type="paragraph" label="Paragraph" />
+        <DraggableElement type="heading" level={1} label="Heading" />
+        <DraggableElement type="span" label="Span" />
+      </div>
+
+      {/* Container Elements Section */}
+      <div style={{ marginTop: '16px' }}>
+        <h4>Container Elements</h4>
+        <DraggableElement type="section" label="Section" />
+        <DraggableElement type="div" label="Div" />
+        <DraggableElement type="ul" label="Unordered List" />
+        <DraggableElement type="ol" label="Ordered List" />
+      </div>
+
+      {/* Form Elements Section */}
+      <div style={{ marginTop: '16px' }}>
+        <h4>Form Elements</h4>
+        <DraggableElement type="input" label="Input" />
+        <DraggableElement type="form" label="Form" />
+      </div>
+
+      {/* Media Elements Section */}
+      <div style={{ marginTop: '16px' }}>
+        <h4>Media Elements</h4>
+        <DraggableElement type="image" label="Image" />
+      </div>
+
+      {/* Button Elements Section */}
+      <div style={{ marginTop: '16px' }}>
+        <h4>Button Elements</h4>
+        <DraggableElement type="button" label="Button" />
+      </div>
     </div>
   );
 };

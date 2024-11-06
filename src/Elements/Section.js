@@ -1,3 +1,4 @@
+// Section.js
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import Paragraph from '../Texts/Paragraph';
@@ -5,15 +6,17 @@ import Heading from '../Texts/Heading';
 import Div from '../Elements/Div';
 import Button from '../Elements/Button';
 import DropZone from '../utils/DropZone';
+import Image from '../Elements/Image';
 
 const Section = ({ id }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement } = useContext(EditableContext);
   const sectionElement = elements.find((el) => el.id === id);
-  const { content, styles, children = [] } = sectionElement || {};
+  console.log('Retrieved section element:', sectionElement); // Debug log
+    const { content, styles, children = [], structure } = sectionElement || {};
   const sectionRef = useRef(null);
 
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
+    e.stopPropagation();
     setSelectedElement({ id, type: 'section' });
   };
 
@@ -33,28 +36,59 @@ const Section = ({ id }) => {
       heading: <Heading id={id} />,
       paragraph: <Paragraph id={id} />,
       section: <Section id={id} />,
-      div: <Div id={id} />, // Recursive Div rendering
+      div: <Div id={id} />,
       button: <Button id={id} />,
+      image: <Image id={id} />,
     };
 
     return (
-      <React.Fragment key={id} id={id} style={{ padding: '5px', border: type === 'div' ? '1px solid black' : undefined }}>
+      <React.Fragment key={id}>
         {componentMap[type]}
-        {/* Render children with a consistent structure if the current element is a div or section */}
         {children && children.length > 0 && (type === 'div' || type === 'section') && (
           <div className="nested-elements" style={{ padding: '5px', marginLeft: '10px' }}>
             {children.map((childElement) => renderElement(childElement))}
-
-            {/* DropZone to add new children for div or section, or at the same level for other types */}
-            {(type === 'div' || type === 'section') ? (
-              <DropZone onDrop={(item) => handleDrop(item, id)} parentId={id} />
-            ) : (
-              <DropZone onDrop={(item) => handleDrop(item, null)} parentId={null} />
-            )}
+            <DropZone onDrop={(item) => handleDrop(item, id)} parentId={id} />
           </div>
         )}
-      </React.Fragment >
+      </React.Fragment>
     );
+  };
+
+  const renderStructure = () => {
+    if (!structure) {
+      console.warn('No structure defined for this section:', id); // Debug log
+      return null; // Handle undefined structure gracefully
+    }
+    console.log('Rendering structure for section:', structure); // Debug log
+    switch (structure) {
+      case 'title-text':
+        return (
+          <>
+            <Heading id={`${id}-title`} level={1} content="Your Title Here" />
+            <Paragraph id={`${id}-text`} content="Your Text Here" />
+          </>
+        );
+      case 'title-image':
+        return (
+          <>
+            <Heading id={`${id}-title`} level={1}  />
+            <Image id={`${id}-image`} />
+          </>
+        );
+      case 'two-columns':
+        return (
+          <Div id={`${id}-columns`} styles={{ display: 'flex' }}>
+            <Div id={`${id}-column-1`} styles={{ flex: 1, padding: '5px' }}>
+              <DropZone onDrop={(item) => handleDrop(item, `${id}-column-1`)} parentId={`${id}-column-1`} />
+            </Div>
+            <Div id={`${id}-column-2`} styles={{ flex: 1, padding: '5px' }}>
+              <DropZone onDrop={(item) => handleDrop(item, `${id}-column-2`)} parentId={`${id}-column-2`} />
+            </Div>
+          </Div>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -74,6 +108,7 @@ const Section = ({ id }) => {
     >
       {content || 'New Section'}
       <div className="nested-elements" style={{ padding: '5px', marginLeft: '10px' }}>
+        {renderStructure()}
         {children.map((childElement) => renderElement(childElement))}
       </div>
       <DropZone onDrop={(item) => handleDrop(item, id)} parentId={id} />

@@ -21,10 +21,12 @@ const Heading = ({ id }) => {
 
   useEffect(() => {
     if (selectedElement?.id === id && headingRef.current) {
+      console.log('Focusing on heading:', id, selectedElement);
       headingRef.current.focus();
     }
-    console.log("Rendering Heading with level:", level); // Confirm the correct level
+    console.log('Rendering Heading with level:', level, 'Content:', content); // Confirm the correct level
   }, [selectedElement, id, level]);
+  
 
   const Tag = `h${level}`; // Render the appropriate heading tag
 

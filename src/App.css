@@ -5,12 +5,7 @@ p {
 }
 
 
-p[contentEditable="true"] {
-  outline: none;
-  border: 1px dashed #000; /* Optional: add a border to show editable state */
-  padding: 4px; /* Adjust as necessary */
-  margin: 0; /* Ensure there’s no margin that causes overlap */
-}
+
 
 .container {
   width: 100%;             /* or use a specific width like 300px */
