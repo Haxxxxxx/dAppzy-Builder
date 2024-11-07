@@ -32,14 +32,14 @@ const ContentList = () => {
     setSelectedElement({ id: newId, type: 'heading', level });
     setShowLevelSelector(false);
   };
-
+  
   const handleStructureSelect = (structure) => {
     console.log('Creating section with structure:', structure);
     const sectionId = addNewElement('section', 1, dropZoneIndex, null, structure);
     setSelectedElement({ id: sectionId, type: 'section', structure });
-
-    // Add the appropriate children to the section based on the structure
+  
     const childrenToAdd = [];
+  
     if (structure === 'title-text') {
       const headingId = addNewElement('heading', 1, null, sectionId);
       const paragraphId = addNewElement('paragraph', 1, null, sectionId);
@@ -52,18 +52,17 @@ const ContentList = () => {
       const column1Id = addNewElement('div', 1, null, sectionId);
       const column2Id = addNewElement('div', 1, null, sectionId);
       childrenToAdd.push(column1Id, column2Id);
-    } else{
-
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === sectionId
-          ? { ...el, children: [...el.children, ...childrenToAdd] }
-          : el
-      )
-    );
-  }
+    }
+  
+    setElements((prevElements) => {
+      return prevElements.map((el) =>
+        el.id === sectionId ? { ...el, children: [...el.children, ...childrenToAdd] } : el
+      );
+    });
+  
     setShowStructureModal(false);
   };
+  
 
   useEffect(() => {
     console.log('Elements state:', elements);

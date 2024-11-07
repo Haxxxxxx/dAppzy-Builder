@@ -42,70 +42,105 @@ export const EditableProvider = ({ children }) => {
     };
 
     setElements((prevElements) => {
+      let updatedElements = [...prevElements];
+
       if (parentId === null) {
         // If there's no parent, add as a top-level element
-        return [...prevElements, newElement];
+        updatedElements = [...prevElements, newElement];
+      } else {
+        // If there is a parent, find and add the new element as a child of that parent
+        updatedElements = prevElements.map((el) => {
+          if (el.id === parentId) {
+            return {
+              ...el,
+              children: [...el.children, newId],
+            };
+          }
+          return el;
+        });
+        updatedElements.push(newElement);
       }
 
-      // If there is a parent, find and add the new element as a child of that parent
-      const updatedElements = prevElements.map((el) => {
-        if (el.id === parentId) {
-          return {
-            ...el,
-            children: [...el.children, newId],
-          };
-        }
-        return el;
-      });
-
-      return [...updatedElements, newElement];
+      return updatedElements;
     });
 
     return newId;
   };
 
-
-  const updateContent = (id, newContent) => {
-    const updateElementContent = (elementsArray) =>
-      elementsArray.map((el) => {
-        if (el.id === id) {
-          return { ...el, content: newContent };
-        } else if (el.children && el.children.length > 0) {
-          return {
-            ...el,
-            children: updateElementContent(el.children),
-          };
-        }
-        return el;
-      });
-
-    setElements((prevElements) => updateElementContent(prevElements));
-  };
-
   const updateStyles = (id, newStyles) => {
     console.log("Updating styles for:", id, newStyles);
-
-    const updateElementStyles = (elementsArray) =>
-      elementsArray.map((el) =>
-        el.id === id
-          ? { ...el, styles: { ...el.styles, ...newStyles } }
-          : { ...el, children: updateElementStyles(el.children || []) }
-      );
-
+  
+    const updateElementStyles = (elementsArray) => {
+      return elementsArray.map((el) => {
+        if (!el) return el; // Skip undefined elements to avoid errors
+  
+        if (el.id === id) {
+          return {
+            ...el,
+            styles: {
+              ...el.styles,
+              ...newStyles,
+            },
+          };
+        }
+  
+        if (el.children && el.children.length > 0) {
+          return {
+            ...el,
+            children: el.children.map((childId) => {
+              const child = elementsArray.find((childEl) => childEl && childEl.id === childId);
+              if (child) {
+                return child.id; // Keep child reference in the parent
+              }
+              return childId; // If child is not found, return the childId itself
+            }),
+          };
+        }
+  
+        return el;
+      });
+    };
+  
     setElements((prevElements) => {
       const updatedElements = updateElementStyles(prevElements);
       localStorage.setItem('editableElements', JSON.stringify(updatedElements));
       return updatedElements;
     });
   };
+  
+  
+  const updateContent = (id, newContent) => {
+    console.log("Updating content for:", id, newContent);
 
+    const updateElementContent = (elementsArray) => {
+      return elementsArray.map((el) => {
+        if (el.id === id) {
+          return {
+            ...el,
+            content: newContent,
+          };
+        }
+        return el;
+      });
+    };
+
+    setElements((prevElements) => {
+      const updatedElements = updateElementContent(prevElements);
+      localStorage.setItem('editableElements', JSON.stringify(updatedElements));
+      return updatedElements;
+    });
+  };
+
+  // Improved findElementById function to prevent infinite recursion
   const findElementById = (id, elementsArray) => {
     for (const element of elementsArray) {
       if (element.id === id) {
         return element;
       }
-      if (element.children) {
-        const found = findElementById(id, element.children);
+
+      // Traverse children if they exist
+      if (element.children && element.children.length > 0) {
+        const found = findElementById(id, elementsArray.filter((el) => element.children.includes(el.id)));
         if (found) {
           return found;
         }
@@ -113,6 +148,7 @@ export const EditableProvider = ({ children }) => {
     }
     return null;
   };
+
   return (
     <EditableContext.Provider
       value={{
@@ -120,9 +156,10 @@ export const EditableProvider = ({ children }) => {
         setSelectedElement,
         elements,
         addNewElement,
-        updateContent,
         updateStyles,
-        setElements,findElementById,
+        updateContent,
+        setElements,
+        findElementById,
       }}
     >
       {children}

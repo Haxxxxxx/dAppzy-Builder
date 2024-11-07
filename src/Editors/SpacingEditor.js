@@ -27,29 +27,31 @@ const SpacingEditor = () => {
   useEffect(() => {
     if (selectedElement) {
       const element = document.getElementById(selectedElement.id); // Get the DOM element by ID
-
-      const computedStyles = getComputedStyle(element);
-      
-      const marginTopValue = computedStyles.marginTop.split(',')[0].trim();
-      const marginRightValue = computedStyles.marginRight.split(',')[0].trim();
-      const marginBottomValue = computedStyles.marginBottom.split(',')[0].trim();
-      const marginLeftValue = computedStyles.marginLeft.split(',')[0].trim();
-      const paddingTopValue = computedStyles.paddingTop.split(',')[0].trim();
-      const paddingRightValue = computedStyles.paddingRight.split(',')[0].trim();
-      const paddingBottomValue = computedStyles.paddingBottom.split(',')[0].trim();
-      const paddingLeftValue = computedStyles.paddingLeft.split(',')[0].trim();
-
-      setMarginTop(marginTopValue.replace('px', ''));
-      setMarginRight(marginRightValue.replace('px', ''));
-      setMarginBottom(marginBottomValue.replace('px', ''));
-      setMarginLeft(marginLeftValue.replace('px', ''));
-      setPaddingTop(paddingTopValue.replace('px', ''));
-      setPaddingRight(paddingRightValue.replace('px', ''));
-      setPaddingBottom(paddingBottomValue.replace('px', ''));
-      setPaddingLeft(paddingLeftValue.replace('px', ''));
+      if (element) {
+        const computedStyles = getComputedStyle(element);
+  
+        // Extract values from computed styles
+        const marginTopValue = computedStyles.marginTop.split(',')[0].trim();
+        const marginRightValue = computedStyles.marginRight.split(',')[0].trim();
+        const marginBottomValue = computedStyles.marginBottom.split(',')[0].trim();
+        const marginLeftValue = computedStyles.marginLeft.split(',')[0].trim();
+        const paddingTopValue = computedStyles.paddingTop.split(',')[0].trim();
+        const paddingRightValue = computedStyles.paddingRight.split(',')[0].trim();
+        const paddingBottomValue = computedStyles.paddingBottom.split(',')[0].trim();
+        const paddingLeftValue = computedStyles.paddingLeft.split(',')[0].trim();
+  
+        setMarginTop(marginTopValue.replace('px', ''));
+        setMarginRight(marginRightValue.replace('px', ''));
+        setMarginBottom(marginBottomValue.replace('px', ''));
+        setMarginLeft(marginLeftValue.replace('px', ''));
+        setPaddingTop(paddingTopValue.replace('px', ''));
+        setPaddingRight(paddingRightValue.replace('px', ''));
+        setPaddingBottom(paddingBottomValue.replace('px', ''));
+        setPaddingLeft(paddingLeftValue.replace('px', ''));
+      }
     }
   }, [selectedElement, elements]);
-
+  
   if (!selectedElement) return null;
 
   const { id } = selectedElement;

@@ -9,9 +9,17 @@ const Paragraph = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent the event from bubbling up to parent Div
-    setSelectedElement({ id, type: 'paragraph', styles });
+    const element = elements.find((el) => el.id === id);
+    if (element) {
+      setSelectedElement({
+        id: element.id,
+        type: element.type,
+        styles: element.styles, // Pass styles of the selected element
+      });
+    }
   };
-
+  
+  
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
       updateContent(id, e.target.innerText);
@@ -20,12 +28,10 @@ const Paragraph = ({ id }) => {
 
   useEffect(() => {
     if (selectedElement?.id === id && paragraphRef.current) {
-      console.log('Focusing on paragraph:', id, selectedElement);
       paragraphRef.current.focus();
     }
-    console.log('Rendering Paragraph with id:', id, 'Content:', content); // Debug log
   }, [selectedElement, id]);
-  
+
   return (
     <p
       id={id}
@@ -36,6 +42,7 @@ const Paragraph = ({ id }) => {
       suppressContentEditableWarning={true}
       style={{
         ...styles,
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         wordWrap: 'break-word',
         wordBreak: 'break-word',
         whiteSpace: 'normal',
