@@ -24,17 +24,6 @@ const EditorPanel = () => {
     return <p>Selected element not found. Please select a different element.</p>;
   }
 
-  // Update heading level
-  const handleLevelChange = (e) => {
-    const newLevel = parseInt(e.target.value, 10);
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === selectedElement.id
-          ? { ...el, level: newLevel }
-          : el
-      )
-    );
-  };
 
   const handleClearAll = () => {
     setElements([]); // Clear all elements by setting elements to an empty array
@@ -47,21 +36,6 @@ const EditorPanel = () => {
         <button onClick={handleClearAll} style={{ marginTop: '16px', padding: '8px', cursor: 'pointer' }}>
           Clear All Elements
         </button>
-      )}
-
-      {/* Heading Level Selector - Only show if selected element is a heading */}
-      {element.type === 'heading' && (
-        <div>
-          <label>Heading Level:</label>
-          <select value={element.level} onChange={handleLevelChange}>
-            <option value={1}>H1</option>
-            <option value={2}>H2</option>
-            <option value={3}>H3</option>
-            <option value={4}>H4</option>
-            <option value={5}>H5</option>
-            <option value={6}>H6</option>
-          </select>
-        </div>
       )}
 
       {/* Style Editors */}

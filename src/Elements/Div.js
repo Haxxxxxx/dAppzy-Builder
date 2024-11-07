@@ -1,14 +1,10 @@
 import React, { useContext, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
-import Paragraph from '../Texts/Paragraph';
-import Heading from '../Texts/Heading';
-import Section from '../Elements/Section';
-import Button from '../Elements/Button';
 import DropZone from '../utils/DropZone';
-import { List } from '../Elements/List';
+import { renderElement } from '../utils/RenderUtils';
 
 const Div = ({ id }) => {
-  const { selectedElement, setSelectedElement, elements, addNewElement } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
   const divElement = elements.find((el) => el.id === id);
   const { styles, children = [] } = divElement || {};
   const divRef = useRef(null);
@@ -23,48 +19,18 @@ const Div = ({ id }) => {
 
     console.log(`Dropping item of type ${item.type} into Div with id ${parentId}`);
 
-    // Check if the parent element already has a child of the same type
-    const existingChild = elements.find((el) => el.parentId === parentId && el.type === item.type);
-    if (existingChild) {
-        // If the parent element already has a child of the same type, return the existing child's ID
-        return existingChild.id;
-    } else {
-        // If the parent element doesn't have a child of the same type, add a new element
-        addNewElement(item.type, item.level || 1, null, parentId);
-    }
-};
+    // Create and add the new element
+    const newId = addNewElement(item.type, item.level || 1, null, parentId);
 
-
-const renderElement = (element) => {
-  const { id, type, children } = element;
-  const componentMap = {
-      heading: <Heading id={id} />,
-      paragraph: <Paragraph id={id} />,
-      section: <Section id={id} />,
-      div: <Div id={id} />, // Recursive Div rendering
-      button: <Button id={id} />,
-      ul: <List id={id} type="ul" />,
-      ol: <List id={id} type="ol" />,
+    // Update the parent's children list, preventing duplication
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === parentId
+          ? { ...el, children: el.children.includes(newId) ? el.children : [...el.children, newId] }
+          : el
+      )
+    );
   };
-
-  return (
-      <React.Fragment key={id}>
-          {componentMap[type]}
-          {/* Only render nested children for div and section, but not for paragraph */}
-          {['div', 'section'].includes(type) && children && children.length > 0 && (
-              <div className="nested-elements" style={{ padding: '5px', marginLeft: '10px' }}>
-                  {children.map((childId) => {
-                      const childElement = elements.find((el) => el.id === childId);
-                      return childElement && childElement.type !== 'paragraph' ? renderElement(childElement) : null;
-                  })}
-              </div>
-          )}
-      </React.Fragment>
-  );
-};
-
-
-
 
   return (
     <div
@@ -75,19 +41,15 @@ const renderElement = (element) => {
       suppressContentEditableWarning={true}
       style={{ ...styles, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', margin: '10px 0' }}
     >
-      <div>
-        New Div
-        <div className="nested-elements">
-          {/* Render each child element */}
-          {children.map((childId) => {
-            const childElement = elements.find((el) => el.id === childId);
-            return childElement ? renderElement(childElement) : null;
-          })}
-          <DropZone onDrop={(item) => handleDrop(item, id)} />
-        </div>
-      </div>
+      New Div
+      {children.map((childId) => {
+        const childElement = elements.find((el) => el.id === childId);
+        return childElement ? renderElement(childElement, elements) : null;
+      })}
+      <DropZone onDrop={(item) => handleDrop(item, id)} />
     </div>
   );
 };
+
 
 export default Div;

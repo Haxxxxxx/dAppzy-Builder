@@ -3,7 +3,6 @@ import React, { createContext, useState, useEffect } from 'react';
 
 export const EditableContext = createContext();
 
-// Define the unique ID generator function
 let elementCounter = 0;
 
 const generateUniqueId = () => {
@@ -30,54 +29,51 @@ export const EditableProvider = ({ children }) => {
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
+
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const newId = generateUniqueId();
     const newElement = {
-        id: newId,
-        type,
-        content: type === 'list-item' ? 'New list-item' : `New ${type}`,
-        styles: {},
-        level,
-        children: [],
-        parentId: parentId || null,
-        structure, // Add structure here
+      id: newId,
+      type,
+      content: `New ${type}`,
+      styles: {},
+      level,
+      children: [],
+      parentId: parentId || null,
+      structure,
     };
-
+  
     setElements((prevElements) => {
-        let updatedElements = [...prevElements];
-
-        if (parentId === null) {
-            // Add as a top-level element
-            updatedElements.push(newElement);
-        } else {
-            // Add to a specific parent's children only if it's not already there
-            const parentElement = updatedElements.find((el) => el.id === parentId);
-            if (parentElement) {
-                // Check if the parent element already has a list as a child
-                const existingList = parentElement.children.find((childId) => {
-                    const childElement = updatedElements.find((el) => el.id === childId);
-                    return childElement && (childElement.type === 'ul' || childElement.type === 'ol');
-                });
-
-                if (existingList) {
-                    // If the parent element already has a list as a child, return the existing list's ID
-                    return existingList;
-                } else {
-                    // If the parent element doesn't have a list as a child, add the new element
-                    parentElement.children.push(newId);
-                    updatedElements.push(newElement);
-                }
-            }
+      if (parentId === null) {
+        // If there's no parent, add as a top-level element
+        return [...prevElements, newElement];
+      }
+  
+      // If there is a parent, find and add the new element as a child of that parent
+      const updatedElements = prevElements.map((el) => {
+        if (el.id === parentId) {
+          return {
+            ...el,
+            children: [...el.children, newId],
+          };
         }
-
-        return updatedElements;
+        return el;
+      });
+  
+      return [...updatedElements, newElement]; // Add the new element only once, either to the top level or under the parent.
     });
-
+  
     return newId;
-};
+  };
+  
+  
+  
+  
+  
 
-
-
+  
+  
+  
 
   const updateContent = (id, newContent) => {
     const updateElementContent = (elementsArray) =>

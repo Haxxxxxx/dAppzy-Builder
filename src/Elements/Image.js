@@ -4,7 +4,7 @@ import { EditableContext } from '../context/EditableContext';
 const Image = ({ id }) => {
   const { selectedElement, setSelectedElement, elements, updateContent } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id);
-  const { content, styles } = imageElement || {};
+  const { content = '', styles = {} } = imageElement || {};
   const [showModal, setShowModal] = useState(false);
   const [newSrc, setNewSrc] = useState('');
   const modalRef = useRef(null);
@@ -39,7 +39,6 @@ const Image = ({ id }) => {
     setNewSrc(e.target.value);
   };
 
-  // Detect click outside of modal to close it
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
