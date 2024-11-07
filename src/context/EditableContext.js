@@ -1,4 +1,3 @@
-// src/context/EditableContext.js
 import React, { createContext, useState, useEffect } from 'react';
 
 export const EditableContext = createContext();
@@ -29,7 +28,6 @@ export const EditableProvider = ({ children }) => {
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
-
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const newId = generateUniqueId();
     const newElement = {
@@ -42,13 +40,13 @@ export const EditableProvider = ({ children }) => {
       parentId: parentId || null,
       structure,
     };
-  
+
     setElements((prevElements) => {
       if (parentId === null) {
         // If there's no parent, add as a top-level element
         return [...prevElements, newElement];
       }
-  
+
       // If there is a parent, find and add the new element as a child of that parent
       const updatedElements = prevElements.map((el) => {
         if (el.id === parentId) {
@@ -59,21 +57,13 @@ export const EditableProvider = ({ children }) => {
         }
         return el;
       });
-  
-      return [...updatedElements, newElement]; // Add the new element only once, either to the top level or under the parent.
+
+      return [...updatedElements, newElement];
     });
-  
+
     return newId;
   };
-  
-  
-  
-  
-  
 
-  
-  
-  
 
   const updateContent = (id, newContent) => {
     const updateElementContent = (elementsArray) =>
@@ -123,7 +113,6 @@ export const EditableProvider = ({ children }) => {
     }
     return null;
   };
-
   return (
     <EditableContext.Provider
       value={{
@@ -133,8 +122,7 @@ export const EditableProvider = ({ children }) => {
         addNewElement,
         updateContent,
         updateStyles,
-        findElementById,
-        setElements,
+        setElements,findElementById,
       }}
     >
       {children}

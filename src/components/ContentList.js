@@ -6,9 +6,10 @@ import HeadingLevelSelector from '../utils/HeadingLevelSelector';
 import { renderElement } from '../utils/RenderUtils';
 
 const ContentList = () => {
-  const { elements, addNewElement, setSelectedElement } = useContext(EditableContext);
+  const { elements, addNewElement, setSelectedElement, setElements } = useContext(EditableContext);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
+  const [dropZoneIndex, setDropZoneIndex] = useState(null);
 
   const handleDrop = (item, index, parentId = null) => {
     if (item.type === 'heading') {
@@ -21,6 +22,11 @@ const ContentList = () => {
     }
   };
 
+  const handleDropZoneClick = (index) => {
+    setDropZoneIndex(index);
+    setShowStructureModal(true);
+  };
+
   const handleLevelSelect = (level) => {
     const newId = addNewElement('heading', level);
     setSelectedElement({ id: newId, type: 'heading', level });
@@ -29,8 +35,33 @@ const ContentList = () => {
 
   const handleStructureSelect = (structure) => {
     console.log('Creating section with structure:', structure);
-    const newId = addNewElement('section', 1, elements.length, null, structure);
-    setSelectedElement({ id: newId, type: 'section', structure });
+    const sectionId = addNewElement('section', 1, dropZoneIndex, null, structure);
+    setSelectedElement({ id: sectionId, type: 'section', structure });
+
+    // Add the appropriate children to the section based on the structure
+    const childrenToAdd = [];
+    if (structure === 'title-text') {
+      const headingId = addNewElement('heading', 1, null, sectionId);
+      const paragraphId = addNewElement('paragraph', 1, null, sectionId);
+      childrenToAdd.push(headingId, paragraphId);
+    } else if (structure === 'title-image') {
+      const headingId = addNewElement('heading', 1, null, sectionId);
+      const imageId = addNewElement('image', 1, null, sectionId);
+      childrenToAdd.push(headingId, imageId);
+    } else if (structure === 'two-columns') {
+      const column1Id = addNewElement('div', 1, null, sectionId);
+      const column2Id = addNewElement('div', 1, null, sectionId);
+      childrenToAdd.push(column1Id, column2Id);
+    } else{
+
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === sectionId
+          ? { ...el, children: [...el.children, ...childrenToAdd] }
+          : el
+      )
+    );
+  }
     setShowStructureModal(false);
   };
 
@@ -43,7 +74,11 @@ const ContentList = () => {
       {elements
         .filter((element) => !element.parentId) // Only render top-level elements
         .map((element) => renderElement(element, elements))}
-      <DropZone index={elements.length} onDrop={(item) => handleDrop(item, null)} />
+      <DropZone
+        index={elements.length}
+        onDrop={(item) => handleDrop(item, null)}
+        onClick={() => handleDropZoneClick(elements.length)}
+      />
 
       {showLevelSelector && (
         <HeadingLevelSelector onSelectLevel={(level) => handleLevelSelect(level)} />
@@ -55,8 +90,6 @@ const ContentList = () => {
         />
       )}
     </div>
-
-
   );
 };
 
