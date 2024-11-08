@@ -1,6 +1,7 @@
 import React from 'react';
 
 const SectionStructureModal = ({ onClose, onSelectStructure }) => {
+  
   const handleStructureSelect = (structure) => {
     console.log('Selected structure:', structure); // Debug log
     onSelectStructure(structure);

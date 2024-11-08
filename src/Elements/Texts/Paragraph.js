@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const Paragraph = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);

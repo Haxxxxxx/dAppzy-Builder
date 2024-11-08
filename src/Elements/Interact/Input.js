@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const Input = ({ id }) => {
   const { selectedElement, setSelectedElement, elements, updateContent } = useContext(EditableContext);
@@ -9,7 +9,7 @@ const Input = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent propagation to parent elements
-    setSelectedElement({ id, type: 'input' });
+    setSelectedElement({ id, type: 'input', styles });
   };
 
   const handleChange = (e) => {
@@ -30,7 +30,12 @@ const Input = ({ id }) => {
       value={content}
       onClick={handleSelect}
       onChange={handleChange}
-      style={{ ...styles, padding: '5px', margin: '5px', border: '1px solid #ccc' }}
+      style={{
+        ...styles,
+        border: selectedElement?.id === id ? '1px dashed blue' : '1px solid #ccc', // Add visual cue for selected input
+        padding: '5px',
+        margin: '5px',
+      }}
     />
   );
 };

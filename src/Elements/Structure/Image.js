@@ -1,5 +1,5 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const Image = ({ id }) => {
   const { selectedElement, setSelectedElement, elements, updateContent } = useContext(EditableContext);

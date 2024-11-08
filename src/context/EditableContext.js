@@ -6,7 +6,7 @@ let elementCounter = 0;
 
 const generateUniqueId = () => {
   elementCounter += 1;
-  return `element-${Date.now()}-${elementCounter}-${Math.random().toString(36).substr(2, 5)}`;
+  return `element-${Date.now()}-${elementCounter}-${Math.random().toString(36).substr(2, 8)}`;
 };
 
 export const EditableProvider = ({ children }) => {
@@ -30,6 +30,8 @@ export const EditableProvider = ({ children }) => {
 
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const newId = generateUniqueId();
+    console.log(`Generated new element ID: ${newId}`);  // Debugging log for generated ID
+  
     const newElement = {
       id: newId,
       type,
@@ -40,10 +42,10 @@ export const EditableProvider = ({ children }) => {
       parentId: parentId || null,
       structure,
     };
-
+  
     setElements((prevElements) => {
       let updatedElements = [...prevElements];
-
+  
       if (parentId === null) {
         // If there's no parent, add as a top-level element
         updatedElements = [...prevElements, newElement];
@@ -60,12 +62,15 @@ export const EditableProvider = ({ children }) => {
         });
         updatedElements.push(newElement);
       }
-
+  
       return updatedElements;
     });
-
+  
     return newId;
   };
+  
+  
+  
 
   const updateStyles = (id, newStyles) => {
     console.log("Updating styles for:", id, newStyles);

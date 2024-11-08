@@ -1,6 +1,5 @@
-// src/Texts/Button.js
 import React, { useContext, useEffect, useRef } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const Button = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
@@ -8,7 +7,8 @@ const Button = ({ id }) => {
   const { content = 'Click Me!', styles = {} } = element || {}; // Default content and styles
   const buttonRef = useRef(null);
 
-  const handleSelect = () => {
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent event bubbling
     setSelectedElement({ id, type: 'button', styles }); // Pass current styles
   };
 
@@ -32,7 +32,12 @@ const Button = ({ id }) => {
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
-      style={styles}
+      style={{
+        ...styles,
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none', // Add visual cue for selected button
+        cursor: 'pointer',
+        padding: '8px',
+      }}
     >
       {content}
     </button>

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const Heading = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
@@ -7,10 +7,11 @@ const Heading = ({ id }) => {
 
   // Fetch the latest element data, including `level`, from `elements`
   const elementData = findElementById(id, elements);
-  const { content, styles, level = 1 } = elementData || {}; // Use default level 1 if undefined
+  const { content = '', styles = {}, level = 1 } = elementData || {}; // Use default level 1 if undefined
 
-  const handleSelect = () => {
-    setSelectedElement({ id, type: 'heading', level });
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent bubbling to parent elements
+    setSelectedElement({ id, type: 'heading', level, styles }); // Include styles when selecting
   };
 
   const handleBlur = (e) => {
@@ -26,7 +27,6 @@ const Heading = ({ id }) => {
     }
     console.log('Rendering Heading with level:', level, 'Content:', content); // Confirm the correct level
   }, [selectedElement, id, level]);
-  
 
   const Tag = `h${level}`; // Render the appropriate heading tag
 
@@ -38,7 +38,14 @@ const Heading = ({ id }) => {
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
-      style={styles}
+      style={{
+        ...styles,
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none', // Add visual cue for selected heading
+        wordWrap: 'break-word',
+        wordBreak: 'break-word',
+        whiteSpace: 'normal',
+        overflowWrap: 'break-word',
+      }}
     >
       {content || 'New Heading'}
     </Tag>

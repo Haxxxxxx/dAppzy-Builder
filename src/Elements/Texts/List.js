@@ -1,5 +1,5 @@
 import React, { useContext, useRef, useEffect } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const ListItem = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements, addNewElement, setElements } = useContext(EditableContext);
@@ -24,30 +24,31 @@ const ListItem = ({ id }) => {
       updateContent(id, e.target.innerText);
     }
   };
+  
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-
+  
       if (!parentId) {
         console.error(`Parent ID for element ${id} not found.`);
         return;
       }
-
+  
       const parentElement = elements.find((el) => el.id === parentId);
       if (!parentElement) {
         console.error(`Parent element with id ${parentId} not found.`);
         return;
       }
-
+  
       const currentIndex = parentElement.children.findIndex((childId) => childId === id);
       if (currentIndex === -1) {
         console.error(`Element ${id} not found in parent ${parentId} children.`);
         return;
       }
-
+  
       const newId = addNewElement('list-item', 1, null, parentId);
-
+  
       setElements((prevElements) =>
         prevElements.map((el) =>
           el.id === parentId
@@ -62,10 +63,11 @@ const ListItem = ({ id }) => {
             : el
         )
       );
-
+  
       setSelectedElement({ id: newId, type: 'list-item' });
     }
   };
+  
 
   useEffect(() => {
     if (isSelected && itemRef.current) {
@@ -111,27 +113,6 @@ const List = ({ id, type = 'ul' }) => {
     setSelectedElement({ id, type });
   };
 
-  const handleDrop = (item, parentId) => {
-    if (!item || !parentId) return;
-
-    console.log(`Dropping item of type ${item.type} into List with id ${parentId}`);
-
-    const parentElement = elements.find((el) => el.id === parentId);
-    if (parentElement && parentElement.children.includes(item.id)) {
-      return;
-    }
-
-    const newId = addNewElement(item.type, 1, null, parentId);
-
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId && !el.children.includes(newId)
-          ? { ...el, children: [...el.children, newId] }
-          : el
-      )
-    );
-  };
-
   return React.createElement(
     type,
     {
@@ -152,5 +133,7 @@ const List = ({ id, type = 'ul' }) => {
     })
   );
 };
+
+
 
 export { List, ListItem };

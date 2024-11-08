@@ -56,13 +56,12 @@ const ContentList = () => {
   
     setElements((prevElements) => {
       return prevElements.map((el) =>
-        el.id === sectionId ? { ...el, children: [...el.children, ...childrenToAdd] } : el
+        el.id === sectionId ? { ...el, children: [...new Set([...el.children, ...childrenToAdd])] } : el
       );
     });
   
     setShowStructureModal(false);
   };
-  
 
   useEffect(() => {
     console.log('Elements state:', elements);

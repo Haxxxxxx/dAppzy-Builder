@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
-import { EditableContext } from '../context/EditableContext';
-import DropZone from '../utils/DropZone';
+import { EditableContext } from '../../context/EditableContext';
+import DropZone from '../../utils/DropZone';
 
 const Form = ({ id }) => {
-  const { elements, addNewElement, setSelectedElement } = useContext(EditableContext);
+  const { selectedElement, elements, addNewElement, setSelectedElement } = useContext(EditableContext);
   const formElement = elements.find((el) => el.id === id);
-  const { children = [] } = formElement || {};
+  const { children = [], styles = {} } = formElement || {};
 
   const handleDrop = (item, parentId) => {
     addNewElement(item.type, 1, null, parentId);
@@ -13,14 +13,20 @@ const Form = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'form' });
+    setSelectedElement({ id, type: 'form', styles });
   };
 
   return (
     <form
       id={id}
       onClick={handleSelect}
-      style={{ padding: '10px', border: '1px solid #ccc', margin: '10px 0' }}
+      style={{
+        ...styles,
+        padding: '10px',
+        border: '1px solid #ccc',
+        margin: '10px 0',
+        border: selectedElement?.id === id ? '1px dashed blue' : '1px solid #ccc', // Add visual cue for selected form
+      }}
     >
       {children.map((childId) => {
         const childElement = elements.find((el) => el.id === childId);

@@ -1,15 +1,16 @@
-// src/Elements/Span.js
 import React, { useContext, useRef, useEffect } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const Span = ({ id }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const element = elements.find((el) => el.id === id);
-  const { content = '', styles = {} } = element || {};
+  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
   const spanRef = useRef(null);
 
+  // Fetch the latest element data from elements
+  const elementData = findElementById(id, elements);
+  const { content = '', styles = {} } = elementData || {};
+
   const handleSelect = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent the click event from propagating to parent elements
     setSelectedElement({ id, type: 'span', styles });
   };
 
@@ -33,7 +34,12 @@ const Span = ({ id }) => {
       contentEditable={selectedElement?.id === id}
       suppressContentEditableWarning={true}
       onBlur={handleBlur}
-      style={{ ...styles, cursor: 'text', padding: '2px' }}
+      style={{
+        ...styles,
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none', // Add visual cue for selected span
+        cursor: 'text',
+        padding: '2px',
+      }}
     >
       {content || 'Editable Span'}
     </span>
