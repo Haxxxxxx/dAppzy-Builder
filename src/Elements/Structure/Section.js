@@ -1,4 +1,3 @@
-
 import React, { useContext, useRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import DropZone from '../../utils/DropZone';
@@ -92,12 +91,14 @@ const Section = ({ id }) => {
         style={{ ...styles, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', margin: '10px 0' }}
       >
         New Section
-        {children.map((childId) => {
-          const childElement = elements.find((el) => el.id === childId);
-          return childElement ? renderElement(childElement, elements) : null;
-        })}
-        <DropZone onDrop={(item) => handleDrop(item, id)} />
+        <div className="children-container">
+          {children.map((childId) => {
+            const childElement = elements.find((el) => el.id === childId);
+            return childElement ? renderElement(childElement, elements) : null;
+          })}
+        </div>
       </section>
+      <DropZone onDrop={(item) => handleDrop(item, id)} text="Click on the section or Drop items here to add to this section" style={{ width: '100%' }} />
 
       {/* Modal for adding new elements or selecting structure */}
       <StructureAndElementsModal

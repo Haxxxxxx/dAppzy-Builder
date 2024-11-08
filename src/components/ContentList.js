@@ -75,6 +75,7 @@ const ContentList = () => {
       <DropZone
         index={elements.length}
         onDrop={(item) => handleDrop(item, null)}
+        text="Click or Drop items here to add to the page"
         onClick={() => handleDropZoneClick(elements.length)}
       />
 

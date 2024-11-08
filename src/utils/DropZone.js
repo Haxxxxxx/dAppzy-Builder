@@ -2,7 +2,7 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
 
-const DropZone = ({ onDrop, parentId, onClick }) => {
+const DropZone = ({ onDrop, parentId, onClick, text }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'ELEMENT',
     drop: (item) => onDrop(item, parentId),
@@ -23,7 +23,7 @@ const DropZone = ({ onDrop, parentId, onClick }) => {
       }}
       onClick={onClick}
     >
-      {isOver ? 'Release to drop here' : 'Click to add a section'}
+      {isOver ? 'Release to drop here' : text || 'Click to add a section'}
     </div>
   );
 };

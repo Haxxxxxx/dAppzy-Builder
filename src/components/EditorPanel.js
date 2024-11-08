@@ -8,6 +8,7 @@ import SpacingEditor from '../Editors/SpacingEditor';
 import DisplayEditor from '../Editors/DisplayEditor';
 import EffectEditor from '../Editors/EffectEditor';
 import ButtonEditor from '../Editors/ButtonEditor';
+import SectionDivEditor from '../Editors/SectionDivEditor';
 
 const EditorPanel = () => {
   const { selectedElement, elements, updateStyles, setElements } = useContext(EditableContext);
@@ -24,6 +25,15 @@ const EditorPanel = () => {
     return <p>Selected element not found. Please select a different element.</p>;
   }
 
+  // Display specific editor for div and section elements
+  if (element.type === 'div' || element.type === 'section') {
+    return (
+      <div>
+        <h3>Edit Section/Div Properties</h3>
+        <SectionDivEditor element={element} updateStyles={updateStyles} setElements={setElements} />
+      </div>
+    );
+  }
 
   const handleClearAll = () => {
     setElements([]); // Clear all elements by setting elements to an empty array
@@ -44,8 +54,8 @@ const EditorPanel = () => {
       <SizeEditor />
       <SpacingEditor />
       <DisplayEditor />
-      <EffectEditor/>
-      <ButtonEditor/>
+      <EffectEditor />
+      <ButtonEditor />
     </div>
   );
 };
