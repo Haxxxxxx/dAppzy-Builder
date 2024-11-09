@@ -19,8 +19,7 @@ const Section = ({ id }) => {
 
   const handleDrop = (item, parentId) => {
     if (!item || !parentId) return;
-
-    console.log(`Dropping item of type ${item.type} into Section with id ${parentId}`);
+    console.log(`Dropping item of type ${item.type} into ${item.type === 'div' ? 'children container' : 'Section/Div'} with id ${parentId}`);
 
     // Create and add the new element
     const newId = addNewElement(item.type, item.level || 1, null, parentId);
@@ -91,12 +90,10 @@ const Section = ({ id }) => {
         style={{ ...styles, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', margin: '10px 0' }}
       >
         New Section
-        <div className="children-container">
-          {children.map((childId) => {
+        {children.map((childId) => {
             const childElement = elements.find((el) => el.id === childId);
             return childElement ? renderElement(childElement, elements) : null;
           })}
-        </div>
       </section>
       <DropZone onDrop={(item) => handleDrop(item, id)} text="Click on the section or Drop items here to add to this section" style={{ width: '100%' }} />
 

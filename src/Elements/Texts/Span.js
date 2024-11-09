@@ -1,18 +1,19 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Span = ({ id }) => {
+const Span = ({ id, content: initialContent }) => {
   const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
   const spanRef = useRef(null);
+  const elementData = findElementById(id, elements) || {};
+  const { content = initialContent, styles = {} } = elementData;
 
-  // Fetch the latest element data from elements
-  const elementData = findElementById(id, elements);
-  const { content = '', styles = {} } = elementData || {};
+  console.log('Creating Span with ID:', id);
 
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent the click event from propagating to parent elements
+    e.stopPropagation(); // Prevents parent from being selected
     setSelectedElement({ id, type: 'span', styles });
   };
+  
 
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
@@ -29,20 +30,20 @@ const Span = ({ id }) => {
   return (
     <span
       id={id}
-      ref={spanRef}
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}
-      suppressContentEditableWarning={true}
       onBlur={handleBlur}
+      suppressContentEditableWarning={true}
       style={{
         ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none', // Add visual cue for selected span
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'text',
         padding: '2px',
       }}
     >
       {content || 'Editable Span'}
     </span>
+
   );
 };
 

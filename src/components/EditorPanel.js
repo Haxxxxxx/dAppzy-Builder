@@ -1,4 +1,3 @@
-// src/components/EditorPanel.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import StyleEditor from '../Editors/TypographyEditor';
@@ -13,17 +12,31 @@ import SectionDivEditor from '../Editors/SectionDivEditor';
 const EditorPanel = () => {
   const { selectedElement, elements, updateStyles, setElements } = useContext(EditableContext);
 
+  console.log('Selected Element in EditorPanel:', selectedElement); // Debugging log
+  console.log('Current elements state:', elements); // Debugging log
+
   if (!selectedElement) {
     return <p>Select an element to edit its properties.</p>;
   }
 
-  // Find the selected element in the array
+
   const element = elements.find(el => el.id === selectedElement.id);
 
-  // Safely check if element exists before proceeding
   if (!element) {
+    console.log('Selected element not found in elements array:', selectedElement);
     return <p>Selected element not found. Please select a different element.</p>;
   }
+
+  console.log('Looking for ID:', selectedElement.id);
+  console.log('Elements in state:', elements.map(el => el.id));
+  elements.forEach(el => {
+    if (el.id === selectedElement.id) {
+      console.log('Match found for:', el);
+    } else {
+      console.log(`No match for element ID: ${el.id}`);
+    }
+  });
+
 
   // Display specific editor for div and section elements
   if (element.type === 'div' || element.type === 'section') {

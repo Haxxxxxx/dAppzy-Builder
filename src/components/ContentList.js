@@ -32,14 +32,14 @@ const ContentList = () => {
     setSelectedElement({ id: newId, type: 'heading', level });
     setShowLevelSelector(false);
   };
-  
+
   const handleStructureSelect = (structure) => {
     console.log('Creating section with structure:', structure);
     const sectionId = addNewElement('section', 1, dropZoneIndex, null, structure);
     setSelectedElement({ id: sectionId, type: 'section', structure });
-  
+
     const childrenToAdd = [];
-  
+
     if (structure === 'title-text') {
       const headingId = addNewElement('heading', 1, null, sectionId);
       const paragraphId = addNewElement('paragraph', 1, null, sectionId);
@@ -53,25 +53,31 @@ const ContentList = () => {
       const column2Id = addNewElement('div', 1, null, sectionId);
       childrenToAdd.push(column1Id, column2Id);
     }
-  
+
     setElements((prevElements) => {
       return prevElements.map((el) =>
         el.id === sectionId ? { ...el, children: [...new Set([...el.children, ...childrenToAdd])] } : el
       );
     });
-  
+
     setShowStructureModal(false);
   };
 
   useEffect(() => {
-    console.log('Elements state:', elements);
+    console.log('Current elements state:', elements); // Add logging
   }, [elements]);
+  
 
   return (
     <div className="content-list">
       {elements
-        .filter((element) => !element.parentId) // Only render top-level elements
+        .filter(
+          (element) =>
+            !element.parentId && // Only render top-level elements
+            (element.type !== 'navbar' || element.configuration) // Filter out empty navbar elements
+        )
         .map((element) => renderElement(element, elements))}
+
       <DropZone
         index={elements.length}
         onDrop={(item) => handleDrop(item, null)}

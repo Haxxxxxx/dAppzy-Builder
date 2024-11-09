@@ -30,7 +30,7 @@ export const EditableProvider = ({ children }) => {
 
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const newId = generateUniqueId();
-    console.log(`Generated new element ID: ${newId}`);  // Debugging log for generated ID
+    console.log(`Generated new element ID: ${newId}`); // Debugging log
   
     const newElement = {
       id: newId,
@@ -47,10 +47,9 @@ export const EditableProvider = ({ children }) => {
       let updatedElements = [...prevElements];
   
       if (parentId === null) {
-        // If there's no parent, add as a top-level element
         updatedElements = [...prevElements, newElement];
       } else {
-        // If there is a parent, find and add the new element as a child of that parent
+        // Find parent and add this element as a child
         updatedElements = prevElements.map((el) => {
           if (el.id === parentId) {
             return {
@@ -63,22 +62,25 @@ export const EditableProvider = ({ children }) => {
         updatedElements.push(newElement);
       }
   
+      console.log('Updated elements array:', updatedElements); // Debugging log
       return updatedElements;
     });
   
     return newId;
   };
   
-  
-  
+
+
+
+
 
   const updateStyles = (id, newStyles) => {
     console.log("Updating styles for:", id, newStyles);
-  
+
     const updateElementStyles = (elementsArray) => {
       return elementsArray.map((el) => {
         if (!el) return el; // Skip undefined elements to avoid errors
-  
+
         if (el.id === id) {
           return {
             ...el,
@@ -88,7 +90,7 @@ export const EditableProvider = ({ children }) => {
             },
           };
         }
-  
+
         if (el.children && el.children.length > 0) {
           return {
             ...el,
@@ -101,19 +103,19 @@ export const EditableProvider = ({ children }) => {
             }),
           };
         }
-  
+
         return el;
       });
     };
-  
+
     setElements((prevElements) => {
       const updatedElements = updateElementStyles(prevElements);
       localStorage.setItem('editableElements', JSON.stringify(updatedElements));
       return updatedElements;
     });
   };
-  
-  
+
+
   const updateContent = (id, newContent) => {
     console.log("Updating content for:", id, newContent);
 
@@ -136,13 +138,13 @@ export const EditableProvider = ({ children }) => {
     });
   };
 
-  // Improved findElementById function to prevent infinite recursion
   const findElementById = (id, elementsArray) => {
     for (const element of elementsArray) {
       if (element.id === id) {
+        console.log('Found element:', element);
         return element;
       }
-
+  
       // Traverse children if they exist
       if (element.children && element.children.length > 0) {
         const found = findElementById(id, elementsArray.filter((el) => element.children.includes(el.id)));
@@ -151,8 +153,10 @@ export const EditableProvider = ({ children }) => {
         }
       }
     }
+    console.log('Element not found with id:', id); // Add logging for missed elements
     return null;
   };
+  
 
   return (
     <EditableContext.Provider

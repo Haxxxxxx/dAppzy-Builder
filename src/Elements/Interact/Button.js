@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Button = ({ id }) => {
+const Button = ({ id, content: initialContent }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const element = elements.find((el) => el.id === id); // Find element by ID
-  const { content = 'Click Me!', styles = {} } = element || {}; // Default content and styles
+  const element = elements.find((el) => el.id === id) || {};
+  const { content = initialContent, styles = {} } = element;
   const buttonRef = useRef(null);
 
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent event bubbling
-    setSelectedElement({ id, type: 'button', styles }); // Pass current styles
+    e.stopPropagation();
+    setSelectedElement({ id, type: 'button', styles });
   };
 
   const handleBlur = (e) => {
@@ -34,7 +34,7 @@ const Button = ({ id }) => {
       suppressContentEditableWarning={true}
       style={{
         ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none', // Add visual cue for selected button
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'pointer',
         padding: '8px',
       }}

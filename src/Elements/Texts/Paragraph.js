@@ -1,25 +1,23 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Paragraph = ({ id }) => {
+const Paragraph = ({ id, content: initialContent }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const element = elements.find((el) => el.id === id);
-  const { content = '', styles = {} } = element || {};
+  const element = elements.find((el) => el.id === id) || {};
+  const { content = initialContent, styles = {} } = element;
   const paragraphRef = useRef(null);
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent the event from bubbling up to parent Div
-    const element = elements.find((el) => el.id === id);
     if (element) {
       setSelectedElement({
         id: element.id,
         type: element.type,
-        styles: element.styles, // Pass styles of the selected element
+        styles: element.styles,
       });
     }
   };
-  
-  
+
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
       updateContent(id, e.target.innerText);

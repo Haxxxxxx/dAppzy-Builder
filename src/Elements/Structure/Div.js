@@ -65,12 +65,10 @@ const Div = ({ id }) => {
           margin: '10px 0',
         }}
       >
-        <div className="children-container">
-          {children.map((childId) => {
+        {children.map((childId) => {
             const childElement = elements.find((el) => el.id === childId);
             return childElement ? renderElement(childElement, elements) : null;
           })}
-        </div>
       </div>
       <DropZone onDrop={(item) => handleDrop(item, id)} text="Click on the div or Drop items here to add to this div" style={{ width: '100%' }} />
 

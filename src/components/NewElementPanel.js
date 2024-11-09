@@ -1,4 +1,8 @@
+
+// NewElementPanel.js
 import React from 'react';
+import FooterPanel from './FooterPanel'
+import NavbarPanel from './NavbarPanel';
 import { useDrag } from 'react-dnd';
 
 const DraggableElement = ({ type, label, level = null }) => {
@@ -27,10 +31,14 @@ const DraggableElement = ({ type, label, level = null }) => {
     </div>
   );
 };
-
 const NewElementPanel = () => {
   return (
     <div>
+      {/* Navbar Elements Section */}
+      <div style={{ marginTop: '16px' }}>
+        <NavbarPanel />
+        <FooterPanel />
+      </div>
       <h3>Create New Element</h3>
 
       {/* Text Elements Section */}
@@ -68,6 +76,8 @@ const NewElementPanel = () => {
         <h4>Button Elements</h4>
         <DraggableElement type="button" label="Button" />
       </div>
+
+
     </div>
   );
 };
