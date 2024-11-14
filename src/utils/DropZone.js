@@ -5,7 +5,11 @@ import { useDrop } from 'react-dnd';
 const DropZone = ({ onDrop, parentId, onClick, text }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'ELEMENT',
-    drop: (item) => onDrop(item, parentId),
+    drop: (item) => {
+      if (onDrop) {
+        onDrop(item, parentId);
+      }
+    },
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
@@ -27,5 +31,6 @@ const DropZone = ({ onDrop, parentId, onClick, text }) => {
     </div>
   );
 };
+
 
 export default DropZone;

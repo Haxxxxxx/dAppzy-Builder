@@ -1,9 +1,8 @@
-
-// NewElementPanel.js
 import React from 'react';
-import FooterPanel from './FooterPanel'
+import FooterPanel from './FooterPanel';
 import NavbarPanel from './NavbarPanel';
 import { useDrag } from 'react-dnd';
+import './css/Sidebar.css';
 
 const DraggableElement = ({ type, label, level = null }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -17,32 +16,39 @@ const DraggableElement = ({ type, label, level = null }) => {
   return (
     <div
       ref={drag}
+      className="draggable-element"
       style={{
         opacity: isDragging ? 0.5 : 1,
-        cursor: 'move',
-        padding: '8px',
-        margin: '4px 0',
-        backgroundColor: '#f0f0f0',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
       }}
     >
       {label}
     </div>
   );
 };
-const NewElementPanel = () => {
+
+const NewElementPanel = ({ viewMode }) => {
+  if (viewMode === 'layout') {
+    return (
+      <div>
+        <div className="panel-header">Layout Elements</div>
+        {/* Render sections or layout elements */}
+        <div className="content-section">
+          <h4>Sections Created</h4>
+          <DraggableElement type="section" label="Section 1" />
+          <DraggableElement type="section" label="Section 2" />
+          <NavbarPanel />
+          <FooterPanel />
+        </div>
+      </div>
+    );
+  }
+
+  // Default to Elements view
   return (
     <div>
-      {/* Navbar Elements Section */}
-      <div style={{ marginTop: '16px' }}>
-        <NavbarPanel />
-        <FooterPanel />
-      </div>
-      <h3>Create New Element</h3>
-
+      <div className="panel-header">New Elements</div>
       {/* Text Elements Section */}
-      <div>
+      <div className="content-section">
         <h4>Text Elements</h4>
         <DraggableElement type="paragraph" label="Paragraph" />
         <DraggableElement type="heading" level={1} label="Heading" />
@@ -50,7 +56,7 @@ const NewElementPanel = () => {
       </div>
 
       {/* Container Elements Section */}
-      <div style={{ marginTop: '16px' }}>
+      <div className="content-section">
         <h4>Container Elements</h4>
         <DraggableElement type="section" label="Section" />
         <DraggableElement type="div" label="Div" />
@@ -59,25 +65,23 @@ const NewElementPanel = () => {
       </div>
 
       {/* Form Elements Section */}
-      <div style={{ marginTop: '16px' }}>
+      <div className="content-section">
         <h4>Form Elements</h4>
         <DraggableElement type="input" label="Input" />
         <DraggableElement type="form" label="Form" />
       </div>
 
       {/* Media Elements Section */}
-      <div style={{ marginTop: '16px' }}>
+      <div className="content-section">
         <h4>Media Elements</h4>
         <DraggableElement type="image" label="Image" />
       </div>
 
       {/* Button Elements Section */}
-      <div style={{ marginTop: '16px' }}>
+      <div className="content-section">
         <h4>Button Elements</h4>
         <DraggableElement type="button" label="Button" />
       </div>
-
-
     </div>
   );
 };

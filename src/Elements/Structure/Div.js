@@ -10,6 +10,7 @@ const Div = ({ id }) => {
   const { styles, children = [] } = divElement || {};
   const divRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent event from bubbling up
@@ -18,7 +19,7 @@ const Div = ({ id }) => {
       setSelectedElement({
         id: element.id,
         type: element.type,
-        styles: element.styles, // Pass the styles of the selected element
+        styles: element.styles,
       });
       setIsModalOpen(true); // Open the modal when div is selected
     }
@@ -26,13 +27,8 @@ const Div = ({ id }) => {
 
   const handleDrop = (item, parentId) => {
     if (!item || !parentId) return;
-
-    console.log(`Dropping item of type ${item.type} into Div with id ${parentId}`);
-
-    // Create and add the new element
+    console.log(`Dropping item of type ${item.type} into div with id ${parentId}`);
     const newId = addNewElement(item.type, item.level || 1, null, parentId);
-
-    // Update the parent's children list, ensuring IDs are being handled correctly
     setElements((prevElements) =>
       prevElements.map((el) =>
         el.id === parentId
@@ -46,7 +42,6 @@ const Div = ({ id }) => {
   };
 
   const handleAddElement = (type) => {
-    // Add new element to the current div
     addNewElement(type, 1, null, id);
     setIsModalOpen(false); // Close the modal after adding
   };
@@ -57,6 +52,8 @@ const Div = ({ id }) => {
         id={id}
         ref={divRef}
         onClick={handleSelect}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
           ...styles,
           padding: '10px',
@@ -66,18 +63,21 @@ const Div = ({ id }) => {
         }}
       >
         {children.map((childId) => {
-            const childElement = elements.find((el) => el.id === childId);
-            return childElement ? renderElement(childElement, elements) : null;
-          })}
+          const childElement = elements.find((el) => el.id === childId);
+          return childElement ? renderElement(childElement, elements, selectedElement, handleDrop) : null;
+        })}
       </div>
-      <DropZone onDrop={(item) => handleDrop(item, id)} text="Click on the div or Drop items here to add to this div" style={{ width: '100%' }} />
-
-      {/* Modal for adding new elements or selecting structure */}
+      {(isHovered || selectedElement?.id === id) && (
+        <DropZone
+          onDrop={(item) => handleDrop(item, id)}
+          text="Click on the div or Drop items here to add to this div"
+          style={{ width: '100%' }}
+        />
+      )}
       <StructureAndElementsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSelectStructure={(structure) => {
-          // Handle structure selection here
           console.log('Selected structure:', structure);
           setIsModalOpen(false);
         }}

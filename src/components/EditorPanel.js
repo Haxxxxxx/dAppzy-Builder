@@ -12,8 +12,8 @@ import SectionDivEditor from '../Editors/SectionDivEditor';
 const EditorPanel = () => {
   const { selectedElement, elements, updateStyles, setElements } = useContext(EditableContext);
 
-  console.log('Selected Element in EditorPanel:', selectedElement); // Debugging log
-  console.log('Current elements state:', elements); // Debugging log
+  // console.log('Selected Element in EditorPanel:', selectedElement); // Debugging log
+  // console.log('Current elements state:', elements); // Debugging log
 
   if (!selectedElement) {
     return <p>Select an element to edit its properties.</p>;
@@ -23,12 +23,12 @@ const EditorPanel = () => {
   const element = elements.find(el => el.id === selectedElement.id);
 
   if (!element) {
-    console.log('Selected element not found in elements array:', selectedElement);
+    // console.log('Selected element not found in elements array:', selectedElement);
     return <p>Selected element not found. Please select a different element.</p>;
   }
 
-  console.log('Looking for ID:', selectedElement.id);
-  console.log('Elements in state:', elements.map(el => el.id));
+  // console.log('Looking for ID:', selectedElement.id);
+  // console.log('Elements in state:', elements.map(el => el.id));
   elements.forEach(el => {
     if (el.id === selectedElement.id) {
       console.log('Match found for:', el);

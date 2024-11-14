@@ -30,8 +30,6 @@ export const EditableProvider = ({ children }) => {
 
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const newId = generateUniqueId();
-    console.log(`Generated new element ID: ${newId}`); // Debugging log
-  
     const newElement = {
       id: newId,
       type,
@@ -47,27 +45,21 @@ export const EditableProvider = ({ children }) => {
       let updatedElements = [...prevElements];
   
       if (parentId === null) {
-        updatedElements = [...prevElements, newElement];
+        updatedElements.push(newElement);
       } else {
-        // Find parent and add this element as a child
-        updatedElements = prevElements.map((el) => {
-          if (el.id === parentId) {
-            return {
-              ...el,
-              children: [...el.children, newId],
-            };
-          }
-          return el;
-        });
+        // Add child to parent
+        updatedElements = prevElements.map((el) =>
+          el.id === parentId ? { ...el, children: [...el.children, newId] } : el
+        );
         updatedElements.push(newElement);
       }
   
-      console.log('Updated elements array:', updatedElements); // Debugging log
       return updatedElements;
     });
   
     return newId;
   };
+  
   
 
 
@@ -75,7 +67,7 @@ export const EditableProvider = ({ children }) => {
 
 
   const updateStyles = (id, newStyles) => {
-    console.log("Updating styles for:", id, newStyles);
+    // console.log("Updating styles for:", id, newStyles);
 
     const updateElementStyles = (elementsArray) => {
       return elementsArray.map((el) => {
@@ -117,7 +109,7 @@ export const EditableProvider = ({ children }) => {
 
 
   const updateContent = (id, newContent) => {
-    console.log("Updating content for:", id, newContent);
+    // console.log("Updating content for:", id, newContent);
 
     const updateElementContent = (elementsArray) => {
       return elementsArray.map((el) => {
@@ -141,7 +133,7 @@ export const EditableProvider = ({ children }) => {
   const findElementById = (id, elementsArray) => {
     for (const element of elementsArray) {
       if (element.id === id) {
-        console.log('Found element:', element);
+        // console.log('Found element:', element);
         return element;
       }
   
@@ -153,7 +145,7 @@ export const EditableProvider = ({ children }) => {
         }
       }
     }
-    console.log('Element not found with id:', id); // Add logging for missed elements
+    // console.log('Element not found with id:', id); // Add logging for missed elements
     return null;
   };
   

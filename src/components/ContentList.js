@@ -6,10 +6,11 @@ import HeadingLevelSelector from '../utils/HeadingLevelSelector';
 import { renderElement } from '../utils/RenderUtils';
 
 const ContentList = () => {
-  const { elements, addNewElement, setSelectedElement, setElements } = useContext(EditableContext);
+  const { elements, addNewElement, setSelectedElement, selectedElement, setElements } = useContext(EditableContext); // Added selectedElement state
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [dropZoneIndex, setDropZoneIndex] = useState(null);
+  const [hoveredElementIndex, setHoveredElementIndex] = useState(null); // Hover state
 
   const handleDrop = (item, index, parentId = null) => {
     if (item.type === 'heading') {
@@ -17,10 +18,13 @@ const ContentList = () => {
     } else if (item.type === 'section') {
       setShowStructureModal(true);
     } else {
-      const newId = addNewElement(item.type, 1, index, parentId);
+      // Ensure index is defined, defaulting to 0 if necessary
+      const safeIndex = index !== null && index !== undefined ? index : 0;
+      const newId = addNewElement(item.type, 1, safeIndex, parentId);
       setSelectedElement({ id: newId, type: item.type });
     }
   };
+  
 
   const handleDropZoneClick = (index) => {
     setDropZoneIndex(index);
@@ -64,20 +68,40 @@ const ContentList = () => {
   };
 
   useEffect(() => {
-    console.log('Current elements state:', elements); // Add logging
+    console.log('Current elements state:', elements);
   }, [elements]);
-  
 
   return (
     <div className="content-list">
+      {/* Display a DropZone initially if no elements are present */}
+      {elements.length === 0 && (
+        <DropZone
+          index={0}
+          onDrop={(item) => handleDrop(item, 0)}
+          text="Click or Drop items here to start creating"
+          onClick={() => handleDropZoneClick(0)}
+        />
+      )}
+
       {elements
         .filter(
           (element) =>
             !element.parentId && // Only render top-level elements
             (element.type !== 'navbar' || element.configuration) // Filter out empty navbar elements
         )
-        .map((element) => renderElement(element, elements))}
+        .map((element, index) => (
+          <div
+            key={element.id}
+            onMouseEnter={() => setHoveredElementIndex(index)}
+            onMouseLeave={() => setHoveredElementIndex(null)}
+            onClick={() => setSelectedElement({ id: element.id, type: element.type })} // Set selected element on click
+            style={{ position: 'relative' }}
+          >
+            {renderElement(element, elements)}
+          </div>
+        ))}
 
+      {/* Always render a DropZone at the end of the list */}
       <DropZone
         index={elements.length}
         onDrop={(item) => handleDrop(item, null)}

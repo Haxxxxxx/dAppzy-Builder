@@ -7,7 +7,7 @@ const Span = ({ id, content: initialContent }) => {
   const elementData = findElementById(id, elements) || {};
   const { content = initialContent, styles = {} } = elementData;
 
-  console.log('Creating Span with ID:', id);
+  // console.log('Creating Span with ID:', id);
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevents parent from being selected

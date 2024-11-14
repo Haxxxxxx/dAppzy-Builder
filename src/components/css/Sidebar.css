@@ -1,0 +1,70 @@
+/* Sidebar.css */
+
+/* General styling for sidebar */
+.sidebar-container {
+    padding: 16px;
+    background-color: #f8f8f8;
+    border-right: 1px solid #ddd;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Button styling for view mode toggle */
+  .sidebar-toggle-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .sidebar-toggle-buttons button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background-color: #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .sidebar-toggle-buttons button:hover {
+    background-color: #d0d0d0;
+  }
+  
+  /* Panel header styling */
+  .panel-header {
+    font-size: 1.2em;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 4px;
+  }
+  
+  /* Draggable element styling */
+  .draggable-element {
+    padding: 8px;
+    margin: 4px 0;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: move;
+    transition: background-color 0.3s;
+  }
+  
+  .draggable-element:hover {
+    background-color: #e8e8e8;
+  }
+  
+  /* Content section styling */
+  .content-section {
+    margin-top: 16px;
+  }
+  
+  .content-section h4 {
+    margin-bottom: 8px;
+  }
+  
+  .sidebar-toggle-buttons button.active {
+    background-color: #ccc; /* Example active state color */
+    font-weight: bold;
+  }
+  

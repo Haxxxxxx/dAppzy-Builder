@@ -4,6 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 import Image from './Image';
 import Button from '../Interact/Button';
 import Span from '../Texts/Span';
+import DropZone from '../../utils/DropZone'; // Import the DropZone component
 
 const DraggableNavbar = ({ configuration, isEditing, showDescription = false }) => {
     const { addNewElement, setElements, setSelectedElement, selectedElement } = useContext(EditableContext);
@@ -112,10 +113,18 @@ const DraggableNavbar = ({ configuration, isEditing, showDescription = false }) 
         </div>
     );
 
-    return isEditing ? (
-        <>{navbarContent}</>
-    ) : (
-        <div>{navbarContent}</div>
+    return (
+        <div>
+            {navbarContent}
+            {/* Render a DropZone below the navbar if it is selected */}
+            {selectedElement?.id === uniqueId && (
+                <DropZone
+                    index={null} // Adjust the index or pass necessary props as per your logic
+                    onDrop={(item) => addNewElement(item.type, 1)}
+                    text="Drop here to create a new section below"
+                />
+            )}
+        </div>
     );
 };
 

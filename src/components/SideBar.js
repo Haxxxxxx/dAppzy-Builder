@@ -1,25 +1,30 @@
-// src/components/SideBar.js
 import React, { useState } from 'react';
-import EditorPanel from './EditorPanel';
 import NewElementPanel from './NewElementPanel';
+import "./css/Sidebar.css";
 
 const SideBar = () => {
-  const [isEditorPanel, setIsEditorPanel] = useState(true);
-
-  // Toggle the displayed panel
-  const togglePanel = () => {
-    setIsEditorPanel((prev) => !prev);
-  };
+  const [viewMode, setViewMode] = useState('elements'); // 'elements' or 'layout'
 
   return (
-    <div>
-      {/* Toggle Text at the Top */}
-      <div style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '16px' }} onClick={togglePanel}>
-        {isEditorPanel ? 'Switch to New Element Panel' : 'Switch to Editor Panel'}
+    <div className="sidebar-container">
+      {/* Buttons to switch between Elements and Layout */}
+      <div className="sidebar-toggle-buttons">
+        <button
+          onClick={() => setViewMode('elements')}
+          className={viewMode === 'elements' ? 'active' : ''}
+        >
+          Elements
+        </button>
+        <button
+          onClick={() => setViewMode('layout')}
+          className={viewMode === 'layout' ? 'active' : ''}
+        >
+          Layout
+        </button>
       </div>
 
-      {/* Conditional Rendering of Panels */}
-      {isEditorPanel ? <EditorPanel /> : <NewElementPanel />}
+      {/* New Element Panel with conditional rendering */}
+      <NewElementPanel viewMode={viewMode} />
     </div>
   );
 };
