@@ -4,13 +4,20 @@ import DropZone from '../../utils/DropZone';
 import { renderElement } from '../../utils/RenderUtils';
 import StructureAndElementsModal from '../../utils/StructureAndElementsModal';
 
-const Section = ({ id }) => {
+const Section = ({ id, isTemplate, structure }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
   const sectionElement = elements.find((el) => el.id === id);
   const { styles, children = [] } = sectionElement || {};
   const sectionRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Populate the template structure when the component is mounted if it's a template
+  React.useEffect(() => {
+    if (isTemplate && structure) {
+      handleSelectStructure(structure);
+    }
+  }, [isTemplate, structure]);
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -86,7 +93,6 @@ const Section = ({ id }) => {
           margin: '10px 0',
         }}
       >
-        New Section
         {children.map((childId) => {
           const childElement = elements.find((el) => el.id === childId);
           return childElement ? renderElement(childElement, elements, selectedElement, handleDrop) : null;

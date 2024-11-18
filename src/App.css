@@ -79,8 +79,8 @@ p {
 .sidebar {
   width: 25%;
   max-width: 350px;
+  min-width: 300px;
   background-color: #f0f0f0;
-  padding: 20px;
   box-sizing: border-box;
   border-right: 1px solid #ddd;
   overflow-y: auto;
@@ -89,7 +89,6 @@ p {
 /* Main content area styling */
 .main-content {
   flex-grow: 1;
-  padding: 20px 20px 0px 20px;
   box-sizing: border-box;
   overflow-y: auto;
   background-color: darkgrey;

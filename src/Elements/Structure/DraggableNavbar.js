@@ -1,7 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
-import Image from './Image';
+import Image from '../Media/Image';
 import Button from '../Interact/Button';
 import Span from '../Texts/Span';
 import DropZone from '../../utils/DropZone'; // Import the DropZone component
@@ -61,71 +61,54 @@ const DraggableNavbar = ({ configuration, isEditing, showDescription = false }) 
             {configuration === 'twoColumn' ? 'Two-column Navbar' : 'Three-column Navbar'}
         </div>
     ) : (
-        <div
-            id={uniqueId}
-            ref={drag}
-            onClick={handleSelectNavbar}
-            style={{
-                opacity: isDragging ? 0.5 : 1,
-                cursor: isEditing ? 'default' : 'move',
-                padding: '16px',
-                margin: '8px 0',
-                backgroundColor: '#e0e0e0',
-                border: selectedElement?.id === uniqueId ? '2px solid blue' : '2px solid #333',
-                borderRadius: '8px',
-            }}
-        >
-            {configuration === 'twoColumn' && (
+    <>
+        {configuration === 'twoColumn' && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <Image id={`${uniqueId}-logo`} width="100px" height="50px" />
-                        </div>
-                        <div>
-                            <ul style={{ display: 'flex', listStyleType: 'none', gap: '16px' }}>
-                                <li><Span id={`${uniqueId}-home`} content="Home" /></li>
-                                <li><Span id={`${uniqueId}-about`} content="About" /></li>
-                                <li><Span id={`${uniqueId}-contact`} content="Contact" /></li>
-                            </ul>
-                        </div>
-                    </div>
+                    <Image id={`${uniqueId}-logo`} width="100px" height="50px" />
                 </div>
-            )}
-            {configuration === 'threeColumn' && (
                 <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
-                        <div>
-                            <Image id={`${uniqueId}-logo`} width="100px" height="50px" />
-                        </div>
-                        <div>
-                            <ul style={{ display: 'flex', listStyleType: 'none', gap: '16px' }}>
-                                <li><Span id={`${uniqueId}-home`} content="Home" /></li>
-                                <li><Span id={`${uniqueId}-services`} content="Services" /></li>
-                                <li><Span id={`${uniqueId}-contact`} content="Contact" /></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <Button id={`${uniqueId}-cta`} content="Call to Action" />
-                        </div>
-                    </div>
+                    <ul style={{ display: 'flex', listStyleType: 'none', gap: '16px' }}>
+                        <li><Span id={`${uniqueId}-home`} content="Home" /></li>
+                        <li><Span id={`${uniqueId}-about`} content="About" /></li>
+                        <li><Span id={`${uniqueId}-contact`} content="Contact" /></li>
+                    </ul>
                 </div>
-            )}
-        </div>
+            </div>
+        )}
+        {configuration === 'threeColumn' && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                <div>
+                    <Image id={`${uniqueId}-logo`} width="100px" height="50px" />
+                </div>
+                <div>
+                    <ul style={{ display: 'flex', listStyleType: 'none', gap: '16px' }}>
+                        <li><Span id={`${uniqueId}-home`} content="Home" /></li>
+                        <li><Span id={`${uniqueId}-services`} content="Services" /></li>
+                        <li><Span id={`${uniqueId}-contact`} content="Contact" /></li>
+                    </ul>
+                </div>
+                <div>
+                    <Button id={`${uniqueId}-cta`} content="Call to Action" />
+                </div>
+            </div>
+        )}
+    </>
     );
 
-    return (
-        <div>
+    return selectedElement?.id === uniqueId ? (
+        <>
             {navbarContent}
-            {/* Render a DropZone below the navbar if it is selected */}
-            {selectedElement?.id === uniqueId && (
-                <DropZone
-                    index={null} // Adjust the index or pass necessary props as per your logic
-                    onDrop={(item) => addNewElement(item.type, 1)}
-                    text="Drop here to create a new section below"
-                />
-            )}
-        </div>
+            <DropZone
+                index={null} // Adjust the index or pass necessary props as per your logic
+                onDrop={(item) => addNewElement(item.type, 1)}
+                text="Drop here to create a new section below"
+            />
+        </>
+    ) : (
+        navbarContent
     );
+
 };
 
 export default DraggableNavbar;

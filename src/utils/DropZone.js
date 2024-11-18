@@ -22,8 +22,8 @@ const DropZone = ({ onDrop, parentId, onClick, text }) => {
         minHeight: '40px',
         backgroundColor: isOver ? 'lightgray' : 'transparent',
         border: '1px dashed #ccc',
-        margin: '10px 0',
         cursor: 'pointer',
+        marginBottom:'20px',
       }}
       onClick={onClick}
     >

@@ -1,3 +1,4 @@
+// src/components/EditableList.js
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
@@ -24,31 +25,32 @@ const ListItem = ({ id }) => {
       updateContent(id, e.target.innerText);
     }
   };
-  
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
-  
+      e.preventDefault(); // Prevent default newline behavior
+
       if (!parentId) {
         console.error(`Parent ID for element ${id} not found.`);
         return;
       }
-  
+
       const parentElement = elements.find((el) => el.id === parentId);
       if (!parentElement) {
         console.error(`Parent element with id ${parentId} not found.`);
         return;
       }
-  
+
       const currentIndex = parentElement.children.findIndex((childId) => childId === id);
       if (currentIndex === -1) {
         console.error(`Element ${id} not found in parent ${parentId} children.`);
         return;
       }
-  
+
+      // Add a new list item
       const newId = addNewElement('list-item', 1, null, parentId);
-  
+
+      // Insert the new element into the parent at the correct position
       setElements((prevElements) =>
         prevElements.map((el) =>
           el.id === parentId
@@ -63,11 +65,11 @@ const ListItem = ({ id }) => {
             : el
         )
       );
-  
+
+      // Automatically select the newly added item
       setSelectedElement({ id: newId, type: 'list-item' });
     }
   };
-  
 
   useEffect(() => {
     if (isSelected && itemRef.current) {
@@ -83,7 +85,11 @@ const ListItem = ({ id }) => {
       onClick={handleSelect}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
-      style={{ cursor: 'text', padding: '4px' }}
+      style={{
+        cursor: 'text',
+        padding: '4px',
+        outline: isSelected ? '1px dashed blue' : 'none',
+      }}
     >
       {content || 'Editable Item'}
     </li>
@@ -96,6 +102,7 @@ const List = ({ id, type = 'ul' }) => {
 
   useEffect(() => {
     if (listElement && listElement.children.length === 0) {
+      // Automatically add a new list item if none exists
       const newItemId = addNewElement('list-item', 1, null, id);
       setElements((prevElements) =>
         prevElements.map((el) =>
@@ -127,13 +134,9 @@ const List = ({ id, type = 'ul' }) => {
     },
     children.map((childId) => {
       const childElement = elements.find((el) => el.id === childId);
-      return childElement ? (
-        <ListItem key={childId} id={childId} />
-      ) : null;
+      return childElement ? <ListItem key={childId} id={childId} /> : null;
     })
   );
 };
-
-
 
 export { List, ListItem };
