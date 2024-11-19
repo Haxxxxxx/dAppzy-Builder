@@ -1,10 +1,15 @@
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../context/EditableContext';
+import './css/Topbar.css';
 
 const Topbar = ({ onExport, onResize }) => {
   const { elements } = useContext(EditableContext);
   const [customSize, setCustomSize] = useState('');
   const [dezoomPercent, setDezoomPercent] = useState(100); // Default to 100% for no scaling
+  const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved'); // Default save status
+
+  const projectName = "My Project"; // Replace with dynamic value if needed
+  const projectURL = "https://www.myproject.com"; // Replace with dynamic value if needed
 
   const handleExportClick = () => {
     if (onExport) {
@@ -32,94 +37,69 @@ const Topbar = ({ onExport, onResize }) => {
     }
   };
 
-  const handleCustomResize = () => {
-    const parsedSize = parseInt(customSize, 10);
-    if (!isNaN(parsedSize)) {
-      handleResize(parsedSize);
+  // Handle resizing when the user presses Enter in the custom size input field
+  const handleCustomResize = (e) => {
+    if (e.key === 'Enter') {
+      const parsedSize = parseInt(customSize, 10);
+      if (!isNaN(parsedSize)) {
+        handleResize(parsedSize);
+      }
     }
   };
 
+  // Simulate auto-save behavior whenever the elements change
+  const handleEdit = () => {
+    setAutoSaveStatus('Saving...');
+    setTimeout(() => {
+      setAutoSaveStatus('All changes saved');
+    }, 1000); // Simulating save delay of 1 second
+  };
+
   return (
-    <div style={styles.topbar}>
-      <h1 style={styles.title}>Content Editor</h1>
-      <div style={styles.resizeControls}>
-        <button style={styles.resizeButton} onClick={() => handleResize(1440)}>
-          Big PC
+    <div className="topbar">
+      <div className="project-info">
+        <button className="return-button">
+          ⬅️ {/* Placeholder return button (replace with logo image if needed) */}
         </button>
-        <button style={styles.resizeButton} onClick={() => handleResize(1200)}>
-          PC
+        <div className="project-details">
+          <span className="project-name">{projectName}</span>
+          <span className="project-url">{projectURL}</span>
+        </div>
+      </div>
+
+      <div className="actions">
+        <button className="undo-button">
+          ↺ {/* Undo Arrow */}
         </button>
-        <button style={styles.resizeButton} onClick={() => handleResize(768)}>
-          Tablet
+        <button className="redo-button">
+          ↻ {/* Redo Arrow */}
         </button>
-        <button style={styles.resizeButton} onClick={() => handleResize(375)}>
-          Phone
+        <button className="preview-button">
+          👁️ {/* Preview Icon */}
         </button>
+      </div>
+
+      <div className="resize-controls">
+        <button className="resize-button" onClick={() => handleResize(1440)}>Big PC</button>
+        <button className="resize-button" onClick={() => handleResize(1200)}>PC</button>
+        <button className="resize-button" onClick={() => handleResize(768)}>Tablet</button>
+        <button className="resize-button" onClick={() => handleResize(375)}>Phone</button>
         <input
           type="text"
+          className="input"
           placeholder="Custom size (px)"
           value={customSize}
           onChange={(e) => setCustomSize(e.target.value)}
-          style={styles.input}
+          onKeyDown={handleCustomResize} // Resize on Enter key
         />
-        <button style={styles.resizeButton} onClick={handleCustomResize}>
-          Apply
-        </button>
-        <span style={styles.dezoomText}>
-          {customSize ? `${customSize}px` : ''} {dezoomPercent < 100 ? `(${dezoomPercent}%)` : ''}
-        </span>
       </div>
-      <button style={styles.button} onClick={handleExportClick}>
-        Export Content
-      </button>
+
+      <div className="export-section">
+        <span className="autosave-status">{autoSaveStatus}</span>
+        <button className="button" onClick={handleExportClick}>Export Content</button>
+      </div>
     </div>
   );
-};
-
-const styles = {
-  topbar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 20px',
-    backgroundColor: '#f0f0f0',
-    borderBottom: '1px solid #ccc',
-  },
-  title: {
-    margin: 0,
-  },
-  resizeControls: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  resizeButton: {
-    padding: '8px 12px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  input: {
-    padding: '8px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    width: '100px',
-  },
-  button: {
-    padding: '8px 16px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-  },
-  dezoomText: {
-    marginLeft: '10px',
-    fontSize: '14px',
-    color: '#333',
-  },
 };
 
 export default Topbar;

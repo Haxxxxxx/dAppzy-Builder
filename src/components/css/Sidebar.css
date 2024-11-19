@@ -73,3 +73,37 @@
     grid-template-columns: repeat(2, 1fr);
     grid-gap: .5rem;
   }
+
+  .leftbar {
+    height: 100vh;
+    width: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distribute the content evenly */
+    align-items: center;
+    background-color: lightgrey;
+    border-right: 1px solid #ccc;
+    padding: 10px 5px; /* Ensure some padding */
+    box-sizing: border-box;
+    z-index: 20;
+}
+
+.buttons-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto; /* Center the buttons-group */
+}
+
+.help-center {
+    margin-top: auto; /* Pushes the help center to the bottom */
+}
+
+.help-center-button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}

@@ -48,20 +48,6 @@ p {
   height: 100vh; /* Full viewport height */
 }
 
-.leftbar {
-  height: 100vh;
-  width: 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: lightgrey;
-  border-right: 1px solid #ccc;
-  padding: 5px;
-  gap: 10px;
-  box-sizing: border-box;
-  z-index: 20;
-}
 
 .app {
   display: flex;
