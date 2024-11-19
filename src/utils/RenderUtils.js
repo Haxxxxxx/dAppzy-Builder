@@ -13,6 +13,8 @@ import { List, ListItem } from '../Elements/Texts/List';
 import { Table, TableRow, TableCell } from '../Elements/Interact/Table';
 import DraggableNavbar from '../Elements/Structure/DraggableNavbar';
 import DraggableFooter from '../Elements/Structure/DraggableFooter';
+import DraggableHero from '../Elements/Structure/DraggableHero';
+import DraggableCTA from '../Elements/Structure/DraggableCTA';
 import Anchor from '../Elements/Interact/Anchor';
 import Textarea from '../Elements/Interact/Textarea';
 import Select from '../Elements/Interact/Select';
@@ -30,34 +32,34 @@ import Pre from '../Elements/Texts/Pre';
 import Hr from '../Elements/Structure/HorizotalRule';
 import Caption from '../Elements/Structure/Caption';
 
-export const renderElement = (element, elements, setHoveredDropzone) => {
+export const renderElement = (element, elements, contentListWidth) => {
   const { id, type, children, configuration } = element;
 
   const componentMap = {
     paragraph: <Paragraph id={id} key={id} content={element.content} />,
     section: (
-      <Section id={id} key={id} setHoveredDropzone={setHoveredDropzone}>
+      <Section id={id} key={id}>
         {children && children.length > 0 && (
           <div className="nested-elements">
             {children
               .filter((childId) => elements.find((el) => el.id === childId))
               .map((childId) => {
                 const childElement = elements.find((el) => el.id === childId);
-                return childElement ? renderElement(childElement, elements, setHoveredDropzone) : null;
+                return childElement ? renderElement(childElement, elements, contentListWidth) : null;
               })}
           </div>
         )}
       </Section>
     ),
     div: (
-      <Div id={id} key={id} setHoveredDropzone={setHoveredDropzone}>
+      <Div id={id} key={id}>
         {children && children.length > 0 && (
           <div className="nested-elements" style={{ padding: '10px' }}>
             {children
               .filter((childId) => elements.find((el) => el.id === childId))
               .map((childId) => {
                 const childElement = elements.find((el) => el.id === childId);
-                return childElement ? renderElement(childElement, elements, setHoveredDropzone) : null;
+                return childElement ? renderElement(childElement, elements, contentListWidth) : null;
               })}
           </div>
         )}
@@ -75,7 +77,7 @@ export const renderElement = (element, elements, setHoveredDropzone) => {
           children.length > 0 &&
           children.map((childId) => {
             const childElement = elements.find((el) => el.id === childId);
-            return childElement ? renderElement(childElement, elements, setHoveredDropzone) : null;
+            return childElement ? renderElement(childElement, elements, contentListWidth) : null;
           })}
       </List>
     ),
@@ -85,16 +87,31 @@ export const renderElement = (element, elements, setHoveredDropzone) => {
           children.length > 0 &&
           children.map((childId) => {
             const childElement = elements.find((el) => el.id === childId);
-            return childElement ? renderElement(childElement, elements, setHoveredDropzone) : null;
+            return childElement ? renderElement(childElement, elements, contentListWidth) : null;
           })}
       </List>
     ),
     'list-item': <ListItem id={id} key={id} content={element.content} />,
     navbar: (
-      <DraggableNavbar configuration={configuration} id={id} key={id} isEditing={true} />
+      <DraggableNavbar
+        configuration={configuration}
+        id={id}
+        key={id}
+        isEditing={true}
+        contentListWidth={contentListWidth} // Pass the contentListWidth to the navbar
+      />
     ),
     footer: (
-      <DraggableFooter configuration={configuration} id={id} key={id} isEditing={true} />
+      <DraggableFooter configuration={configuration} id={id} key={id} isEditing={true} contentListWidth={contentListWidth}/>
+    ),
+    hero: (
+      <DraggableHero
+        configuration={configuration}
+        id={id}
+        key={id}
+        isEditing={true}
+        contentListWidth={contentListWidth} // Pass the contentListWidth if required
+      />
     ),
     table: <Table id={id} key={id} />,
     anchor: <Anchor id={id} key={id} />,
@@ -113,6 +130,8 @@ export const renderElement = (element, elements, setHoveredDropzone) => {
     pre: <Pre id={id} key={id} />,
     hr: <Hr id={id} key={id} />,
     caption: <Caption id={id} key={id} />,
+    cta: <DraggableCTA configuration={configuration} id={id} key={id} isEditing={true} />,
+
   };
 
   const component = componentMap[type];
@@ -120,7 +139,6 @@ export const renderElement = (element, elements, setHoveredDropzone) => {
     console.warn(`Unsupported element type: ${type}`);
     return null;
   }
-  
+
   return <React.Fragment key={id}>{component}</React.Fragment>;
-  
 };

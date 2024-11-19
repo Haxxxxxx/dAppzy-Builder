@@ -36,7 +36,6 @@ const Span = ({ id, content: initialContent, styles: customStyles }) => {
         ...customStyles, // custom styles passed from parent component
         border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'text',
-        padding: '2px',
       }}
     >
       {content || 'Editable Span'}

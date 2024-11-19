@@ -21,6 +21,7 @@ function App() {
   const handleResize = (size) => {
     setContentListWidth(size);
   };
+  console.log('App contentListWidth:', contentListWidth);
 
   return (
     <EditableProvider>
@@ -32,7 +33,9 @@ function App() {
             <div className="content-container">
               {isSideBarVisible && (
                 <div className="sidebar" id="sidebar">
-                  <SideBar />
+                  <SideBar
+                    contentListWidth={contentListWidth}
+                  />
                 </div>
               )}
               <div className="main-content">

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import NewElementPanel from './NewElementPanel';
 import "./css/Sidebar.css";
 
-const SideBar = () => {
+const SideBar = ({contentListWidth}) => {
   const [viewMode, setViewMode] = useState('elements'); // 'elements' or 'layout'
 
   return (
@@ -24,7 +24,7 @@ const SideBar = () => {
       </div>
 
       {/* New Element Panel with conditional rendering */}
-      <NewElementPanel viewMode={viewMode} />
+      <NewElementPanel viewMode={viewMode} contentListWidth={contentListWidth}/>
     </div>
   );
 };

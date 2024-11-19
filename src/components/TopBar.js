@@ -18,6 +18,7 @@ const Topbar = ({ onExport, onResize }) => {
   const handleResize = (size) => {
     if (onResize) {
       onResize(size);
+      setCustomSize(size);
 
       // Calculate dezoom percentage if the content width exceeds viewport width
       const viewportWidth = window.innerWidth;
@@ -64,7 +65,9 @@ const Topbar = ({ onExport, onResize }) => {
         <button style={styles.resizeButton} onClick={handleCustomResize}>
           Apply
         </button>
-        <span style={styles.dezoomText}>{dezoomPercent}%</span>
+        <span style={styles.dezoomText}>
+          {customSize ? `${customSize}px` : ''} {dezoomPercent < 100 ? `(${dezoomPercent}%)` : ''}
+        </span>
       </div>
       <button style={styles.button} onClick={handleExportClick}>
         Export Content

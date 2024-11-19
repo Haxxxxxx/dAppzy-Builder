@@ -18,14 +18,14 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
     const viewportWidth = window.innerWidth;
     const activeSidebarWidth = isSideBarVisible ? sideBarWidth : 0;
     const availableWidth = viewportWidth - leftBarWidth - activeSidebarWidth;
-  
+
     // Calculate the scale ratio to fit the contentListWidth within availableWidth
     const newScale = availableWidth / contentListWidth;
-  
+
     // Update the scale, but only scale down when needed
     setScale(newScale < 1 ? newScale : 1);
   };
-  
+
 
   useEffect(() => {
     calculateScale();
@@ -113,6 +113,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
 
     setShowStructureModal(false);
   };
+  console.log('content list contentListWidth:', contentListWidth);
 
   return (
     <div
@@ -137,11 +138,13 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
 
       {elements
         .filter((element) => !element.parentId)
-        .map((element, index) => (
+        .map((element) => (
           <React.Fragment key={element.id}>
-            {renderElement(element, elements)}
+            {renderElement(element, elements,  contentListWidth)}
           </React.Fragment>
         ))}
+
+
 
       <DropZone
         index={elements.length}
