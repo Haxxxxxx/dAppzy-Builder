@@ -1,13 +1,17 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Image = ({ id }) => {
+// Updated Image Component
+const Image = ({ id, styles: customStyles, width = 'auto', height = 'auto', src }) => {
   const { selectedElement, setSelectedElement, elements, updateContent } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id);
   const { content = '', styles = {} } = imageElement || {};
   const [showModal, setShowModal] = useState(false);
   const [newSrc, setNewSrc] = useState('');
   const modalRef = useRef(null);
+
+  // Default IPFS hash as src if none is provided
+  const defaultSrc = `https://ipfs.io/ipfs/QmPYNr9i6RR2bFpW9jnaME4NLCm9qcMDMEhxtFKqK3uvwM`;
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -61,12 +65,15 @@ const Image = ({ id }) => {
     <div
       id={id}
       onClick={handleSelect}
-      style={{ ...styles, cursor: 'pointer', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', margin: '10px 0' }}
+      style={{
+        ...styles,
+        ...customStyles, // Custom styles take precedence
+      }}
     >
       <img
-        src={content || 'https://via.placeholder.com/150'}
+        src={content || src || defaultSrc} // Use content from context, or src prop, or default IPFS hash
         alt="Placeholder"
-        style={{ maxWidth: '100%', height: 'auto' }}
+        style={{ maxWidth: '100%', height: height, width: width }}
       />
       {showModal && (
         <div className="modal">

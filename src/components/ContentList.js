@@ -1,19 +1,40 @@
-// src/components/ContentList.js
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
 import SectionStructureModal from '../utils/SectionStructureModal';
 import HeadingLevelSelector from '../utils/HeadingLevelSelector';
 import { renderElement } from '../utils/RenderUtils';
-import TableFormatModal from '../utils/TableFormatModal'; // Import the TableFormatModal
+import TableFormatModal from '../utils/TableFormatModal';
 
-const ContentList = () => {
-  const { elements, addNewElement, setSelectedElement, selectedElement, setElements } = useContext(EditableContext);
+const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300 }) => {
+  const { elements, addNewElement, setSelectedElement, setElements } = useContext(EditableContext);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [dropZoneIndex, setDropZoneIndex] = useState(null);
-  const [showTableFormatModal, setShowTableFormatModal] = useState(false); // State for table modal
-  const [hoveredElementIndex, setHoveredElementIndex] = useState(null);
+  const [showTableFormatModal, setShowTableFormatModal] = useState(false);
+  const [scale, setScale] = useState(1);
+
+  const calculateScale = () => {
+    const viewportWidth = window.innerWidth;
+    const activeSidebarWidth = isSideBarVisible ? sideBarWidth : 0;
+    const availableWidth = viewportWidth - leftBarWidth - activeSidebarWidth;
+  
+    // Calculate the scale ratio to fit the contentListWidth within availableWidth
+    const newScale = availableWidth / contentListWidth;
+  
+    // Update the scale, but only scale down when needed
+    setScale(newScale < 1 ? newScale : 1);
+  };
+  
+
+  useEffect(() => {
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+
+    return () => {
+      window.removeEventListener('resize', calculateScale);
+    };
+  }, [contentListWidth, isSideBarVisible, leftBarWidth, sideBarWidth]);
 
   const handleDrop = (item, index, parentId = null) => {
     if (item.type === 'heading') {
@@ -21,7 +42,7 @@ const ContentList = () => {
     } else if (item.type === 'section') {
       setShowStructureModal(true);
     } else if (item.type === 'table') {
-      setShowTableFormatModal(true); // Show the table format modal
+      setShowTableFormatModal(true);
       setDropZoneIndex(index);
     } else {
       const safeIndex = index !== null && index !== undefined ? index : 0;
@@ -57,6 +78,7 @@ const ContentList = () => {
 
     setSelectedElement({ id: newTableId, type: 'table' });
   };
+
   const handleLevelSelect = (level) => {
     const newId = addNewElement('heading', level);
     setSelectedElement({ id: newId, type: 'heading', level });
@@ -64,7 +86,6 @@ const ContentList = () => {
   };
 
   const handleStructureSelect = (structure) => {
-    console.log('Creating section with structure:', structure);
     const sectionId = addNewElement('section', 1, dropZoneIndex, null, structure);
     setSelectedElement({ id: sectionId, type: 'section', structure });
 
@@ -93,10 +114,18 @@ const ContentList = () => {
     setShowStructureModal(false);
   };
 
-
   return (
-    <div className="content-list">
-      {/* Display a DropZone initially if no elements are present */}
+    <div
+      className="content-list"
+      style={{
+        width: `${contentListWidth}px`,
+        // transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        transition: 'width 0.3s ease, transform 0.3s ease',
+        margin: scale < 1 ? '0 auto' : '0',
+        overflow: 'auto',
+      }}
+    >
       {elements.length === 0 && (
         <DropZone
           index={0}
@@ -106,17 +135,14 @@ const ContentList = () => {
         />
       )}
 
-{elements
-    .filter((element) => !element.parentId)
-    .map((element, index) => (
-      <React.Fragment key={element.id}>
-        {renderElement(element, elements)}
-      </React.Fragment>
-    ))}
+      {elements
+        .filter((element) => !element.parentId)
+        .map((element, index) => (
+          <React.Fragment key={element.id}>
+            {renderElement(element, elements)}
+          </React.Fragment>
+        ))}
 
-
-
-      {/* Always render a DropZone at the end of the list */}
       <DropZone
         index={elements.length}
         onDrop={(item) => handleDrop(item, null)}

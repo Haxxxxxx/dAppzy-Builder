@@ -86,18 +86,25 @@ p {
   overflow-y: auto;
 }
 
-/* Main content area styling */
+/* Ensure content list scales responsively */
 .main-content {
   flex-grow: 1;
   box-sizing: border-box;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: darkgrey;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Ensures alignment to the top */
 }
 
-.content-list{
+.content-list {
   background-color: #F5F5F5;
   min-height: 100vh;
+  height: auto;
+  max-width: 100%;
 }
+
 
 
 /* General container styling */

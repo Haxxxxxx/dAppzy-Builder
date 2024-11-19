@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Button = ({ id, content: initialContent }) => {
+const Button = ({ id, content: initialContent, styles: customStyles }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id) || {};
   const { content = initialContent, styles = {} } = element;
@@ -33,10 +33,9 @@ const Button = ({ id, content: initialContent }) => {
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
-        ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
-        cursor: 'pointer',
-        padding: '8px',
+        fontFamily: 'Roboto, sans-serif', // Default font style for Button
+        ...styles, // styles from EditableContext (if any)
+        ...customStyles, // styles passed from DraggableNavbar, will override defaults if provided
       }}
     >
       {content}

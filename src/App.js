@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { EditableProvider } from './context/EditableContext';
-import ContentList from './components/ContentList'; 
+import ContentList from './components/ContentList';
 import SideBar from './components/SideBar';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -11,10 +11,15 @@ import LeftBar from './components/LeftBar';
 
 function App() {
   const [isSideBarVisible, setIsSideBarVisible] = useState(false);
+  const [contentListWidth, setContentListWidth] = useState(1200); // Default width for PC
 
   const handleExport = (elements) => {
     console.log('Export function called with elements:', elements);
     exportFiles(elements);
+  };
+
+  const handleResize = (size) => {
+    setContentListWidth(size);
   };
 
   return (
@@ -23,15 +28,19 @@ function App() {
         <div className="layout">
           <LeftBar onShowSidebar={() => setIsSideBarVisible(!isSideBarVisible)} />
           <div className="app">
-            <Topbar onExport={handleExport} />
+            <Topbar onExport={handleExport} onResize={handleResize} />
             <div className="content-container">
               {isSideBarVisible && (
-                <div className="sidebar">
+                <div className="sidebar" id="sidebar">
                   <SideBar />
                 </div>
               )}
               <div className="main-content">
-                <ContentList />
+                <ContentList
+                  contentListWidth={contentListWidth}
+                  isSideBarVisible={isSideBarVisible}
+                  leftBarWidth={40} // Width of the left bar
+                />
               </div>
             </div>
           </div>
