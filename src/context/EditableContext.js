@@ -30,7 +30,7 @@ export const EditableProvider = ({ children }) => {
 
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const newId = generateUniqueId();
-    const newElement = {
+    let newElement = {
       id: newId,
       type,
       content: `New ${type}`,
@@ -40,31 +40,138 @@ export const EditableProvider = ({ children }) => {
       parentId: parentId || null,
       structure,
     };
-  
+
+    let childrenToAdd = [];
+
+    // Add specific children if the element is a special type like navbar
+    if (type === 'navbar') {
+      const logoId = generateUniqueId();
+      const titleId = generateUniqueId();
+      const link1Id = generateUniqueId();
+      const link2Id = generateUniqueId();
+      const link3Id = generateUniqueId();
+      const link4Id = generateUniqueId();
+      const button1Id = generateUniqueId();
+      const button2Id = generateUniqueId();
+
+      newElement.children = [
+        logoId,
+        titleId,
+        link1Id,
+        link2Id,
+        link3Id,
+        link4Id,
+        button1Id,
+        button2Id,
+      ];
+
+      childrenToAdd = [
+        {
+          id: logoId,
+          type: 'image',
+          content: 'Logo',
+          styles: { width: '40px', height: '40px', borderRadius: '50%' },
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: titleId,
+          type: 'span',
+          content: '3S.Template',
+          styles: { marginLeft: '8px', fontSize: '1.5rem' },
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: link1Id,
+          type: 'span',
+          content: 'Link',
+          styles: {},
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: link2Id,
+          type: 'span',
+          content: 'Link',
+          styles: {},
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: link3Id,
+          type: 'span',
+          content: 'Link',
+          styles: {},
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: link4Id,
+          type: 'span',
+          content: 'Link',
+          styles: {},
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: button1Id,
+          type: 'button',
+          content: 'Button Text',
+          styles: {
+            border: 'none',
+            padding: '16px 28px',
+            height: '48px',
+            fontFamily: 'Roboto, sans-serif',
+          },
+          parentId: newId,
+          children: [],
+        },
+        {
+          id: button2Id,
+          type: 'button',
+          content: 'Button Text',
+          styles: {
+            backgroundColor: 'var(--dark-grey, #334155)',
+            color: '#fff',
+            padding: '16px 28px',
+            border: 'none',
+            height: '48px',
+            fontFamily: 'Roboto, sans-serif',
+          },
+          parentId: newId,
+          children: [],
+        },
+      ];
+    }
+
     setElements((prevElements) => {
-      let updatedElements = [...prevElements];
-  
-      if (parentId === null) {
-        updatedElements.push(newElement);
-      } else {
-        // Add child to parent
-        updatedElements = prevElements.map((el) =>
+      // Check if the element already exists in prevElements to avoid duplication
+      const doesElementExist = prevElements.some((el) => el.id === newId);
+      if (doesElementExist) {
+        console.warn('Attempted to add a duplicate element:', newId);
+        return prevElements; // Return without making changes if duplicate
+      }
+
+      let updatedElements = [...prevElements, newElement];
+
+      // Add the children if there are any
+      if (childrenToAdd.length > 0) {
+        updatedElements = updatedElements.concat(childrenToAdd);
+      }
+
+      // Update the parent element if necessary
+      if (parentId !== null) {
+        updatedElements = updatedElements.map((el) =>
           el.id === parentId ? { ...el, children: [...el.children, newId] } : el
         );
-        updatedElements.push(newElement);
       }
-  
+
       return updatedElements;
     });
-  
+
     return newId;
   };
-  
-  
-
-
-
-
 
   const updateStyles = (id, newStyles) => {
     // console.log("Updating styles for:", id, newStyles);
@@ -148,7 +255,18 @@ export const EditableProvider = ({ children }) => {
     // console.log('Element not found with id:', id); // Add logging for missed elements
     return null;
   };
-  
+
+  // Function to build nested hierarchy
+  const buildHierarchy = (elements, parentId = null) => {
+    return elements
+      .filter((element) => element.parentId === parentId)
+      .map((element) => {
+        return {
+          ...element,
+          children: buildHierarchy(elements, element.id),
+        };
+      });
+  };
 
   return (
     <EditableContext.Provider
@@ -157,10 +275,11 @@ export const EditableProvider = ({ children }) => {
         setSelectedElement,
         elements,
         addNewElement,
-        updateStyles,
-        updateContent,
         setElements,
         findElementById,
+        buildHierarchy,
+        updateContent,
+        updateStyles,
       }}
     >
       {children}

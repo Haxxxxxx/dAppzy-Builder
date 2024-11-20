@@ -102,7 +102,12 @@ export const renderElement = (element, elements, contentListWidth) => {
       />
     ),
     footer: (
-      <DraggableFooter configuration={configuration} id={id} key={id} isEditing={true} contentListWidth={contentListWidth}/>
+      <DraggableFooter 
+        configuration={configuration} 
+        id={id} 
+        key={id} 
+        isEditing={true} 
+        contentListWidth={contentListWidth} />
     ),
     hero: (
       <DraggableHero
@@ -111,6 +116,14 @@ export const renderElement = (element, elements, contentListWidth) => {
         key={id}
         isEditing={true}
         contentListWidth={contentListWidth} // Pass the contentListWidth if required
+      />
+    ),
+    cta: (
+      <DraggableCTA 
+        configuration={configuration} 
+        id={id} 
+        key={id} 
+        isEditing={true} 
       />
     ),
     table: <Table id={id} key={id} />,
@@ -130,7 +143,6 @@ export const renderElement = (element, elements, contentListWidth) => {
     pre: <Pre id={id} key={id} />,
     hr: <Hr id={id} key={id} />,
     caption: <Caption id={id} key={id} />,
-    cta: <DraggableCTA configuration={configuration} id={id} key={id} isEditing={true} />,
 
   };
 

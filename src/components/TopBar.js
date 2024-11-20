@@ -1,9 +1,11 @@
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import './css/Topbar.css';
+import ReactDOMServer from 'react-dom/server';
+import { renderElement } from '../utils/RenderUtils';
 
 const Topbar = ({ onExport, onResize }) => {
-  const { elements } = useContext(EditableContext);
+  const { elements, buildHierarchy } = useContext(EditableContext);
   const [customSize, setCustomSize] = useState('');
   const [dezoomPercent, setDezoomPercent] = useState(100); // Default to 100% for no scaling
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved'); // Default save status
@@ -11,15 +13,53 @@ const Topbar = ({ onExport, onResize }) => {
   const projectName = "My Project"; // Replace with dynamic value if needed
   const projectURL = "https://www.myproject.com"; // Replace with dynamic value if needed
 
+  // Export to JSON file
   const handleExportClick = () => {
-    if (onExport) {
-      console.log('Exporting elements:', elements);
-      onExport(elements);
-    } else {
-      console.error('Export function is not defined');
-    }
+    const nestedElements = buildHierarchy(elements);
+    console.log('Exporting elements:', JSON.stringify(nestedElements, null, 2));
+    downloadFile('website_structure.json', JSON.stringify(nestedElements, null, 2), 'application/json');
   };
 
+  // Export to HTML file
+  const handleExportHtmlClick = () => {
+    const renderHtml = (element) => {
+      const component = renderElement(element, elements);
+      return ReactDOMServer.renderToStaticMarkup(component);
+    };
+
+    const nestedElements = buildHierarchy(elements);
+    const htmlElements = nestedElements.map((element) => renderHtml(element));
+
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Exported Website</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link rel="stylesheet" href="styles.css">
+        </head>
+        <body>
+          ${htmlElements.join('')}
+        </body>
+      </html>
+    `;
+
+    downloadFile('exported_website.html', fullHtml, 'text/html');
+  };
+
+  // Function to download file
+  const downloadFile = (filename, content, type) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Handle resizing of content based on button or input
   const handleResize = (size) => {
     if (onResize) {
       onResize(size);
@@ -37,7 +77,7 @@ const Topbar = ({ onExport, onResize }) => {
     }
   };
 
-  // Handle resizing when the user presses Enter in the custom size input field
+  // Handle resizing with custom input size
   const handleCustomResize = (e) => {
     if (e.key === 'Enter') {
       const parsedSize = parseInt(customSize, 10);
@@ -47,7 +87,7 @@ const Topbar = ({ onExport, onResize }) => {
     }
   };
 
-  // Simulate auto-save behavior whenever the elements change
+  // Simulate auto-save whenever an edit occurs
   const handleEdit = () => {
     setAutoSaveStatus('Saving...');
     setTimeout(() => {
@@ -58,9 +98,7 @@ const Topbar = ({ onExport, onResize }) => {
   return (
     <div className="topbar">
       <div className="project-info">
-        <button className="return-button">
-          ⬅️ {/* Placeholder return button (replace with logo image if needed) */}
-        </button>
+        <button className="return-button">⬅️</button>
         <div className="project-details">
           <span className="project-name">{projectName}</span>
           <span className="project-url">{projectURL}</span>
@@ -68,15 +106,9 @@ const Topbar = ({ onExport, onResize }) => {
       </div>
 
       <div className="actions">
-        <button className="undo-button">
-          ↺ {/* Undo Arrow */}
-        </button>
-        <button className="redo-button">
-          ↻ {/* Redo Arrow */}
-        </button>
-        <button className="preview-button">
-          👁️ {/* Preview Icon */}
-        </button>
+        <button className="undo-button">↺</button>
+        <button className="redo-button">↻</button>
+        <button className="preview-button">👁️</button>
       </div>
 
       <div className="resize-controls">
@@ -96,7 +128,8 @@ const Topbar = ({ onExport, onResize }) => {
 
       <div className="export-section">
         <span className="autosave-status">{autoSaveStatus}</span>
-        <button className="button" onClick={handleExportClick}>Export Content</button>
+        <button className="button" onClick={handleExportClick}>Export JSON</button>
+        <button className="button" onClick={handleExportHtmlClick}>Export as HTML</button>
       </div>
     </div>
   );

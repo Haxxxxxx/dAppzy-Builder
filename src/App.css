@@ -63,7 +63,6 @@ p {
 
 /* Sidebar styling */
 .sidebar {
-  width: 25%;
   max-width: 350px;
   min-width: 300px;
   background-color: #f0f0f0;
@@ -90,7 +89,6 @@ p {
   height: auto;
   max-width: 100%;
 }
-
 
 
 /* General container styling */
@@ -126,4 +124,120 @@ p {
   padding: 16px;
   border-radius: 4px;
   flex: 1; /* Grow and shrink as needed */
+}
+
+
+/* src/App.css or another relevant CSS file */
+.structure-panel {
+  width: 300px;
+  padding: 16px;
+  background-color: #f8f8f8;
+  border-left: 1px solid #ddd;
+  overflow-y: auto;
+  max-width: 350px;
+  min-width: 300px;
+}
+
+.structure-panel h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.structure-panel div {
+  font-size: 14px;
+  color: #333;
+}
+
+/* src/App.css or another relevant CSS file */
+.media-panel {
+  width: 300px;
+  padding: 16px;
+  background-color: #f0f0f0;
+  border-left: 1px solid #ddd;
+  overflow-y: auto;
+  max-width: 350px;
+  min-width: 300px;
+}
+
+.media-panel h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.media-item {
+  border: 1px solid #ccc;
+  padding: 8px;
+  background-color: #fff;
+}
+
+.media-item img {
+  max-width: 100%;
+  height: auto;
+}
+
+.media-item video {
+  max-width: 100%;
+  height: auto;
+}
+
+.media-file a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.media-file a:hover {
+  text-decoration: underline;
+}
+
+/* src/App.css or another relevant CSS file */
+.settings-panel {
+  width: 300px;
+  padding: 16px;
+  background-color: #f0f0f0;
+  border-left: 1px solid #ddd;
+  max-width: 350px;
+  min-width: 300px;
+}
+
+.settings-panel h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.settings-group {
+  margin-bottom: 16px;
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.settings-group input,
+.settings-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.save-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.save-button:hover {
+  background-color: #0056b3;
 }
