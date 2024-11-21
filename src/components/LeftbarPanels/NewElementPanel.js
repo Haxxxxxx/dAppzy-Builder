@@ -1,11 +1,11 @@
 // src/components/NewElementPanel.js
 import React, { useEffect } from 'react';
-import FooterPanel from './FooterPanel';
-import NavbarPanel from './NavbarPanel';
+import FooterPanel from '../ElementsPanels/FooterPanel';
+import NavbarPanel from '../ElementsPanels/NavbarPanel';
 import { useDrag } from 'react-dnd';
-import './css/Sidebar.css';
-import HeroPanel from './HeroPanel';
-import CTAPanel from './CTAPanel';
+import '../css/Sidebar.css';
+import HeroPanel from '../ElementsPanels/HeroPanel';
+import CTAPanel from '../ElementsPanels/CTAPanel';
 
 const DraggableElement = ({ type, label, level = null, description = '', contentListWidth }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -49,9 +49,9 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
         <div className="panel-header">Layout Elements</div>
         <div className="content-section">
           <h4>Sections Created</h4>
+          <NavbarPanel contentListWidth={contentListWidth} />
           <HeroPanel/>
           <CTAPanel/>
-          <NavbarPanel contentListWidth={contentListWidth} />
           <FooterPanel />
 
         </div>

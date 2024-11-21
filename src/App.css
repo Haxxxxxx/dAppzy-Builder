@@ -45,7 +45,8 @@ p {
 /* src/App.css */
 .layout {
   display: flex;
-  height: 100vh; /* Full viewport height */
+  height: 100vh;
+  /* Full viewport height */
 }
 
 
@@ -58,7 +59,8 @@ p {
 .content-container {
   display: flex;
   flex-grow: 1;
-  height: calc(100vh - 60px); /* Adjust based on Topbar height */
+  height: calc(100vh - 60px);
+  /* Adjust based on Topbar height */
 }
 
 /* Sidebar styling */
@@ -80,7 +82,8 @@ p {
   background-color: darkgrey;
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Ensures alignment to the top */
+  align-items: flex-start;
+  /* Ensures alignment to the top */
 }
 
 .content-list {
@@ -95,9 +98,11 @@ p {
 .container {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Space between each section */
+  gap: 16px;
+  /* Space between each section */
   padding: 16px;
-  background-color: #e0e0e0; /* Example background color */
+  background-color: #e0e0e0;
+  /* Example background color */
 }
 
 /* Section styling */
@@ -115,27 +120,36 @@ p {
 .row {
   display: flex;
   justify-content: space-between;
-  gap: 16px; /* Space between columns */
+  gap: 16px;
+  /* Space between columns */
 }
 
 /* Item styling */
 .item {
-  background-color: #c0c0c0; /* Example item background */
+  background-color: #c0c0c0;
+  /* Example item background */
   padding: 16px;
   border-radius: 4px;
-  flex: 1; /* Grow and shrink as needed */
+  flex: 1;
+  /* Grow and shrink as needed */
 }
 
 
-/* src/App.css or another relevant CSS file */
 .structure-panel {
   width: 300px;
+  max-width: 350px;
+  min-width: 300px;
+  height: 100%;
+  /* Make the panel fill the available height */
+  max-height: 100vh;
+  /* Restrict the height to the viewport */
   padding: 16px;
   background-color: #f8f8f8;
   border-left: 1px solid #ddd;
   overflow-y: auto;
-  max-width: 350px;
-  min-width: 300px;
+  /* Enable vertical scrolling */
+  box-sizing: border-box;
+  /* Ensure padding and border are included in height */
 }
 
 .structure-panel h3 {
@@ -148,22 +162,29 @@ p {
   color: #333;
 }
 
-/* src/App.css or another relevant CSS file */
+/* Shared scrolling styles */
+.scrollable-panel {
+  overflow-y: auto;
+  /* Enable vertical scrolling */
+  height: 100%;
+  /* Take full available height */
+  max-height: 100vh;
+  /* Constrain to viewport height */
+  box-sizing: border-box;
+  /* Include padding and border in height calculation */
+  padding: 16px;
+}
+
+/* Media Panel */
 .media-panel {
   width: 300px;
-  padding: 16px;
-  background-color: #f0f0f0;
-  border-left: 1px solid #ddd;
-  overflow-y: auto;
   max-width: 350px;
   min-width: 300px;
+  background-color: #f0f0f0;
+  border-left: 1px solid #ddd;
 }
 
-.media-panel h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-}
-
+/* Specific styles for media items */
 .media-list {
   display: flex;
   flex-direction: column;
@@ -176,58 +197,41 @@ p {
   background-color: #fff;
 }
 
-.media-item img {
-  max-width: 100%;
-  height: auto;
-}
-
+.media-item img,
 .media-item video {
   max-width: 100%;
   height: auto;
 }
 
-.media-file a {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.media-file a:hover {
-  text-decoration: underline;
-}
-
-/* src/App.css or another relevant CSS file */
+/* Settings Panel */
 .settings-panel {
   width: 300px;
-  padding: 16px;
-  background-color: #f0f0f0;
-  border-left: 1px solid #ddd;
   max-width: 350px;
   min-width: 300px;
-}
-
-.settings-panel h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
+  background-color: #f0f0f0;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .settings-group {
   margin-bottom: 16px;
-}
-
-.settings-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .settings-group input,
 .settings-group textarea {
-  width: 100%;
+  width: 50%;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-
+.settings-group textarea {
+  width: 90%;
+}
 .save-button {
   background-color: #007bff;
   color: #fff;

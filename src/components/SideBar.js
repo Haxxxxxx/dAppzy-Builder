@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NewElementPanel from './NewElementPanel';
+import NewElementPanel from './LeftbarPanels/NewElementPanel';
 import "./css/Sidebar.css";
 
 const SideBar = ({contentListWidth}) => {

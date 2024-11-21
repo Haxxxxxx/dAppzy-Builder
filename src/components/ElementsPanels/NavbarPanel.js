@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import DraggableNavbar from '../Elements/Structure/DraggableNavbar';
+import DraggableNavbar from '../../Elements/Structure/DraggableNavbar';
 
 const NavbarPanel = ({ contentListWidth }) => {
   useEffect(() => {
@@ -9,7 +9,7 @@ const NavbarPanel = ({ contentListWidth }) => {
   return (
     <div>
       <h3>Create New Navbar</h3>
-      <div style={{ marginTop: '16px' }}>
+      <div className='bento-display-elements' style={{ marginTop: '16px' }}>
         <DraggableNavbar
           configuration="twoColumn"
           isEditing={false}

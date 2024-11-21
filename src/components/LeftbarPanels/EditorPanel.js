@@ -1,13 +1,13 @@
 import React, { useContext } from 'react';
-import { EditableContext } from '../context/EditableContext';
-import StyleEditor from '../Editors/TypographyEditor';
-import BorderEditor from '../Editors/BorderEditor';
-import SizeEditor from '../Editors/SizeEditor';
-import SpacingEditor from '../Editors/SpacingEditor';
-import DisplayEditor from '../Editors/DisplayEditor';
-import EffectEditor from '../Editors/EffectEditor';
-import ButtonEditor from '../Editors/ButtonEditor';
-import SectionDivEditor from '../Editors/SectionDivEditor';
+import { EditableContext } from '../../context/EditableContext';
+import StyleEditor from '../../Editors/TypographyEditor';
+import BorderEditor from '../../Editors/BorderEditor';
+import SizeEditor from '../../Editors/SizeEditor';
+import SpacingEditor from '../../Editors/SpacingEditor';
+import DisplayEditor from '../../Editors/DisplayEditor';
+import EffectEditor from '../../Editors/EffectEditor';
+import ButtonEditor from '../../Editors/ButtonEditor';
+import SectionDivEditor from '../../Editors/SectionDivEditor';
 
 const EditorPanel = () => {
   const { selectedElement, elements, updateStyles, setElements } = useContext(EditableContext);

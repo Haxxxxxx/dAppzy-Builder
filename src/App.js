@@ -1,7 +1,7 @@
 // src/App.js
 import React, { useState } from 'react';
 import { EditableProvider } from './context/EditableContext';
-import ContentList from './components/ContentList';
+import ContentList from './components/Canva';
 import SideBar from './components/SideBar';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -9,9 +9,9 @@ import './App.css';
 import Topbar from './components/TopBar';
 import { exportFiles } from './utils/ExportContent';
 import LeftBar from './components/LeftBar';
-import StructurePanel from './components/StructurePanel';
-import MediaPanel from './components/MediaPanel';
-import SettingsPanel from './components/SettingsPanel';
+import StructurePanel from './components/LeftbarPanels/StructurePanel';
+import MediaPanel from './components/LeftbarPanels/MediaPanel';
+import SettingsPanel from './components/LeftbarPanels/SettingsPanel';
 
 function App() {
   const [openPanel, setOpenPanel] = useState(null); // Track which panel is open (null means no panel is open)

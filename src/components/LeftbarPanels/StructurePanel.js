@@ -1,6 +1,6 @@
 // src/components/StructurePanel.js
 import React, { useContext } from 'react';
-import { EditableContext } from '../context/EditableContext';
+import { EditableContext } from '../../context/EditableContext';
 
 const StructurePanel = () => {
   const { elements, buildHierarchy } = useContext(EditableContext);
