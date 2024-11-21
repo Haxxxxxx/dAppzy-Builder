@@ -32,9 +32,6 @@ const DraggableNavbar = ({ configuration, isEditing, showDescription = false, co
   const uniqueId = useMemo(() => `navbar-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    console.log('DraggableNavbar contentListWidth:', contentListWidth);
-  }, [contentListWidth]);
 
   // Descriptions for each navbar configuration
   const descriptions = {

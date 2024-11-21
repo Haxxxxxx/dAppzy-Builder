@@ -16,7 +16,6 @@ const Topbar = ({ onExport, onResize }) => {
   // Export to JSON file
   const handleExportClick = () => {
     const nestedElements = buildHierarchy(elements);
-    console.log('Exporting elements:', JSON.stringify(nestedElements, null, 2));
     downloadFile('website_structure.json', JSON.stringify(nestedElements, null, 2), 'application/json');
   };
 

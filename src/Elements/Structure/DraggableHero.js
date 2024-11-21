@@ -31,9 +31,6 @@ const DraggableHero = ({ configuration, isEditing, showDescription = false, cont
   const uniqueId = useMemo(() => `hero-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    console.log('DraggableHero contentListWidth:', contentListWidth);
-  }, [contentListWidth]);
 
   // Descriptions for each hero configuration
   const descriptions = {

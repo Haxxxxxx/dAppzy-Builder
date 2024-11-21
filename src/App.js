@@ -41,7 +41,6 @@ function App() {
     setOpenPanel((prevPanel) => (prevPanel === panelName ? null : panelName));
   };
 
-  console.log('App contentListWidth:', contentListWidth);
 
   return (
     <EditableProvider>

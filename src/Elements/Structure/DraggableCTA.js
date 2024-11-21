@@ -27,9 +27,6 @@ const DraggableCTA = ({ configuration, isEditing, showDescription = false }) => 
   const uniqueId = useMemo(() => `cta-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    console.log('DraggableCTA configuration:', configuration);
-  }, [configuration]);
 
   const descriptions = {
     ctaOne: 'A simple CTA section with a title, description, and a button.',

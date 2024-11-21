@@ -28,9 +28,6 @@ const DraggableFooter = ({ configuration, isEditing, showDescription = false, co
   const uniqueId = useMemo(() => `footer-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    console.log('Footer Configuration:', configuration);
-  }, [configuration]);
 
   const descriptions = {
     simple: 'A simple footer with basic company info and a subscription button.',

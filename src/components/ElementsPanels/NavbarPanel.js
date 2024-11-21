@@ -2,9 +2,6 @@ import React, {useEffect} from 'react';
 import DraggableNavbar from '../../Elements/Structure/DraggableNavbar';
 
 const NavbarPanel = ({ contentListWidth }) => {
-  useEffect(() => {
-    console.log('NavbarPanel contentListWidth:', contentListWidth);
-  }, [contentListWidth]);
 
   return (
     <div>
