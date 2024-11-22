@@ -1,0 +1,14 @@
+/* Drop Zone */
+.dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  text-align: center;
+  transition: background-color 0.3s, border 0.3s;
+}
+
+.dropzone:hover {
+  background-color: #e6f7ff;
+  cursor: pointer; /* Highlight drop zone with pointer */
+}

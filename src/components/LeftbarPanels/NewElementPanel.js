@@ -1,45 +1,13 @@
-// src/components/NewElementPanel.js
 import React, { useEffect } from 'react';
 import FooterPanel from '../ElementsPanels/FooterPanel';
 import NavbarPanel from '../ElementsPanels/NavbarPanel';
-import { useDrag } from 'react-dnd';
+import DraggableElement from './DraggableElement';
 import '../css/Sidebar.css';
 import HeroPanel from '../ElementsPanels/HeroPanel';
 import CTAPanel from '../ElementsPanels/CTAPanel';
 
-const DraggableElement = ({ type, label, level = null, description = '', contentListWidth }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'ELEMENT',
-    item: { type, level },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }));
-
-  return (
-    <div
-      ref={drag}
-      className="draggable-element"
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        marginBottom: '8px', // Add some spacing for better readability
-      }}
-    >
-      <div>
-        <strong>{label}</strong>
-      </div>
-      {description && (
-        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-          {description}
-        </div>
-      )}
-    </div>
-  );
-};
-
-
-const NewElementPanel = ({contentListWidth, viewMode }) => {
-  useEffect(() => {    
+const NewElementPanel = ({ contentListWidth, viewMode }) => {
+  useEffect(() => {
     console.log(contentListWidth);
   }, [contentListWidth]);
 
@@ -50,15 +18,14 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
         <div className="content-section">
           <h4>Sections Created</h4>
           <NavbarPanel contentListWidth={contentListWidth} />
-          <HeroPanel/>
-          <CTAPanel/>
+          <HeroPanel />
+          <CTAPanel />
           <FooterPanel />
-
         </div>
       </div>
     );
   }
-  // Default to Elements view
+
   return (
     <div>
       <div className="panel-header">New Elements</div>
@@ -66,7 +33,7 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
       {/* Text Elements Section */}
       <div className="content-section">
         <h4>Text Elements</h4>
-        <div className='bento-display-elements'>
+        <div className="bento-display-elements">
           <DraggableElement type="paragraph" label="Paragraph" description="A block of text." />
           <DraggableElement type="heading" level={1} label="Heading" description="A title or header element." />
           <DraggableElement type="span" label="Span" description="An inline text element." />
@@ -80,7 +47,7 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
       {/* Container Elements Section */}
       <div className="content-section">
         <h4>Container Elements</h4>
-        <div className='bento-display-elements'>
+        <div className="bento-display-elements">
           <DraggableElement type="section" label="Section" description="A container element for layout." />
           <DraggableElement type="div" label="Div" description="A generic container element." />
           <DraggableElement type="table" label="Table" description="A table element for tabular data." />
@@ -93,7 +60,7 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
       {/* Form Elements Section */}
       <div className="content-section">
         <h4>Form Elements</h4>
-        <div className='bento-display-elements'>
+        <div className="bento-display-elements">
           <DraggableElement type="input" label="Input" description="A basic input field." />
           <DraggableElement type="form" label="Form" description="A container for form elements." />
           <DraggableElement type="textarea" label="Textarea" description="A multi-line text input." />
@@ -106,7 +73,7 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
       {/* Media Elements Section */}
       <div className="content-section">
         <h4>Media Elements</h4>
-        <div className='bento-display-elements'>
+        <div className="bento-display-elements">
           <DraggableElement type="image" label="Image" description="An image element." />
           <DraggableElement type="video" label="Video" description="A video player element." />
           <DraggableElement type="audio" label="Audio" description="An audio player element." />
@@ -117,7 +84,7 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
       {/* Interactive Elements Section */}
       <div className="content-section">
         <h4>Interactive Elements</h4>
-        <div className='bento-display-elements'>
+        <div className="bento-display-elements">
           <DraggableElement type="button" label="Button" description="A clickable button." />
           <DraggableElement type="progress" label="Progress" description="A progress bar indicator." />
           <DraggableElement type="meter" label="Meter" description="A measurement value." />
@@ -127,7 +94,7 @@ const NewElementPanel = ({contentListWidth, viewMode }) => {
       {/* Structural Elements Section */}
       <div className="content-section">
         <h4>Structural Elements</h4>
-        <div className='bento-display-elements'>
+        <div className="bento-display-elements">
           <DraggableElement type="hr" label="Horizontal Rule" description="A horizontal separator line." />
           <DraggableElement type="caption" label="Caption" description="A caption for a table." />
         </div>

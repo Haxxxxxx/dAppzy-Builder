@@ -1,6 +1,6 @@
-// DropZone.js
 import React from 'react';
 import { useDrop } from 'react-dnd';
+import '../components/css/Sidebar.css';
 
 const DropZone = ({ onDrop, parentId, onClick, text }) => {
   const [{ isOver }, drop] = useDrop({
@@ -15,15 +15,28 @@ const DropZone = ({ onDrop, parentId, onClick, text }) => {
     }),
   });
 
+  // Force custom cursor for drop zone
+  React.useEffect(() => {
+    if (isOver) {
+      document.body.style.cursor = 'pointer'; // Custom pointer cursor on hover
+    } else {
+      document.body.style.cursor = 'default'; // Reset cursor
+    }
+    return () => {
+      document.body.style.cursor = 'default'; // Clean up on unmount
+    };
+  }, [isOver]);
+
   return (
     <div
       ref={drop}
+      className="dropzone"
       style={{
         minHeight: '40px',
         backgroundColor: isOver ? 'lightgray' : 'transparent',
-        border: '1px dashed #ccc',
-        cursor: 'pointer',
-        marginBottom:'20px',
+        border: isOver ? '2px solid #007bff' : '1px dashed #ccc',
+        marginBottom: '20px',
+        transition: 'background-color 0.3s, border 0.3s',
       }}
       onClick={onClick}
     >
@@ -31,6 +44,5 @@ const DropZone = ({ onDrop, parentId, onClick, text }) => {
     </div>
   );
 };
-
 
 export default DropZone;

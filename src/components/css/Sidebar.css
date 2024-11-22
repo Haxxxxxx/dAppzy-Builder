@@ -39,20 +39,27 @@
   padding-bottom: 4px;
 }
 
-/* Draggable element styling */
+/* Draggable Element */
 .draggable-element {
   padding: 8px;
   margin: 4px 0;
   background-color: #f0f0f0;
   border: 1px solid #ccc;
   border-radius: 4px;
-  cursor: move;
-  transition: background-color 0.3s;
+  cursor: grab;
+  transition: background-color 0.3s, opacity 0.3s;
 }
 
 .draggable-element:hover {
   background-color: #e8e8e8;
 }
+
+.draggable-element.dragging {
+  cursor: grab !important; /* Ensure grab cursor during dragging */
+  opacity: 0.8;
+}
+
+
 
 /* Content section styling */
 .content-section {
