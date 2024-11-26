@@ -8,13 +8,13 @@ const Span = ({ id, content: initialContent, styles: customStyles }) => {
   const { content = initialContent, styles = {} } = elementData;
 
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevents parent from being selected
+    e.stopPropagation(); // Prevent parent from being selected
     setSelectedElement({ id, type: 'span', styles });
   };
 
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
-      updateContent(id, e.target.innerText);
+      updateContent(id, e.target.innerText.trim() || 'Editable Span'); // Fallback to default if empty
     }
   };
 
@@ -27,13 +27,14 @@ const Span = ({ id, content: initialContent, styles: customStyles }) => {
   return (
     <span
       id={id}
+      ref={spanRef}
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
-        ...styles, // styles from EditableContext (if any)
-        ...customStyles, // custom styles passed from parent component
+        ...styles,
+        ...customStyles,
         border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'text',
       }}

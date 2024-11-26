@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState, useEffect } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import DropZone from '../../utils/DropZone';
@@ -6,32 +6,33 @@ import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 
-const DraggableNavbar = ({ configuration, isEditing, showDescription = false, contentListWidth }) => {
-  const { addNewElement, setElements, setSelectedElement, selectedElement } = useContext(EditableContext);
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: 'ELEMENT',
-      item: { type: 'navbar', configuration },
-      collect: (monitor) => ({
-        isDragging: !!monitor.isDragging(),
-      }),
-      end: (item, monitor) => {
-        if (monitor.didDrop() && !isEditing) {
-          const newId = addNewElement('navbar', 1, null, null, configuration);
-          setElements((prevElements) =>
-            prevElements.map((el) =>
-              el.id === newId ? { ...el, configuration } : el
-            )
-          );
-        }
-      },
+const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
+  const { addNewElement, setElements, elements, findElementById } = useContext(EditableContext);
+
+  // Always call hooks, regardless of conditions
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'ELEMENT',
+    item: { type: 'navbar', configuration },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
     }),
-    [configuration, isEditing, addNewElement, setElements]
-  );
+    end: (item, monitor) => {
+      if (monitor.didDrop() && !isEditing) {
+        const newId = addNewElement('navbar', 1, null, null, configuration);
+        setElements((prevElements) =>
+          prevElements.map((el) =>
+            el.id === newId ? { ...el, configuration } : el
+          )
+        );
+      }
+    },
+  }), [configuration, isEditing, addNewElement, setElements]);
 
   const uniqueId = useMemo(() => `navbar-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Safely find navbar
+  const navbar = findElementById(id, elements);
+  const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || []; // Map child IDs to elements
 
   // Descriptions for each navbar configuration
   const descriptions = {
@@ -40,6 +41,13 @@ const DraggableNavbar = ({ configuration, isEditing, showDescription = false, co
     customTemplate: 'A custom template navbar with logo, links, and buttons.',
   };
 
+  const titles = {
+    twoColumn: 'Two Columns',
+    threeColumn: 'Three Columns',
+    customTemplate: '3S Template Navbar',
+  };
+
+  // Show description mode
   if (showDescription) {
     return (
       <div
@@ -53,24 +61,40 @@ const DraggableNavbar = ({ configuration, isEditing, showDescription = false, co
           cursor: 'move',
         }}
       >
-        <strong>{configuration === 'twoColumn' ? 'Two-Column Navbar' : configuration === 'threeColumn' ? 'Three-Column Navbar' : 'Custom Template Navbar'}</strong>
-        <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: '#666' }}>
-          {descriptions[configuration]}
-        </p>
+        <strong>{titles[configuration]}</strong>
+        <p>{descriptions[configuration]}</p>
       </div>
     );
   }
 
+  // Choose the correct NavbarComponent based on configuration
   let NavbarComponent;
-  if (configuration === 'twoColumn') {
-    NavbarComponent = <TwoColumnNavbar uniqueId={uniqueId} contentListWidth={contentListWidth} />;
+  if (configuration === 'customTemplate') {
+    NavbarComponent = (
+      <CustomTemplateNavbar
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+      />
+    );
+  } else if (configuration === 'twoColumn') {
+    NavbarComponent = (
+      <TwoColumnNavbar
+        uniqueId={id}
+        children={children}
+      />
+    );
   } else if (configuration === 'threeColumn') {
-    NavbarComponent = <ThreeColumnNavbar uniqueId={uniqueId} contentListWidth={contentListWidth} />;
-  } else if (configuration === 'customTemplate') {
-    NavbarComponent = <CustomTemplateNavbar uniqueId={uniqueId} contentListWidth={contentListWidth} />;
+    NavbarComponent = (
+      <ThreeColumnNavbar
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+      />
+    );
   }
 
-  return selectedElement?.id === uniqueId ? (
+  return (
     <>
       {NavbarComponent}
       <DropZone
@@ -79,8 +103,6 @@ const DraggableNavbar = ({ configuration, isEditing, showDescription = false, co
         text="Drop here to create a new section below"
       />
     </>
-  ) : (
-    NavbarComponent
   );
 };
 

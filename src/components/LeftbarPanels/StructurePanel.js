@@ -7,9 +7,12 @@ const StructurePanel = () => {
 
   const renderStructure = (elements) => {
     return elements.map((element) => (
-      <div key={element.id} style={{ paddingLeft: '16px', borderLeft: '1px solid #ccc', marginBottom: '8px' }}>
+      <div
+        key={element.id}
+        style={{ paddingLeft: '16px', borderLeft: '1px solid #ccc', marginBottom: '8px' }}
+      >
         <div>
-          {element.type} - {element.content || `[${element.type}]`}
+          {element.type} - {element.content || `${element.id}`}
         </div>
         {element.children && element.children.length > 0 && renderStructure(element.children)}
       </div>

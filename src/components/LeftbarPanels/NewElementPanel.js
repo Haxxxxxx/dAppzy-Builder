@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import FooterPanel from '../ElementsPanels/FooterPanel';
-import NavbarPanel from '../ElementsPanels/NavbarPanel';
+import FooterPanel from '../SectionsPanels/FooterPanel';
+import NavbarPanel from '../SectionsPanels/NavbarPanel';
 import DraggableElement from './DraggableElement';
 import '../css/Sidebar.css';
-import HeroPanel from '../ElementsPanels/HeroPanel';
-import CTAPanel from '../ElementsPanels/CTAPanel';
+import HeroPanel from '../SectionsPanels/HeroPanel';
+import CTAPanel from '../SectionsPanels/CTAPanel';
 
 const NewElementPanel = ({ contentListWidth, viewMode }) => {
   useEffect(() => {

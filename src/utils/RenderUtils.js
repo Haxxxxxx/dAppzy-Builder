@@ -34,7 +34,12 @@ import Caption from '../Elements/Structure/Caption';
 
 export const renderElement = (element, elements, contentListWidth) => {
   const { id, type, children, configuration } = element;
-
+  console.log('Rendering element:', { id, type, children, configuration });
+  if (type === 'navbar' && !configuration) {
+    console.warn(`Navbar with id ${id} is missing a configuration and will not be rendered.`);
+    return null; // Skip rendering if navbar has no configuration
+  }
+  
   const componentMap = {
     paragraph: <Paragraph id={id} key={id} content={element.content} />,
     section: (
@@ -67,8 +72,8 @@ export const renderElement = (element, elements, contentListWidth) => {
     ),
     heading: <Heading id={id} key={id} content={element.content} />,
     button: <Button id={id} key={id} content={element.content} />,
-    image: <Image id={id} key={id} />,
     span: <Span id={id} key={id} content={element.content} />,
+    image: <Image id={id} key={id} />,
     input: <Input id={id} key={id} />,
     form: <Form id={id} key={id} />,
     ul: (
@@ -98,7 +103,7 @@ export const renderElement = (element, elements, contentListWidth) => {
         id={id}
         key={id}
         isEditing={true}
-        contentListWidth={contentListWidth} // Pass the contentListWidth to the navbar
+        contentListWidth={contentListWidth}
       />
     ),
     footer: (

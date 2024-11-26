@@ -1,23 +1,26 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Button = ({ id, content: initialContent, styles: customStyles }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const element = elements.find((el) => el.id === id) || {};
-  const { content = initialContent, styles = {} } = element;
+  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
   const buttonRef = useRef(null);
+  const elementData = findElementById(id, elements) || {};
+  const { content = initialContent, styles = {} } = elementData;
 
+  // Handle element selection
   const handleSelect = (e) => {
     e.stopPropagation();
     setSelectedElement({ id, type: 'button', styles });
   };
 
+  // Update content when editing is complete
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
-      updateContent(id, e.target.innerText);
+      updateContent(id, e.target.innerText.trim() || 'Editable Button'); // Ensure non-empty content
     }
   };
 
+  // Focus on the button when it is selected
   useEffect(() => {
     if (selectedElement?.id === id && buttonRef.current) {
       buttonRef.current.focus();
@@ -26,19 +29,20 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
 
   return (
     <button
-      ref={buttonRef}
       id={id}
+      ref={buttonRef}
       onClick={handleSelect}
-      contentEditable={selectedElement?.id === id}
+      contentEditable={selectedElement?.id === id} // Enable editing only if selected
       onBlur={handleBlur}
-      suppressContentEditableWarning={true}
+      suppressContentEditableWarning={true} // Suppress React warnings for `contentEditable`
       style={{
-        fontFamily: 'Roboto, sans-serif', // Default font style for Button
-        ...styles, // styles from EditableContext (if any)
-        ...customStyles, // styles passed from DraggableNavbar, will override defaults if provided
+        ...styles,
+        ...customStyles,
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
+        cursor: 'text',
       }}
     >
-      {content}
+      {content || 'Editable Button'}
     </button>
   );
 };
