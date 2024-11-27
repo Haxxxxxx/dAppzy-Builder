@@ -19,7 +19,10 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
 
   // Separate children into categories for rendering
   const logo = children?.find((child) => child.type === 'image');
-  const links = children?.filter((child) => child.type === 'span');
+  const title = children?.find((child) => child.content === '3S.Template'); // Find the title span
+  const links = children?.filter(
+    (child) => child.type === 'span' && child.content !== '3S.Template' // Exclude the title span
+  );
   const buttons = children?.filter((child) => child.type === 'button');
 
   return (
@@ -39,15 +42,21 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
         {logo && (
           <Image
             id={logo.id}
-            src={logo.content || 'default-logo.png'} // Fallback if no source is provided
+            src={logo.content || 'default-logo.png'}
             styles={{ width: '40px', height: '40px', borderRadius: '50%' }}
           />
         )}
-        <Span
-          id={`${uniqueId}-title`}
-          content="3S.Template"
-          styles={{ marginLeft: '8px', fontSize: '1.5rem' }}
-        />
+        {title && (
+          <Span
+            id={title.id}
+            content={title.content}
+            styles={{
+              marginLeft: '8px',
+              fontSize: '1.5rem',
+              cursor: 'pointer', // Ensure pointer cursor for better UI feedback
+            }}
+          />
+        )}
       </div>
 
       {/* Hamburger Menu Icon for Compact View */}
@@ -114,7 +123,6 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
       {/* Desktop Links and Buttons */}
       {!isCompact && (
         <>
-          {/* Links */}
           <div
             style={{
               display: 'flex',
@@ -138,7 +146,6 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
             ))}
           </div>
 
-          {/* Buttons */}
           <div
             style={{
               display: 'flex',

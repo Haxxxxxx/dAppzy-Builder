@@ -1,42 +1,47 @@
-// HeroPanel.js
-import React, { useContext, useMemo, useState, useEffect } from 'react';
+// DraggableHero.js
+import React, { useContext, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
-import DropZone from '../../utils/DropZone';
 import HeroOne from '../Sections/Heros/HeroOne';
 import HeroTwo from '../Sections/Heros/HeroTwo';
 import HeroThree from '../Sections/Heros/HeroThree';
 
-const DraggableHero = ({ configuration, isEditing, showDescription = false, contentListWidth }) => {
-  const { addNewElement, setElements, setSelectedElement, selectedElement } = useContext(EditableContext);
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: 'ELEMENT',
-      item: { type: 'hero', configuration },
-      collect: (monitor) => ({
-        isDragging: !!monitor.isDragging(),
-      }),
-      end: (item, monitor) => {
-        if (monitor.didDrop() && !isEditing) {
-          const newId = addNewElement('hero', 1, null, null, configuration);
-          setElements((prevElements) =>
-            prevElements.map((el) => (el.id === newId ? { ...el, configuration } : el))
-          );
-        }
-      },
+const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
+  const { addNewElement, setElements, elements, findElementById } = useContext(EditableContext);
+
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'ELEMENT',
+    item: { type: 'hero', configuration },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
     }),
-    [configuration, isEditing, addNewElement, setElements]
-  );
+    end: (item, monitor) => {
+      if (monitor.didDrop() && !isEditing) {
+        const newId = addNewElement('hero', 1, null, null, configuration);
+        setElements((prevElements) =>
+          prevElements.map((el) =>
+            el.id === newId ? { ...el, configuration } : el
+          )
+        );
+      }
+    },
+  }), [configuration, isEditing, addNewElement, setElements]);
 
   const uniqueId = useMemo(() => `hero-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const hero = findElementById(id, elements);
+  const children = hero?.children?.map((childId) => findElementById(childId, elements)) || [];
 
-  // Descriptions for each hero configuration
   const descriptions = {
     heroOne: 'A simple hero section with title, subtitle, and a button.',
     heroTwo: 'Another hero section with a different layout and styling.',
     heroThree: 'A more detailed hero section.',
+  };
+
+  const titles = {
+    heroOne: 'Hero Section One',
+    heroTwo: 'Hero Section Two',
+    heroThree: 'Hero Section Three',
   };
 
   if (showDescription) {
@@ -52,36 +57,43 @@ const DraggableHero = ({ configuration, isEditing, showDescription = false, cont
           cursor: 'move',
         }}
       >
-        <strong>
-          {configuration === 'heroOne' ? 'Hero Section One' : configuration === 'heroTwo' ? 'Hero Section Two' : configuration === 'heroThree' ? 'Hero Section Three' : 'Undefined'}
-        </strong>
-        <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: '#666' }}>
-          {descriptions[configuration]}
-        </p>
+        <strong>{titles[configuration]}</strong>
+        <p>{descriptions[configuration]}</p>
       </div>
     );
   }
 
   let HeroComponent;
   if (configuration === 'heroOne') {
-    HeroComponent = <HeroOne uniqueId={uniqueId} contentListWidth={contentListWidth} />;
+    HeroComponent = (
+      <HeroOne
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+      />
+    );
   } else if (configuration === 'heroTwo') {
-    HeroComponent = <HeroTwo uniqueId={uniqueId} contentListWidth={contentListWidth} />;
+    HeroComponent = (
+      <HeroTwo
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+      />
+    );
   } else if (configuration === 'heroThree') {
-    HeroComponent = <HeroThree uniqueId={uniqueId} contentListWidth={contentListWidth} />;
+    HeroComponent = (
+      <HeroThree
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+      />
+    );
   }
 
-  return selectedElement?.id === uniqueId ? (
+  return (
     <>
       {HeroComponent}
-      <DropZone
-        index={null}
-        onDrop={(item) => addNewElement(item.type, 1)}
-        text="Drop here to create a new section below"
-      />
     </>
-  ) : (
-    HeroComponent
   );
 };
 

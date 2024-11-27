@@ -5,18 +5,21 @@ const StructurePanel = () => {
   const { elements, buildHierarchy } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
 
+  // Recursive function to render structure
   const renderStructure = (elements) => {
-    return elements.map((element) => (
-      <div
-        key={element.id}
-        style={{ paddingLeft: '16px', borderLeft: '1px solid #ccc', marginBottom: '8px' }}
-      >
-        <div>
-          {element.type} - {element.content || `${element.id}`}
+    return elements
+      .filter((element) => element && element.type) // Ensure the element is valid
+      .map((element) => (
+        <div
+          key={element.id}
+          style={{ paddingLeft: '16px', borderLeft: '1px solid #ccc', marginBottom: '8px' }}
+        >
+          <div>
+            {element.type} - {element.content || element.id}
+          </div>
+          {element.children && element.children.length > 0 && renderStructure(element.children)}
         </div>
-        {element.children && element.children.length > 0 && renderStructure(element.children)}
-      </div>
-    ));
+      ));
   };
 
   return (

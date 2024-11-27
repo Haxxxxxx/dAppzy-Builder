@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
 import SectionStructureModal from '../utils/SectionStructureModal';
@@ -14,18 +14,16 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
   const [showTableFormatModal, setShowTableFormatModal] = useState(false);
   const [scale, setScale] = useState(1);
 
+  const contentRef = useRef(null);
+
   const calculateScale = () => {
     const viewportWidth = window.innerWidth;
     const activeSidebarWidth = isSideBarVisible ? sideBarWidth : 0;
     const availableWidth = viewportWidth - leftBarWidth - activeSidebarWidth;
 
-    // Calculate the scale ratio to fit the contentListWidth within availableWidth
     const newScale = availableWidth / contentListWidth;
-
-    // Update the scale, but only scale down when needed
     setScale(newScale < 1 ? newScale : 1);
   };
-
 
   useEffect(() => {
     calculateScale();
@@ -35,6 +33,13 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
       window.removeEventListener('resize', calculateScale);
     };
   }, [contentListWidth, isSideBarVisible, leftBarWidth, sideBarWidth]);
+
+  const handleContentClick = (e) => {
+    // If the click is directly on the blank space of the ContentList
+    if (e.target === contentRef.current) {
+      setSelectedElement(null); // Clear selection
+    }
+  };
 
   const handleDrop = (item, index, parentId = null) => {
     if (item.type === 'heading') {
@@ -49,34 +54,6 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
       const newId = addNewElement(item.type, 1, safeIndex, parentId);
       setSelectedElement({ id: newId, type: item.type });
     }
-  };
-
-  const handleTableFormatSubmit = (rows, columns) => {
-    const newTableId = addNewElement('table', 1, dropZoneIndex, null);
-    const newRows = [];
-
-    for (let i = 0; i < rows; i++) {
-      const rowId = addNewElement('table-row', 1, null, newTableId);
-      const newCells = [];
-      for (let j = 0; j < columns; j++) {
-        const cellId = addNewElement('table-cell', 1, null, rowId);
-        newCells.push(cellId);
-      }
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === rowId ? { ...el, children: newCells } : el
-        )
-      );
-      newRows.push(rowId);
-    }
-
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === newTableId ? { ...el, children: newRows } : el
-      )
-    );
-
-    setSelectedElement({ id: newTableId, type: 'table' });
   };
 
   const handleLevelSelect = (level) => {
@@ -113,14 +90,42 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
 
     setShowStructureModal(false);
   };
-  console.log('content list contentListWidth:', contentListWidth);
+
+  const handleTableFormatSubmit = (rows, columns) => {
+    const newTableId = addNewElement('table', 1, dropZoneIndex, null);
+    const newRows = [];
+
+    for (let i = 0; i < rows; i++) {
+      const rowId = addNewElement('table-row', 1, null, newTableId);
+      const newCells = [];
+      for (let j = 0; j < columns; j++) {
+        const cellId = addNewElement('table-cell', 1, null, rowId);
+        newCells.push(cellId);
+      }
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === rowId ? { ...el, children: newCells } : el
+        )
+      );
+      newRows.push(rowId);
+    }
+
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === newTableId ? { ...el, children: newRows } : el
+      )
+    );
+
+    setSelectedElement({ id: newTableId, type: 'table' });
+  };
 
   return (
     <div
+      ref={contentRef}
       className="content-list"
+      onClick={handleContentClick} // Handle clicks to deselect on blank space
       style={{
         width: `${contentListWidth}px`,
-        // transform: `scale(${scale})`,
         transformOrigin: 'top left',
         transition: 'width 0.3s ease, transform 0.3s ease',
         margin: scale < 1 ? '0 auto' : '0',
@@ -132,7 +137,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
           index={0}
           onDrop={(item) => handleDrop(item, 0)}
           text="Click or Drop items here to start creating"
-          onClick={() => setDropZoneIndex(0)}
+          onClick={(e) => e.stopPropagation()} // Prevent blank click handling
         />
       )}
 
@@ -140,17 +145,15 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
         .filter((element) => !element.parentId)
         .map((element) => (
           <React.Fragment key={element.id}>
-            {renderElement(element, elements,  contentListWidth)}
+            {renderElement(element, elements, contentListWidth, setSelectedElement)}
           </React.Fragment>
         ))}
-
-
 
       <DropZone
         index={elements.length}
         onDrop={(item) => handleDrop(item, null)}
         text="Click or Drop items here to add to the page"
-        onClick={() => setDropZoneIndex(elements.length)}
+        onClick={(e) => e.stopPropagation()} // Prevent blank click handling
       />
 
       {showLevelSelector && (

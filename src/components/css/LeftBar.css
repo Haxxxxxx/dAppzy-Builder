@@ -1,0 +1,33 @@
+/* Global Material Symbols Styles */
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-size: 24px; /* Adjust size if needed */
+  }
+  
+  /* Button Styling */
+  .icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .icon-button:hover {
+    color: #4285f4; /* Optional hover effect */
+  }
+  
+  .help-center-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #000;
+  }
+  

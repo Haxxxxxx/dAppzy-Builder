@@ -97,11 +97,6 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
   return (
     <>
       {NavbarComponent}
-      <DropZone
-        index={null}
-        onDrop={(item) => addNewElement(item.type, 1)}
-        text="Drop here to create a new section below"
-      />
     </>
   );
 };

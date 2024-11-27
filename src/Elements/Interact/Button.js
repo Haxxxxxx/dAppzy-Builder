@@ -2,25 +2,31 @@ import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Button = ({ id, content: initialContent, styles: customStyles }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } =
+    useContext(EditableContext);
   const buttonRef = useRef(null);
+
+  // Get element data dynamically
   const elementData = findElementById(id, elements) || {};
   const { content = initialContent, styles = {} } = elementData;
 
-  // Handle element selection
+  // Debug styles
+  console.log('Button styles:', { id, styles, customStyles });
+
+  // Handle selection
   const handleSelect = (e) => {
     e.stopPropagation();
     setSelectedElement({ id, type: 'button', styles });
   };
 
-  // Update content when editing is complete
+  // Update content on blur
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
-      updateContent(id, e.target.innerText.trim() || 'Editable Button'); // Ensure non-empty content
+      updateContent(id, e.target.innerText.trim() || 'Editable Button'); // Default text if empty
     }
   };
 
-  // Focus on the button when it is selected
+  // Autofocus when selected
   useEffect(() => {
     if (selectedElement?.id === id && buttonRef.current) {
       buttonRef.current.focus();
@@ -32,12 +38,12 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
       id={id}
       ref={buttonRef}
       onClick={handleSelect}
-      contentEditable={selectedElement?.id === id} // Enable editing only if selected
+      contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
-      suppressContentEditableWarning={true} // Suppress React warnings for `contentEditable`
+      suppressContentEditableWarning={true}
       style={{
-        ...styles,
-        ...customStyles,
+        ...styles, // Apply dynamic styles first
+        ...customStyles, // Override with custom styles
         border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'text',
       }}

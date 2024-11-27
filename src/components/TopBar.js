@@ -107,7 +107,9 @@ const Topbar = ({ onExport, onResize }) => {
       <div className="actions">
         <button className="undo-button">↺</button>
         <button className="redo-button">↻</button>
-        <button className="preview-button">👁️</button>
+        <button className="preview-button">
+        <span className="material-symbols-outlined">visibility</span>
+        </button>
       </div>
 
       <div className="resize-controls">

@@ -129,6 +129,8 @@ export const renderElement = (element, elements, contentListWidth) => {
         id={id} 
         key={id} 
         isEditing={true} 
+        contentListWidth={contentListWidth} // Pass the contentListWidth if required
+
       />
     ),
     table: <Table id={id} key={id} />,

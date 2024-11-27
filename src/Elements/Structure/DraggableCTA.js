@@ -1,13 +1,12 @@
-// DraggableCTA.js
-import React, { useContext, useMemo, useState, useEffect } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
-import DropZone from '../../utils/DropZone';
 import CTAOne from '../Sections/CTAs/CTAOne';
 import CTATwo from '../Sections/CTAs/CTATwo';
 
-const DraggableCTA = ({ configuration, isEditing, showDescription = false }) => {
-  const { addNewElement, setElements, selectedElement } = useContext(EditableContext);
+const DraggableCTA = ({ id, configuration, isEditing, showDescription = false }) => {
+  const { addNewElement, elements, setElements, findElementById } = useContext(EditableContext);
+
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { type: 'cta', configuration },
@@ -17,29 +16,33 @@ const DraggableCTA = ({ configuration, isEditing, showDescription = false }) => 
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
         const newId = addNewElement('cta', 1, null, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) => (el.id === newId ? { ...el, configuration } : el))
+        setElements((prev) =>
+          prev.map((el) => (el.id === newId ? { ...el, configuration } : el))
         );
       }
     },
-  }), [configuration, isEditing, addNewElement, setElements]);
+  }));
 
   const uniqueId = useMemo(() => `cta-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const ctaElement = findElementById(id, elements);
+  const children = ctaElement?.children?.map((childId) => findElementById(childId, elements)) || [];
 
   const descriptions = {
-    ctaOne: 'A simple CTA section with a title, description, and a button.',
-    ctaTwo: 'A detailed CTA section with a title, and two action buttons.',
+    ctaOne: 'A simple CTA with a title, description, and a button.',
+    ctaTwo: 'A CTA with a title and two action buttons.',
   };
 
-  // Determine which CTA component to render based on the configuration
+  const titles = {
+    ctaOne: 'CTA One',
+    ctaTwo: 'CTA Two',
+  };
+
   const renderCTAComponent = () => {
     switch (configuration) {
       case 'ctaOne':
-        return <CTAOne uniqueId={uniqueId} />;
+        return <CTAOne uniqueId={id} children={children} />;
       case 'ctaTwo':
-        return <CTATwo uniqueId={uniqueId} />;
+        return <CTATwo uniqueId={id} children={children} />;
       default:
         return null;
     }
@@ -47,35 +50,26 @@ const DraggableCTA = ({ configuration, isEditing, showDescription = false }) => 
 
   const CTAComponent = renderCTAComponent();
 
-  return showDescription ? (
-    <div
-      ref={drag}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        padding: '8px',
-        margin: '8px 0',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        cursor: 'move',
-      }}
-    >
-      <strong>{configuration === 'ctaOne' ? 'CTA Section One' : 'CTA Section Two'}</strong>
-      <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: '#666' }}>
-        {descriptions[configuration]}
-      </p>
-    </div>
-  ) : selectedElement?.id === uniqueId ? (
-    <>
-      {CTAComponent}
-      <DropZone
-        index={null}
-        onDrop={(item) => addNewElement(item.type, 1)}
-        text="Drop here to create a new section below"
-      />
-    </>
-  ) : (
-    CTAComponent
-  );
+  if (showDescription) {
+    return (
+      <div
+        ref={drag}
+        style={{
+          opacity: isDragging ? 0.5 : 1,
+          padding: '8px',
+          margin: '8px 0',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'move',
+        }}
+      >
+        <strong>{titles[configuration]}</strong>
+        <p>{descriptions[configuration]}</p>
+      </div>
+    );
+  }
+
+  return <>{CTAComponent}</>;
 };
 
 export default DraggableCTA;

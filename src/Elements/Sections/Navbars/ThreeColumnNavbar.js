@@ -1,24 +1,51 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 
-const ThreeColumnNavbar = ({ uniqueId }) => (
-  <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-    <div>
-      <Image id={`${uniqueId}-logo`} width="100px" height="50px" />
-    </div>
-    <div>
-      <ul style={{ display: 'flex', listStyleType: 'none', gap: '16px' }}>
-        <li><Span id={`${uniqueId}-home`} content="Home" /></li>
-        <li><Span id={`${uniqueId}-services`} content="Services" /></li>
-        <li><Span id={`${uniqueId}-contact`} content="Contact" /></li>
-      </ul>
-    </div>
-    <div>
-      <Button id={`${uniqueId}-cta`} content="Call to Action" />
-    </div>
-  </nav>
-);
+const ThreeColumnNavbar = ({ uniqueId, children }) => {
+  const { findElementById, elements } = useContext(EditableContext);
+
+  // Find relevant child elements
+  const logo = children?.find((child) => child.id === `${uniqueId}-logo`);
+  const links = children?.filter((child) => child.id.includes('-link'));
+  const cta = children?.find((child) => child.id === `${uniqueId}-cta`);
+
+  return (
+    <nav
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px',
+      }}
+    >
+      <div>
+        {logo && <Image id={logo.id} src={logo.content} styles={logo.styles} />}
+      </div>
+      <div>
+        <ul
+          style={{
+            display: 'flex',
+            listStyleType: 'none',
+            gap: '16px',
+            padding: 0,
+            margin: 0,
+          }}
+        >
+          {links?.map((link) => (
+            <li key={link.id}>
+              <Span id={link.id} content={link.content} styles={link.styles} />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        {cta && <Button id={cta.id} content={cta.content} styles={cta.styles} />}
+      </div>
+    </nav>
+  );
+};
 
 export default ThreeColumnNavbar;

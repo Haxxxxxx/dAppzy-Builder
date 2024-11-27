@@ -2,15 +2,21 @@ import React, { useEffect, useState } from 'react';
 import Span from '../../Texts/Span';
 import Image from '../../Media/Image';
 
-const TemplateFooter = ({ uniqueId, contentListWidth }) => {
+const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
   const [isCompact, setIsCompact] = useState(false);
 
-  // Update isCompact state based on contentListWidth
+  // Update `isCompact` state based on `contentListWidth`
   useEffect(() => {
     if (typeof contentListWidth === 'number' && !isNaN(contentListWidth)) {
-      setIsCompact(contentListWidth < 768); // Adjust the breakpoint as needed
+      setIsCompact(contentListWidth < 768); // Adjust breakpoint as needed
     }
   }, [contentListWidth]);
+
+  const logo = children?.find((child) => child.id === `${uniqueId}-logo`);
+  const sections = children?.filter((child) => child.id.includes('section'));
+  const rights = children?.find((child) => child.id === `${uniqueId}-template-rights`);
+  const title = children?.find((child) => child.id === `${uniqueId}-template-title`);
+  const socialIcons = children?.filter((child) => child.id.includes('-social-'));
 
   return (
     <footer
@@ -28,23 +34,20 @@ const TemplateFooter = ({ uniqueId, contentListWidth }) => {
       {isCompact ? (
         // Compact Display Layout
         <>
-          {/* Links Section */}
           <div
             style={{
               display: 'flex',
               gap: '16px',
               justifyContent: 'center',
-              flexDirection: 'row',
               alignItems: 'center',
               marginBottom: '16px',
             }}
           >
-            <Span id={`${uniqueId}-section-1`} content="Eleven" />
-            <Span id={`${uniqueId}-section-2`} content="Twelve" />
-            <Span id={`${uniqueId}-section-3`} content="Thirteen" />
+            {sections?.map((section) => (
+              <Span key={section.id} id={section.id} content={section.content} />
+            ))}
           </div>
 
-          {/* Logo and Title Section */}
           <div
             style={{
               display: 'flex',
@@ -54,19 +57,10 @@ const TemplateFooter = ({ uniqueId, contentListWidth }) => {
               marginBottom: '16px',
             }}
           >
-            <Image
-              id={`${uniqueId}-logo`}
-              src="http://bafybeiar3s4oejrrcgzsghcdiupg5ey62rkfs5db6dzc6wj32yaymu6fiq.ipfs.localhost:8080"
-              styles={{ width: '40px', height: '40px', borderRadius: '50%' }}
-            />
-            <Span
-              id={`${uniqueId}-template-title`}
-              content="3S Template"
-              styles={{ fontSize: '1rem', fontWeight: 'bold' }}
-            />
+            {logo && <Image id={logo.id} src={logo.content} styles={logo.styles} />}
+            {title && <Span id={title.id} content={title.content} styles={title.styles} />}
           </div>
 
-          {/* Social Media Icons */}
           <div
             style={{
               display: 'flex',
@@ -76,59 +70,44 @@ const TemplateFooter = ({ uniqueId, contentListWidth }) => {
               marginBottom: '16px',
             }}
           >
-            <Image src="social-youtube-icon.png" styles={{ width: '24px', height: '24px' }} />
-            <Image src="social-facebook-icon.png" styles={{ width: '24px', height: '24px' }} />
-            <Image src="social-twitter-icon.png" styles={{ width: '24px', height: '24px' }} />
-            <Image src="social-instagram-icon.png" styles={{ width: '24px', height: '24px' }} />
-            <Image src="social-linkedin-icon.png" styles={{ width: '24px', height: '24px' }} />
+            {socialIcons?.map((icon) => (
+              <Image key={icon.id} id={icon.id} src={icon.content} styles={{ width: '24px', height: '24px' }} />
+            ))}
           </div>
 
-          {/* Footer Rights Section */}
-          <Span
-            id={`${uniqueId}-template-rights`}
-            content="CompanyName @ 202X. All rights reserved."
-            styles={{ fontSize: '0.875rem' }}
-          />
+          {rights && <Span id={rights.id} content={rights.content} styles={rights.styles} />}
         </>
       ) : (
         // Normal Display Layout
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* Links Section */}
             <div style={{ display: 'flex', gap: '32px' }}>
-              <Span id={`${uniqueId}-section-1`} content="Eleven" />
-              <Span id={`${uniqueId}-section-2`} content="Twelve" />
-              <Span id={`${uniqueId}-section-3`} content="Thirteen" />
+              {sections?.map((section) => (
+                <Span key={section.id} id={section.id} content={section.content} />
+              ))}
             </div>
 
-            {/* Logo and Title Section */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-                <Image
-                  id={`${uniqueId}-logo`}
-                  src="http://bafybeiar3s4oejrrcgzsghcdiupg5ey62rkfs5db6dzc6wj32yaymu6fiq.ipfs.localhost:8080"
-                  styles={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                />
-                <Span id={`${uniqueId}-template-title`} content="3S Template" styles={{ fontSize: '1.5rem', fontWeight: 'bold' }} />
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                {logo && <Image id={logo.id} src={logo.content} styles={logo.styles} />}
+                {title && <Span id={title.id} content={title.content} styles={title.styles} />}
               </div>
             </div>
 
-            {/* Social Media Icons */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <Image src="social-youtube-icon.png" styles={{ width: '24px', height: '24px' }} />
-              <Image src="social-facebook-icon.png" styles={{ width: '24px', height: '24px' }} />
-              <Image src="social-twitter-icon.png" styles={{ width: '24px', height: '24px' }} />
-              <Image src="social-instagram-icon.png" styles={{ width: '24px', height: '24px' }} />
-              <Image src="social-linkedin-icon.png" styles={{ width: '24px', height: '24px' }} />
+              {socialIcons?.map((icon) => (
+                <Image key={icon.id} id={icon.id} src={icon.content} styles={{ width: '24px', height: '24px' }} />
+              ))}
             </div>
           </div>
 
-          {/* Footer Rights Section */}
-          <Span
-            id={`${uniqueId}-template-rights`}
-            content="CompanyName @ 202X. All rights reserved."
-            styles={{ marginTop: '16px', fontSize: '0.875rem', alignSelf: 'center' }}
-          />
+          {rights && (
+            <Span
+              id={rights.id}
+              content={rights.content}
+              styles={{ marginTop: '16px', fontSize: '0.875rem', alignSelf: 'center' }}
+            />
+          )}
         </>
       )}
     </footer>

@@ -1,14 +1,19 @@
-// SimpleFooter.js
 import React from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 
-const SimpleFooter = ({ uniqueId }) => (
-  <footer style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-    <Span id={`${uniqueId}-simple-message`} content="Simple Footer - © 2024 My Company" />
-    <div style={{ marginLeft: '16px' }}>
-      <Button id={`${uniqueId}-simple-cta`} content="Subscribe" />
-    </div>
+const SimpleFooter = ({ uniqueId, children }) => (
+  <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', backgroundColor: '#333', color: '#fff' }}>
+    {children
+      .filter((child) => child.id === `${uniqueId}-simple-message`)
+      .map((child) => (
+        <Span key={child.id} id={child.id} content={child.content} styles={child.styles} />
+      ))}
+    {children
+      .filter((child) => child.id === `${uniqueId}-simple-cta`)
+      .map((child) => (
+        <Button key={child.id} id={child.id} content={child.content} styles={child.styles} />
+      ))}
   </footer>
 );
 

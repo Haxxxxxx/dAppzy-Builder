@@ -1,25 +1,38 @@
-// DetailedFooter.js
 import React from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 
-const DetailedFooter = ({ uniqueId }) => (
-  <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+const DetailedFooter = ({ uniqueId, children }) => (
+  <footer style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', backgroundColor: '#444', color: '#eee' }}>
     <div>
-      <Span id={`${uniqueId}-company-info`} content="Company Name, Address Line 1, Address Line 2" />
+      {children
+        .filter((child) => child.id === `${uniqueId}-company-info`)
+        .map((child) => (
+          <Span key={child.id} id={child.id} content={child.content} styles={child.styles} />
+        ))}
       <div style={{ marginTop: '8px' }}>
-        <Button id={`${uniqueId}-contact`} content="Contact Us" />
+        {children
+          .filter((child) => child.id === `${uniqueId}-contact`)
+          .map((child) => (
+            <Button key={child.id} id={child.id} content={child.content} styles={child.styles} />
+          ))}
       </div>
     </div>
+    <ul style={{ listStyleType: 'none', margin: 0, padding: 0 }}>
+      {children
+        .filter((child) => child.type === 'span' && child.id.includes('policy'))
+        .map((child) => (
+          <li key={child.id}>
+            <Span id={child.id} content={child.content} styles={child.styles} />
+          </li>
+        ))}
+    </ul>
     <div>
-      <ul style={{ display: 'flex', flexDirection: 'column', listStyleType: 'none', padding: 0 }}>
-        <li><Span id={`${uniqueId}-privacy`} content="Privacy Policy" /></li>
-        <li><Span id={`${uniqueId}-terms`} content="Terms of Service" /></li>
-        <li><Span id={`${uniqueId}-support`} content="Support" /></li>
-      </ul>
-    </div>
-    <div style={{ textAlign: 'right' }}>
-      <Span id={`${uniqueId}-social-media`} content="Follow us: [Social Links]" />
+      {children
+        .filter((child) => child.id === `${uniqueId}-social-media`)
+        .map((child) => (
+          <Span key={child.id} id={child.id} content={child.content} styles={child.styles} />
+        ))}
     </div>
   </footer>
 );

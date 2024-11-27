@@ -47,8 +47,9 @@
     background: none;
     border: none;
     cursor: pointer;
+    align-items: center;
     font-size: 1.5rem;
-  }
+    display: flex;  }
   
   .resize-controls {
     display: flex;
