@@ -20,10 +20,10 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
         <div className="content-section">
           <h4>Sections Created</h4>
           <NavbarPanel contentListWidth={contentListWidth} />
+          <Web3SectionPanel/>
           <HeroPanel />
           <CTAPanel />
           <FooterPanel />
-          <Web3SectionPanel/>
         </div>
       </div>
     );

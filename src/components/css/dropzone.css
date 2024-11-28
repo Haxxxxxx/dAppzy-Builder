@@ -12,3 +12,7 @@
   background-color: #e6f7ff;
   cursor: pointer; /* Highlight drop zone with pointer */
 }
+
+.drop-indicator{
+  position: absolute;
+}

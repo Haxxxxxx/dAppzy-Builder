@@ -1,8 +1,8 @@
 import React, { useContext, useRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
-import DropZone from '../../utils/DropZone';
 import { renderElement } from '../../utils/RenderUtils';
 import StructureAndElementsModal from '../../utils/StructureAndElementsModal';
+import useElementDrop from '../../utils/useElementDrop';
 
 const Section = ({ id, isTemplate, structure }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
@@ -10,44 +10,6 @@ const Section = ({ id, isTemplate, structure }) => {
   const { styles, children = [] } = sectionElement || {};
   const sectionRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Populate the template structure when the component is mounted if it's a template
-  React.useEffect(() => {
-    if (isTemplate && structure) {
-      handleSelectStructure(structure);
-    }
-  }, [isTemplate, structure]);
-
-  const handleSelect = (e) => {
-    e.stopPropagation();
-    setSelectedElement({ id, type: 'section', styles });
-    setIsModalOpen(true);
-  };
-
-  const handleDrop = (item, parentId) => {
-    if (!item || !parentId) return;
-    console.log(`Dropping item of type ${item.type} into section with id ${parentId}`);
-    const newId = addNewElement(item.type, item.level || 1, null, parentId);
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId
-          ? { ...el, children: [...new Set([...el.children, newId])] }
-          : el
-      )
-    );
-  };
-
-  const handleAddElement = (type) => {
-    const newId = addNewElement(type, 1, null, id);
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === id ? { ...el, children: [...new Set([...el.children, newId])] } : el
-      )
-    );
-    setIsModalOpen(false);
-  };
-
   const handleSelectStructure = (structure) => {
     console.log('Selected structure:', structure);
     let elementsToAdd = [];
@@ -76,42 +38,70 @@ const Section = ({ id, isTemplate, structure }) => {
     );
     setIsModalOpen(false);
   };
+  const { isOverCurrent, canDrop, drop } = useElementDrop({
+    id,
+    elementRef: sectionRef,
+    onDropItem: (item, parentId) => {
+      const newId = addNewElement(item.type, item.level || 1, null, parentId);
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === parentId
+            ? { ...el, children: [...new Set([...el.children, newId])] }
+            : el
+        )
+      );
+    },
+  });
+
+  React.useEffect(() => {
+    if (isTemplate && structure) {
+      handleSelectStructure(structure);
+    }
+  }, [isTemplate, structure]);
+
+  const handleSelect = (e) => {
+    e.stopPropagation();
+    setSelectedElement({ id, type: 'section', styles });
+    setIsModalOpen(true);
+  };
 
   return (
-    <>
-      <section
-        id={id}
-        ref={sectionRef}
-        onClick={handleSelect}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        style={{
-          ...styles,
-          padding: '10px',
-          border: selectedElement?.id === id ? '2px solid blue' : '1px solid #ccc',
-          borderRadius: '4px',
-          margin: '10px 0',
-        }}
-      >
-        {children.map((childId) => {
-          const childElement = elements.find((el) => el.id === childId);
-          return childElement ? renderElement(childElement, elements, selectedElement, handleDrop) : null;
-        })}
-      </section>
-      {(isHovered || selectedElement?.id === id) && (
-        <DropZone
-          onDrop={(item) => handleDrop(item, id)}
-          text="Click on the section or Drop items here to add to this section"
-          style={{ width: '100%' }}
-        />
-      )}
+    <section
+      id={id}
+      ref={(node) => {
+        sectionRef.current = node;
+        drop(node);
+      }}
+      onClick={handleSelect}
+      style={{
+        ...styles,
+        padding: '10px',
+        border: selectedElement?.id === id ? '2px solid blue' : '1px solid #ccc',
+        borderRadius: '4px',
+        margin: '10px 0',
+        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+      }}
+    >
+      {children.map((childId) => {
+        const childElement = elements.find((el) => el.id === childId);
+        return childElement ? renderElement(childElement, elements, selectedElement) : null;
+      })}
+      {isOverCurrent && canDrop && <div className="drop-indicator">Drop here</div>}
       <StructureAndElementsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSelectStructure={handleSelectStructure}
-        onAddElement={handleAddElement}
+        onAddElement={(type) => {
+          const newId = addNewElement(type, 1, null, id);
+          setElements((prevElements) =>
+            prevElements.map((el) =>
+              el.id === id ? { ...el, children: [...new Set([...el.children, newId])] } : el
+            )
+          );
+          setIsModalOpen(false);
+        }}
       />
-    </>
+    </section>
   );
 };
 

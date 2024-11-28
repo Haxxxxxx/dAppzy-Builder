@@ -92,7 +92,6 @@ const ButtonEditor = () => {
 
     return (
         <div className="button-editor editor">
-            <h3>Edit Button Properties</h3>
 
             {/* Display the current styles */}
             <div className="current-styles">
@@ -106,57 +105,79 @@ const ButtonEditor = () => {
                 <p>Border Radius: {displayedStyles.borderRadius}</p>
                 <p>Box Shadow: {displayedStyles.boxShadow}</p>
             </div>
+            <div className="editor-group">
 
-            {/* Hover Settings */}
-            <label>
-                Hover Background Color:
-                <input
-                    type="color"
-                    value={hoverBackgroundColor}
-                    onChange={handleHoverBackgroundColorChange}
-                />
-            </label>
+                {/* Hover Settings */}
+                <label>
+                    Hover Background Color:
+                    <div className="color-group">
+                        <input
+                            type="color"
+                            value={hoverBackgroundColor}
+                            onChange={(e) => handleHoverBackgroundColorChange}
+                        />
+                        <input
+                            type="text"
+                            value={hoverBackgroundColor}
+                            readOnly
+                            className="color-hex"
+                        />
+                    </div>
+                </label>
 
-            <label>
-                Hover Text Color:
-                <input
-                    type="color"
-                    value={hoverTextColor}
-                    onChange={handleHoverTextColorChange}
-                />
-            </label>
+                <label>
+                    Hover Text Color:
+                    <div className="color-group">
+                        <input
+                            type="color"
+                            value={hoverTextColor}
+                            onChange={(e) => handleHoverTextColorChange}
+                        />
+                        <input
+                            type="text"
+                            value={hoverTextColor}
+                            readOnly
+                            className="color-hex"
+                        />
+                    </div>
+                </label>
+            </div>
 
-            {/* Click Event */}
-            <label>
-                Click Event (JS Function Name):
-                <input
-                    type="text"
-                    value={clickEvent}
-                    onChange={handleClickEventChange}
-                    placeholder="e.g., handleButtonClick"
-                />
-            </label>
+            <div className="editor-group">
 
-            {/* Accessibility Settings */}
-            <label>
-                ARIA Label:
-                <input
-                    type="text"
-                    value={ariaLabel}
-                    onChange={handleAriaLabelChange}
-                    placeholder="Describe button purpose"
-                />
-            </label>
+                {/* Click Event */}
+                <label>
+                    Click Event (JS Function Name):
+                    <input
+                        type="text"
+                        value={clickEvent}
+                        onChange={handleClickEventChange}
+                        placeholder="e.g., handleButtonClick"
+                    />
+                </label>
 
-            <label>
-                Tooltip:
-                <input
-                    type="text"
-                    value={tooltip}
-                    onChange={handleTooltipChange}
-                    placeholder="Tooltip text"
-                />
-            </label>
+                {/* Accessibility Settings */}
+                <label>
+                    ARIA Label:
+                    <input
+                        type="text"
+                        value={ariaLabel}
+                        onChange={handleAriaLabelChange}
+                        placeholder="Describe button purpose"
+                    />
+                </label>
+
+                <label>
+                    Tooltip:
+                    <input
+                        type="text"
+                        value={tooltip}
+                        onChange={handleTooltipChange}
+                        placeholder="Tooltip text"
+                    />
+                </label>
+            </div>
+
         </div>
     );
 };

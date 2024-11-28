@@ -1,0 +1,112 @@
+.typography-editor {
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .editor-group {
+    margin-bottom: 16px;
+    width: auto;
+  }
+  
+  .editor-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  
+  .editor-group select,
+  .editor-group input { 
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .editor-regroup {
+    display: flex;
+    gap: 16px; /* Space between the fields */
+    align-items: flex-end; /* Align input and select at the bottom */
+  }
+  
+  .editor-group {
+    display: flex;
+    flex-direction: column; /* Stack label and input/select vertically */
+    flex: 1; /* Allow equal space for both groups */
+  }
+  
+  .editor-group label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .editor-group select,
+  .editor-group input {
+    width: 100%; /* Ensure the input/select fills its container */
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .color-group {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .color-hex {
+    flex: 1;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    background: #fff;
+  }
+  
+  .color-group input { 
+    width: 10% !important;
+    padding: 0 !important;
+}
+
+  .text-decoration-group,
+  .text-align-group {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  
+  .text-decoration-group button,
+  .text-align-group button {
+    width: 36px;
+    height: 36px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  
+  .text-decoration-group button.active,
+  .text-align-group button.active {
+    background: #217bf4;
+    color: #fff;
+    border-color: #217bf4;
+  }
+  
+  .text-decoration-group button:hover,
+  .text-align-group button:hover {
+    background: #dcdcdc;
+  }
+  
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
+  }
+  

@@ -60,7 +60,6 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
 
   return (
     <div className="section-div-editor">
-      <h4>Edit Section/Div</h4>
 
       <div className="editor-field">
         <label>Background Color:</label>

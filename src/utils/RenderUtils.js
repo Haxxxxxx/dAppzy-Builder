@@ -34,39 +34,66 @@ import Caption from '../Elements/Structure/Caption';
 import DraggableMintingSection from '../Elements/Structure/DraggableMintingSection';
 import DateComponent from '../Elements/Interact/DateComponent';
 
-export const renderElement = (element, elements, contentListWidth, setSelectedElement) => {
-  const { id, type, children, configuration } = element;
-  if (type === 'navbar' && !configuration) {
-    console.warn(`Navbar with id ${id} is missing a configuration and will not be rendered.`);
-    return null; // Skip rendering if navbar has no configuration
+const warnedElements = new Set();
+
+export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements) => {
+  if (!element || !element.id || !element.type) {
+    console.warn(`Invalid element:`, element);
+    return null;
   }
+  const { id, type, children, configuration } = element;
+
+  // Handle missing configuration for navbar
+  if (type === 'navbar' && !configuration) {
+    if (!warnedElements.has(id)) {
+      console.warn(`Navbar with id ${id} is missing a configuration and will not be rendered.`);
+      warnedElements.add(id);
+    }
+  
+    // Remove the problematic navbar from the state
+    if (setElements) {
+      setElements((prev) => {
+        const updatedElements = prev.filter((el) => el.id !== id);
+        
+        // Update localStorage after state update
+        localStorage.setItem(
+          'editableElements',
+          JSON.stringify(updatedElements.filter((el) => el.type !== 'navbar' || el.configuration))
+        );
+  
+        return updatedElements;
+      });
+    }
+  
+    return null; // Skip rendering
+  }
+  
+  
+
+  const resolvedChildren = Array.isArray(children)
+    ? children.map(childId => elements.find(el => el.id === childId))
+    : [];
 
   const componentMap = {
     paragraph: <Paragraph id={id} key={id} content={element.content} />,
     section: (
       <Section id={id} key={id}>
-        {children && children.length > 0 && (
+        {resolvedChildren.length > 0 && (
           <div className="nested-elements">
-            {children
-              .filter((childId) => elements.find((el) => el.id === childId))
-              .map((childId) => {
-                const childElement = elements.find((el) => el.id === childId);
-                return childElement ? renderElement(childElement, elements, contentListWidth) : null;
-              })}
+            {resolvedChildren.map(child =>
+              child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
+            )}
           </div>
         )}
       </Section>
     ),
     div: (
       <Div id={id} key={id}>
-        {children && children.length > 0 && (
+        {resolvedChildren.length > 0 && (
           <div className="nested-elements" style={{ padding: '10px' }}>
-            {children
-              .filter((childId) => elements.find((el) => el.id === childId))
-              .map((childId) => {
-                const childElement = elements.find((el) => el.id === childId);
-                return childElement ? renderElement(childElement, elements, contentListWidth) : null;
-              })}
+            {resolvedChildren.map(child =>
+              child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
+            )}
           </div>
         )}
       </Div>
@@ -79,22 +106,16 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     form: <Form id={id} key={id} />,
     ul: (
       <List id={id} type="ul" key={id}>
-        {children &&
-          children.length > 0 &&
-          children.map((childId) => {
-            const childElement = elements.find((el) => el.id === childId);
-            return childElement ? renderElement(childElement, elements, contentListWidth) : null;
-          })}
+        {resolvedChildren.map(child =>
+          child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
+        )}
       </List>
     ),
     ol: (
       <List id={id} type="ol" key={id}>
-        {children &&
-          children.length > 0 &&
-          children.map((childId) => {
-            const childElement = elements.find((el) => el.id === childId);
-            return childElement ? renderElement(childElement, elements, contentListWidth) : null;
-          })}
+        {resolvedChildren.map(child =>
+          child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
+        )}
       </List>
     ),
     'list-item': <ListItem id={id} key={id} content={element.content} />,
@@ -104,6 +125,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         id={id}
         key={id}
         isEditing={true}
+        children={resolvedChildren}
         contentListWidth={contentListWidth}
       />
     ),
@@ -113,7 +135,8 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         id={id}
         key={id}
         isEditing={true}
-        contentListWidth={contentListWidth} />
+        contentListWidth={contentListWidth}
+      />
     ),
     hero: (
       <DraggableHero
@@ -121,7 +144,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         id={id}
         key={id}
         isEditing={true}
-        contentListWidth={contentListWidth} // Pass the contentListWidth if required
+        contentListWidth={contentListWidth}
       />
     ),
     cta: (
@@ -130,8 +153,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         id={id}
         key={id}
         isEditing={true}
-        contentListWidth={contentListWidth} // Pass the contentListWidth if required
-
+        contentListWidth={contentListWidth}
       />
     ),
     table: <Table id={id} key={id} />,
@@ -160,17 +182,20 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         contentListWidth={contentListWidth}
       />
     ),
-    date: <DateComponent id={id} key={id} styles={element.styles} />,
-
-
+    date: <DateComponent id={id} key={id} styles={element.styles} />
   };
-  // Ensure content is string
+
+  // Ensure content is string for date
   if (type === 'date' && element.content instanceof Date) {
     element.content = element.content.toLocaleString();
   }
+
   const component = componentMap[type];
   if (!component) {
-    console.warn(`Unsupported element type: ${type}`);
+    if (!warnedElements.has(id)) {
+      console.warn(`Unsupported element type: ${type}`);
+      warnedElements.add(id);
+    }
     return null;
   }
 

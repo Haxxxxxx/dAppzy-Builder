@@ -9,6 +9,7 @@ import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
   const { addNewElement, setElements, elements, findElementById } = useContext(EditableContext);
 
+
   // Always call hooks, regardless of conditions
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -30,6 +31,24 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
 
   const uniqueId = useMemo(() => `navbar-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
 
+  
+  const onDropItem = (item, parentId) => {
+    if (!item || !parentId) return;
+  
+    const newId = addNewElement(item.type, 1, null, parentId);
+  
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === parentId
+          ? {
+              ...el,
+              children: [...new Set([...el.children, newId])], // Ensure unique children
+            }
+          : el
+      )
+    );
+  };
+  
   // Safely find navbar
   const navbar = findElementById(id, elements);
   const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || []; // Map child IDs to elements
@@ -75,6 +94,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
+        onDropItem={onDropItem} // Pass the callback here
       />
     );
   } else if (configuration === 'twoColumn') {
@@ -82,6 +102,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
       <TwoColumnNavbar
         uniqueId={id}
         children={children}
+        onDropItem={onDropItem} // Pass the callback here
       />
     );
   } else if (configuration === 'threeColumn') {
@@ -90,6 +111,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
+        onDropItem={onDropItem} // Pass the callback here
       />
     );
   }

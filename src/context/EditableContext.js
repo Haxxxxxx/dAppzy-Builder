@@ -9,6 +9,38 @@ const generateUniqueId = (type) => {
   const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, ''); // Clean timestamp
   return `${type}-${timestamp}-${elementCounter}`;
 };
+const structureConfigurations = {
+  customTemplate: {
+    children: [
+      { type: 'image', content: 'Logo' },
+      { type: 'span', content: '3S.Template' },
+      { type: 'span', content: 'Link 1' },
+      { type: 'span', content: 'Link 2' },
+      { type: 'span', content: 'Link 3' },
+      { type: 'span', content: 'Link 4' },
+      { type: 'button', content: 'Button Text' },
+      { type: 'button', content: 'Button Text' },
+    ],
+  },
+  twoColumn: {
+    children: [
+      { type: 'image', content: 'Logo' },
+      { type: 'span', content: 'Home' },
+      { type: 'span', content: 'About' },
+      { type: 'span', content: 'Contact' },
+    ],
+  },
+  threeColumn: {
+    children: [
+      { type: 'image', content: 'Logo' },
+      { type: 'span', content: 'Home' },
+      { type: 'span', content: 'Services' },
+      { type: 'span', content: 'Contact' },
+      { type: 'button', content: 'Call to Action' },
+    ],
+  },
+  // Add other structures here...
+};
 
 
 export const EditableProvider = ({ children }) => {
@@ -33,9 +65,10 @@ export const EditableProvider = ({ children }) => {
       type,
       styles: {},
       level,
-      children: [],
+      children: [], // Always initialize as an array
       parentId: parentId || null,
-      structure,
+      content: type === 'paragraph' ? 'New Paragraph' : null, // Default content for isolated elements
+      structure: structure || null,
     };
   
     const structureConfigurations = {
@@ -159,41 +192,24 @@ export const EditableProvider = ({ children }) => {
       
     };
   
+
     if (structure && structureConfigurations[structure]) {
       const children = structureConfigurations[structure].children.map((child) => ({
-        id: child.id || generateUniqueId(child.type),
+        id: generateUniqueId(child.type),
         type: child.type,
-        content: child.content,
+        content: child.content || '',
         parentId: newId,
       }));
-      if (structure === 'mintingSection') {
-        newElement.children = [
-          ...structureConfigurations[structure].children.map((child, index) => ({
-            id: child.id || `${newId}-${child.type}-${index}`,
-            type: child.type,
-            content: child.content || '',
-            parentId: newId,
-          })),
-        ];
-      }
-      newElement.children = children.map((child) => child.id);
   
+      newElement.children = children.map((child) => child.id);
       setElements((prev) => [...prev, newElement, ...children]);
-    } else if (!structure) {
-      console.warn('Invalid structure specified, skipping element creation.');
-      return null;
     } else {
-      setElements((prev) => {
-        const updatedElements = [...prev, newElement];
-        localStorage.setItem('editableElements', JSON.stringify(updatedElements));
-        return updatedElements;
-      });
+      setElements((prev) => [...prev, newElement]);
     }
   
     return newId;
   };
-
-  const updateStyles = (id, newStyles) => {
+    const updateStyles = (id, newStyles) => {
     const updateElementStyles = (elementsArray) => {
       return elementsArray.map((el) => {
         if (!el) return el;
@@ -341,17 +357,68 @@ export const EditableProvider = ({ children }) => {
     return JSON.parse(savedSection);
   };
 
+
   useEffect(() => {
-    const validElements = elements.filter((el) => el && el.type && (el.configuration || el.children?.length > 0));
+    // Save only valid elements to localStorage
+    const validElements = elements.filter((el) => el.type && el.id);
     localStorage.setItem('editableElements', JSON.stringify(validElements));
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
   
-  useEffect(() => {
-    console.log("Current selected element:", selectedElement);
-  }, [selectedElement]);
+  const removeElementById = (id) => {
+    setElements((prevElements) => {
+      const updatedElements = prevElements.filter((el) => el.id !== id);
   
-
+      // Update children of parent elements
+      updatedElements.forEach((el) => {
+        if (el.children) {
+          el.children = el.children.filter((childId) => childId !== id);
+        }
+      });
+  
+      localStorage.setItem('editableElements', JSON.stringify(updatedElements));
+      return updatedElements;
+    });
+  
+    console.info(`Element with id ${id} has been removed.`);
+  };
+  
+  const changeSectionStructure = (sectionId, newStructure) => {
+    setElements((prevElements) => {
+      const section = prevElements.find((el) => el.id === sectionId);
+      if (!section) {
+        console.warn(`Section with id ${sectionId} not found.`);
+        return prevElements;
+      }
+  
+      const structureConfig = structureConfigurations[newStructure];
+      if (!structureConfig) {
+        console.warn(`Structure configuration ${newStructure} not found.`);
+        return prevElements;
+      }
+  
+      // Generate new children based on the new structure
+      const newChildren = structureConfig.children.map((child) => ({
+        ...child,
+        id: generateUniqueId(child.type),
+        parentId: sectionId,
+      }));
+  
+      const updatedSection = {
+        ...section,
+        structure: newStructure,
+        children: newChildren.map((child) => child.id),
+      };
+  
+      const updatedElements = prevElements.map((el) =>
+        el.id === sectionId ? updatedSection : el
+      );
+  
+      // Add new children to elements array
+      return [...updatedElements, ...newChildren];
+    });
+  };
+  
   return (
     <EditableContext.Provider
       value={{
@@ -362,11 +429,13 @@ export const EditableProvider = ({ children }) => {
         setElements,
         findElementById,
         buildHierarchy,
+        removeElementById,
         updateContent,
         updateStyles,
         saveSectionToLocalStorage,
         loadSectionFromLocalStorage,
         updateElementSettings,
+        changeSectionStructure,
       }}
     >
       {children}

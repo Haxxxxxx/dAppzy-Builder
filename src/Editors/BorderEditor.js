@@ -1,17 +1,5 @@
-// src/components/BorderEditor.js
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
-
-// Helper function to convert RGB color to hex
-const rgbToHex = (rgb) => {
-  const result = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(rgb);
-  return result
-    ? `#${((1 << 24) + (parseInt(result[1]) << 16) + (parseInt(result[2]) << 8) + parseInt(result[3]))
-        .toString(16)
-        .slice(1)
-        .toUpperCase()}`
-    : rgb;
-};
 
 const BorderEditor = () => {
   const { selectedElement, updateStyles, elements } = useContext(EditableContext);
@@ -22,15 +10,14 @@ const BorderEditor = () => {
 
   useEffect(() => {
     if (selectedElement) {
-      // Get the element's stored styles directly from elements array
-      const element = elements.find(el => el.id === selectedElement.id);
+      const element = elements.find((el) => el.id === selectedElement.id);
 
       if (element) {
         const { borderWidth = '0', borderStyle = 'none', borderColor = '#000000' } = element.styles || {};
 
         setBorderWidth(borderWidth.replace('px', ''));
         setBorderStyle(borderStyle);
-        setBorderColor(rgbToHex(borderColor));
+        setBorderColor(borderColor);
       }
     }
   }, [selectedElement, elements]);
@@ -58,24 +45,21 @@ const BorderEditor = () => {
   };
 
   return (
-    <div className="border-editor editor">
-      <h3>Edit Border Styles</h3>
-
-      {/* Border Width */}
-      <label>
-        Border Width:
+    <div className="editor-section">
+      <h4 className="editor-title">Border Settings</h4>
+      <div className="editor-group">
+        <label>Border Width</label>
         <input
           type="number"
           value={borderWidth}
           onChange={handleBorderWidthChange}
           min="0"
+          className="editor-input"
         />
-      </label>
-
-      {/* Border Style */}
-      <label>
-        Border Style:
-        <select value={borderStyle} onChange={handleBorderStyleChange}>
+      </div>
+      <div className="editor-group">
+        <label>Border Style</label>
+        <select value={borderStyle} onChange={handleBorderStyleChange} className="editor-select">
           <option value="none">None</option>
           <option value="solid">Solid</option>
           <option value="dotted">Dotted</option>
@@ -86,17 +70,24 @@ const BorderEditor = () => {
           <option value="inset">Inset</option>
           <option value="outset">Outset</option>
         </select>
-      </label>
-
-      {/* Border Color */}
-      <label>
-        Border Color:
-        <input
-          type="color"
-          value={borderColor}
-          onChange={handleBorderColorChange}
-        />
-      </label>
+      </div>
+      <div className="editor-group">
+        <label>Border Color</label>
+        <div className="color-group">
+          <input
+            type="color"
+            value={borderColor}
+            onChange={handleBorderColorChange}
+            className="editor-color"
+          />
+          <input
+            type="text"
+            value={borderColor}
+            readOnly
+            className="color-hex"
+          />
+        </div>
+      </div>
     </div>
   );
 };

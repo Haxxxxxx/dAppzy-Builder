@@ -1,140 +1,123 @@
-// src/components/SpacingEditor.js
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
-import { debounce } from '../utils/debounce';
 
 const SpacingEditor = () => {
-  const { selectedElement, updateStyles, elements } = useContext(EditableContext);
+  const { selectedElement, updateStyles } = useContext(EditableContext);
 
-  // Initialize margin and padding states
-  const [marginTop, setMarginTop] = useState('');
-  const [marginRight, setMarginRight] = useState('');
-  const [marginBottom, setMarginBottom] = useState('');
-  const [marginLeft, setMarginLeft] = useState('');
-  const [paddingTop, setPaddingTop] = useState('');
-  const [paddingRight, setPaddingRight] = useState('');
-  const [paddingBottom, setPaddingBottom] = useState('');
-  const [paddingLeft, setPaddingLeft] = useState('');
-
-  // Debounced handler for updating styles
-  const debouncedUpdateStyle = useCallback(
-    debounce((id, styleKey, value) => {
-      updateStyles(id, { [styleKey]: value });
-    }, 200),
-    [updateStyles]
-  );
+  const [margin, setMargin] = useState({ top: '', right: '', bottom: '', left: '' });
+  const [padding, setPadding] = useState({ top: '', right: '', bottom: '', left: '' });
 
   useEffect(() => {
     if (selectedElement) {
-      const element = document.getElementById(selectedElement.id); // Get the DOM element by ID
+      const element = document.getElementById(selectedElement.id);
       if (element) {
         const computedStyles = getComputedStyle(element);
-  
-        // Extract values from computed styles
-        const marginTopValue = computedStyles.marginTop.split(',')[0].trim();
-        const marginRightValue = computedStyles.marginRight.split(',')[0].trim();
-        const marginBottomValue = computedStyles.marginBottom.split(',')[0].trim();
-        const marginLeftValue = computedStyles.marginLeft.split(',')[0].trim();
-        const paddingTopValue = computedStyles.paddingTop.split(',')[0].trim();
-        const paddingRightValue = computedStyles.paddingRight.split(',')[0].trim();
-        const paddingBottomValue = computedStyles.paddingBottom.split(',')[0].trim();
-        const paddingLeftValue = computedStyles.paddingLeft.split(',')[0].trim();
-  
-        setMarginTop(marginTopValue.replace('px', ''));
-        setMarginRight(marginRightValue.replace('px', ''));
-        setMarginBottom(marginBottomValue.replace('px', ''));
-        setMarginLeft(marginLeftValue.replace('px', ''));
-        setPaddingTop(paddingTopValue.replace('px', ''));
-        setPaddingRight(paddingRightValue.replace('px', ''));
-        setPaddingBottom(paddingBottomValue.replace('px', ''));
-        setPaddingLeft(paddingLeftValue.replace('px', ''));
+        setMargin({
+          top: parseFloat(computedStyles.marginTop) || '',
+          right: parseFloat(computedStyles.marginRight) || '',
+          bottom: parseFloat(computedStyles.marginBottom) || '',
+          left: parseFloat(computedStyles.marginLeft) || '',
+        });
+        setPadding({
+          top: parseFloat(computedStyles.paddingTop) || '',
+          right: parseFloat(computedStyles.paddingRight) || '',
+          bottom: parseFloat(computedStyles.paddingBottom) || '',
+          left: parseFloat(computedStyles.paddingLeft) || '',
+        });
       }
     }
-  }, [selectedElement, elements]);
-  
+  }, [selectedElement]);
+
   if (!selectedElement) return null;
 
-  const { id } = selectedElement;
-
-  // Update functions for each margin and padding property with debouncing
-  const handleSpacingChange = (type, value) => {
-    debouncedUpdateStyle(id, type, `${value}px`);
+  const handleSpacingChange = (type, direction, value) => {
+    if (type === 'margin') {
+      setMargin({ ...margin, [direction]: value });
+      updateStyles(selectedElement.id, { [`margin${direction.charAt(0).toUpperCase() + direction.slice(1)}`]: `${value}px` });
+    } else {
+      setPadding({ ...padding, [direction]: value });
+      updateStyles(selectedElement.id, { [`padding${direction.charAt(0).toUpperCase() + direction.slice(1)}`]: `${value}px` });
+    }
   };
 
   return (
-    <div className="spacing-editor editor">
-      <h3>Edit Spacing</h3>
-
-      {/* Margin Controls */}
-      <div className="margin-controls controls">
-        <label>
-          Margin Top:
+    <div className="editor-section">
+      <h4 className="editor-title">Spacing Settings</h4>
+      <div className="spacing-group">
+        <div className="editor-group">
+          <label>Margin Top</label>
           <input
             type="number"
-            value={marginTop}
-            onChange={(e) => { setMarginTop(e.target.value); handleSpacingChange('marginTop', e.target.value); }}
+            value={margin.top}
+            onChange={(e) => handleSpacingChange('margin', 'top', e.target.value)}
+            className="editor-input"
           />
-        </label>
-        <label>
-          Margin Right:
+        </div>
+        <div className="editor-group">
+          <label>Margin Right</label>
           <input
             type="number"
-            value={marginRight}
-            onChange={(e) => { setMarginRight(e.target.value); handleSpacingChange('marginRight', e.target.value); }}
+            value={margin.right}
+            onChange={(e) => handleSpacingChange('margin', 'right', e.target.value)}
+            className="editor-input"
           />
-        </label>
-        <label>
-          Margin Bottom:
+        </div>
+        <div className="editor-group">
+          <label>Margin Bottom</label>
           <input
             type="number"
-            value={marginBottom}
-            onChange={(e) => { setMarginBottom(e.target.value); handleSpacingChange('marginBottom', e.target.value); }}
+            value={margin.bottom}
+            onChange={(e) => handleSpacingChange('margin', 'bottom', e.target.value)}
+            className="editor-input"
           />
-        </label>
-        <label>
-          Margin Left:
+        </div>
+        <div className="editor-group">
+          <label>Margin Left</label>
           <input
             type="number"
-            value={marginLeft}
-            onChange={(e) => { setMarginLeft(e.target.value); handleSpacingChange('marginLeft', e.target.value); }}
+            value={margin.left}
+            onChange={(e) => handleSpacingChange('margin', 'left', e.target.value)}
+            className="editor-input"
           />
-        </label>
+        </div>
       </div>
-
-      {/* Padding Controls */}
-      <div className="padding-controls controls">
-        <label>
-          Padding Top:
+      <div className="spacing-group">
+        <div className="editor-group">
+          <label>Padding Top</label>
           <input
             type="number"
-            value={paddingTop}
-            onChange={(e) => { setPaddingTop(e.target.value); handleSpacingChange('paddingTop', e.target.value); }}
+            value={padding.top}
+            onChange={(e) => handleSpacingChange('padding', 'top', e.target.value)}
+            className="editor-input"
           />
-        </label>
-        <label>
-          Padding Right:
+        </div>
+        <div className="editor-group">
+          <label>Padding Right</label>
           <input
             type="number"
-            value={paddingRight}
-            onChange={(e) => { setPaddingRight(e.target.value); handleSpacingChange('paddingRight', e.target.value); }}
+            value={padding.right}
+            onChange={(e) => handleSpacingChange('padding', 'right', e.target.value)}
+            className="editor-input"
           />
-        </label>
-        <label>
-          Padding Bottom:
+        </div>
+        <div className="editor-group">
+          <label>Padding Bottom</label>
           <input
             type="number"
-            value={paddingBottom}
-            onChange={(e) => { setPaddingBottom(e.target.value); handleSpacingChange('paddingBottom', e.target.value); }}
+            value={padding.bottom}
+            onChange={(e) => handleSpacingChange('padding', 'bottom', e.target.value)}
+            className="editor-input"
           />
-        </label>
-        <label>
-          Padding Left:
+        </div>
+        <div className="editor-group">
+          <label>Padding Left</label>
           <input
             type="number"
-            value={paddingLeft}
-            onChange={(e) => { setPaddingLeft(e.target.value); handleSpacingChange('paddingLeft', e.target.value); }}
+            value={padding.left}
+            onChange={(e) => handleSpacingChange('padding', 'left', e.target.value)}
+            className="editor-input"
           />
-        </label>
+        </div>
       </div>
     </div>
   );

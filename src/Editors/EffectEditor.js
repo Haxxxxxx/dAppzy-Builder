@@ -61,58 +61,59 @@ const EffectEditor = () => {
 
   return (
     <div className="effect-editor editor">
-      <h3>Effect Editor</h3>
+      <div className="editor-group">
 
-      <label>
-        Box Shadow:
-        <select value={boxShadow} onChange={handleBoxShadowChange}>
-          <option value="">None</option>
-          <option value="2px 4px 10px rgba(0,0,0,0.3)">Small Shadow</option>
-          <option value="5px 10px 20px rgba(0,0,0,0.5)">Medium Shadow</option>
-          <option value="10px 15px 30px rgba(0,0,0,0.7)">Large Shadow</option>
-        </select>
-      </label>
+        <label>
+          Box Shadow:
+          <select value={boxShadow} onChange={handleBoxShadowChange}>
+            <option value="">None</option>
+            <option value="2px 4px 10px rgba(0,0,0,0.3)">Small Shadow</option>
+            <option value="5px 10px 20px rgba(0,0,0,0.5)">Medium Shadow</option>
+            <option value="10px 15px 30px rgba(0,0,0,0.7)">Large Shadow</option>
+          </select>
+        </label>
 
-      <label>
-        Opacity:
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={opacity}
-          onChange={handleOpacityChange}
-        />
-      </label>
+        <label>
+          Opacity:
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={opacity}
+            onChange={handleOpacityChange}
+          />
+        </label>
 
-      <label>
-        Visibility:
-        <select value={visibility} onChange={handleVisibilityChange}>
-          <option value="visible">Visible</option>
-          <option value="hidden">Hidden</option>
-          <option value="collapse">Collapse</option>
-        </select>
-      </label>
+        <label>
+          Visibility:
+          <select value={visibility} onChange={handleVisibilityChange}>
+            <option value="visible">Visible</option>
+            <option value="hidden">Hidden</option>
+            <option value="collapse">Collapse</option>
+          </select>
+        </label>
 
-      <label>
-        Transition:
-        <select value={transition} onChange={handleTransitionChange}>
-          <option value="">None</option>
-          <option value="all 0.3s ease-in-out">Fade In/Out</option>
-          <option value="all 0.5s ease">Slow Fade</option>
-          <option value="all 0.2s linear">Quick Transition</option>
-        </select>
-      </label>
+        <label>
+          Transition:
+          <select value={transition} onChange={handleTransitionChange}>
+            <option value="">None</option>
+            <option value="all 0.3s ease-in-out">Fade In/Out</option>
+            <option value="all 0.5s ease">Slow Fade</option>
+            <option value="all 0.2s linear">Quick Transition</option>
+          </select>
+        </label>
 
-      <label>
-        Animation:
-        <select value={animation} onChange={handleAnimationChange}>
-          <option value="">None</option>
-          <option value="bounce 1s infinite">Bounce</option>
-          <option value="fadeIn 1s forwards">Fade In</option>
-          <option value="rotate 2s linear infinite">Rotate</option>
-        </select>
-      </label>
+        <label>
+          Animation:
+          <select value={animation} onChange={handleAnimationChange}>
+            <option value="">None</option>
+            <option value="bounce 1s infinite">Bounce</option>
+            <option value="fadeIn 1s forwards">Fade In</option>
+            <option value="rotate 2s linear infinite">Rotate</option>
+          </select>
+        </label>
+      </div>
     </div>
   );
 };
