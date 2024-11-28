@@ -35,9 +35,8 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
   }, [contentListWidth, isSideBarVisible, leftBarWidth, sideBarWidth]);
 
   const handleContentClick = (e) => {
-    // If the click is directly on the blank space of the ContentList
     if (e.target === contentRef.current) {
-      setSelectedElement(null); // Clear selection
+      setSelectedElement(null);
     }
   };
 
@@ -123,7 +122,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
     <div
       ref={contentRef}
       className="content-list"
-      onClick={handleContentClick} // Handle clicks to deselect on blank space
+      onClick={handleContentClick}
       style={{
         width: `${contentListWidth}px`,
         transformOrigin: 'top left',
@@ -137,7 +136,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
           index={0}
           onDrop={(item) => handleDrop(item, 0)}
           text="Click or Drop items here to start creating"
-          onClick={(e) => e.stopPropagation()} // Prevent blank click handling
+          onClick={(e) => e.stopPropagation()}
         />
       )}
 
@@ -153,7 +152,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
         index={elements.length}
         onDrop={(item) => handleDrop(item, null)}
         text="Click or Drop items here to add to the page"
-        onClick={(e) => e.stopPropagation()} // Prevent blank click handling
+        onClick={(e) => e.stopPropagation()}
       />
 
       {showLevelSelector && (

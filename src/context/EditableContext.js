@@ -138,6 +138,25 @@ export const EditableProvider = ({ children }) => {
           { type: 'span', id: `${newId}-template-rights`, content: 'CompanyName @ 202X. All rights reserved.', styles: { fontSize: '0.875rem' } },
         ],
       },
+      mintingSection: {
+        children: [
+          { type: 'image', id: `${newId}-logo`, content: 'logo-image-url' },
+          { type: 'span', id: `${newId}-title`, content: 'Mint {Collection Name}' },
+          { type: 'span', id: `${newId}-description`, content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ' },
+          { type: 'span', id: `${newId}-timer`, content: '17d 5h 38m 34s' }, // Timer field
+          { type: 'span', id: `${newId}-remaining`, content: '1000/1000' }, // Remaining NFTs field
+          { type: 'span', id: `${newId}-price`, content: '1.5 SOL' }, // Price field
+          { type: 'span', id: `${newId}-quantity`, content: '2' }, // Quantity field
+          { type: 'image', id: `${newId}-rare-item-1`, content: 'rare-item-1-image-url' },
+          { type: 'image', id: `${newId}-rare-item-2`, content: 'rare-item-2-image-url' },
+          { type: 'image', id: `${newId}-rare-item-3`, content: 'rare-item-3-image-url' },
+          { type: 'image', id: `${newId}-rare-item-4`, content: 'rare-item-4-image-url' },
+          { type: 'image', id: `${newId}-document-item-1`, content: 'document-item-1-image-url' },
+          { type: 'image', id: `${newId}-document-item-2`, content: 'document-item-2-image-url' },
+          { type: 'image', id: `${newId}-document-item-3`, content: 'document-item-3-image-url' },
+        ],
+      },
+      
     };
   
     if (structure && structureConfigurations[structure]) {
@@ -147,7 +166,16 @@ export const EditableProvider = ({ children }) => {
         content: child.content,
         parentId: newId,
       }));
-  
+      if (structure === 'mintingSection') {
+        newElement.children = [
+          ...structureConfigurations[structure].children.map((child, index) => ({
+            id: child.id || `${newId}-${child.type}-${index}`,
+            type: child.type,
+            content: child.content || '',
+            parentId: newId,
+          })),
+        ];
+      }
       newElement.children = children.map((child) => child.id);
   
       setElements((prev) => [...prev, newElement, ...children]);
@@ -155,7 +183,11 @@ export const EditableProvider = ({ children }) => {
       console.warn('Invalid structure specified, skipping element creation.');
       return null;
     } else {
-      setElements((prev) => [...prev, newElement]);
+      setElements((prev) => {
+        const updatedElements = [...prev, newElement];
+        localStorage.setItem('editableElements', JSON.stringify(updatedElements));
+        return updatedElements;
+      });
     }
   
     return newId;
@@ -199,47 +231,64 @@ export const EditableProvider = ({ children }) => {
       return updatedElements;
     });
   };
-
-  const updateContent = (id, newContent) => {
-    const updateElementContent = (elementsArray) => {
-      return elementsArray.map((el) => {
-        if (el.id === id) {
-          return {
-            ...el,
-            content: newContent,
-          };
-        }
-        return el;
-      });
-    };
-
+  
+  const updateContent = (id, content) => {
+    if (!id) {
+      console.warn('Attempted to update content with an undefined ID');
+      return;
+    }
+  
     setElements((prevElements) => {
-      const updatedElements = updateElementContent(prevElements);
-      localStorage.setItem('editableElements', JSON.stringify(updatedElements));
+      const updatedElements = prevElements.map((el) =>
+        el.id === id ? { ...el, content } : el
+      );
+  
+      // Handle nested children updates for '-rare-item'
+      if (id.includes('-rare-item')) {
+        const parent = updatedElements.find((el) =>
+          Array.isArray(el.children) && el.children.includes(id)
+        );
+  
+        if (parent) {
+          parent.children = Array.isArray(parent.children)
+            ? [...new Set([...parent.children, id])] // Avoid duplicate IDs
+            : [id];
+        }
+      }
+  
       return updatedElements;
     });
   };
-
+  
+  
   const findElementById = (id, elementsArray) => {
-    const element = elementsArray.find((el) => el.id === id);
+    if (!id || !Array.isArray(elementsArray)) return null;
+  
+    const element = elementsArray.find((el) => el?.id === id);
     if (element) return element;
   
-    for (const element of elementsArray) {
-      if (element.children && element.children.length > 0) {
-        const childElements = elementsArray.filter((el) => element.children.includes(el.id));
-        const found = findElementById(id, childElements);
+    for (const el of elementsArray) {
+      if (el?.children?.length) {
+        const found = findElementById(
+          id,
+          el.children.map((childId) =>
+            elementsArray.find((child) => child?.id === childId)
+          )
+        );
         if (found) return found;
       }
     }
     return null;
   };
   
+  
+  
 
 
   const buildHierarchy = (elements) => {
     const elementMap = elements.reduce((map, element) => {
       if (element && element.type) {
-        map[element.id] = { ...element, children: [] }; // Initialize with an empty children array
+        map[element.id] = { ...element, children: [] };
       }
       return map;
     }, {});
@@ -257,6 +306,18 @@ export const EditableProvider = ({ children }) => {
   };
   
   
+  
+  const updateElementSettings = (id, newSettings) => {
+    setElements((prev) =>
+      prev.map((el) => {
+        if (el.id === id) {
+          console.log(`Updating settings for ${id}:`, newSettings);
+          return { ...el, ...newSettings };
+        }
+        return el;
+      })
+    );
+  };
   
 
   const saveSectionToLocalStorage = (sectionId) => {
@@ -286,7 +347,10 @@ export const EditableProvider = ({ children }) => {
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
   
-
+  useEffect(() => {
+    console.log("Current selected element:", selectedElement);
+  }, [selectedElement]);
+  
 
   return (
     <EditableContext.Provider
@@ -302,6 +366,7 @@ export const EditableProvider = ({ children }) => {
         updateStyles,
         saveSectionToLocalStorage,
         loadSectionFromLocalStorage,
+        updateElementSettings,
       }}
     >
       {children}

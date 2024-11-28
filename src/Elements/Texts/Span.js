@@ -11,7 +11,6 @@ const Span = ({ id, content: initialContent, styles: customStyles }) => {
   const { content = initialContent, styles = {} } = elementData;
 
   // Debug styles
-  console.log('Span styles:', { id, styles, customStyles });
 
   // Handle selection
   const handleSelect = (e) => {

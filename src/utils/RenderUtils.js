@@ -31,15 +31,16 @@ import Code from '../Elements/Texts/Code';
 import Pre from '../Elements/Texts/Pre';
 import Hr from '../Elements/Structure/HorizotalRule';
 import Caption from '../Elements/Structure/Caption';
+import DraggableMintingSection from '../Elements/Structure/DraggableMintingSection';
+import DateComponent from '../Elements/Interact/DateComponent';
 
-export const renderElement = (element, elements, contentListWidth) => {
+export const renderElement = (element, elements, contentListWidth, setSelectedElement) => {
   const { id, type, children, configuration } = element;
-  console.log('Rendering element:', { id, type, children, configuration });
   if (type === 'navbar' && !configuration) {
     console.warn(`Navbar with id ${id} is missing a configuration and will not be rendered.`);
     return null; // Skip rendering if navbar has no configuration
   }
-  
+
   const componentMap = {
     paragraph: <Paragraph id={id} key={id} content={element.content} />,
     section: (
@@ -107,11 +108,11 @@ export const renderElement = (element, elements, contentListWidth) => {
       />
     ),
     footer: (
-      <DraggableFooter 
-        configuration={configuration} 
-        id={id} 
-        key={id} 
-        isEditing={true} 
+      <DraggableFooter
+        configuration={configuration}
+        id={id}
+        key={id}
+        isEditing={true}
         contentListWidth={contentListWidth} />
     ),
     hero: (
@@ -124,11 +125,11 @@ export const renderElement = (element, elements, contentListWidth) => {
       />
     ),
     cta: (
-      <DraggableCTA 
-        configuration={configuration} 
-        id={id} 
-        key={id} 
-        isEditing={true} 
+      <DraggableCTA
+        configuration={configuration}
+        id={id}
+        key={id}
+        isEditing={true}
         contentListWidth={contentListWidth} // Pass the contentListWidth if required
 
       />
@@ -150,9 +151,23 @@ export const renderElement = (element, elements, contentListWidth) => {
     pre: <Pre id={id} key={id} />,
     hr: <Hr id={id} key={id} />,
     caption: <Caption id={id} key={id} />,
+    mintingSection: (
+      <DraggableMintingSection
+        configuration={configuration}
+        id={id}
+        key={id}
+        isEditing={true}
+        contentListWidth={contentListWidth}
+      />
+    ),
+    date: <DateComponent id={id} key={id} styles={element.styles} />,
+
 
   };
-
+  // Ensure content is string
+  if (type === 'date' && element.content instanceof Date) {
+    element.content = element.content.toLocaleString();
+  }
   const component = componentMap[type];
   if (!component) {
     console.warn(`Unsupported element type: ${type}`);

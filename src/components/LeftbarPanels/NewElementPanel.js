@@ -5,6 +5,8 @@ import DraggableElement from './DraggableElement';
 import '../css/Sidebar.css';
 import HeroPanel from '../SectionsPanels/HeroPanel';
 import CTAPanel from '../SectionsPanels/CTAPanel';
+import Web3ElementPanel from '../SectionsPanels/Web3ElementPanel';
+import Web3SectionPanel from '../SectionsPanels/Web3SectionPanel';
 
 const NewElementPanel = ({ contentListWidth, viewMode }) => {
   useEffect(() => {
@@ -21,6 +23,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <HeroPanel />
           <CTAPanel />
           <FooterPanel />
+          <Web3SectionPanel/>
         </div>
       </div>
     );
@@ -99,6 +102,12 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="caption" label="Caption" description="A caption for a table." />
         </div>
       </div>
+      <div className="content-section">
+        <h4>Web3 Elements</h4>
+        <Web3ElementPanel/>
+        </div>
+
+
     </div>
   );
 };
