@@ -41,19 +41,43 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
   };
 
   const handleDrop = (item, index, parentId = null) => {
-    if (item.type === 'heading') {
+    if (item.type === 'navbar' && item.structure) {
+      const newId = addNewElement(item.type, 1, index, parentId, item.structure);
+      setSelectedElement({ id: newId, type: item.type, structure: item.structure });
+    } else if (item.type === 'navbar') {
+      const newId = addNewElement(item.type, 1, index, parentId);
+      setSelectedElement({ id: newId, type: item.type });
+    } else if (item.type === 'hero' && item.structure) {
+      const heroId = addNewElement(item.type, 1, index, parentId, item.structure);
+  
+      // Add default children for hero sections
+      const childrenToAdd = [
+        { type: 'image', content: 'Background Image', parentId: heroId },
+        { type: 'span', content: 'Hero Title', parentId: heroId },
+        { type: 'span', content: 'Hero Subtitle', parentId: heroId },
+        { type: 'button', content: 'Click Here', parentId: heroId },
+      ];
+  
+      const childIds = childrenToAdd.map((child) => addNewElement(child.type, 1, null, heroId, null, child.content));
+  
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === heroId ? { ...el, children: [...el.children, ...childIds] } : el
+        )
+      );
+  
+      setSelectedElement({ id: heroId, type: item.type, structure: item.structure });
+    } else if (item.type === 'heading') {
       setShowLevelSelector(true);
     } else if (item.type === 'section') {
       setShowStructureModal(true);
-    } else if (item.type === 'table') {
-      setShowTableFormatModal(true);
-      setDropZoneIndex(index);
     } else {
       const safeIndex = index !== null && index !== undefined ? index : 0;
       const newId = addNewElement(item.type, 1, safeIndex, parentId);
       setSelectedElement({ id: newId, type: item.type });
     }
   };
+  
 
   const handleLevelSelect = (level) => {
     const newId = addNewElement('heading', level);

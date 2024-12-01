@@ -37,11 +37,13 @@ import DateComponent from '../Elements/Interact/DateComponent';
 const warnedElements = new Set();
 
 export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements) => {
-  if (!element || !element.id || !element.type) {
-    console.warn(`Invalid element:`, element);
+
+  const { id, type, children, configuration } = element;
+
+  if (!element || !element.id || !element.type || (!element.children?.length && !element.content && !element.structure)) {
+    console.warn(`Skipping invalid or empty element:`, element);
     return null;
   }
-  const { id, type, children, configuration } = element;
 
   // Handle missing configuration for navbar
   if (type === 'navbar' && !configuration) {
@@ -49,26 +51,26 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
       console.warn(`Navbar with id ${id} is missing a configuration and will not be rendered.`);
       warnedElements.add(id);
     }
-  
+
     // Remove the problematic navbar from the state
     if (setElements) {
       setElements((prev) => {
         const updatedElements = prev.filter((el) => el.id !== id);
-        
+
         // Update localStorage after state update
         localStorage.setItem(
           'editableElements',
           JSON.stringify(updatedElements.filter((el) => el.type !== 'navbar' || el.configuration))
         );
-  
+
         return updatedElements;
       });
     }
-  
+
     return null; // Skip rendering
   }
-  
-  
+
+
 
   const resolvedChildren = Array.isArray(children)
     ? children.map(childId => elements.find(el => el.id === childId))
@@ -175,13 +177,15 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     caption: <Caption id={id} key={id} />,
     mintingSection: (
       <DraggableMintingSection
-        configuration={configuration}
         id={id}
-        key={id}
-        isEditing={true}
-        contentListWidth={contentListWidth}
+        configuration={configuration}
+        elements={elements} // Ensure this is passed correctly
+        setElements={setElements}
+        setSelectedElement={setSelectedElement}
       />
+
     ),
+
     date: <DateComponent id={id} key={id} styles={element.styles} />
   };
 

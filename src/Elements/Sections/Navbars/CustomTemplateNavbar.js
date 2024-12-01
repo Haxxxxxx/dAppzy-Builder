@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
+import useElementDrop from '../../../utils/useElementDrop';
+import { EditableContext } from '../../../context/EditableContext';
 
-const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
+const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem }) => {
+  const navRef = useRef(null);
+  const { handleRemoveElement } = useContext(EditableContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+
+  const { isOverCurrent, canDrop, drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: navRef,
+    onDropItem,
+  });
 
   // Adjust compact mode based on contentListWidth
   useEffect(() => {
@@ -17,16 +27,12 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
   // Toggle menu visibility in compact mode
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
-  // Separate children into categories for rendering
-  const logo = children?.find((child) => child.type === 'image');
-  const title = children?.find((child) => child.content === '3S.Template'); // Find the title span
-  const links = children?.filter(
-    (child) => child.type === 'span' && child.content !== '3S.Template' // Exclude the title span
-  );
-  const buttons = children?.filter((child) => child.type === 'button');
-
   return (
     <nav
+      ref={(node) => {
+        navRef.current = node;
+        drop(node);
+      }}
       style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -35,28 +41,56 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
         backgroundColor: '#ffffff',
         flexWrap: 'wrap',
         position: 'relative',
+        border: isOverCurrent ? '2px solid blue' : '1px solid transparent',
+        borderRadius: '4px',
       }}
     >
       {/* Logo and Title */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        {logo && (
-          <Image
-            id={logo.id}
-            src={logo.content || 'default-logo.png'}
-            styles={{ width: '40px', height: '40px', borderRadius: '50%' }}
-          />
-        )}
-        {title && (
-          <Span
-            id={title.id}
-            content={title.content}
-            styles={{
-              marginLeft: '8px',
-              fontSize: '1.5rem',
-              cursor: 'pointer', // Ensure pointer cursor for better UI feedback
-            }}
-          />
-        )}
+        {children
+          .filter((child) => child?.type === 'image')
+          .map((child) => (
+            <div key={child.id} style={{ position: 'relative' }}>
+              <Image id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
+              <button
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  border: 'none',
+                  background: 'red',
+                  color: 'white',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                }}
+                onClick={() => handleRemoveElement(child.id)}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        {children
+          .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
+          .map((child) => (
+            <div key={child.id} style={{ marginLeft: '8px', position: 'relative' }}>
+              <Span id={child.id} content={child.content} styles={{ fontSize: '1.5rem', cursor: 'pointer' }} />
+              <button
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  border: 'none',
+                  background: 'red',
+                  color: 'white',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                }}
+                onClick={() => handleRemoveElement(child.id)}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
       </div>
 
       {/* Hamburger Menu Icon for Compact View */}
@@ -93,84 +127,130 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children }) => {
             boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
           }}
         >
-          {links?.map((link) => (
-            <Span
-              key={link.id}
-              id={link.id}
-              content={link.content || 'Link'}
-              styles={{ fontSize: '1rem', cursor: 'pointer' }}
-            />
-          ))}
-          {buttons?.map((button) => (
-            <Button
-              key={button.id}
-              id={button.id}
-              content={button.content || 'Button'}
-              styles={{
-                border: 'none',
-                padding: '12px 20px',
-                height: 'auto',
-                fontFamily: 'Roboto, sans-serif',
-                width: '100%',
-                backgroundColor: button.styles?.backgroundColor || '#ffffff',
-                color: button.styles?.color || '#000',
-              }}
-            />
-          ))}
+          {children
+            .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+            .map((child) => (
+              <div key={child.id} style={{ position: 'relative' }}>
+                <Span id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
+                <button
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    border: 'none',
+                    background: 'red',
+                    color: 'white',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleRemoveElement(child.id)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          {children
+            .filter((child) => child?.type === 'button')
+            .map((child) => (
+              <div key={child.id} style={{ position: 'relative' }}>
+                <Button
+                  id={child.id}
+                  content={child.content}
+                  styles={{
+                    ...child.styles,
+                    border: 'none',
+                    padding: '12px 20px',
+                    fontFamily: 'Roboto, sans-serif',
+                    backgroundColor: child.styles?.backgroundColor || '#ffffff',
+                    color: child.styles?.color || '#000',
+                  }}
+                />
+                <button
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    border: 'none',
+                    background: 'red',
+                    color: 'white',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleRemoveElement(child.id)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
         </div>
       )}
 
       {/* Desktop Links and Buttons */}
       {!isCompact && (
         <>
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'center',
-              color: 'var(--CoolGray-90, #21272A)',
-              fontSize: '16px',
-              fontStyle: 'normal',
-              fontWeight: 500,
-              lineHeight: '100%',
-              marginTop: '0',
-            }}
-          >
-            {links?.map((link) => (
-              <Span
-                key={link.id}
-                id={link.id}
-                content={link.content || 'Link'}
-                styles={{ fontSize: '1rem', cursor: 'pointer' }}
-              />
-            ))}
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            {children
+              .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+              .map((child) => (
+                <div key={child.id} style={{ position: 'relative' }}>
+                  <Span id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
+                  <button
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      border: 'none',
+                      background: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleRemoveElement(child.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              marginTop: '0',
-            }}
-          >
-            {buttons?.map((button) => (
-              <Button
-                key={button.id}
-                id={button.id}
-                content={button.content || 'Button'}
-                styles={{
-                  border: 'none',
-                  padding: '16px 28px',
-                  height: '48px',
-                  fontFamily: 'Roboto, sans-serif',
-                  backgroundColor: button.styles?.backgroundColor || '#334155',
-                  color: button.styles?.color || '#fff',
-                }}
-              />
-            ))}
+          <div style={{ display: 'flex', gap: '16px' }}>
+            {children
+              .filter((child) => child?.type === 'button')
+              .map((child) => (
+                <div key={child.id} style={{ position: 'relative' }}>
+                  <Button
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      border: 'none',
+                      padding: '16px 28px',
+                      backgroundColor: child.styles?.backgroundColor || '#334155',
+                      color: child.styles?.color || '#fff',
+                    }}
+                  />
+                  <button
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      border: 'none',
+                      background: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleRemoveElement(child.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
           </div>
         </>
       )}
+
+      {isOverCurrent && canDrop && <div className="drop-indicator">Drop here</div>}
     </nav>
   );
 };

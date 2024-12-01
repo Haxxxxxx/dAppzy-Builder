@@ -44,6 +44,7 @@ const Div = ({ id }) => {
   };
 
   return (
+    <>
     <div
       id={id}
       ref={(node) => {
@@ -66,15 +67,26 @@ const Div = ({ id }) => {
         const childElement = elements.find((el) => el.id === childId);
         return childElement ? renderElement(childElement, elements, selectedElement) : null;
       })}
-      <StructureAndElementsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSelectStructure={(structure) => {
-          console.log('Selected structure:', structure);
-          setIsModalOpen(false);
-        }}
-      />
+      
     </div>
+    <StructureAndElementsModal
+    isOpen={isModalOpen}
+    onClose={() => setIsModalOpen(false)}
+    onSelectStructure={(structure) => {
+      console.log('Selected structure:', structure);
+      setIsModalOpen(false);
+    }}
+    onAddElement={(type) => {
+      const newId = addNewElement(type, 1, null, id);
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === id ? { ...el, children: [...new Set([...el.children, newId])] } : el
+        )
+      );
+      setIsModalOpen(false);
+    }}
+  />
+    </>
   );
 };
 
