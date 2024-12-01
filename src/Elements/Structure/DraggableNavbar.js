@@ -1,16 +1,16 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useState, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import DropZone from '../../utils/DropZone';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
+import HeroSelectionModal from '../../utils/SectionQuickAdd/HeroSelectionModal'; // Import the modal component
 
 const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
   const { addNewElement, setElements, elements, findElementById } = useContext(EditableContext);
+  const [isModalOpen, setModalOpen] = useState(false); // Modal state
 
-
-  // Always call hooks, regardless of conditions
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { type: 'navbar', configuration },
@@ -31,29 +31,60 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
 
   const uniqueId = useMemo(() => `navbar-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
 
-  
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
+
+    const parentElement = findElementById(parentId, elements);
+
+    if (parentElement) {
+      const newId = addNewElement(item.type, 1, null, parentId);
+
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === parentId
+            ? {
+                ...el,
+                children: [...new Set([...el.children, newId])], // Ensure unique children
+              }
+            : el
+        )
+      );
+    }
+  };
+
+  const navbar = findElementById(id, elements);
+  const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || [];
+
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
+
+  const handleHeroSelection = (heroType) => {
+    closeModal();
   
-    const newId = addNewElement(item.type, 1, null, parentId);
+    // Create the hero section at the same level as the navbar
+    const newHeroId = addNewElement('hero', 1, null, null, heroType); // No parentId to keep it at the top level
   
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId
-          ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-          : el
-      )
-    );
+    // Update the state to include the new hero section
+    setElements((prevElements) => [
+      ...prevElements,
+      {
+        id: newHeroId,
+        type: 'hero',
+        styles: {},
+        level: 1, // Same level as navbar
+        children: [], // Initialize empty children
+        parentId: null,
+        content: null,
+        structure: heroType,
+        configuration: heroType,
+      },
+    ]);
+  
+    // Optionally log for debugging
+    console.log(`Added hero section of type '${heroType}' at the same level as navbar with ID '${id}'.`);
   };
   
-  // Safely find navbar
-  const navbar = findElementById(id, elements);
-  const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || []; // Map child IDs to elements
 
-  // Descriptions for each navbar configuration
   const descriptions = {
     twoColumn: 'A two-column navbar with logo and links.',
     threeColumn: 'A three-column navbar with logo, links, and a button.',
@@ -86,7 +117,6 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
     );
   }
 
-  // Choose the correct NavbarComponent based on configuration
   let NavbarComponent;
   if (configuration === 'customTemplate') {
     NavbarComponent = (
@@ -94,7 +124,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
-        onDropItem={onDropItem} // Pass the callback here
+        onDropItem={onDropItem}
       />
     );
   } else if (configuration === 'twoColumn') {
@@ -102,7 +132,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
       <TwoColumnNavbar
         uniqueId={id}
         children={children}
-        onDropItem={onDropItem} // Pass the callback here
+        onDropItem={onDropItem}
       />
     );
   } else if (configuration === 'threeColumn') {
@@ -111,14 +141,27 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
-        onDropItem={onDropItem} // Pass the callback here
+        onDropItem={onDropItem}
       />
     );
   }
 
   return (
     <>
-      {NavbarComponent}
+      <div
+        ref={drag}
+        style={{ cursor: 'pointer', border: isDragging ? '1px dashed #000' : 'none' }}
+        onClick={openModal} // Open modal on click
+      >
+        {NavbarComponent}
+      </div>
+      {isModalOpen && (
+        <HeroSelectionModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          onHeroSelect={handleHeroSelection}
+        />
+      )}
     </>
   );
 };

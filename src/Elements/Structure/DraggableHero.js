@@ -6,7 +6,7 @@ import HeroOne from '../Sections/Heros/HeroOne';
 import HeroTwo from '../Sections/Heros/HeroTwo';
 import HeroThree from '../Sections/Heros/HeroThree';
 
-const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
+const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth, children }) => {
   const { addNewElement, setElements, elements, findElementById } = useContext(EditableContext);
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -28,10 +28,26 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
   }), [configuration, isEditing, addNewElement, setElements]);
 
   const uniqueId = useMemo(() => `hero-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
+  const onDropItem = (item, parentId) => {
+    if (!item || !parentId) return;
+
+    const newId = addNewElement(item.type, 1, null, parentId);
+
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === parentId
+          ? {
+            ...el,
+            children: [...new Set([...el.children, newId])], // Ensure unique children
+          }
+          : el
+      )
+    );
+  };
 
   const hero = findElementById(id, elements);
-  const children = hero?.children?.map((childId) => findElementById(childId, elements)) || [];
 
+  
   const descriptions = {
     heroOne: 'A simple hero section with title, subtitle, and a button.',
     heroTwo: 'Another hero section with a different layout and styling.',
@@ -70,6 +86,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
+        onDropItem={onDropItem} // Pass the callback here
       />
     );
   } else if (configuration === 'heroTwo') {
@@ -78,6 +95,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
+        onDropItem={onDropItem} // Pass the callback here
       />
     );
   } else if (configuration === 'heroThree') {
@@ -86,6 +104,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
+        onDropItem={onDropItem} // Pass the callback here
       />
     );
   }

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Heading = ({ id }) => {
+const Heading = ({ id, content: initialContent }) => {
   const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
   const headingRef = useRef(null);
 

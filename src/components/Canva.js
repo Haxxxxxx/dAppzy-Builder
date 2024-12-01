@@ -7,7 +7,7 @@ import { renderElement } from '../utils/RenderUtils';
 import TableFormatModal from '../utils/TableFormatModal';
 
 const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300 }) => {
-  const { elements, addNewElement, setSelectedElement, setElements } = useContext(EditableContext);
+  const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById } = useContext(EditableContext);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [dropZoneIndex, setDropZoneIndex] = useState(null);
@@ -41,43 +41,24 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
   };
 
   const handleDrop = (item, index, parentId = null) => {
-    if (item.type === 'navbar' && item.structure) {
-      const newId = addNewElement(item.type, 1, index, parentId, item.structure);
-      setSelectedElement({ id: newId, type: item.type, structure: item.structure });
-    } else if (item.type === 'navbar') {
-      const newId = addNewElement(item.type, 1, index, parentId);
-      setSelectedElement({ id: newId, type: item.type });
-    } else if (item.type === 'hero' && item.structure) {
-      const heroId = addNewElement(item.type, 1, index, parentId, item.structure);
+    const safeIndex = index !== null && index !== undefined ? index : 0;
   
-      // Add default children for hero sections
-      const childrenToAdd = [
-        { type: 'image', content: 'Background Image', parentId: heroId },
-        { type: 'span', content: 'Hero Title', parentId: heroId },
-        { type: 'span', content: 'Hero Subtitle', parentId: heroId },
-        { type: 'button', content: 'Click Here', parentId: heroId },
-      ];
-  
-      const childIds = childrenToAdd.map((child) => addNewElement(child.type, 1, null, heroId, null, child.content));
-  
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === heroId ? { ...el, children: [...el.children, ...childIds] } : el
-        )
-      );
-  
+    if (item.type === 'hero') {
+      // Create hero at the root level
+      const heroId = addNewElement(item.type, 1, safeIndex, null, item.structure);
       setSelectedElement({ id: heroId, type: item.type, structure: item.structure });
-    } else if (item.type === 'heading') {
-      setShowLevelSelector(true);
-    } else if (item.type === 'section') {
-      setShowStructureModal(true);
+    } else if (item.type === 'navbar') {
+      // Create navbar at the root level
+      const navbarId = addNewElement(item.type, 1, safeIndex, null, item.structure);
+      setSelectedElement({ id: navbarId, type: item.type, structure: item.structure });
     } else {
-      const safeIndex = index !== null && index !== undefined ? index : 0;
+      // Handle other types
       const newId = addNewElement(item.type, 1, safeIndex, parentId);
       setSelectedElement({ id: newId, type: item.type });
     }
   };
   
+
 
   const handleLevelSelect = (level) => {
     const newId = addNewElement('heading', level);
@@ -142,6 +123,19 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
     setSelectedElement({ id: newTableId, type: 'table' });
   };
 
+  useEffect(() => {
+    saveToLocalStorage('editableElements', elements);
+    saveToLocalStorage('elementsVersion', ELEMENTS_VERSION);
+  }, [elements]);
+  
+  const saveSectionToLocalStorage = (sectionId) => {
+    const section = findElementById(sectionId, elements);
+    if (section) {
+      const hierarchy = buildHierarchy(elements);
+      saveToLocalStorage(`section-${sectionId}`, hierarchy);
+    }
+  };
+  
   return (
     <div
       ref={contentRef}

@@ -33,36 +33,46 @@ import Hr from '../Elements/Structure/HorizotalRule';
 import Caption from '../Elements/Structure/Caption';
 import DraggableMintingSection from '../Elements/Structure/DraggableMintingSection';
 import DateComponent from '../Elements/Interact/DateComponent';
-
+import { structureConfigurations } from '../configs/structureConfigurations';
 const warnedElements = new Set();
 
 export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements) => {
-
   const { id, type, children, configuration } = element;
 
-  if (!element || !element.id || !element.type || (!element.children?.length && !element.content && !element.structure)) {
-    console.warn(`Skipping invalid or empty element:`, element);
+  if (!element || !id || !type) {
+    console.warn(`Skipping invalid element due to missing fields:`, element);
     return null;
   }
 
-  // Handle missing configuration for navbar
-  if (type === 'navbar' && !configuration) {
+  const resolvedChildren = Array.isArray(children)
+    ? children.map((childId) => elements.find((el) => el.id === childId))
+    : [];
+
+  // Warn for missing children in `hero`
+  if (type === 'hero') {
+    const requiredChildren = structureConfigurations[configuration]?.children.map((child) => child.type) || [];
+    const hasRequiredChildren = requiredChildren.every((childType) =>
+      resolvedChildren.some((child) => child?.type === childType)
+    );
+  
+    if (!hasRequiredChildren) {
+      console.warn(`Hero with ID ${id} is missing required children:`, { requiredChildren, resolvedChildren });
+      return <div style={{ color: 'red' }}>Incomplete Hero Section</div>; // Render fallback and stop further rendering
+    }
+  }
+  
+
+  // Handle missing configuration for `navbar` and `hero`
+  if ((type === 'navbar' || type === 'hero') && !configuration) {
     if (!warnedElements.has(id)) {
-      console.warn(`Navbar with id ${id} is missing a configuration and will not be rendered.`);
+      console.warn(`${type.charAt(0).toUpperCase() + type.slice(1)} with ID ${id} is missing a configuration.`);
       warnedElements.add(id);
     }
 
-    // Remove the problematic navbar from the state
     if (setElements) {
       setElements((prev) => {
         const updatedElements = prev.filter((el) => el.id !== id);
-
-        // Update localStorage after state update
-        localStorage.setItem(
-          'editableElements',
-          JSON.stringify(updatedElements.filter((el) => el.type !== 'navbar' || el.configuration))
-        );
-
+        localStorage.setItem('editableElements', JSON.stringify(updatedElements));
         return updatedElements;
       });
     }
@@ -70,34 +80,22 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     return null; // Skip rendering
   }
 
-
-
-  const resolvedChildren = Array.isArray(children)
-    ? children.map(childId => elements.find(el => el.id === childId))
-    : [];
+  // Recursive child rendering
+  const renderChildren = () =>
+    resolvedChildren.map((child) =>
+      child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
+    );
 
   const componentMap = {
     paragraph: <Paragraph id={id} key={id} content={element.content} />,
     section: (
       <Section id={id} key={id}>
-        {resolvedChildren.length > 0 && (
-          <div className="nested-elements">
-            {resolvedChildren.map(child =>
-              child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
-            )}
-          </div>
-        )}
+        {resolvedChildren.length > 0 && <div className="nested-elements">{renderChildren()}</div>}
       </Section>
     ),
     div: (
       <Div id={id} key={id}>
-        {resolvedChildren.length > 0 && (
-          <div className="nested-elements" style={{ padding: '10px' }}>
-            {resolvedChildren.map(child =>
-              child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
-            )}
-          </div>
-        )}
+        {resolvedChildren.length > 0 && <div className="nested-elements" style={{ padding: '10px' }}>{renderChildren()}</div>}
       </Div>
     ),
     heading: <Heading id={id} key={id} content={element.content} />,
@@ -106,21 +104,6 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     image: <Image id={id} key={id} />,
     input: <Input id={id} key={id} />,
     form: <Form id={id} key={id} />,
-    ul: (
-      <List id={id} type="ul" key={id}>
-        {resolvedChildren.map(child =>
-          child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
-        )}
-      </List>
-    ),
-    ol: (
-      <List id={id} type="ol" key={id}>
-        {resolvedChildren.map(child =>
-          child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
-        )}
-      </List>
-    ),
-    'list-item': <ListItem id={id} key={id} content={element.content} />,
     navbar: (
       <DraggableNavbar
         configuration={configuration}
@@ -131,17 +114,18 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         contentListWidth={contentListWidth}
       />
     ),
-    footer: (
-      <DraggableFooter
-        configuration={configuration}
-        id={id}
-        key={id}
-        isEditing={true}
-        contentListWidth={contentListWidth}
-      />
-    ),
     hero: (
       <DraggableHero
+        id={id}
+        configuration={configuration}
+        key={id}
+        children={resolvedChildren}
+        contentListWidth={contentListWidth}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    footer: (
+      <DraggableFooter
         configuration={configuration}
         id={id}
         key={id}
@@ -194,6 +178,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     element.content = element.content.toLocaleString();
   }
 
+  // Ensure component exists in the map
   const component = componentMap[type];
   if (!component) {
     if (!warnedElements.has(id)) {

@@ -1,14 +1,15 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useRef, useState, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
-import Button from '../../Interact/Button'; // Assuming you have a Button component
+import Button from '../../Interact/Button';
 import useElementDrop from '../../../utils/useElementDrop';
 import { EditableContext } from '../../../context/EditableContext';
 
-const ThreeColumnNavbar = ({ uniqueId, children, onDropItem }) => {
+const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) => {
   const navRef = useRef(null);
-  const { handleRemoveElement, setSelectedElements } = useContext(EditableContext);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { handleRemoveElement } = useContext(EditableContext);
+  const [isCompact, setIsCompact] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { isOverCurrent, canDrop, drop } = useElementDrop({
     id: uniqueId,
@@ -16,9 +17,12 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem }) => {
     onDropItem,
   });
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen((prev) => !prev);
-  };
+  // Adjust compact mode based on `contentListWidth`
+  useEffect(() => {
+    setIsCompact(contentListWidth < 768); // Adjust breakpoint as needed
+  }, [contentListWidth]);
+
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   return (
     <nav
@@ -30,27 +34,31 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem }) => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '10px',
-        border: isOverCurrent ? '2px solid blue' : '1px solid transparent',
-        borderRadius: '4px',
-        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
+        padding: '16px',
+        backgroundColor: '#ffffff',
+        flexWrap: 'wrap',
         position: 'relative',
+        borderBottom: isOverCurrent ? '2px solid blue' : '1px solid transparent',
+        borderRadius: '4px',
       }}
     >
       {/* Logo Section */}
-      <div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
             <div key={child.id} style={{ position: 'relative' }}>
-              <Image id={child.id} styles={child.styles} />
+              <Image id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
               <button
                 style={{
                   position: 'absolute',
                   top: 0,
                   right: 0,
                   border: 'none',
+                  background: 'red',
+                  color: 'white',
                   borderRadius: '50%',
+                  cursor: 'pointer',
                 }}
                 onClick={() => handleRemoveElement(child.id)}
               >
@@ -60,81 +68,108 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem }) => {
           ))}
       </div>
 
-      {/* Links Section */}
-      <div
-        style={{
-          display: isMobileMenuOpen ? 'block' : 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          flexDirection: isMobileMenuOpen ? 'column' : 'row',
-        }}
-      >
-        <ul style={{ display: 'flex', listStyleType: 'none', gap: '16px', padding: 0, margin: 0 }}>
-          {children
-            .filter((child) => child?.type === 'span')
-            .map((child) => (
-              <li key={child.id} style={{ position: 'relative' }}>
-                <Span id={child.id} content={child.content} styles={child.styles} />
-                <button
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    border: 'none',
-                    borderRadius: '50%',
-                  }}
-                  onClick={() => handleRemoveElement(child.id)}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-        </ul>
-      </div>
-
-      {/* Call-to-Action Button Section */}
-      <div>
-        {children
-          .filter((child) => child?.type === 'button')
-          .map((child) => (
-            <div key={child.id} style={{ position: 'relative' }}>
-              <Button id={child.id} content={child.content} styles={child.styles} />
-              <button
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  border: 'none',
-                  borderRadius: '50%',
-                }}
-                onClick={() => handleRemoveElement(child.id)}
-              >
-                ✕
-              </button>
+      {/* Compact Mode */}
+      {isCompact && (
+        <>
+          <div style={{ cursor: 'pointer' }} onClick={toggleMenu}>
+            ☰
+          </div>
+          {isMenuOpen && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                marginTop: '16px',
+                backgroundColor: '#fff',
+                width: '100%',
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+                padding: '16px',
+              }}
+            >
+              {children.map((child) => (
+                <div key={child.id} style={{ position: 'relative' }}>
+                  {child.type === 'span' && <Span id={child.id} content={child.content} />}
+                  {child.type === 'button' && <Button id={child.id} content={child.content} />}
+                  <button
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      border: 'none',
+                      background: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleRemoveElement(child.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
             </div>
-          ))}
-      </div>
+          )}
+        </>
+      )}
 
-      {/* Mobile Menu Toggle */}
-      <button
-        style={{
-          display: 'none',
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          padding: '8px',
-          backgroundColor: '#007BFF',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-        onClick={toggleMobileMenu}
-      >
-        ☰
-      </button>
+      {/* Standard Mode */}
+      {!isCompact && (
+        <>
+          <ul style={{ display: 'flex', listStyle: 'none', gap: '16px', padding: 0, margin: 0 }}>
+            {children
+              .filter((child) => child?.type === 'span')
+              .map((child) => (
+                <li key={child.id} style={{ position: 'relative' }}>
+                  <Span id={child.id} content={child.content} />
+                  <button
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      border: 'none',
+                      background: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleRemoveElement(child.id)}
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+          </ul>
 
-      {isOverCurrent && canDrop && <div className="drop-indicator">Drop here</div>}
+          <div style={{ display: 'flex', gap: '16px' }}>
+            {children
+              .filter((child) => child?.type === 'button')
+              .map((child) => (
+                <div key={child.id} style={{ position: 'relative' }}>
+                  <Button id={child.id} content={child.content} />
+                  <button
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      border: 'none',
+                      background: 'red',
+                      color: 'white',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleRemoveElement(child.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+          </div>
+        </>
+      )}
     </nav>
   );
 };

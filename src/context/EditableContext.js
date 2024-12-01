@@ -34,21 +34,25 @@ export const EditableProvider = ({ children }) => {
       parentId: parentId || null,
       content: type === 'paragraph' ? 'New Paragraph' : null,
       structure: structure || null,
+      configuration: structure || null, // Include configuration for proper rendering
     };
   
+    // Create children based on structure
     if (structure && structureConfigurations[structure]) {
-      // Add structured element with predefined children
       const children = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
         content: child.content || '',
         styles: child.styles || {},
-        parentId: newId,
+        parentId: newId, // Set the parentId for each child
       }));
   
       baseElement.children = children.map((child) => child.id);
+  
+      // Add base element and its children to the state
       setElements((prev) => [...prev, baseElement, ...children]);
     } else {
+      // Add only the base element if no structure
       setElements((prev) => [...prev, baseElement]);
     }
   
@@ -56,7 +60,7 @@ export const EditableProvider = ({ children }) => {
     return newId;
   };
   
-  
+
   const handleRemoveElement = (id) => {
     setElements((prevElements) => {
       const updatedElements = removeElementById(id, prevElements);
@@ -64,7 +68,7 @@ export const EditableProvider = ({ children }) => {
       return updatedElements;
     });
   };
-  
+
 
   const updateContent = (id, content) => {
     setElements((prev) =>
@@ -110,6 +114,7 @@ export const EditableProvider = ({ children }) => {
         findElementById,
         buildHierarchy,
         handleRemoveElement,
+        saveToLocalStorage,
       }}
     >
       {children}

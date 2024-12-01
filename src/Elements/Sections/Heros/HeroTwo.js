@@ -1,16 +1,19 @@
-import React, { useContext } from 'react';
-import { EditableContext } from '../../../context/EditableContext';
+import React from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 
-const HeroTwo = ({ uniqueId, children }) => {
-  const { findElementById, elements } = useContext(EditableContext);
+const HeroTwo = ({ children }) => {
+  // Dynamically find child elements by type
+  const title = children?.find((child) => child.type === 'span' && child.content?.includes('Hero Title'));
+  const subtitle = children?.find((child) => child.type === 'span' && child.content?.includes('Hero Subtitle'));
+  const button = children?.find((child) => child.type === 'button');
 
-  // Find relevant child elements
-  const title = children?.find((child) => child.id === `${uniqueId}-hero-title`);
-  const subtitle = children?.find((child) => child.id === `${uniqueId}-hero-subtitle`);
-  const button = children?.find((child) => child.id === `${uniqueId}-hero-button`);
-
+  // Display warnings if critical children are missing
+  if (!title || !subtitle || !button) {
+    console.warn(`HeroTwo is missing required children:`, { title, subtitle, button });
+    return <div style={{ color: 'red' }}>Incomplete Hero Section</div>;
+  }
+  
   return (
     <section
       style={{

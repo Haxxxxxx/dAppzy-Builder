@@ -41,7 +41,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         backgroundColor: '#ffffff',
         flexWrap: 'wrap',
         position: 'relative',
-        border: isOverCurrent ? '2px solid blue' : '1px solid transparent',
+        borderBottom: isOverCurrent ? '2px solid blue' : '1px solid transparent',
         borderRadius: '4px',
       }}
     >
@@ -250,7 +250,6 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         </>
       )}
 
-      {isOverCurrent && canDrop && <div className="drop-indicator">Drop here</div>}
     </nav>
   );
 };
