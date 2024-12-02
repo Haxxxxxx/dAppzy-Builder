@@ -8,7 +8,7 @@ import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 import HeroSelectionModal from '../../utils/SectionQuickAdd/HeroSelectionModal'; // Import the modal component
 
 const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
-  const { addNewElement, setElements, elements, findElementById } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -58,6 +58,10 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
 
+  const handleRemove = () => {
+    handleRemoveElement(id);
+  };
+
   const handleHeroSelection = (heroType) => {
     closeModal();
   
@@ -83,7 +87,6 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
     // Optionally log for debugging
     console.log(`Added hero section of type '${heroType}' at the same level as navbar with ID '${id}'.`);
   };
-  
 
   const descriptions = {
     twoColumn: 'A two-column navbar with logo and links.',
@@ -147,14 +150,40 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
   }
 
   return (
-    <>
-      <div
-        ref={drag}
-        style={{ cursor: 'pointer', border: isDragging ? '1px dashed #000' : 'none' }}
-        onClick={openModal} // Open modal on click
+    <div
+      ref={drag}
+      style={{
+        position: 'relative',
+        cursor: 'pointer',
+        border: isDragging ? '1px dashed #000' : 'none',
+        marginBottom: '16px',
+        padding: '8px',
+        backgroundColor: '#f9f9f9',
+        borderRadius: '8px',
+      }}
+      onClick={openModal} // Open modal on click
+
+    >
+      {/* Render the Navbar Component */}
+      {NavbarComponent}
+
+      {/* Remove Button */}
+      <button
+        onClick={handleRemove}
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          background: 'red',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        }}
       >
-        {NavbarComponent}
-      </div>
+        ✕
+      </button>
+
       {isModalOpen && (
         <HeroSelectionModal
           isOpen={isModalOpen}
@@ -162,7 +191,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
           onHeroSelect={handleHeroSelection}
         />
       )}
-    </>
+    </div>
   );
 };
 

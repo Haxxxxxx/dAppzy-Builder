@@ -36,30 +36,26 @@ export const EditableProvider = ({ children }) => {
       structure: structure || null,
       configuration: structure || null, // Include configuration for proper rendering
     };
-  
-    // Create children based on structure
+
     if (structure && structureConfigurations[structure]) {
       const children = structureConfigurations[structure].children.map((child) => ({
-        id: generateUniqueId(child.type),
+        id: generateUniqueId(child.type), // Ensure unique ID for each child
         type: child.type,
         content: child.content || '',
         styles: child.styles || {},
         parentId: newId, // Set the parentId for each child
       }));
-  
+
       baseElement.children = children.map((child) => child.id);
-  
-      // Add base element and its children to the state
+
       setElements((prev) => [...prev, baseElement, ...children]);
     } else {
-      // Add only the base element if no structure
       setElements((prev) => [...prev, baseElement]);
     }
-  
+
     console.log('Added new element:', baseElement);
     return newId;
   };
-  
 
   const handleRemoveElement = (id) => {
     setElements((prevElements) => {
@@ -69,13 +65,12 @@ export const EditableProvider = ({ children }) => {
     });
   };
 
-
   const updateContent = (id, content) => {
     setElements((prev) =>
       prev.map((el) => (el.id === id ? { ...el, content } : el))
     );
   };
-
+  
   const updateStyles = (id, newStyles) => {
     setElements((prev) =>
       prev.map((el) => (el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el))
@@ -92,6 +87,22 @@ export const EditableProvider = ({ children }) => {
 
   const loadSectionFromLocalStorage = (sectionId) => {
     return loadFromLocalStorage(`section-${sectionId}`);
+  };
+
+  const updateConfiguration = (id, key, value) => {
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === id
+          ? {
+              ...el,
+              configuration: {
+                ...el.configuration,
+                [key]: value,
+              },
+            }
+          : el
+      )
+    );
   };
 
   useEffect(() => {
@@ -115,6 +126,7 @@ export const EditableProvider = ({ children }) => {
         buildHierarchy,
         handleRemoveElement,
         saveToLocalStorage,
+        updateConfiguration,
       }}
     >
       {children}

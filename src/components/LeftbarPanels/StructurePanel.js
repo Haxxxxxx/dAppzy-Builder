@@ -8,7 +8,7 @@ const StructurePanel = () => {
   // Recursive function to render structure
   const renderStructure = (elements) => {
     return elements
-      .filter((element) => element && element.type) // Ensure the element is valid
+      .filter((element) => element) // Ensure the element is valid
       .map((element) => (
         <div
           key={element.id}

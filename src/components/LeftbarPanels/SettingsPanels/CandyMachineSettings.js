@@ -1,55 +1,68 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const CandyMachineSettings = () => {
-  const { updateContent, selectedElement } = useContext(EditableContext);
+  const { updateContent, selectedElement, elements, findElementById } = useContext(EditableContext);
   const [localSettings, setLocalSettings] = useState({
     title: '',
     description: '',
-    timer: null,
+    timer: undefined,
     remaining: '',
     price: '',
     quantity: '',
-    logo: '',
-    rareItems: [],
-    documentItems: [],
     blockchain: 'Ethereum', // Default blockchain
   });
 
   const availableBlockchains = ['Ethereum', 'Solana', 'Polygon', 'Binance Smart Chain'];
 
+  // Initialize settings only when `selectedElement` changes
+  useEffect(() => {
+    if (selectedElement) {
+      const elementData = findElementById(selectedElement.id, elements);
+      setLocalSettings({
+        title: elementData?.title || '',
+        description: elementData?.description || '',
+        timer: elementData?.timer ? new Date(elementData.timer) : undefined,
+        remaining: elementData?.remaining || '',
+        price: elementData?.price || '',
+        quantity: elementData?.quantity || '',
+        blockchain: elementData?.blockchain || 'Ethereum',
+      });
+    }
+  }, [selectedElement]); // Only depend on `selectedElement`
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Update local state immediately
     setLocalSettings((prev) => ({ ...prev, [name]: value }));
 
     if (selectedElement) {
-      updateContent(`${selectedElement.id}-${name}`, value || '');
+      // Find the child element to update
+      const childElement = elements.find(
+        (el) => el.parentId === selectedElement.id && el.type === name
+      );
+
+      if (childElement) {
+        // Update the content in the global state
+        updateContent(childElement.id, value);
+      }
     }
   };
 
   const handleDateChange = (date) => {
     setLocalSettings((prev) => ({ ...prev, timer: date }));
+
     if (selectedElement) {
-      updateContent(`${selectedElement.id}-timer`, date?.toISOString() || '');
-    }
-  };
+      const childElement = elements.find(
+        (el) => el.parentId === selectedElement.id && el.type === 'timer'
+      );
 
-  const handleImageChange = (e, type) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setLocalSettings((prev) => ({ ...prev, [type]: reader.result }));
-
-      if (selectedElement) {
-        updateContent(`${selectedElement.id}-${type}`, reader.result);
+      if (childElement) {
+        updateContent(childElement.id, date?.toISOString());
       }
-    };
-
-    if (file) {
-      reader.readAsDataURL(file);
     }
   };
 
@@ -58,7 +71,13 @@ const CandyMachineSettings = () => {
     setLocalSettings((prev) => ({ ...prev, blockchain }));
 
     if (selectedElement) {
-      updateContent(`${selectedElement.id}-blockchain`, blockchain);
+      const childElement = elements.find(
+        (el) => el.parentId === selectedElement.id && el.type === 'blockchain'
+      );
+
+      if (childElement) {
+        updateContent(childElement.id, blockchain);
+      }
     }
   };
 
@@ -115,13 +134,6 @@ const CandyMachineSettings = () => {
         onChange={handleInputChange}
         placeholder="Enter quantity"
       />
-      <label htmlFor="logo">Logo:</label>
-      <input
-        type="file"
-        name="logo"
-        onChange={(e) => handleImageChange(e, 'logo')}
-      />
-
       <label htmlFor="blockchain">Select Blockchain:</label>
       <select
         name="blockchain"
@@ -134,8 +146,6 @@ const CandyMachineSettings = () => {
           </option>
         ))}
       </select>
-
-      {/* Other settings like rare items and document items can go here */}
     </div>
   );
 };

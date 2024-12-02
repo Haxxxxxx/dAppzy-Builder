@@ -7,7 +7,7 @@ import { renderElement } from '../utils/RenderUtils';
 import TableFormatModal from '../utils/TableFormatModal';
 
 const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300 }) => {
-  const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById } = useContext(EditableContext);
+  const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById, selectedElement } = useContext(EditableContext);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [dropZoneIndex, setDropZoneIndex] = useState(null);
@@ -135,7 +135,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
       saveToLocalStorage(`section-${sectionId}`, hierarchy);
     }
   };
-  
+
   return (
     <div
       ref={contentRef}

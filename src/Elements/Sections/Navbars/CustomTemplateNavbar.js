@@ -1,13 +1,12 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import useElementDrop from '../../../utils/useElementDrop';
-import { EditableContext } from '../../../context/EditableContext';
+import RemovableWrapper from '../../../utils/RemovableWrapper';
 
 const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem }) => {
   const navRef = useRef(null);
-  const { handleRemoveElement } = useContext(EditableContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
 
@@ -17,14 +16,12 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
     onDropItem,
   });
 
-  // Adjust compact mode based on contentListWidth
   useEffect(() => {
     if (typeof contentListWidth === 'number' && !isNaN(contentListWidth)) {
       setIsCompact(contentListWidth < 768); // Adjust the breakpoint as needed
     }
   }, [contentListWidth]);
 
-  // Toggle menu visibility in compact mode
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   return (
@@ -50,46 +47,16 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <div key={child.id} style={{ position: 'relative' }}>
+            <RemovableWrapper key={child.id} id={child.id}>
               <Image id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
-              <button
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  border: 'none',
-                  background: 'red',
-                  color: 'white',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                }}
-                onClick={() => handleRemoveElement(child.id)}
-              >
-                ✕
-              </button>
-            </div>
+            </RemovableWrapper>
           ))}
         {children
           .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
           .map((child) => (
-            <div key={child.id} style={{ marginLeft: '8px', position: 'relative' }}>
+            <RemovableWrapper key={child.id} id={child.id}>
               <Span id={child.id} content={child.content} styles={{ fontSize: '1.5rem', cursor: 'pointer' }} />
-              <button
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  border: 'none',
-                  background: 'red',
-                  color: 'white',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                }}
-                onClick={() => handleRemoveElement(child.id)}
-              >
-                ✕
-              </button>
-            </div>
+            </RemovableWrapper>
           ))}
       </div>
 
@@ -130,29 +97,14 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
           {children
             .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
             .map((child) => (
-              <div key={child.id} style={{ position: 'relative' }}>
+              <RemovableWrapper key={child.id} id={child.id}>
                 <Span id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
-                <button
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    border: 'none',
-                    background: 'red',
-                    color: 'white',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => handleRemoveElement(child.id)}
-                >
-                  ✕
-                </button>
-              </div>
+              </RemovableWrapper>
             ))}
           {children
             .filter((child) => child?.type === 'button')
             .map((child) => (
-              <div key={child.id} style={{ position: 'relative' }}>
+              <RemovableWrapper key={child.id} id={child.id}>
                 <Button
                   id={child.id}
                   content={child.content}
@@ -165,22 +117,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
                     color: child.styles?.color || '#000',
                   }}
                 />
-                <button
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    border: 'none',
-                    background: 'red',
-                    color: 'white',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => handleRemoveElement(child.id)}
-                >
-                  ✕
-                </button>
-              </div>
+              </RemovableWrapper>
             ))}
         </div>
       )}
@@ -192,24 +129,9 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
             {children
               .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
               .map((child) => (
-                <div key={child.id} style={{ position: 'relative' }}>
+                <RemovableWrapper key={child.id} id={child.id}>
                   <Span id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
-                  <button
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      border: 'none',
-                      background: 'red',
-                      color: 'white',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleRemoveElement(child.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
+                </RemovableWrapper>
               ))}
           </div>
 
@@ -217,7 +139,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
             {children
               .filter((child) => child?.type === 'button')
               .map((child) => (
-                <div key={child.id} style={{ position: 'relative' }}>
+                <RemovableWrapper key={child.id} id={child.id}>
                   <Button
                     id={child.id}
                     content={child.content}
@@ -229,27 +151,11 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
                       color: child.styles?.color || '#fff',
                     }}
                   />
-                  <button
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      border: 'none',
-                      background: 'red',
-                      color: 'white',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleRemoveElement(child.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
+                </RemovableWrapper>
               ))}
           </div>
         </>
       )}
-
     </nav>
   );
 };

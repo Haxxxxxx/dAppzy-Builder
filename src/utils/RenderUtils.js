@@ -44,9 +44,11 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     return null;
   }
 
+  // Resolve children
   const resolvedChildren = Array.isArray(children)
     ? children.map((childId) => elements.find((el) => el.id === childId))
     : [];
+
 
   // Warn for missing children in `hero`
   if (type === 'hero') {
@@ -54,16 +56,11 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     const hasRequiredChildren = requiredChildren.every((childType) =>
       resolvedChildren.some((child) => child?.type === childType)
     );
-  
-    if (!hasRequiredChildren) {
-      console.warn(`Hero with ID ${id} is missing required children:`, { requiredChildren, resolvedChildren });
-      return <div style={{ color: 'red' }}>Incomplete Hero Section</div>; // Render fallback and stop further rendering
-    }
   }
-  
+
 
   // Handle missing configuration for `navbar` and `hero`
-  if ((type === 'navbar' || type === 'hero') && !configuration) {
+  if ((type === 'navbar' || type === 'hero'|| type === 'mintingSection') && !configuration) {
     if (!warnedElements.has(id)) {
       console.warn(`${type.charAt(0).toUpperCase() + type.slice(1)} with ID ${id} is missing a configuration.`);
       warnedElements.add(id);
@@ -163,13 +160,12 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
       <DraggableMintingSection
         id={id}
         configuration={configuration}
-        elements={elements} // Ensure this is passed correctly
+        key={id}
+        elements={elements}
         setElements={setElements}
         setSelectedElement={setSelectedElement}
       />
-
     ),
-
     date: <DateComponent id={id} key={id} styles={element.styles} />
   };
 

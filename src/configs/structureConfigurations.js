@@ -98,20 +98,24 @@ export const structureConfigurations = {
       { type: 'span', content: 'CompanyName @ 202X. All rights reserved.', styles: { fontSize: '0.875rem' } },
     ],
   },
-  mintingSection: {
+  mintingSection :{
     children: [
-      { type: 'image', content: 'logo-image-url' },
-      { type: 'span', content: 'Mint {Collection Name}' },
-      { type: 'span', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.' },
-      { type: 'span', content: '17d 5h 38m 34s' },
-      { type: 'span', content: '1000/1000' },
-      { type: 'span', content: '1.5 SOL' },
-      { type: 'span', content: '2' },
-      { type: 'image', content: 'rare-item-1-image-url' },
+      { type: 'image', content: 'logo-image-url' }, // Logo
+      { type: 'title', content: 'Mint {Collection Name}' }, // Title
+      { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
+      { type: 'timer', content: '17d 5h 38m 34s' }, // Timer
+      { type: 'remaining', content: '1000/1000', label: 'Remaining' }, // Remaining
+      { type: 'value', content: '1.5', label: 'Price' }, // Price Value
+      { type: 'currency', content: 'SOL' }, // Currency
+      { type: 'quantity', content: '2', label: 'Quantity' }, // Quantity Value
+      { type: 'price', content: '3 SOL', label: 'Total Price' }, // Total Price
+      { type: 'span', content: 'Rarest Items' }, // Rarest Items 
+      { type: 'span', content: 'Document Items' }, // Document Items 
+      { type: 'image', content: 'rare-item-1-image-url' }, // Rare Items
       { type: 'image', content: 'rare-item-2-image-url' },
       { type: 'image', content: 'rare-item-3-image-url' },
       { type: 'image', content: 'rare-item-4-image-url' },
-      { type: 'image', content: 'document-item-1-image-url' },
+      { type: 'image', content: 'document-item-1-image-url' }, // Document Items
       { type: 'image', content: 'document-item-2-image-url' },
       { type: 'image', content: 'document-item-3-image-url' },
     ],

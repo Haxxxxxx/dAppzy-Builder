@@ -3,11 +3,10 @@ import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import useElementDrop from '../../../utils/useElementDrop';
-import { EditableContext } from '../../../context/EditableContext';
+import RemovableWrapper from '../../../utils/RemovableWrapper';
 
 const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) => {
   const navRef = useRef(null);
-  const { handleRemoveElement } = useContext(EditableContext);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -46,28 +45,13 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <div key={child.id} style={{ position: 'relative' }}>
+            <RemovableWrapper key={child.id} id={child.id}>
               <Image id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
-              <button
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  border: 'none',
-                  background: 'red',
-                  color: 'white',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                }}
-                onClick={() => handleRemoveElement(child.id)}
-              >
-                ✕
-              </button>
-            </div>
+            </RemovableWrapper>
           ))}
       </div>
 
-      {/* Compact Mode */}
+      {/* Compact Menu */}
       {isCompact && (
         <>
           <div style={{ cursor: 'pointer' }} onClick={toggleMenu}>
@@ -90,25 +74,10 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
               }}
             >
               {children.map((child) => (
-                <div key={child.id} style={{ position: 'relative' }}>
+                <RemovableWrapper key={child.id} id={child.id}>
                   {child.type === 'span' && <Span id={child.id} content={child.content} />}
                   {child.type === 'button' && <Button id={child.id} content={child.content} />}
-                  <button
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      border: 'none',
-                      background: 'red',
-                      color: 'white',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleRemoveElement(child.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
+                </RemovableWrapper>
               ))}
             </div>
           )}
@@ -122,24 +91,9 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <li key={child.id} style={{ position: 'relative' }}>
+                <RemovableWrapper key={child.id} id={child.id}>
                   <Span id={child.id} content={child.content} />
-                  <button
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      border: 'none',
-                      background: 'red',
-                      color: 'white',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleRemoveElement(child.id)}
-                  >
-                    ✕
-                  </button>
-                </li>
+                </RemovableWrapper>
               ))}
           </ul>
 
@@ -147,24 +101,9 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
             {children
               .filter((child) => child?.type === 'button')
               .map((child) => (
-                <div key={child.id} style={{ position: 'relative' }}>
+                <RemovableWrapper key={child.id} id={child.id}>
                   <Button id={child.id} content={child.content} />
-                  <button
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      border: 'none',
-                      background: 'red',
-                      color: 'white',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleRemoveElement(child.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
+                </RemovableWrapper>
               ))}
           </div>
         </>

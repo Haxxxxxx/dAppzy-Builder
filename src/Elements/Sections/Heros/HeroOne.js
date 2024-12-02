@@ -1,26 +1,62 @@
-import React, { useContext } from 'react';
-import { EditableContext } from '../../../context/EditableContext';
+import React from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import Image from '../../Media/Image';
+import RemovableWrapper from '../../../utils/RemovableWrapper';
 
 const HeroOne = ({ uniqueId, children }) => {
-  const backgroundImage = children.find((child) => child.type === 'image');
-  const heroTitle = children.find((child) => child.type === 'span' && child.content === 'Welcome to Our Website');
-  const heroSubtitle = children.find((child) => child.type === 'span' && child.content === 'Building a better future together.');
-  const heroButton = children.find((child) => child.type === 'button');
+  // Find children or set defaults
+  const backgroundImage = children.find((child) => child.type === 'image') || {
+    id: `placeholder-image-${uniqueId}`,
+    content: '/placeholder-image.png',
+  };
 
-  if (!backgroundImage || !heroTitle || !heroSubtitle || !heroButton) {
-    console.warn(`HeroOne component with ID ${uniqueId} is missing critical children.`, { backgroundImage, heroTitle, heroSubtitle, heroButton });
-    return <div style={{ color: 'red' }}>Incomplete Hero Section</div>; // Display fallback
-  }
+  const heroTitle = children.find((child) => child.type === 'span' && child.content === 'Welcome to Our Website') || {
+    id: `placeholder-title-${uniqueId}`,
+    content: 'Welcome to Our Website',
+  };
+
+  const heroSubtitle = children.find((child) => child.type === 'span' && child.content === 'Building a better future together.') || {
+    id: `placeholder-subtitle-${uniqueId}`,
+    content: 'Building a better future together.',
+  };
+
+  const heroButton = children.find((child) => child.type === 'button') || {
+    id: `placeholder-button-${uniqueId}`,
+    content: 'Learn More',
+  };
 
   return (
-    <section style={{ backgroundColor: '#282c34', color: '#ffffff', padding: '40px', textAlign: 'center', display:'flex', alignItems:'center',flexDirection:'column' }}>
-      {backgroundImage && <Image id={backgroundImage.id} content={backgroundImage.content} />}
-      {heroTitle && <Span id={heroTitle.id} content={heroTitle.content} />}
-      {heroSubtitle && <Span id={heroSubtitle.id} content={heroSubtitle.content} />}
-      {heroButton && <Button id={heroButton.id} content={heroButton.content} />}
+    <section
+      style={{
+        backgroundColor: '#282c34',
+        color: '#ffffff',
+        padding: '40px',
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Background Image */}
+      <RemovableWrapper id={backgroundImage.id}>
+        <Image id={backgroundImage.id} content={backgroundImage.content} />
+      </RemovableWrapper>
+
+      {/* Hero Title */}
+      <RemovableWrapper id={heroTitle.id}>
+        <Span id={heroTitle.id} content={heroTitle.content} />
+      </RemovableWrapper>
+
+      {/* Hero Subtitle */}
+      <RemovableWrapper id={heroSubtitle.id}>
+        <Span id={heroSubtitle.id} content={heroSubtitle.content} />
+      </RemovableWrapper>
+
+      {/* Hero Button */}
+      <RemovableWrapper id={heroButton.id}>
+        <Button id={heroButton.id} content={heroButton.content} />
+      </RemovableWrapper>
     </section>
   );
 };

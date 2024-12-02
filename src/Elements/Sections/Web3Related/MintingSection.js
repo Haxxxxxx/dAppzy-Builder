@@ -1,30 +1,58 @@
-import React from 'react';
+import React, { useRef, useContext, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
-import Heading from '../../Texts/Heading';
-import Paragraph from '../../Texts/Paragraph';
 import Button from '../../Interact/Button';
 import DateComponent from '../../Interact/DateComponent';
+import RemovableWrapper from '../../../utils/RemovableWrapper';
+import useElementDrop from '../../../utils/useElementDrop';
+import { EditableContext } from '../../../context/EditableContext';
 
-const MintingSection = ({ uniqueId, children = [], setSelectedElement }) => {
+const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem }) => {
+  const sectionRef = useRef(null);
+  const { isOverCurrent, canDrop, drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: sectionRef,
+    onDropItem,
+  });
+  const { elements } = useContext(EditableContext); // Access updated content
+
+  // Helper function to get child by type
+  const getChildByType = (type) => children.find((child) => child.type === type);
+  const getChildrenByType = (type) => children.filter((child) => child.type === type);
+  const titleContent = elements?.find(el => el.id === `${uniqueId}-4`)?.content || 'Default Collection Title'; // Fallback
+
+  // Extract specific children
+  const logo = getChildByType('image'); // Logo is the first image
+  const title = elements.find(
+    (el) => el.parentId === uniqueId && el.type === 'title'
+  );
+    const description = children.find((child) => child.type === 'description'); // Description
+  const timer = getChildByType('timer');
+  const remaining = getChildByType('remaining');
+  const value = getChildByType('value');
+  const currency = getChildByType('currency');
+  const quantity = getChildByType('quantity');
+  const rareItemsTitle = children.find((child) => child.type === 'span' && child.id.includes('-12'));
+  const docItemsTitle = children.find((child) => child.type === 'span' && child.id.includes('-13'));
+  const totalPrice = getChildByType('price');
+  const rareItems = getChildrenByType('image').slice(1, 5); // Rare items
+  const documentItems = getChildrenByType('image').slice(5); // Document items
+
   const handleClick = () => {
     console.log("Selected Candy Machine Element:", uniqueId);
     setSelectedElement({ id: uniqueId, type: 'candyMachine' });
   };
 
-  // Safely access children with fallbacks
-  const logo = children.find((child) => child?.id === `${uniqueId}-logo`) || null;
-  const title = children.find((child) => child?.id === `${uniqueId}-title`) || {};
-  const description = children.find((child) => child?.id === `${uniqueId}-description`) || {};
-  const timer = children.find((child) => child?.id === `${uniqueId}-timer`) || {};
-  const remaining = children.find((child) => child?.id === `${uniqueId}-remaining`) || {};
-  const price = children.find((child) => child?.id === `${uniqueId}-price`) || {};
-  const quantity = children.find((child) => child?.id === `${uniqueId}-quantity`) || {};
-  const rareItems = children.filter((child) => child?.id?.includes('-rare-item')) || [];
-  const documentItems = children.filter((child) => child?.id?.includes('-document-item')) || [];
+  useEffect(() => {
+    console.log('Elements state:', elements);
+  }, [elements]);
 
   return (
     <section
+      ref={(node) => {
+        sectionRef.current = node;
+        drop(node);
+      }}
       style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -33,10 +61,12 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement }) => {
         backgroundColor: '#14141D',
         color: '#fff',
         borderRadius: '12px',
-        alignItems:'center',
+        alignItems: 'center',
+        border: isOverCurrent ? '2px dashed blue' : 'none',
       }}
       onClick={handleClick}
     >
+      {/* Left Section */}
       <div
         style={{
           display: 'flex',
@@ -47,63 +77,61 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement }) => {
           padding: '1.5rem',
         }}
       >
+        {/* Logo */}
         {logo && (
-          <div
-            style={{
-              position: 'relative',
-              width: '200px',
-              height: '200px',
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
-            <Image id={logo.id} src={logo.content} styles={{ width: '160px', height: '160px', borderRadius: '8px' }} />
-          </div>
+          <RemovableWrapper id={logo.id}>
+            <div
+              style={{
+                position: 'relative',
+                width: '200px',
+                height: '200px',
+                borderRadius: '50%',
+                backgroundColor: '#fff',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <Image id={logo.id} src={elements.find(el => el.id === `${uniqueId}-3`)?.content || logo.content} styles={{ width: '160px', height: '160px', borderRadius: '8px' }} />
+            </div>
+          </RemovableWrapper>
         )}
-
-        <Span
-          id={`${uniqueId}-mint-starting`}
-          content="Mint starting in..."
-          styles={{ fontSize: '1rem', color: '#ccc', marginBottom: '0.5rem' }}
-        />
+        {/* Timer */}
         {timer && (
-          <DateComponent
-            id={timer.id}
-            styles={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '1rem' }}
-          />
+          <RemovableWrapper id={timer.id}>
+            <DateComponent
+              id={timer.id}
+              content={`Mint starting in... ${elements.find(el => el.id === `${uniqueId}-6`)?.content || timer.content}`}
+              styles={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem' }}
+            />
+          </RemovableWrapper>
         )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', width: '70%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        {/* Details */}
+        <div style={{display:'flex', flexDirection:'column', alignItems:'center', margin: '1rem 0', gap:'1vh', }}>
+          {remaining && (
             <Span
-              id={`${uniqueId}-remaining-title`}
-              content="Remaining"
-              styles={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+              id={remaining.id}
+              content={`Remaining: ${elements.find(el => el.id === `${uniqueId}-7`)?.content || remaining.content}`}
+              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
             />
-            {remaining && <Span id={remaining.id} content={remaining.content} styles={{ fontSize: '1rem', color: '#ccc' }} />}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          )}
+          {value && currency && (
             <Span
-              id={`${uniqueId}-price-title`}
-              content="Price"
-              styles={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+              id={`${value.id}-${currency.id}`}
+              content={`Price: ${elements.find(el => el.id === `${uniqueId}-8`)?.content || value.content} ${currency.content}`}
+              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
             />
-            {price && <Span id={price.id} content={price.content} styles={{ fontSize: '1rem', color: '#ccc' }} />}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          )}
+          {quantity && totalPrice && (
             <Span
-              id={`${uniqueId}-quantity-title`}
-              content="Quantity"
-              styles={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+              id={quantity.id}
+              content={`Quantity: ${elements.find(el => el.id === `${uniqueId}-10`)?.content || quantity.content} (${totalPrice.content})`}
+              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
             />
-            {quantity && <Span id={quantity.id} content={quantity.content} styles={{ fontSize: '1rem', color: '#ccc' }} />}
-          </div>
+          )}
         </div>
-
+        {/* Mint Button */}
         <Button
           id={`${uniqueId}-mint-button`}
           content="Mint"
@@ -126,38 +154,48 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement }) => {
         />
       </div>
 
+      {/* Right Section */}
       <div style={{ padding: '1rem' }}>
-        {title && <Heading id={title.id} content={title.content} styles={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }} />}
+        {title && (
+          <RemovableWrapper id={title.id}>
+            <Span
+              id={title.id}
+              content={titleContent}
+              styles={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}
+            />
+          </RemovableWrapper>
+        )}
         {description && (
-          <Paragraph
-            id={description.id}
-            content={description.content}
-            styles={{ fontSize: '1rem', color: '#ccc', marginBottom: '2rem' }}
-          />
+          <RemovableWrapper id={description.id}>
+            <Span
+              id={description.id}
+              content={elements.find(el => el.id === `${uniqueId}-5`)?.content || description.content}
+              styles={{ fontSize: '1rem', color: '#ccc', marginBottom: '2rem' }}
+            />
+          </RemovableWrapper>
         )}
         <Span
-          id={`${uniqueId}-rarest-items`}
-          content="Rarest Items"
+          id={rareItemsTitle.id}
+          content={rareItemsTitle.content}
           styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
         />
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-          {rareItems.slice(0, 4).map((item) => (
-            <Image key={item.id} id={item.id} src={item.content} styles={{ width: '80px', height: '80px', borderRadius: '8px' }} />
+          {rareItems.map((item, index) => (
+            <RemovableWrapper key={index} id={item.id}>
+              <Image id={item.id} src={item.content} styles={{ width: '80px', height: '80px', borderRadius: '8px' }} />
+            </RemovableWrapper>
           ))}
         </div>
         <Span
-          id={`${uniqueId}-our-documents`}
-          content="Our Documents"
+          id={docItemsTitle.id}
+          content={docItemsTitle.content}
           styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
         />
         <div style={{ display: 'flex', gap: '1rem' }}>
-          {documentItems.map((item) => (
-            <Button
-              key={item.id}
-              id={item.id}
-              content={item.content}
-              styles={{ padding: '1rem', backgroundColor: '#1D1C2B', borderRadius: '8px', color: '#fff', textAlign: 'center', fontSize: '1rem', cursor: 'pointer' }}
-            />
+          {documentItems.map((item, index) => (
+            <RemovableWrapper key={index} id={item.id}>
+              <Image id={item.id} src={item.content} styles={{ width: '80px', height: '80px', borderRadius: '8px' }} />
+            </RemovableWrapper>
           ))}
         </div>
       </div>
