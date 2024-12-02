@@ -31,12 +31,13 @@ import Code from '../Elements/Texts/Code';
 import Pre from '../Elements/Texts/Pre';
 import Hr from '../Elements/Structure/HorizotalRule';
 import Caption from '../Elements/Structure/Caption';
-import DraggableMintingSection from '../Elements/Structure/DraggableMintingSection';
+import DraggableWeb3Elements from '../Elements/Structure/DraggableWeb3Elements';
 import DateComponent from '../Elements/Interact/DateComponent';
+import ConnectWalletButton from '../Elements/Sections/Web3Related/ConnectWalletButton';
 import { structureConfigurations } from '../configs/structureConfigurations';
 const warnedElements = new Set();
 
-export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements) => {
+export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements, handlePanelToggle) => {
   const { id, type, children, configuration } = element;
 
   if (!element || !id || !type) {
@@ -157,15 +158,18 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     hr: <Hr id={id} key={id} />,
     caption: <Caption id={id} key={id} />,
     mintingSection: (
-      <DraggableMintingSection
+      <DraggableWeb3Elements
         id={id}
         configuration={configuration}
         key={id}
         elements={elements}
         setElements={setElements}
         setSelectedElement={setSelectedElement}
+        handlePanelToggle={handlePanelToggle}
       />
     ),
+    connectWalletButton: <ConnectWalletButton id={id} key={id} content={element.content} handlePanelToggle={handlePanelToggle}/>,
+
     date: <DateComponent id={id} key={id} styles={element.styles} />
   };
 
@@ -184,5 +188,5 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     return null;
   }
 
-  return <React.Fragment key={id}>{component}</React.Fragment>;
+  return <React.Fragment key={id} >{component}</React.Fragment>;
 };

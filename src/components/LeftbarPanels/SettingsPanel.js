@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import CandyMachineSettings from './SettingsPanels/CandyMachineSettings';
+import WalletSettingsPanel from './SettingsPanels/WalletSettingsPanel';
 
 const SettingsPanel = ({ onUpdateSettings }) => {
   const { selectedElement } = useContext(EditableContext); // Access selectedElement from context
@@ -9,11 +10,29 @@ const SettingsPanel = ({ onUpdateSettings }) => {
     faviconUrl: '',
     description: '',
     author: '',
+    wallets: [
+      { name: 'Phantom', enabled: true },
+      { name: 'MetaMask', enabled: false },
+      { name: 'WalletConnect', enabled: false },
+    ],
   });
 
-  // Update settings fields based on the selectedElement type
+  // Update settings based on selectedElement type
   useEffect(() => {
-    if (!selectedElement || selectedElement.type !== 'candyMachine') {
+    if (selectedElement) {
+      if (selectedElement.type === 'connectWalletButton') {
+        setSettings(selectedElement.settings || { wallets: [] }); // Use existing settings if available
+      } else if (selectedElement.type === 'candyMachine') {
+        // Specific logic for Candy Machine
+        setSettings({
+          siteTitle: 'My Website',
+          faviconUrl: '',
+          description: '',
+          author: '',
+        });
+      }
+    } else {
+      // Default settings for general or no selection
       setSettings({
         siteTitle: 'My Website',
         faviconUrl: '',
@@ -29,12 +48,36 @@ const SettingsPanel = ({ onUpdateSettings }) => {
   };
 
   const handleSave = () => {
-    onUpdateSettings(settings);
+    if (onUpdateSettings) {
+      onUpdateSettings(settings);
+    } else {
+      console.error('onUpdateSettings is not defined');
+    }
+  };
+
+  const handleUpdateSettings = (updatedSettings) => {
+    console.log('Updated settings received:', updatedSettings); // Debugging
+    setSettings((prev) => ({ ...prev, ...updatedSettings }));
+
+    // Propagate to parent if onUpdateSettings is defined
+    if (onUpdateSettings) {
+      onUpdateSettings({ ...settings, ...updatedSettings });
+    }
   };
 
   return (
     <div className="settings-panel scrollable-panel">
-      {!selectedElement || selectedElement.type !== 'candyMachine' ? (
+      {selectedElement?.type === 'connectWalletButton' ? (
+        <WalletSettingsPanel
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+        />
+      ) : selectedElement?.type === 'candyMachine' ? (
+        <CandyMachineSettings
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+        />
+      ) : (
         <>
           <h3>Website Settings</h3>
           <div className="settings-group">
@@ -80,14 +123,6 @@ const SettingsPanel = ({ onUpdateSettings }) => {
             Save Settings
           </button>
         </>
-      ) : (
-        <CandyMachineSettings
-          settings={settings}
-          onUpdateSettings={(updatedSettings) => {
-            setSettings(updatedSettings);
-            onUpdateSettings(updatedSettings);
-          }}
-        />
       )}
     </div>
   );

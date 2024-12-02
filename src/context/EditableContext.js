@@ -35,6 +35,8 @@ export const EditableProvider = ({ children }) => {
       content: type === 'paragraph' ? 'New Paragraph' : null,
       structure: structure || null,
       configuration: structure || null, // Include configuration for proper rendering
+      settings: {}, // Ensure settings field exists
+
     };
 
     if (structure && structureConfigurations[structure]) {
@@ -98,6 +100,10 @@ export const EditableProvider = ({ children }) => {
               configuration: {
                 ...el.configuration,
                 [key]: value,
+              },
+              settings: {
+                ...el.settings,
+                [key]: value, // Ensure settings are updated
               },
             }
           : el

@@ -5,7 +5,7 @@ import { EditableContext } from '../context/EditableContext';
 import './css/Sidebar.css';
 
 const SideBar = ({ contentListWidth }) => {
-  const [viewMode, setViewMode] = useState('layout'); // 'elements' or 'layout'
+  const [viewMode, setViewMode] = useState('elements'); // 'elements' or 'layout'
   const { selectedElement } = useContext(EditableContext); // Access selectedElement from context
 
   return (

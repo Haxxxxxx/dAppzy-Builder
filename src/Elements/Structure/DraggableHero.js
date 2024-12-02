@@ -125,9 +125,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
       style={{
         position: 'relative',
         border: isDragging ? '1px dashed #000' : 'none',
-        marginBottom: '16px',
         backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
       }}
     >
       {/* Render the Hero Component */}

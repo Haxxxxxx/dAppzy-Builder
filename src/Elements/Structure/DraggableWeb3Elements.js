@@ -4,7 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 import MintingSection from '../Sections/Web3Related/MintingSection';
 import { structureConfigurations } from '../../configs/structureConfigurations';
 
-const DraggableMintingSection = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
+const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription = false, contentListWidth,handlePanelToggle}) => {
   const { addNewElement, setElements, elements, setSelectedElement, findElementById, handleRemoveElement } = useContext(EditableContext);
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -77,7 +77,6 @@ const DraggableMintingSection = ({ id, configuration, isEditing, showDescription
       style={{
         position: 'relative',
         border: isDragging ? '1px dashed #000' : 'none',
-        marginBottom: '16px',
       }}
     >
       <MintingSection 
@@ -86,6 +85,7 @@ const DraggableMintingSection = ({ id, configuration, isEditing, showDescription
         children={resolvedChildren}
         onDropItem={onDropItem}
         setSelectedElement={setSelectedElement}
+        handlePanelToggle={handlePanelToggle}
        />
       <button
         onClick={handleRemove}
@@ -106,4 +106,4 @@ const DraggableMintingSection = ({ id, configuration, isEditing, showDescription
   );
 };
 
-export default DraggableMintingSection;
+export default DraggableWeb3Elements;

@@ -6,7 +6,7 @@ import HeadingLevelSelector from '../utils/HeadingLevelSelector';
 import { renderElement } from '../utils/RenderUtils';
 import TableFormatModal from '../utils/TableFormatModal';
 
-const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300 }) => {
+const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300, handlePanelToggle }) => {
   const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById, selectedElement } = useContext(EditableContext);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [showStructureModal, setShowStructureModal] = useState(false);
@@ -42,7 +42,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
 
   const handleDrop = (item, index, parentId = null) => {
     const safeIndex = index !== null && index !== undefined ? index : 0;
-  
+
     if (item.type === 'hero') {
       // Create hero at the root level
       const heroId = addNewElement(item.type, 1, safeIndex, null, item.structure);
@@ -57,7 +57,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
       setSelectedElement({ id: newId, type: item.type });
     }
   };
-  
+
 
 
   const handleLevelSelect = (level) => {
@@ -127,7 +127,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
     saveToLocalStorage('editableElements', elements);
     saveToLocalStorage('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
-  
+
   const saveSectionToLocalStorage = (sectionId) => {
     const section = findElementById(sectionId, elements);
     if (section) {
@@ -154,24 +154,36 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
           index={0}
           onDrop={(item) => handleDrop(item, 0)}
           text="Click or Drop items here to start creating"
-          onClick={(e) => e.stopPropagation()}
-        />
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePanelToggle('sidebar'); // Open the sidebar on click
+          }} />
       )}
 
       {elements
         .filter((element) => !element.parentId)
         .map((element) => (
           <React.Fragment key={element.id}>
-            {renderElement(element, elements, contentListWidth, setSelectedElement)}
+            {renderElement(
+              element,
+              elements,
+              contentListWidth,
+              setSelectedElement,
+              setElements,
+              handlePanelToggle // Pass this down
+            )}
           </React.Fragment>
         ))}
-
-      <DropZone
-        index={elements.length}
-        onDrop={(item) => handleDrop(item, null)}
-        text="Click or Drop items here to add to the page"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {elements.length > 0 && (
+        <DropZone
+          index={elements.length}
+          onDrop={(item) => handleDrop(item, null)}
+          text="Click or Drop items here to add to the page"
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePanelToggle('sidebar'); // Open the sidebar on click
+          }} />
+      )}
 
       {showLevelSelector && (
         <HeadingLevelSelector onSelectLevel={(level) => handleLevelSelect(level)} />

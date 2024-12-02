@@ -91,6 +91,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="button" label="Button" description="A clickable button." />
           <DraggableElement type="progress" label="Progress" description="A progress bar indicator." />
           <DraggableElement type="meter" label="Meter" description="A measurement value." />
+
         </div>
       </div>
 
@@ -103,7 +104,6 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
         </div>
       </div>
       <div className="content-section">
-        <h4>Web3 Elements</h4>
         <Web3ElementPanel/>
         </div>
 

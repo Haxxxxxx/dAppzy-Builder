@@ -1,7 +1,8 @@
-import React, { useContext, useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
+import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import ConnectWalletButton
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
 
@@ -77,6 +78,9 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
                 <RemovableWrapper key={child.id} id={child.id}>
                   {child.type === 'span' && <Span id={child.id} content={child.content} />}
                   {child.type === 'button' && <Button id={child.id} content={child.content} />}
+                  {child.type === 'connectWalletButton' && (
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                  )}
                 </RemovableWrapper>
               ))}
             </div>
@@ -84,7 +88,7 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
         </>
       )}
 
-      {/* Standard View */}
+      {/* Standard Menu */}
       {!isCompact && (
         <>
           <ul style={{ display: 'flex', listStyle: 'none', gap: '16px', padding: 0, margin: 0 }}>
@@ -99,10 +103,14 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
 
           <div style={{ display: 'flex', gap: '16px' }}>
             {children
-              .filter((child) => child?.type === 'button')
+              .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
                 <RemovableWrapper key={child.id} id={child.id}>
-                  <Button id={child.id} content={child.content} />
+                  {child.type === 'connectWalletButton' ? (
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                  ) : (
+                    <Button id={child.id} content={child.content} />
+                  )}
                 </RemovableWrapper>
               ))}
           </div>

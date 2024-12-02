@@ -14,7 +14,7 @@ import MediaPanel from './components/LeftbarPanels/MediaPanel';
 import SettingsPanel from './components/LeftbarPanels/SettingsPanel';
 
 function App() {
-  const [openPanel, setOpenPanel] = useState('sidebar'); // Track which panel is open (null means no panel is open)
+  const [openPanel, setOpenPanel] = useState(''); // Track which panel is open (null means no panel is open)
   const [contentListWidth, setContentListWidth] = useState(1200); // Default width for PC
   const [pageSettings, setPageSettings] = useState({
     title: 'My Webpage',
@@ -79,7 +79,8 @@ function App() {
                 <ContentList
                   contentListWidth={contentListWidth}
                   isSideBarVisible={openPanel === 'sidebar'}
-                  leftBarWidth={40} // Width of the left bar
+                  leftBarWidth={40}
+                  handlePanelToggle={handlePanelToggle} // Add this line
                 />
               </div>
             </div>

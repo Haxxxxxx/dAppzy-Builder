@@ -67,23 +67,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
   
     // Create the hero section at the same level as the navbar
     const newHeroId = addNewElement('hero', 1, null, null, heroType); // No parentId to keep it at the top level
-  
-    // Update the state to include the new hero section
-    setElements((prevElements) => [
-      ...prevElements,
-      {
-        id: newHeroId,
-        type: 'hero',
-        styles: {},
-        level: 1, // Same level as navbar
-        children: [], // Initialize empty children
-        parentId: null,
-        content: null,
-        structure: heroType,
-        configuration: heroType,
-      },
-    ]);
-  
+    
     // Optionally log for debugging
     console.log(`Added hero section of type '${heroType}' at the same level as navbar with ID '${id}'.`);
   };
@@ -156,7 +140,6 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         position: 'relative',
         cursor: 'pointer',
         border: isDragging ? '1px dashed #000' : 'none',
-        marginBottom: '16px',
         padding: '8px',
         backgroundColor: '#f9f9f9',
         borderRadius: '8px',

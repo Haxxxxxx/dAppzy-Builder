@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
+import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import the ConnectWalletButton
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
 
@@ -102,21 +103,25 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
               </RemovableWrapper>
             ))}
           {children
-            .filter((child) => child?.type === 'button')
+            .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton') // Include ConnectWalletButton
             .map((child) => (
               <RemovableWrapper key={child.id} id={child.id}>
-                <Button
-                  id={child.id}
-                  content={child.content}
-                  styles={{
-                    ...child.styles,
-                    border: 'none',
-                    padding: '12px 20px',
-                    fontFamily: 'Roboto, sans-serif',
-                    backgroundColor: child.styles?.backgroundColor || '#ffffff',
-                    color: child.styles?.color || '#000',
-                  }}
-                />
+                {child.type === 'connectWalletButton' ? (
+                  <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                ) : (
+                  <Button
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      border: 'none',
+                      padding: '12px 20px',
+                      fontFamily: 'Roboto, sans-serif',
+                      backgroundColor: child.styles?.backgroundColor || '#ffffff',
+                      color: child.styles?.color || '#000',
+                    }}
+                  />
+                )}
               </RemovableWrapper>
             ))}
         </div>
@@ -137,20 +142,25 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
 
           <div style={{ display: 'flex', gap: '16px' }}>
             {children
-              .filter((child) => child?.type === 'button')
+              .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton') // Include ConnectWalletButton
               .map((child) => (
                 <RemovableWrapper key={child.id} id={child.id}>
-                  <Button
-                    id={child.id}
-                    content={child.content}
-                    styles={{
-                      ...child.styles,
-                      border: 'none',
-                      padding: '16px 28px',
-                      backgroundColor: child.styles?.backgroundColor || '#334155',
-                      color: child.styles?.color || '#fff',
-                    }}
-                  />
+                  {child.type === 'connectWalletButton' ? (
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} preventHeroModal={true} // Pass preventHeroModal as true
+                    />
+                  ) : (
+                    <Button
+                      id={child.id}
+                      content={child.content}
+                      styles={{
+                        ...child.styles,
+                        border: 'none',
+                        padding: '16px 28px',
+                        backgroundColor: child.styles?.backgroundColor || '#334155',
+                        color: child.styles?.color || '#fff',
+                      }}
+                    />
+                  )}
                 </RemovableWrapper>
               ))}
           </div>

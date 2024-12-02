@@ -7,7 +7,7 @@ import RemovableWrapper from '../../../utils/RemovableWrapper';
 import useElementDrop from '../../../utils/useElementDrop';
 import { EditableContext } from '../../../context/EditableContext';
 
-const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem }) => {
+const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem, handlePanelToggle }) => {
   const sectionRef = useRef(null);
   const { isOverCurrent, canDrop, drop } = useElementDrop({
     id: uniqueId,
@@ -42,6 +42,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   const handleClick = () => {
     console.log("Selected Candy Machine Element:", uniqueId);
     setSelectedElement({ id: uniqueId, type: 'candyMachine' });
+    handlePanelToggle('settings');
   };
 
   useEffect(() => {
@@ -61,7 +62,6 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
         padding: '2rem',
         backgroundColor: '#14141D',
         color: '#fff',
-        borderRadius: '12px',
         alignItems: 'center',
         border: isOverCurrent ? '2px dashed blue' : 'none',
       }}

@@ -15,7 +15,7 @@ const Web3ElementPanel = ({ contentListWidth}) => {
       <div className="content-section">
         <h4>Blockchain Elements</h4>
         <div className="bento-display-elements">
-          <DraggableElement type="walletConnect" label="Wallet Connect" description="Integrate wallet connection functionality." />
+          <DraggableElement type="connectWalletButton" label="Wallet Connect" description="Integrate wallet connection functionality." />
           <DraggableElement type="transactionButton" label="Transaction Button" description="Trigger on-chain transactions." />
           <DraggableElement type="tokenDisplay" label="Token Display" description="Display token balances or prices." />
           <DraggableElement type="nftGrid" label="NFT Grid" description="Display a collection of NFTs in a grid format." />
