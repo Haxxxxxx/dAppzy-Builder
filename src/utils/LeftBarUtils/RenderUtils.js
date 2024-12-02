@@ -61,13 +61,13 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
 
 
   // Handle missing configuration for `navbar` and `hero`
-  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection') && !configuration) {
+  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' ) && !configuration) {
     if (!warnedElements.has(id)) {
       console.warn(`${type.charAt(0).toUpperCase() + type.slice(1)} with ID ${id} is missing a configuration.`);
       warnedElements.add(id);
     }
 
-    if (setElements) {
+    if (setElements || type ==! 'footer') {
       setElements((prev) => {
         const updatedElements = prev.filter((el) => el.id !== id);
         localStorage.setItem('editableElements', JSON.stringify(updatedElements));
