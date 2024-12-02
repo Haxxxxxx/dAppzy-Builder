@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import './css/Topbar.css';
 import ReactDOMServer from 'react-dom/server';
-import { renderElement } from '../utils/RenderUtils';
+import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 
 const Topbar = ({ onExport, onResize }) => {
   const { elements, buildHierarchy } = useContext(EditableContext);

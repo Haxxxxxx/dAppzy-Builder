@@ -1,10 +1,9 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
-import SectionStructureModal from '../utils/SectionStructureModal';
-import HeadingLevelSelector from '../utils/HeadingLevelSelector';
-import { renderElement } from '../utils/RenderUtils';
-import TableFormatModal from '../utils/TableFormatModal';
+import SectionStructureModal from '../utils/SectionQuickAdd/ModalQuickAdd/SectionStructureModal';
+import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
+import TableFormatModal from '../utils/SectionQuickAdd/TableFormatModal';
 
 const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300, handlePanelToggle }) => {
   const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById, selectedElement } = useContext(EditableContext);
@@ -41,103 +40,37 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
   };
 
   
-  const handleDrop = (item, index, parentId = null) => {
-    const safeIndex = index !== null && index !== undefined ? index : 0;
-  
-    if (item.type === 'hero') {
-      // Create hero at the root level
-      const heroId = addNewElement(item.type, 1, safeIndex, null, item.structure);
-      setSelectedElement({ id: heroId, type: item.type, structure: item.structure });
-    } else if (item.type === 'navbar') {
-      // Create navbar at the root level
-      const navbarId = addNewElement(item.type, 1, safeIndex, null, item.structure);
-      setSelectedElement({ id: navbarId, type: item.type, structure: item.structure });
-    } else if (item.type === 'div' || item.type === 'section') {
-      // Add div or section directly without wrapping
-      const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-      setSelectedElement({ id: newElementId, type: item.type });
-    } else {
-      // Wrap other elements in a div if dropped in isolation
-      const divId = addNewElement('div', 1, safeIndex, parentId);
-      const newElementId = addNewElement(item.type, 1, null, divId);
-  
-      // Add the new element as a child of the wrapping div
-      setElements((prevElements) => {
-        return prevElements.map((el) =>
-          el.id === divId
-            ? { ...el, children: [...(el.children || []), newElementId] }
-            : el
-        );
-      });
-  
-      setSelectedElement({ id: newElementId, type: item.type });
-    }
-  };
-  
+const handleDrop = (item, index, parentId = null) => {
+  const safeIndex = index !== null && index !== undefined ? index : 0;
 
-
-  const handleLevelSelect = (level) => {
-    const newId = addNewElement('heading', level);
-    setSelectedElement({ id: newId, type: 'heading', level });
-    setShowLevelSelector(false);
-  };
-
-  const handleStructureSelect = (structure) => {
-    const sectionId = addNewElement('section', 1, dropZoneIndex, null, structure);
-    setSelectedElement({ id: sectionId, type: 'section', structure });
-
-    const childrenToAdd = [];
-
-    if (structure === 'title-text') {
-      const headingId = addNewElement('heading', 1, null, sectionId);
-      const paragraphId = addNewElement('paragraph', 1, null, sectionId);
-      childrenToAdd.push(headingId, paragraphId);
-    } else if (structure === 'title-image') {
-      const headingId = addNewElement('heading', 1, null, sectionId);
-      const imageId = addNewElement('image', 1, null, sectionId);
-      childrenToAdd.push(headingId, imageId);
-    } else if (structure === 'two-columns') {
-      const column1Id = addNewElement('div', 1, null, sectionId);
-      const column2Id = addNewElement('div', 1, null, sectionId);
-      childrenToAdd.push(column1Id, column2Id);
-    }
+  if (item.type === 'table') {
+    // Show the table format modal
+    setShowTableFormatModal(true);
+    setDropZoneIndex(safeIndex); // Save index for table placement
+  } else if (item.type === 'hero') {
+    const heroId = addNewElement(item.type, 1, safeIndex, null, item.structure);
+    setSelectedElement({ id: heroId, type: item.type, structure: item.structure });
+  } else if (item.type === 'navbar') {
+    const navbarId = addNewElement(item.type, 1, safeIndex, null, item.structure);
+    setSelectedElement({ id: navbarId, type: item.type, structure: item.structure });
+  } else if (item.type === 'div' || item.type === 'section' || item.type === 'form') {
+    const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
+    setSelectedElement({ id: newElementId, type: item.type });
+  } else {
+    const divId = addNewElement('div', 1, safeIndex, parentId);
+    const newElementId = addNewElement(item.type, 1, null, divId);
 
     setElements((prevElements) => {
       return prevElements.map((el) =>
-        el.id === sectionId ? { ...el, children: [...new Set([...el.children, ...childrenToAdd])] } : el
+        el.id === divId
+          ? { ...el, children: [...(el.children || []), newElementId] }
+          : el
       );
     });
 
-    setShowStructureModal(false);
-  };
-
-  const handleTableFormatSubmit = (rows, columns) => {
-    const newTableId = addNewElement('table', 1, dropZoneIndex, null);
-    const newRows = [];
-
-    for (let i = 0; i < rows; i++) {
-      const rowId = addNewElement('table-row', 1, null, newTableId);
-      const newCells = [];
-      for (let j = 0; j < columns; j++) {
-        const cellId = addNewElement('table-cell', 1, null, rowId);
-        newCells.push(cellId);
-      }
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === rowId ? { ...el, children: newCells } : el
-        )
-      );
-      newRows.push(rowId);
-    }
-
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === newTableId ? { ...el, children: newRows } : el
-      )
-    );
-
-    setSelectedElement({ id: newTableId, type: 'table' });
-  };
+    setSelectedElement({ id: newElementId, type: item.type });
+  }
+};
 
   useEffect(() => {
     saveToLocalStorage('editableElements', elements);
@@ -201,22 +134,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
           }} />
       )}
 
-      {showLevelSelector && (
-        <HeadingLevelSelector onSelectLevel={(level) => handleLevelSelect(level)} />
-      )}
-      {showStructureModal && (
-        <SectionStructureModal
-          onClose={() => setShowStructureModal(false)}
-          onSelectStructure={handleStructureSelect}
-        />
-      )}
-      {showTableFormatModal && (
-        <TableFormatModal
-          isOpen={showTableFormatModal}
-          onClose={() => setShowTableFormatModal(false)}
-          onSubmit={handleTableFormatSubmit}
-        />
-      )}
+
     </div>
   );
 };

@@ -4,11 +4,11 @@ import {
   buildHierarchy,
   findElementById,
   removeElementById,
-} from '../utils/elementUtils';
+} from '../utils/LeftBarUtils/elementUtils';
 import {
   saveToLocalStorage,
   loadFromLocalStorage,
-} from '../utils/storageUtils';
+} from '../utils/LeftBarUtils/storageUtils';
 import { structureConfigurations } from '../configs/structureConfigurations';
 
 export const EditableContext = createContext();
@@ -24,7 +24,21 @@ export const EditableProvider = ({ children }) => {
   });
 
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
-    const newId = generateUniqueId(type);
+    const existingElement = elements.find(
+      (el) => el.type === type && el.parentId === parentId && el.structure === structure
+    );
+    if (existingElement) {
+      console.warn(`Element of type ${type} already exists for parentId ${parentId}`);
+      return existingElement.id;
+    }
+  
+    let newId = generateUniqueId(type);
+  
+    while (elements.some((el) => el.id === newId)) {
+      console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
+      newId = generateUniqueId(type);
+    }
+  
     const baseElement = {
       id: newId,
       type,
@@ -32,32 +46,49 @@ export const EditableProvider = ({ children }) => {
       level,
       children: [],
       parentId: parentId || null,
-      content: type === 'paragraph' ? 'New Paragraph' : null,
+      content: (() => {
+        switch (type) {
+          case 'paragraph':
+            return 'New Paragraph';
+          case 'anchor':
+            return 'Click here';
+          case 'blockquote':
+            return 'Blockquote text...';
+          case 'code':
+            return 'Code snippet...';
+          case 'pre':
+            return 'Preformatted text...';
+          case 'list-item':
+            return 'Editable Item';
+          default:
+            return ''; // Default to an empty string
+        }
+      })(),
       structure: structure || null,
-      configuration: structure || null, // Include configuration for proper rendering
-      settings: {}, // Ensure settings field exists
-
+      configuration: structure || null,
+      settings: {},
     };
-
+  
     if (structure && structureConfigurations[structure]) {
       const children = structureConfigurations[structure].children.map((child) => ({
-        id: generateUniqueId(child.type), // Ensure unique ID for each child
+        id: generateUniqueId(child.type),
         type: child.type,
         content: child.content || '',
         styles: child.styles || {},
-        parentId: newId, // Set the parentId for each child
+        parentId: newId,
       }));
-
+  
       baseElement.children = children.map((child) => child.id);
-
+  
       setElements((prev) => [...prev, baseElement, ...children]);
     } else {
       setElements((prev) => [...prev, baseElement]);
     }
-
+  
     console.log('Added new element:', baseElement);
     return newId;
   };
+  
 
   const handleRemoveElement = (id) => {
     setElements((prevElements) => {
@@ -72,7 +103,7 @@ export const EditableProvider = ({ children }) => {
       prev.map((el) => (el.id === id ? { ...el, content } : el))
     );
   };
-  
+
   const updateStyles = (id, newStyles) => {
     setElements((prev) =>
       prev.map((el) => (el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el))
@@ -96,16 +127,16 @@ export const EditableProvider = ({ children }) => {
       prevElements.map((el) =>
         el.id === id
           ? {
-              ...el,
-              configuration: {
-                ...el.configuration,
-                [key]: value,
-              },
-              settings: {
-                ...el.settings,
-                [key]: value, // Ensure settings are updated
-              },
-            }
+            ...el,
+            configuration: {
+              ...el.configuration,
+              [key]: value,
+            },
+            settings: {
+              ...el.settings,
+              [key]: value, // Ensure settings are updated
+            },
+          }
           : el
       )
     );

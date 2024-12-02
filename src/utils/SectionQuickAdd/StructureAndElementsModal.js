@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import SectionStructureModal from '../SectionStructureModal';
-import QuickAddElementModal from '../QuickAddElementModal';
+import SectionStructureModal from './ModalQuickAdd/SectionStructureModal';
+import QuickAddElementModal from './ModalQuickAdd/QuickAddElementModal';
 import './StructureAndElementsModal.css';
 
 const StructureAndElementsModal = ({ isOpen, onClose, onSelectStructure, onAddElement }) => {

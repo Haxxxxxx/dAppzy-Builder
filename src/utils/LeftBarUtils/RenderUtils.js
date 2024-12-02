@@ -1,40 +1,40 @@
 // src/utils/RenderUtils.js
 import React from 'react';
-import Paragraph from '../Elements/Texts/Paragraph';
-import Heading from '../Elements/Texts/Heading';
-import Section from '../Elements/Structure/Section';
-import Div from '../Elements/Structure/Div';
-import Button from '../Elements/Interact/Button';
-import Image from '../Elements/Media/Image';
-import Form from '../Elements/Interact/Form';
-import Span from '../Elements/Texts/Span';
-import Input from '../Elements/Interact/Input';
-import { List, ListItem } from '../Elements/Texts/List';
-import { Table, TableRow, TableCell } from '../Elements/Interact/Table';
-import DraggableNavbar from '../Elements/Structure/DraggableNavbar';
-import DraggableFooter from '../Elements/Structure/DraggableFooter';
-import DraggableHero from '../Elements/Structure/DraggableHero';
-import DraggableCTA from '../Elements/Structure/DraggableCTA';
-import Anchor from '../Elements/Interact/Anchor';
-import Textarea from '../Elements/Interact/Textarea';
-import Select from '../Elements/Interact/Select';
-import Video from '../Elements/Media/Video';
-import Audio from '../Elements/Media/Audio';
-import Iframe from '../Elements/Media/Iframe';
-import Label from '../Elements/Interact/Label';
-import Fieldset from '../Elements/Interact/FieldSet';
-import Legend from '../Elements/Texts/Legend';
-import Progress from '../Elements/Interact/Progress';
-import Meter from '../Elements/Interact/Meter';
-import Blockquote from '../Elements/Texts/Blockquote';
-import Code from '../Elements/Texts/Code';
-import Pre from '../Elements/Texts/Pre';
-import Hr from '../Elements/Interact/HorizotalRule';
-import Caption from '../Elements/Texts/Caption';
-import DraggableWeb3Elements from '../Elements/Structure/DraggableWeb3Elements';
-import DateComponent from '../Elements/Interact/DateComponent';
-import ConnectWalletButton from '../Elements/Sections/Web3Related/ConnectWalletButton';
-import { structureConfigurations } from '../configs/structureConfigurations';
+import Paragraph from '../../Elements/Texts/Paragraph';
+import Heading from '../../Elements/Texts/Heading';
+import Section from '../../Elements/Structure/Section';
+import Div from '../../Elements/Structure/Div';
+import Button from '../../Elements/Interact/Button';
+import Image from '../../Elements/Media/Image';
+import Form from '../../Elements/Interact/Form';
+import Span from '../../Elements/Texts/Span';
+import Input from '../../Elements/Interact/Input';
+import { List, ListItem } from '../../Elements/Texts/List';
+import { Table, TableRow, TableCell } from '../../Elements/Interact/Table';
+import DraggableNavbar from '../../Elements/Structure/DraggableNavbar';
+import DraggableFooter from '../../Elements/Structure/DraggableFooter';
+import DraggableHero from '../../Elements/Structure/DraggableHero';
+import DraggableCTA from '../../Elements/Structure/DraggableCTA';
+import Anchor from '../../Elements/Interact/Anchor';
+import Textarea from '../../Elements/Interact/Textarea';
+import Select from '../../Elements/Interact/Select';
+import Video from '../../Elements/Media/Video';
+import Audio from '../../Elements/Media/Audio';
+import Iframe from '../../Elements/Media/Iframe';
+import Label from '../../Elements/Interact/Label';
+import Fieldset from '../../Elements/Interact/FieldSet';
+import Legend from '../../Elements/Texts/Legend';
+import Progress from '../../Elements/Interact/Progress';
+import Meter from '../../Elements/Interact/Meter';
+import Blockquote from '../../Elements/Texts/Blockquote';
+import Code from '../../Elements/Texts/Code';
+import Pre from '../../Elements/Texts/Pre';
+import Hr from '../../Elements/Interact/HorizotalRule';
+import Caption from '../../Elements/Texts/Caption';
+import DraggableWeb3Elements from '../../Elements/Structure/DraggableWeb3Elements';
+import DateComponent from '../../Elements/Interact/DateComponent';
+import ConnectWalletButton from '../../Elements/Sections/Web3Related/ConnectWalletButton';
+import { structureConfigurations } from '../../configs/structureConfigurations';
 const warnedElements = new Set();
 
 export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements, handlePanelToggle) => {
@@ -61,7 +61,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
 
 
   // Handle missing configuration for `navbar` and `hero`
-  if ((type === 'navbar' || type === 'hero'|| type === 'mintingSection') && !configuration) {
+  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection') && !configuration) {
     if (!warnedElements.has(id)) {
       console.warn(`${type.charAt(0).toUpperCase() + type.slice(1)} with ID ${id} is missing a configuration.`);
       warnedElements.add(id);
@@ -102,6 +102,8 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     image: <Image id={id} key={id} />,
     input: <Input id={id} key={id} />,
     form: <Form id={id} key={id} />,
+    ul: <List id={id} key={id} type="ul" />,
+    ol: <List id={id} key={id} type="ol" />,
     navbar: (
       <DraggableNavbar
         configuration={configuration}
@@ -170,7 +172,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         handlePanelToggle={handlePanelToggle}
       />
     ),
-    connectWalletButton: <ConnectWalletButton id={id} key={id} content={element.content} handlePanelToggle={handlePanelToggle}/>,
+    connectWalletButton: <ConnectWalletButton id={id} key={id} content={element.content} handlePanelToggle={handlePanelToggle} />,
 
     date: <DateComponent id={id} key={id} styles={element.styles} />
   };

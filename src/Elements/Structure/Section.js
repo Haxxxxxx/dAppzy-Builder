@@ -1,6 +1,6 @@
 import React, { useContext, useRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
-import { renderElement } from '../../utils/RenderUtils';
+import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import StructureAndElementsModal from '../../utils/SectionQuickAdd/StructureAndElementsModal';
 import useElementDrop from '../../utils/useElementDrop';
 

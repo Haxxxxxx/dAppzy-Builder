@@ -1,6 +1,6 @@
 // src/components/TableFormatModal.js
 import React, { useState } from 'react';
-
+import './TableFormatModal.css';
 const TableFormatModal = ({ isOpen, onClose, onSubmit }) => {
   const [rows, setRows] = useState(2);
   const [columns, setColumns] = useState(2);
@@ -15,10 +15,9 @@ const TableFormatModal = ({ isOpen, onClose, onSubmit }) => {
   }
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content">
+      <div className="table-modal-content">
         <h3>Choose Table Format</h3>
-        <div className="modal-controls">
+        <div className="table-modal-controls">
           <label>
             Rows:
             <input
@@ -38,12 +37,11 @@ const TableFormatModal = ({ isOpen, onClose, onSubmit }) => {
             />
           </label>
         </div>
-        <div className="modal-actions">
+        <div className="table-modal-actions">
           <button onClick={handleSubmit}>Create Table</button>
           <button onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </div>
   );
 };
 

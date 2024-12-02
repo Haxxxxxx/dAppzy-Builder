@@ -1,12 +1,17 @@
-// src/Elements/Texts/Pre.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Pre = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id);
-  const { content = 'Preformatted text...' } = element || {};
+  let { content = 'Preformatted text...' } = element || {};
   const isSelected = selectedElement?.id === id;
+
+  // Ensure content is a string
+  if (typeof content !== 'string') {
+    console.warn(`Invalid content type for pre with ID ${id}. Converting to string.`);
+    content = String(content); // Convert to string
+  }
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -14,7 +19,10 @@ const Pre = ({ id }) => {
   };
 
   const handleBlur = (e) => {
-    if (isSelected) updateContent(id, e.target.innerText);
+    if (isSelected) {
+      const newContent = e.target.innerText.trim();
+      updateContent(id, newContent || 'Preformatted text...'); // Provide fallback if empty
+    }
   };
 
   return (
