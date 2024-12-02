@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import SectionStructureModal from './SectionStructureModal';
-import QuickAddElementModal from './QuickAddElementModal';
+import SectionStructureModal from '../SectionStructureModal';
+import QuickAddElementModal from '../QuickAddElementModal';
+import './StructureAndElementsModal.css';
 
 const StructureAndElementsModal = ({ isOpen, onClose, onSelectStructure, onAddElement }) => {
   const [activeTab, setActiveTab] = useState('elements'); // Default to the "Elements" tab
@@ -10,25 +11,30 @@ const StructureAndElementsModal = ({ isOpen, onClose, onSelectStructure, onAddEl
   }
 
   return (
-    <div className="modal">
+    <div className="structure-elements-modal">
       <div className="modal-content">
-        {/* Modal Header */}
+        {/* Close Button */}
+        <button className="modal-close-button" onClick={onClose}>
+          ✕
+        </button>
+
+        {/* Header */}
         <div className="modal-header">
           <button
             onClick={() => setActiveTab('elements')}
-            style={activeTab === 'elements' ? { fontWeight: 'bold' } : {}}
+            className={activeTab === 'elements' ? 'active' : ''}
           >
             Elements
           </button>
           <button
             onClick={() => setActiveTab('structure')}
-            style={activeTab === 'structure' ? { fontWeight: 'bold' } : {}}
+            className={activeTab === 'structure' ? 'active' : ''}
           >
             Structure
           </button>
         </div>
 
-        {/* Modal Body */}
+        {/* Body */}
         <div className="modal-body">
           {activeTab === 'elements' && (
             <QuickAddElementModal onAddElement={onAddElement} onClose={onClose} />
@@ -37,11 +43,6 @@ const StructureAndElementsModal = ({ isOpen, onClose, onSelectStructure, onAddEl
             <SectionStructureModal onClose={onClose} onSelectStructure={onSelectStructure} />
           )}
         </div>
-
-        {/* Close Button */}
-        <button onClick={onClose} className="modal-close-button">
-          Close
-        </button>
       </div>
     </div>
   );

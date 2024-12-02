@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDrag } from 'react-dnd';
-import '../css/Sidebar.css';
+import '../../components/css/LeftBar.css';
 
 const DraggableElement = ({ type, label, level = null, description = '' }) => {
   const [{ isDragging }, drag, preview] = useDrag(() => ({

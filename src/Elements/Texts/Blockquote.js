@@ -1,12 +1,17 @@
-// src/Elements/Texts/Blockquote.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Blockquote = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id);
-  const { content = 'Blockquote text...' } = element || {};
+  let { content = 'Blockquote text...' } = element || {};
   const isSelected = selectedElement?.id === id;
+
+  // Ensure content is a string
+  if (typeof content !== 'string') {
+    console.warn(`Invalid content type for blockquote with ID ${id}. Converting to string.`);
+    content = String(content); // Convert to string
+  }
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -14,7 +19,10 @@ const Blockquote = ({ id }) => {
   };
 
   const handleBlur = (e) => {
-    if (isSelected) updateContent(id, e.target.innerText);
+    if (isSelected) {
+      const newContent = e.target.innerText.trim();
+      updateContent(id, newContent || 'Blockquote text...'); // Provide fallback if empty
+    }
   };
 
   return (

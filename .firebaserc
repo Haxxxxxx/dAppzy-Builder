@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "default": "third--space",
+    "demo": "third--space"
+  },
+  "targets": {
+    "third--space": {
+      "hosting": {
+        "3rd-demo": [
+          "3rd-demo"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

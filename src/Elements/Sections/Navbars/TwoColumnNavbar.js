@@ -6,7 +6,7 @@ import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import 
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
 
-const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) => {
+const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, handlePanelToggle}) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,7 +79,7 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) =
                   {child.type === 'span' && <Span id={child.id} content={child.content} />}
                   {child.type === 'button' && <Button id={child.id} content={child.content} />}
                   {child.type === 'connectWalletButton' && (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} handlePanelToggle={handlePanelToggle}/>
                   )}
                 </RemovableWrapper>
               ))}

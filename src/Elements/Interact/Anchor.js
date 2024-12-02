@@ -2,39 +2,55 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Anchor = ({ id }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
-  const element = elements.find((el) => el.id === id);
-  const { content = 'Click here', href = '#' } = element || {};
-  const isSelected = selectedElement?.id === id;
+const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
+  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } =
+    useContext(EditableContext);
   const anchorRef = useRef(null);
 
-  useEffect(() => {
-    if (!element) console.error(`Element with id ${id} not found.`);
-  }, [element, id]);
+  // Dynamically fetch element data
+  const elementData = findElementById(id, elements) || {};
+  let { content = initialContent || 'Click here', href = '#', styles = {} } = elementData;
+
+  // Ensure content is a string
+  if (typeof content !== 'string') {
+    console.warn(`Invalid content type for anchor with ID ${id}. Converting to string.`);
+    content = String(content); // Convert to string as a fallback
+  }
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'anchor' });
+    setSelectedElement({ id, type: 'anchor', styles });
   };
 
   const handleBlur = (e) => {
-    if (isSelected) updateContent(id, e.target.innerText);
+    if (selectedElement?.id === id) {
+      updateContent(id, e.target.innerText.trim() || 'Click here');
+    }
   };
 
   useEffect(() => {
-    if (isSelected && anchorRef.current) anchorRef.current.focus();
-  }, [isSelected]);
+    if (selectedElement?.id === id && anchorRef.current) {
+      anchorRef.current.focus();
+    }
+  }, [selectedElement, id]);
 
   return (
     <a
+      id={id}
       ref={anchorRef}
       href={href}
-      contentEditable={isSelected}
-      suppressContentEditableWarning={true}
+      contentEditable={selectedElement?.id === id}
       onClick={handleSelect}
       onBlur={handleBlur}
-      style={{ cursor: 'pointer', color: '#007BFF', textDecoration: 'underline' }}
+      suppressContentEditableWarning={true}
+      style={{
+        ...styles,
+        ...customStyles,
+        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
+        cursor: 'pointer',
+        textDecoration: 'underline',
+        color: '#007BFF',
+      }}
     >
       {content}
     </a>

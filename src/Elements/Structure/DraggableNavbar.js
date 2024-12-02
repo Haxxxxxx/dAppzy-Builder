@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import DropZone from '../../utils/DropZone';
@@ -7,9 +7,17 @@ import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 import HeroSelectionModal from '../../utils/SectionQuickAdd/HeroSelectionModal'; // Import the modal component
 
-const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
+const DraggableNavbar = ({
+  id,
+  configuration,
+  isEditing,
+  showDescription = false,
+  contentListWidth,
+  handlePanelToggle,
+}) => {
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
+  const modalRef = useRef(null);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -55,22 +63,36 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
   const navbar = findElementById(id, elements);
   const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || [];
 
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
+  const toggleModal = () => setModalOpen((prev) => !prev);
 
   const handleRemove = () => {
     handleRemoveElement(id);
   };
 
   const handleHeroSelection = (heroType) => {
-    closeModal();
-  
-    // Create the hero section at the same level as the navbar
-    const newHeroId = addNewElement('hero', 1, null, null, heroType); // No parentId to keep it at the top level
-    
-    // Optionally log for debugging
+    setModalOpen(false);
+    const newHeroId = addNewElement('hero', 1, null, null, heroType);
     console.log(`Added hero section of type '${heroType}' at the same level as navbar with ID '${id}'.`);
   };
+
+  // Close modal if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModalOpen]);
 
   const descriptions = {
     twoColumn: 'A two-column navbar with logo and links.',
@@ -84,7 +106,6 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
     customTemplate: '3S Template Navbar',
   };
 
-  // Show description mode
   if (showDescription) {
     return (
       <div
@@ -112,6 +133,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         contentListWidth={contentListWidth}
         children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
       />
     );
   } else if (configuration === 'twoColumn') {
@@ -120,6 +142,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         uniqueId={id}
         children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
       />
     );
   } else if (configuration === 'threeColumn') {
@@ -129,6 +152,7 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         contentListWidth={contentListWidth}
         children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
       />
     );
   }
@@ -144,13 +168,9 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
         backgroundColor: '#f9f9f9',
         borderRadius: '8px',
       }}
-      onClick={openModal} // Open modal on click
-
+      onClick={toggleModal}
     >
-      {/* Render the Navbar Component */}
       {NavbarComponent}
-
-      {/* Remove Button */}
       <button
         onClick={handleRemove}
         style={{
@@ -168,11 +188,13 @@ const DraggableNavbar = ({ id, configuration, isEditing, showDescription = false
       </button>
 
       {isModalOpen && (
-        <HeroSelectionModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          onHeroSelect={handleHeroSelection}
-        />
+        <div ref={modalRef}>
+          <HeroSelectionModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+            onHeroSelect={handleHeroSelection}
+          />
+        </div>
       )}
     </div>
   );

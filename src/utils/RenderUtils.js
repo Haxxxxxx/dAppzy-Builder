@@ -22,15 +22,15 @@ import Video from '../Elements/Media/Video';
 import Audio from '../Elements/Media/Audio';
 import Iframe from '../Elements/Media/Iframe';
 import Label from '../Elements/Interact/Label';
-import Fieldset from '../Elements/Structure/FieldSet';
-import Legend from '../Elements/Structure/Legend';
-import Progress from '../Elements/Structure/Progress';
+import Fieldset from '../Elements/Interact/FieldSet';
+import Legend from '../Elements/Texts/Legend';
+import Progress from '../Elements/Interact/Progress';
 import Meter from '../Elements/Interact/Meter';
 import Blockquote from '../Elements/Texts/Blockquote';
 import Code from '../Elements/Texts/Code';
 import Pre from '../Elements/Texts/Pre';
-import Hr from '../Elements/Structure/HorizotalRule';
-import Caption from '../Elements/Structure/Caption';
+import Hr from '../Elements/Interact/HorizotalRule';
+import Caption from '../Elements/Texts/Caption';
 import DraggableWeb3Elements from '../Elements/Structure/DraggableWeb3Elements';
 import DateComponent from '../Elements/Interact/DateComponent';
 import ConnectWalletButton from '../Elements/Sections/Web3Related/ConnectWalletButton';
@@ -88,7 +88,7 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
     paragraph: <Paragraph id={id} key={id} content={element.content} />,
     section: (
       <Section id={id} key={id}>
-        {resolvedChildren.length > 0 && <div className="nested-elements">{renderChildren()}</div>}
+        {resolvedChildren.length > 0 && <div className="nested-elements" style={{ padding: '10px' }}>{renderChildren()}</div>}
       </Section>
     ),
     div: (
@@ -110,6 +110,8 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
         isEditing={true}
         children={resolvedChildren}
         contentListWidth={contentListWidth}
+        handlePanelToggle={handlePanelToggle} // Add this line
+
       />
     ),
     hero: (

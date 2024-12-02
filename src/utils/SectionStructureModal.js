@@ -9,13 +9,12 @@ const SectionStructureModal = ({ onClose, onSelectStructure }) => {
   };
 
   return (
-    <div className="modal">
-      <div className="modal-content">
+    <div className="quick-add-modal">
+      <div >
         <h2>Select Section Structure</h2>
         <button onClick={() => handleStructureSelect('title-text')}>Title & Text</button>
         <button onClick={() => handleStructureSelect('title-image')}>Title & Image</button>
         <button onClick={() => handleStructureSelect('two-columns')}>Two Columns</button>
-        <button onClick={onClose}>Cancel</button>
       </div>
     </div>
   );

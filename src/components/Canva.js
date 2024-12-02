@@ -40,9 +40,10 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
     }
   };
 
+  
   const handleDrop = (item, index, parentId = null) => {
     const safeIndex = index !== null && index !== undefined ? index : 0;
-
+  
     if (item.type === 'hero') {
       // Create hero at the root level
       const heroId = addNewElement(item.type, 1, safeIndex, null, item.structure);
@@ -51,13 +52,28 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
       // Create navbar at the root level
       const navbarId = addNewElement(item.type, 1, safeIndex, null, item.structure);
       setSelectedElement({ id: navbarId, type: item.type, structure: item.structure });
+    } else if (item.type === 'div' || item.type === 'section') {
+      // Add div or section directly without wrapping
+      const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
+      setSelectedElement({ id: newElementId, type: item.type });
     } else {
-      // Handle other types
-      const newId = addNewElement(item.type, 1, safeIndex, parentId);
-      setSelectedElement({ id: newId, type: item.type });
+      // Wrap other elements in a div if dropped in isolation
+      const divId = addNewElement('div', 1, safeIndex, parentId);
+      const newElementId = addNewElement(item.type, 1, null, divId);
+  
+      // Add the new element as a child of the wrapping div
+      setElements((prevElements) => {
+        return prevElements.map((el) =>
+          el.id === divId
+            ? { ...el, children: [...(el.children || []), newElementId] }
+            : el
+        );
+      });
+  
+      setSelectedElement({ id: newElementId, type: item.type });
     }
   };
-
+  
 
 
   const handleLevelSelect = (level) => {

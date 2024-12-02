@@ -8,18 +8,19 @@ const QuickAddElementModal = ({ onClose, onAddElement }) => {
   };
 
   return (
-    <div className="modal">
-      <div className="modal-content">
+    <div className="quick-add-modal">
+      <div >
         <h2>Quick Add Elements</h2>
         <button onClick={() => handleElementSelect('paragraph')}>Paragraph</button>
         <button onClick={() => handleElementSelect('heading')}>Heading</button>
         <button onClick={() => handleElementSelect('button')}>Button</button>
         <button onClick={() => handleElementSelect('input')}>Input</button>
         <button onClick={() => handleElementSelect('image')}>Image</button>
-        <button onClick={onClose}>Cancel</button>
+        <button onClick={onClose} className="modal-close-button"></button>
       </div>
     </div>
   );
+  
 };
 
 export default QuickAddElementModal;

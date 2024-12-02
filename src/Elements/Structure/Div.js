@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/RenderUtils';
-import StructureAndElementsModal from '../../utils/StructureAndElementsModal';
+import StructureAndElementsModal from '../../utils/SectionQuickAdd/StructureAndElementsModal';
 import useElementDrop from '../../utils/useElementDrop';
 
 const Div = ({ id }) => {
@@ -10,20 +10,16 @@ const Div = ({ id }) => {
   const { styles, children = [] } = divElement || {};
   const divRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
-  const { isOverCurrent, canDrop, drop } = useElementDrop({
+  const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: divRef,
     onDropItem: (item, parentId) => {
       const newId = addNewElement(item.type, item.level || 1, null, parentId);
-      setElements((prevElements) =>
-        prevElements.map((el) =>
+      setElements((prev) =>
+        prev.map((el) =>
           el.id === parentId
-            ? {
-                ...el,
-                children: el.children.includes(newId) ? el.children : [...el.children, newId],
-              }
+            ? { ...el, children: [...new Set([...el.children, newId])] }
             : el
         )
       );
@@ -32,60 +28,46 @@ const Div = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    const element = elements.find((el) => el.id === id);
-    if (element) {
-      setSelectedElement({
-        id: element.id,
-        type: element.type,
-        styles: element.styles,
-      });
-      setIsModalOpen(true);
-    }
+    setSelectedElement({ id, type: 'div', styles });
+    setIsModalOpen(true);
   };
 
   return (
     <>
-    <div
-      id={id}
-      ref={(node) => {
-        divRef.current = node;
-        drop(node);
-      }}
-      onClick={handleSelect}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        ...styles,
-        padding: '10px',
-        border: selectedElement?.id === id ? '2px solid blue' : '1px solid #ccc',
-        borderRadius: '4px',
-        margin: '10px 0',
-        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : 'transparent',
-      }}
-    >
-      {children.map((childId) => {
-        const childElement = elements.find((el) => el.id === childId);
-        return childElement ? renderElement(childElement, elements, selectedElement) : null;
-      })}
-      
-    </div>
-    <StructureAndElementsModal
-    isOpen={isModalOpen}
-    onClose={() => setIsModalOpen(false)}
-    onSelectStructure={(structure) => {
-      console.log('Selected structure:', structure);
-      setIsModalOpen(false);
-    }}
-    onAddElement={(type) => {
-      const newId = addNewElement(type, 1, null, id);
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === id ? { ...el, children: [...new Set([...el.children, newId])] } : el
-        )
-      );
-      setIsModalOpen(false);
-    }}
-  />
+      <div
+        id={id}
+        ref={(node) => {
+          divRef.current = node;
+          drop(node);
+        }}
+        onClick={handleSelect}
+        style={{
+          ...styles,
+          border: selectedElement?.id === id ? '2px solid blue' : '1px solid #ccc',
+          padding: styles.padding || '10px',
+          margin: styles.margin || '10px 0',
+          backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
+        }}
+      >
+        {children.map((childId) =>
+          renderElement(elements.find((el) => el.id === childId), elements, selectedElement)
+        )}
+      </div>
+      {isModalOpen && (
+        <StructureAndElementsModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onAddElement={(type) => {
+            const newId = addNewElement(type, 1, null, id);
+            setElements((prev) =>
+              prev.map((el) =>
+                el.id === id ? { ...el, children: [...new Set([...el.children, newId])] } : el
+              )
+            );
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </>
   );
 };

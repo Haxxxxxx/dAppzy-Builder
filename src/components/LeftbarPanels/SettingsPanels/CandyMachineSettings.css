@@ -29,14 +29,14 @@
   margin: 5px 0;
   padding: 10px 15px;
   border: none;
-  background: #007bff;
+  background: grey;
   color: white;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .wallet-popup button:hover {
-  background: #0056b3;
+  background: darkgrey;
 }
 
 .wallet-popup button:last-child {

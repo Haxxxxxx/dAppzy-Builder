@@ -59,15 +59,22 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
   };
 
   return (
-    <div className="section-div-editor">
+    <div className="editor-group">
 
-      <div className="editor-field">
+      <div className="color-group">
         <label>Background Color:</label>
-        <input
-          type="color"
-          value={backgroundColor}
-          onChange={handleBackgroundColorChange}
-        />
+          <input
+            type="color"
+            value={backgroundColor}
+            onChange={handleBackgroundColorChange}
+            className="editor-color"
+          />
+          <input
+            type="text"
+            value={backgroundColor}
+            readOnly
+            className="color-hex"
+          />
       </div>
 
       <div className="editor-field">
@@ -90,7 +97,7 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
         />
       </div>
 
-      <div className="editor-field">
+      <div className="editor-group">
         <label>Display:</label>
         <select value={display} onChange={handleDisplayChange}>
           <option value="block">Block</option>
@@ -102,7 +109,7 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
 
       {display === 'flex' && (
         <>
-          <div className="editor-field">
+          <div className="editor-group">
             <label>Flex Direction:</label>
             <select value={flexDirection} onChange={handleFlexDirectionChange}>
               <option value="row">Row</option>
@@ -112,7 +119,7 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
             </select>
           </div>
 
-          <div className="editor-field">
+          <div className="editor-group">
             <label>Justify Content:</label>
             <select value={justifyContent} onChange={handleJustifyContentChange}>
               <option value="flex-start">Flex Start</option>
@@ -125,7 +132,7 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
         </>
       )}
 
-      <div className="editor-actions">
+      <div className="editor-group">
         <button onClick={() => handleAddChildElement('heading')}>Add Heading</button>
         <button onClick={() => handleAddChildElement('paragraph')}>Add Paragraph</button>
         <button onClick={() => handleAddChildElement('div')}>Add Div</button>

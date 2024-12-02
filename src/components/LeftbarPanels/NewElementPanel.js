@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import FooterPanel from '../SectionsPanels/FooterPanel';
 import NavbarPanel from '../SectionsPanels/NavbarPanel';
-import DraggableElement from './DraggableElement';
+import DraggableElement from '../../Elements/Structure/DraggableElement';
 import '../css/Sidebar.css';
 import HeroPanel from '../SectionsPanels/HeroPanel';
 import CTAPanel from '../SectionsPanels/CTAPanel';

@@ -110,3 +110,11 @@
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
   }
   
+  .editor-group button {
+    padding: 8px;
+    margin: 4px 0;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: background-color 0.3s, opacity 0.3s;
+  }

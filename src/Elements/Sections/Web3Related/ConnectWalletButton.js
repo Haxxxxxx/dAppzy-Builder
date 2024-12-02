@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 
-const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles, preventHeroModal, handlePanelToggle  }) => {
+const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles, preventHeroModal,   handlePanelToggle = () => {},}) => {
   const { selectedElement, setSelectedElement, elements, findElementById, updateStyles } = useContext(EditableContext);
   const buttonRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -108,6 +108,7 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
     if (preventHeroModal) {
       e.stopPropagation(); // Prevent click from triggering parent behavior
     }
+    e.stopPropagation(); // Prevent click from triggering parent behavior
     setSelectedElement({ id, type: 'connectWalletButton', styles });
     setShowPopup(!showPopup);
     handlePanelToggle('settings');

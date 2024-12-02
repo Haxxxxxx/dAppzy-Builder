@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import DraggableElement from '../LeftbarPanels/DraggableElement';
+import DraggableElement from '../../Elements/Structure/DraggableElement';
 import '../css/Sidebar.css';
 
 const Web3ElementPanel = ({ contentListWidth}) => {
