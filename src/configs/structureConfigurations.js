@@ -109,15 +109,15 @@ export const structureConfigurations = {
       { type: 'currency', content: 'SOL' }, // Currency
       { type: 'quantity', content: '2', label: 'Quantity' }, // Quantity Value
       { type: 'price', content: '3 SOL', label: 'Total Price' }, // Total Price
-      { type: 'span', content: 'Rarest Items' }, // Rarest Items 
-      { type: 'span', content: 'Document Items' }, // Document Items 
-      { type: 'image', content: 'rare-item-1-image-url' }, // Rare Items
-      { type: 'image', content: 'rare-item-2-image-url' },
-      { type: 'image', content: 'rare-item-3-image-url' },
-      { type: 'image', content: 'rare-item-4-image-url' },
-      { type: 'image', content: 'document-item-1-image-url' }, // Document Items
-      { type: 'image', content: 'document-item-2-image-url' },
-      { type: 'image', content: 'document-item-3-image-url' },
+      { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items 
+      { type: 'docItemsTitle', content: 'Document Items' }, // Document Items 
+      { type: 'rare-item', content: 'rare-item-1-image-url' }, // Rare Items
+      { type: 'rare-item', content: 'rare-item-2-image-url' },
+      { type: 'rare-item', content: 'rare-item-3-image-url' },
+      { type: 'rare-item', content: 'rare-item-4-image-url' },
+      { type: 'document-item', content: 'document-item-1-image-url' }, // Document Items
+      { type: 'document-item', content: 'document-item-2-image-url' },
+      { type: 'document-item', content: 'document-item-3-image-url' },
     ],
   },
 };

@@ -26,17 +26,18 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   const title = elements.find(
     (el) => el.parentId === uniqueId && el.type === 'title'
   );
-    const description = children.find((child) => child.type === 'description'); // Description
+  const description = children.find((child) => child.type === 'description'); // Description
   const timer = getChildByType('timer');
   const remaining = getChildByType('remaining');
   const value = getChildByType('value');
   const currency = getChildByType('currency');
   const quantity = getChildByType('quantity');
-  const rareItemsTitle = children.find((child) => child.type === 'span' && child.id.includes('-12'));
-  const docItemsTitle = children.find((child) => child.type === 'span' && child.id.includes('-13'));
+  const rareItemsTitle = getChildByType('rareItemsTitle');
+  const docItemsTitle = getChildByType('docItemsTitle');
   const totalPrice = getChildByType('price');
-  const rareItems = getChildrenByType('image').slice(1, 5); // Rare items
-  const documentItems = getChildrenByType('image').slice(5); // Document items
+  const rareItems = getChildrenByType('rare-item').slice(1, 4); // Rare items
+  const documentItems = getChildrenByType('document-item').slice(1, 3); // Document items
+
 
   const handleClick = () => {
     console.log("Selected Candy Machine Element:", uniqueId);
@@ -108,7 +109,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
           </RemovableWrapper>
         )}
         {/* Details */}
-        <div style={{display:'flex', flexDirection:'column', alignItems:'center', margin: '1rem 0', gap:'1vh', }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '1rem 0', gap: '1vh', }}>
           {remaining && (
             <Span
               id={remaining.id}

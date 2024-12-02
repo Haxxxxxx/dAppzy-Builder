@@ -2,53 +2,90 @@ import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import './CandyMachineSettings.css';
+
+const parseTimerToDate = (timerString) => {
+  if (!timerString) return null;
+  const match = timerString.match(/(\d+)d\s(\d+)h\s(\d+)m\s(\d+)s/);
+  if (!match) return null;
+
+  const [_, days, hours, minutes, seconds] = match.map(Number);
+  const now = new Date();
+  return new Date(
+    now.getTime() +
+      days * 24 * 60 * 60 * 1000 +
+      hours * 60 * 60 * 1000 +
+      minutes * 60 * 1000 +
+      seconds * 1000
+  );
+};
+
+const formatDateToTimer = (date) => {
+  if (!date) return '';
+  const now = new Date();
+  const diff = Math.max(0, date - now);
+
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((diff % (60 * 1000)) / 1000);
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
 
 const CandyMachineSettings = () => {
   const { updateContent, selectedElement, elements, findElementById } = useContext(EditableContext);
-  const [localSettings, setLocalSettings] = useState({
-    title: '',
-    description: '',
-    timer: undefined,
-    remaining: '',
-    price: '',
-    quantity: '',
-    blockchain: 'Ethereum', // Default blockchain
-  });
+  const [localSettings, setLocalSettings] = useState({});
+  const [imagePreviews, setImagePreviews] = useState({}); // Track image previews
 
-  const availableBlockchains = ['Ethereum', 'Solana', 'Polygon', 'Binance Smart Chain'];
-
-  // Initialize settings only when `selectedElement` changes
   useEffect(() => {
     if (selectedElement) {
-      const elementData = findElementById(selectedElement.id, elements);
-      setLocalSettings({
-        title: elementData?.title || '',
-        description: elementData?.description || '',
-        timer: elementData?.timer ? new Date(elementData.timer) : undefined,
-        remaining: elementData?.remaining || '',
-        price: elementData?.price || '',
-        quantity: elementData?.quantity || '',
-        blockchain: elementData?.blockchain || 'Ethereum',
-      });
+      const childrenElements = elements.filter((el) => el.parentId === selectedElement.id);
+      const settings = childrenElements.reduce((acc, child) => {
+        acc[child.type] = child.content || '';
+        return acc;
+      }, {});
+      const timerDate = parseTimerToDate(settings.timer);
+      setLocalSettings((prev) => ({
+        ...prev,
+        ...settings,
+        timer: timerDate || null,
+      }));
     }
-  }, [selectedElement]); // Only depend on `selectedElement`
+  }, [selectedElement, elements]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // Update local state immediately
     setLocalSettings((prev) => ({ ...prev, [name]: value }));
 
     if (selectedElement) {
-      // Find the child element to update
       const childElement = elements.find(
         (el) => el.parentId === selectedElement.id && el.type === name
       );
-
       if (childElement) {
-        // Update the content in the global state
         updateContent(childElement.id, value);
       }
+    }
+  };
+
+  const handleImageChange = (e, key) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreviews((prev) => ({ ...prev, [key]: reader.result }));
+        setLocalSettings((prev) => ({ ...prev, [key]: reader.result }));
+
+        if (selectedElement) {
+          const childElement = elements.find(
+            (el) => el.parentId === selectedElement.id && el.type === key
+          );
+          if (childElement) {
+            updateContent(childElement.id, reader.result);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -59,93 +96,114 @@ const CandyMachineSettings = () => {
       const childElement = elements.find(
         (el) => el.parentId === selectedElement.id && el.type === 'timer'
       );
-
       if (childElement) {
-        updateContent(childElement.id, date?.toISOString());
+        const formattedTimer = formatDateToTimer(date);
+        updateContent(childElement.id, formattedTimer);
       }
     }
   };
 
-  const handleBlockchainChange = (e) => {
-    const blockchain = e.target.value;
-    setLocalSettings((prev) => ({ ...prev, blockchain }));
+  const renderInputs = () => {
+    const inputTypes = {
+      title: 'text',
+      description: 'textarea',
+      timer: 'date',
+      remaining: 'number',
+      price: 'text',
+      quantity: 'number',
+      currency: 'dropdown',
+      logo: 'image',
+      rareItems: 'image-array',
+      documentItems: 'image-array',
+    };
 
-    if (selectedElement) {
-      const childElement = elements.find(
-        (el) => el.parentId === selectedElement.id && el.type === 'blockchain'
-      );
+    const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
 
-      if (childElement) {
-        updateContent(childElement.id, blockchain);
+    return Object.keys(localSettings).map((key) => {
+      switch (inputTypes[key]) {
+        case 'textarea':
+          return (
+            <div className="settings-group" key={key}>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <textarea
+                name={key}
+                value={localSettings[key]}
+                onChange={handleInputChange}
+                placeholder={`Enter ${key}`}
+                className="settings-input"
+              />
+            </div>
+          );
+        case 'date':
+          return (
+            <div className="settings-group" key={key}>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <DatePicker
+                selected={localSettings[key]}
+                onChange={handleDateChange}
+                dateFormat="MMMM d, yyyy h:mm aa"
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={15}
+                timeCaption="time"
+                placeholderText="Select a date and time"
+                className="settings-input"
+              />
+            </div>
+          );
+        case 'dropdown':
+          return (
+            <div className="settings-group" key={key}>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <select
+                name={key}
+                value={localSettings[key]}
+                onChange={handleInputChange}
+                className="settings-input"
+              >
+                {availableCurrencies.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        case 'image':
+          return (
+            <div className="settings-group" key={key}>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange(e, key)}
+                className="settings-input"
+              />
+              {imagePreviews[key] && <img src={imagePreviews[key]} alt={`${key} preview`} className="image-preview" />}
+            </div>
+          );
+        default:
+          return (
+            <div className="settings-group" key={key}>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <input
+                type={inputTypes[key] || 'text'}
+                name={key}
+                value={localSettings[key]}
+                onChange={handleInputChange}
+                placeholder={`Enter ${key}`}
+                className="settings-input"
+              />
+            </div>
+          );
       }
-    }
+    });
   };
 
   return (
-    <div className="settings-panel">
-      <h3>Collection Details</h3>
-      <label htmlFor="title">Collection Name:</label>
-      <input
-        type="text"
-        name="title"
-        value={localSettings.title}
-        onChange={handleInputChange}
-        placeholder="Enter collection name"
-      />
-      <label htmlFor="description">Description:</label>
-      <textarea
-        name="description"
-        value={localSettings.description}
-        onChange={handleInputChange}
-        placeholder="Enter description"
-      />
-      <label htmlFor="timer">Timer:</label>
-      <DatePicker
-        selected={localSettings.timer}
-        onChange={handleDateChange}
-        dateFormat="MMMM d, yyyy h:mm aa"
-        showTimeSelect
-        timeFormat="HH:mm"
-        timeIntervals={15}
-        timeCaption="time"
-        placeholderText="Select a date and time"
-      />
-      <label htmlFor="remaining">Remaining:</label>
-      <input
-        type="text"
-        name="remaining"
-        value={localSettings.remaining}
-        onChange={handleInputChange}
-        placeholder="Enter remaining"
-      />
-      <label htmlFor="price">Price:</label>
-      <input
-        type="text"
-        name="price"
-        value={localSettings.price}
-        onChange={handleInputChange}
-        placeholder="Enter price"
-      />
-      <label htmlFor="quantity">Quantity:</label>
-      <input
-        type="text"
-        name="quantity"
-        value={localSettings.quantity}
-        onChange={handleInputChange}
-        placeholder="Enter quantity"
-      />
-      <label htmlFor="blockchain">Select Blockchain:</label>
-      <select
-        name="blockchain"
-        value={localSettings.blockchain}
-        onChange={handleBlockchainChange}
-      >
-        {availableBlockchains.map((blockchain) => (
-          <option key={blockchain} value={blockchain}>
-            {blockchain}
-          </option>
-        ))}
-      </select>
+    <div>
+      <h3>Minting Section Settings</h3>
+      {renderInputs()}
     </div>
   );
 };
