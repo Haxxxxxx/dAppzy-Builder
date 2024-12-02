@@ -6,7 +6,6 @@ import { structureConfigurations } from '../../configs/structureConfigurations';
 
 const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription = false, contentListWidth,handlePanelToggle}) => {
   const { addNewElement, setElements, elements, setSelectedElement, findElementById, handleRemoveElement } = useContext(EditableContext);
-
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { type: 'mintingSection', configuration },
@@ -26,7 +25,6 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
   const mintPage = findElementById(id, elements);
   const resolvedChildren = mintPage?.children?.map((childId) => findElementById(childId, elements)) || [];
 
-  console.log(resolvedChildren);
 
   const handleRemove = () => {
     handleRemoveElement(id);

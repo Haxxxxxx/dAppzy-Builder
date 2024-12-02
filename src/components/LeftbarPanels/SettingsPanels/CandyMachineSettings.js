@@ -73,7 +73,6 @@ const CandyMachineSettings = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setImagePreviews((prev) => ({ ...prev, [key]: reader.result }));
         setLocalSettings((prev) => ({ ...prev, [key]: reader.result }));
 
         if (selectedElement) {
@@ -88,6 +87,7 @@ const CandyMachineSettings = () => {
       reader.readAsDataURL(file);
     }
   };
+  
 
   const handleDateChange = (date) => {
     setLocalSettings((prev) => ({ ...prev, timer: date }));
@@ -102,7 +102,32 @@ const CandyMachineSettings = () => {
       }
     }
   };
-
+  const handleImageArrayChange = (e, key, index) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setLocalSettings((prev) => {
+          const updatedImages = [...(prev[key] || [])];
+          updatedImages[index] = reader.result;
+          return { ...prev, [key]: updatedImages };
+        });
+  
+        if (selectedElement) {
+          const childElement = elements.find(
+            (el) => el.parentId === selectedElement.id && el.type === key
+          );
+          if (childElement) {
+            const updatedContent = [...(childElement.content || [])];
+            updatedContent[index] = reader.result;
+            updateContent(childElement.id, updatedContent);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
   const renderInputs = () => {
     const inputTypes = {
       title: 'text',
@@ -112,10 +137,13 @@ const CandyMachineSettings = () => {
       price: 'text',
       quantity: 'number',
       currency: 'dropdown',
-      logo: 'image',
-      rareItems: 'image-array',
-      documentItems: 'image-array',
+      image: 'image', // Add this line
+      rareItemsTitle: 'text',
+      docItemsTitle: 'text',
+      'rare-item': 'image-array',
+      'document-item': 'image-array',
     };
+    
 
     const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
 
@@ -169,19 +197,29 @@ const CandyMachineSettings = () => {
               </select>
             </div>
           );
-        case 'image':
-          return (
-            <div className="settings-group" key={key}>
-              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e, key)}
-                className="settings-input"
-              />
-              {imagePreviews[key] && <img src={imagePreviews[key]} alt={`${key} preview`} className="image-preview" />}
-            </div>
-          );
+          case 'image':
+            return (
+              <div className="settings-group" key={key}>
+                <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+                {/* Button to trigger file selection */}
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(`${key}-file-input`).click()}
+                  className="settings-button"
+                >
+                  Choose Image
+                </button>
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  id={`${key}-file-input`}
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e, key)}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            );
+          
         default:
           return (
             <div className="settings-group" key={key}>

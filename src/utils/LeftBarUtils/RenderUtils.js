@@ -41,14 +41,17 @@ export const renderElement = (element, elements, contentListWidth, setSelectedEl
   const { id, type, children, configuration } = element;
 
   if (!element || !id || !type) {
-    console.warn(`Skipping invalid element due to missing fields:`, element);
-    return null;
+    console.warn(`Skipping invalid or undefined element:`, element);
+    return null; // Skip invalid elements
   }
+  
 
   // Resolve children
-  const resolvedChildren = Array.isArray(children)
-    ? children.map((childId) => elements.find((el) => el.id === childId))
-    : [];
+const resolvedChildren = Array.isArray(children)
+  ? children
+      .map((childId) => elements.find((el) => el.id === childId))
+      .filter(Boolean) // Filters out null/undefined children
+  : [];
 
 
   // Warn for missing children in `hero`

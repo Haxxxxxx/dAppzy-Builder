@@ -16,6 +16,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   });
   const { elements } = useContext(EditableContext); // Access updated content
 
+
   // Helper function to get child by type
   const getChildByType = (type) => children.find((child) => child.type === type);
   const getChildrenByType = (type) => children.filter((child) => child.type === type);
@@ -94,10 +95,11 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
                 marginBottom: '1rem',
               }}
             >
-              <Image id={logo.id} src={elements.find(el => el.id === `${uniqueId}-3`)?.content || logo.content} styles={{ width: '160px', height: '160px', borderRadius: '8px' }} />
+              <Image id={logo.id} src={elements.find((el) => el.id === logo.id)?.content || logo.content} styles={{ width: '160px', height: '160px', borderRadius: '8px' }} />
             </div>
           </RemovableWrapper>
         )}
+
         {/* Timer */}
         {timer && (
           <RemovableWrapper id={timer.id}>

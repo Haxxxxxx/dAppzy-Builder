@@ -10,8 +10,6 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
   const elementData = findElementById(id, elements) || {};
   const { content = initialContent, styles = {} } = elementData;
 
-  // Debug styles
-  console.log('Button styles:', { id, styles, customStyles });
 
   // Handle selection
   const handleSelect = (e) => {

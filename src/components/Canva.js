@@ -40,37 +40,36 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
   };
 
   
-const handleDrop = (item, index, parentId = null) => {
-  const safeIndex = index !== null && index !== undefined ? index : 0;
-
-  if (item.type === 'table') {
-    // Show the table format modal
-    setShowTableFormatModal(true);
-    setDropZoneIndex(safeIndex); // Save index for table placement
-  } else if (item.type === 'hero') {
-    const heroId = addNewElement(item.type, 1, safeIndex, null, item.structure);
-    setSelectedElement({ id: heroId, type: item.type, structure: item.structure });
-  } else if (item.type === 'navbar') {
-    const navbarId = addNewElement(item.type, 1, safeIndex, null, item.structure);
-    setSelectedElement({ id: navbarId, type: item.type, structure: item.structure });
-  } else if (item.type === 'div' || item.type === 'section' || item.type === 'form') {
-    const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-    setSelectedElement({ id: newElementId, type: item.type });
-  } else {
-    const divId = addNewElement('div', 1, safeIndex, parentId);
-    const newElementId = addNewElement(item.type, 1, null, divId);
-
-    setElements((prevElements) => {
-      return prevElements.map((el) =>
-        el.id === divId
-          ? { ...el, children: [...(el.children || []), newElementId] }
-          : el
-      );
-    });
-
-    setSelectedElement({ id: newElementId, type: item.type });
-  }
-};
+  const handleDrop = (item, index, parentId = null) => {
+    const safeIndex = index !== null && index !== undefined ? index : 0;
+  
+    if (item.type === 'table') {
+      setShowTableFormatModal(true);
+      setDropZoneIndex(safeIndex);
+    } else if (item.type === 'hero' || item.type === 'navbar' || item.type === 'mintingSection') {
+      // Handle structured elements like hero, navbar, mintingSection
+      const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
+      setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
+    } else if (item.type === 'div' || item.type === 'section' || item.type === 'form') {
+      const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
+      setSelectedElement({ id: newElementId, type: item.type });
+    } else {
+      // Generic handling for other types
+      const divId = addNewElement('div', 1, safeIndex, parentId);
+      const newElementId = addNewElement(item.type, 1, null, divId);
+  
+      setElements((prevElements) => {
+        return prevElements.map((el) =>
+          el.id === divId
+            ? { ...el, children: [...(el.children || []), newElementId] }
+            : el
+        );
+      });
+  
+      setSelectedElement({ id: newElementId, type: item.type });
+    }
+  };
+  
 
   useEffect(() => {
     saveToLocalStorage('editableElements', elements);
