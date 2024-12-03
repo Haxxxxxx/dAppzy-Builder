@@ -23,7 +23,7 @@ function App() {
   const contentRef = useRef(null); // Reference to the content-list
   const mainContentRef = useRef(null); // Reference to the main-content
   const [pageSettings, setPageSettings] = useState({
-    siteTitle: 'My Webpage',
+    siteTitle: 'My Website',
     faviconUrl: '',
     description: '',
     author: '',

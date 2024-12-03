@@ -9,7 +9,7 @@ const SettingsPanel = ({ onUpdateSettings }) => {
   const [settings, setSettings] = useState({
     siteTitle: 'My Website',
     faviconUrl: '',
-    description: '',
+    description: 'My Project',
     author: '',
     wallets: [
       { name: 'Phantom', enabled: true },
@@ -28,7 +28,7 @@ const SettingsPanel = ({ onUpdateSettings }) => {
         setSettings({
           siteTitle: 'My Website',
           faviconUrl: '',
-          description: '',
+          description: 'My Project',
           author: '',
         });
       }
@@ -38,7 +38,7 @@ const SettingsPanel = ({ onUpdateSettings }) => {
         ...prevSettings,
         siteTitle: 'My Website',
         faviconUrl: '',
-        description: '',
+        description: 'My Project',
         author: '',
       }));
     }

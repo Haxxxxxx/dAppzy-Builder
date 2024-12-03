@@ -1,18 +1,32 @@
-import React, { useRef, useState, useEffect } from 'react';
+// src/Elements/Structures/Navbars/TwoColumnNavbar.js
+
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
+import { defaultNavbarStyles } from './TwoColumnNavbarStyles';
 
-const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, handlePanelToggle }) => {
+const TwoColumnNavbar = ({
+  id,
+  children,
+  onDropItem,
+  contentListWidth,
+  handlePanelToggle,
+}) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const { elements } = useContext(EditableContext);
+  const navbarElement = elements.find((el) => el.id === id) || {};
+  const { styles = {} } = navbarElement;
+
   const { isOverCurrent, canDrop, drop } = useElementDrop({
-    id: uniqueId,
+    id,
     elementRef: navRef,
     onDropItem,
   });
@@ -30,19 +44,13 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
         drop(node);
       }}
       style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px',
-        backgroundColor: '#ffffff',
-        flexWrap: 'wrap',
-        position: 'relative',
-        borderBottom: isOverCurrent ? '2px solid blue' : '1px solid transparent',
-        borderRadius: '4px',
+        ...defaultNavbarStyles.nav,
+        borderBottom: isOverCurrent ? '2px solid blue' : defaultNavbarStyles.nav.borderBottom,
+        ...styles, // Merge navbar's styles from state
       }}
     >
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={defaultNavbarStyles.logoContainer} className="navbar-logo-container">
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
@@ -55,25 +63,11 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
       {/* Compact Menu */}
       {isCompact && (
         <>
-          <div style={{ cursor: 'pointer' }} onClick={toggleMenu}>
+          <div style={defaultNavbarStyles.compactMenuIcon} onClick={toggleMenu} className="navbar-compact-menu-icon">
             ☰
           </div>
           {isMenuOpen && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                marginTop: '16px',
-                backgroundColor: '#fff',
-                width: '100%',
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                padding: '16px',
-              }}
-            >
+            <div style={defaultNavbarStyles.compactMenu} className="navbar-compact-menu">
               {children.map((child) => (
                 <RemovableWrapper key={child.id} id={child.id}>
                   {child.type === 'span' && <Span id={child.id} content={child.content} />}
@@ -90,24 +84,8 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
 
       {/* Standard Menu */}
       {!isCompact && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: '16px',
-            flex: 1,
-          }}
-        >
-          <ul
-            style={{
-              display: 'flex',
-              listStyle: 'none',
-              gap: '16px',
-              padding: 0,
-              margin: 0,
-            }}
-          >
+        <div style={defaultNavbarStyles.standardMenuContainer} className="navbar-standard-menu-container">
+          <ul style={defaultNavbarStyles.navList} className="navbar-nav-list">
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
@@ -117,7 +95,7 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
               ))}
           </ul>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={defaultNavbarStyles.buttonContainer} className="navbar-button-container">
             {children
               .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
