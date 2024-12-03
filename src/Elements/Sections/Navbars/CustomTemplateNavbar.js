@@ -5,6 +5,7 @@ import Button from '../../Interact/Button';
 import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import the ConnectWalletButton
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
+import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
 
 const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem }) => {
   const navRef = useRef(null);
@@ -31,20 +32,12 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         navRef.current = node;
         drop(node);
       }}
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px',
-        backgroundColor: '#ffffff',
-        flexWrap: 'wrap',
-        position: 'relative',
-        borderBottom: isOverCurrent ? '2px solid blue' : '1px solid transparent',
-        borderRadius: '4px',
-      }}
+     style={{
+    ...CustomTemplateNavbarStyles.nav, // Apply specific styles
+  }}
     >
       {/* Logo and Title */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ ...CustomTemplateNavbarStyles.logoContainer }}>
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
@@ -65,11 +58,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
       {isCompact && (
         <div
           style={{
-            display: 'flex',
-            cursor: 'pointer',
-            marginLeft: 'auto',
-            fontSize: '1.5rem',
-            color: '#000',
+            ...CustomTemplateNavbarStyles.compactMenuIcon,
           }}
           onClick={toggleMenu}
         >
@@ -81,18 +70,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
       {isCompact && isMenuOpen && (
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            width: '100%',
-            marginTop: '16px',
-            backgroundColor: '#ffffff',
-            padding: '16px',
-            position: 'absolute',
-            top: '100%',
-            left: '0',
-            zIndex: '10',
-            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+            ...CustomTemplateNavbarStyles.compactMenu,
           }}
         >
           {children
@@ -130,7 +108,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
       {/* Desktop Links and Buttons */}
       {!isCompact && (
         <>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ ...CustomTemplateNavbarStyles.standardMenuContainer }}>
             {children
               .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
               .map((child) => (
@@ -140,7 +118,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
               ))}
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ ...CustomTemplateNavbarStyles.buttonContainer}}>
             {children
               .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton') // Include ConnectWalletButton
               .map((child) => (

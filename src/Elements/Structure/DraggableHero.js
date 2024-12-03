@@ -6,9 +6,10 @@ import HeroTwo from '../Sections/Heros/HeroTwo';
 import HeroThree from '../Sections/Heros/HeroThree';
 import DropZone from '../../utils/DropZone';
 import RemovableWrapper from '../../utils/RemovableWrapper';
-
+import { structureConfigurations } from '../../configs/structureConfigurations';
 const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth, children }) => {
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -19,6 +20,35 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
         const newId = addNewElement('hero', 1, null, null, configuration);
+        const heroStructure = structureConfigurations[configuration];
+
+        if (heroStructure && heroStructure.children) {
+          heroStructure.children.forEach((child) => {
+            const childId = addNewElement(
+              child.type,
+              2,
+              null,
+              newId,
+              null,
+              child.content,
+              child.styles,
+              child.attributes
+            );
+
+            // Update the parent hero element to include this child
+            setElements((prevElements) =>
+              prevElements.map((el) =>
+                el.id === newId
+                  ? {
+                      ...el,
+                      children: [...(el.children || []), { ...child, id: childId }],
+                    }
+                  : el
+              )
+            );
+          });
+        }
+
         setElements((prevElements) =>
           prevElements.map((el) =>
             el.id === newId ? { ...el, configuration } : el

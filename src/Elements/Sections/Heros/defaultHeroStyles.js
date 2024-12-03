@@ -1,0 +1,70 @@
+
+export const defaultHeroStyles = {
+  hero: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '40px',
+    backgroundColor: '#ffffff',
+  },
+  heroContent: {
+    flex: '1',
+    minWidth: '300px',
+    maxWidth: '600px',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  caption: {
+    fontWeight: 'bold',
+    color: '#334155',
+    marginBottom: '8px',
+    display: 'block',
+  },
+  heroTitle: {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    marginBottom: '16px',
+  },
+  heroDescription: {
+    fontSize: '1rem',
+    lineHeight: '1.5',
+    marginBottom: '24px',
+  },
+  buttonContainer: {
+    display: 'flex',
+    gap: '12px',
+  },
+  primaryButton: {
+    backgroundColor: '#334155',
+    color: '#ffffff',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    border: 'none',
+    cursor: 'pointer',
+    borderRadius: '4px',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    color: '#334155',
+    padding: '12px 24px',
+    border: '2px solid #334155',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    borderRadius: '4px',
+  },
+  heroImageContainer: {
+    flex: '1',
+    minWidth: '300px',
+    maxWidth: '600px',
+    textAlign: 'center',
+    marginTop: '20px',
+  },
+  heroImage: {
+    maxWidth: '100%',
+    height: '400px',
+    backgroundColor: '#334155',
+    objectFit: 'cover',
+    borderRadius: '8px',
+  },
+};

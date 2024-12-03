@@ -8,7 +8,7 @@ import Button from '../../Interact/Button';
 import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
-import { defaultNavbarStyles } from './TwoColumnNavbarStyles';
+import { defaultNavbarStyles } from './DefaultNavbarStyles';
 
 const TwoColumnNavbar = ({
   id,

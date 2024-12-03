@@ -75,7 +75,7 @@ export const EditableProvider = ({ children }) => {
         id: generateUniqueId(child.type),
         type: child.type,
         content: child.content || '',
-        styles: child.styles || {},
+        styles: child.styles,
         label: child.label || '', // Ensure label is passed here
         parentId: newId,
       }));

@@ -1,24 +1,28 @@
-import React, { useRef, useState, useEffect } from 'react';
+// src/Elements/Structures/Navbars/ThreeColumnNavbar.js
+
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
-import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import ConnectWalletButton
+import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
+import { defaultNavbarStyles } from './DefaultNavbarStyles';
 
 const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const { isOverCurrent, canDrop, drop } = useElementDrop({
+  const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: navRef,
     onDropItem,
   });
 
   useEffect(() => {
-    setIsCompact(contentListWidth < 768); // Adjust breakpoint as needed
+    setIsCompact(contentListWidth < 768); // Adjust breakpoint
   }, [contentListWidth]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
@@ -30,19 +34,12 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
         drop(node);
       }}
       style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px',
-        backgroundColor: '#ffffff',
-        flexWrap: 'wrap',
-        position: 'relative',
-        borderBottom: isOverCurrent ? '2px solid blue' : '1px solid transparent',
-        borderRadius: '4px',
+        ...defaultNavbarStyles.nav,
+        borderBottom: isOverCurrent ? '2px solid blue' : defaultNavbarStyles.nav.borderBottom,
       }}
     >
       {/* Logo Section */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={defaultNavbarStyles.logoContainer}>
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
@@ -55,25 +52,11 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
       {/* Compact Menu */}
       {isCompact && (
         <>
-          <div style={{ cursor: 'pointer' }} onClick={toggleMenu}>
+          <div style={defaultNavbarStyles.compactMenuIcon} onClick={toggleMenu}>
             ☰
           </div>
           {isMenuOpen && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                marginTop: '16px',
-                backgroundColor: '#fff',
-                width: '100%',
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                padding: '16px',
-              }}
-            >
+            <div style={defaultNavbarStyles.compactMenu}>
               {children.map((child) => (
                 <RemovableWrapper key={child.id} id={child.id}>
                   {child.type === 'span' && <Span id={child.id} content={child.content} />}
@@ -90,8 +73,8 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
 
       {/* Standard Menu */}
       {!isCompact && (
-        <>
-          <ul style={{ display: 'flex', listStyle: 'none', gap: '16px', padding: 0, margin: 0 }}>
+        <div style={defaultNavbarStyles.standardMenuContainer}>
+          <ul style={defaultNavbarStyles.navList}>
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
@@ -101,7 +84,7 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
               ))}
           </ul>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={defaultNavbarStyles.buttonContainer}>
             {children
               .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
@@ -114,7 +97,7 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
                 </RemovableWrapper>
               ))}
           </div>
-        </>
+        </div>
       )}
     </nav>
   );

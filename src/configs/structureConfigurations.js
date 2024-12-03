@@ -29,14 +29,16 @@ export const structureConfigurations = {
     ],
   },
   heroOne: {
+    type: 'hero',
     children: [
-      { type: 'image', content: 'background-image-url', styles: { width: '100%', height: 'auto', position: 'absolute', top: 0, left: 0 } },
-      { type: 'span', content: 'Welcome to Our Website', styles: { fontSize: '2.5rem', fontWeight: 'bold' } },
-      { type: 'span', content: 'Building a better future together.', styles: { margin: '16px 0', fontSize: '1.25rem' } },
-      { type: 'button', content: 'Get Started', styles: { marginTop: '24px', padding: '10px 20px', backgroundColor: '#61dafb', color: '#000', border: 'none', borderRadius: '4px' } },
+      { type: 'image', content: 'background-image-url' },
+      { type: 'span', content: 'Welcome to Our Website'},
+      { type: 'span', content: 'Building a better future together.' },
+      { type: 'button', content: 'Get Started'},
     ],
   },
   heroTwo: {
+    type: 'hero',
     children: [
       { type: 'span', content: 'Discover Your Potential' },
       { type: 'span', content: 'Join us today and start making an impact.' },
@@ -44,6 +46,7 @@ export const structureConfigurations = {
     ],
   },
   heroThree: {
+    type: 'hero',
     children: [
       { type: 'span', content: 'CAPTION' },
       { type: 'span', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
