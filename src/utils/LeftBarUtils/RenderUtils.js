@@ -37,40 +37,46 @@ import ConnectWalletButton from '../../Elements/Sections/Web3Related/ConnectWall
 import { structureConfigurations } from '../../configs/structureConfigurations';
 const warnedElements = new Set();
 
-export const renderElement = (element, elements, contentListWidth, setSelectedElement, setElements, handlePanelToggle) => {
+export const renderElement = (
+  element,
+  elements,
+  contentListWidth,
+  setSelectedElement,
+  setElements,
+  handlePanelToggle,
+  isPreviewMode = true // Default to true for static rendering
+) => {
   const { id, type, children, configuration } = element;
 
   if (!element || !id || !type) {
     console.warn(`Skipping invalid or undefined element:`, element);
     return null; // Skip invalid elements
   }
-  
 
   // Resolve children
-const resolvedChildren = Array.isArray(children)
-  ? children
-      .map((childId) => elements.find((el) => el.id === childId))
-      .filter(Boolean) // Filters out null/undefined children
-  : [];
-
+  const resolvedChildren = Array.isArray(children)
+    ? children
+        .map((childId) => elements.find((el) => el.id === childId))
+        .filter(Boolean) // Filters out null/undefined children
+    : [];
 
   // Warn for missing children in `hero`
   if (type === 'hero') {
-    const requiredChildren = structureConfigurations[configuration]?.children.map((child) => child.type) || [];
+    const requiredChildren =
+      structureConfigurations[configuration]?.children.map((child) => child.type) || [];
     const hasRequiredChildren = requiredChildren.every((childType) =>
       resolvedChildren.some((child) => child?.type === childType)
     );
   }
 
-
-  // Handle missing configuration for `navbar` and `hero`
-  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' ) && !configuration) {
+  // Handle missing configuration for `navbar`, `hero`, and `mintingSection`
+  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection') && !configuration) {
     if (!warnedElements.has(id)) {
       console.warn(`${type.charAt(0).toUpperCase() + type.slice(1)} with ID ${id} is missing a configuration.`);
       warnedElements.add(id);
     }
 
-    if (setElements || type ==! 'footer') {
+    if (setElements || type !== 'footer') {
       setElements((prev) => {
         const updatedElements = prev.filter((el) => el.id !== id);
         localStorage.setItem('editableElements', JSON.stringify(updatedElements));
@@ -84,39 +90,126 @@ const resolvedChildren = Array.isArray(children)
   // Recursive child rendering
   const renderChildren = () =>
     resolvedChildren.map((child) =>
-      child ? renderElement(child, elements, contentListWidth, setSelectedElement, setElements) : null
+      child
+        ? renderElement(
+            child,
+            elements,
+            contentListWidth,
+            setSelectedElement,
+            setElements,
+            handlePanelToggle,
+            isPreviewMode // Pass isPreviewMode recursively
+          )
+        : null
     );
 
+  // Define component mappings
   const componentMap = {
-    paragraph: <Paragraph id={id} key={id} content={element.content} />,
+    paragraph: (
+      <Paragraph
+        id={id}
+        key={id}
+        content={element.content}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
     section: (
-      <Section id={id} key={id}>
-        {resolvedChildren.length > 0 && <div className="nested-elements" style={{ padding: '10px' }}>{renderChildren()}</div>}
+      <Section id={id} key={id} isPreviewMode={isPreviewMode} setSelectedElement={setSelectedElement}>
+        {resolvedChildren.length > 0 && (
+          <div className="nested-elements" style={{ padding: '10px' }}>
+            {renderChildren()}
+          </div>
+        )}
       </Section>
     ),
     div: (
-      <Div id={id} key={id}>
-        {resolvedChildren.length > 0 && <div className="nested-elements" style={{ padding: '10px' }}>{renderChildren()}</div>}
+      <Div id={id} key={id} isPreviewMode={isPreviewMode} setSelectedElement={setSelectedElement}>
+        {resolvedChildren.length > 0 && (
+          <div className="nested-elements" style={{ padding: '10px' }}>
+            {renderChildren()}
+          </div>
+        )}
       </Div>
     ),
-    heading: <Heading id={id} key={id} content={element.content} />,
-    button: <Button id={id} key={id} content={element.content} />,
-    span: <Span id={id} key={id} content={element.content} />,
-    image: <Image id={id} key={id} />,
-    input: <Input id={id} key={id} />,
-    form: <Form id={id} key={id} />,
-    ul: <List id={id} key={id} type="ul" />,
-    ol: <List id={id} key={id} type="ol" />,
+    heading: (
+      <Heading
+        id={id}
+        key={id}
+        content={element.content}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    button: (
+      <Button
+        id={id}
+        key={id}
+        content={element.content}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    span: (
+      <Span
+        id={id}
+        key={id}
+        content={element.content}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    image: (
+      <Image
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    input: (
+      <Input
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    form: (
+      <Form
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    ul: (
+      <List
+        id={id}
+        key={id}
+        type="ul"
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    ol: (
+      <List
+        id={id}
+        key={id}
+        type="ol"
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
     navbar: (
       <DraggableNavbar
         configuration={configuration}
         id={id}
         key={id}
-        isEditing={true}
+        isEditing={!isPreviewMode}
         children={resolvedChildren}
         contentListWidth={contentListWidth}
-        handlePanelToggle={handlePanelToggle} // Add this line
-
+        handlePanelToggle={handlePanelToggle}
       />
     ),
     hero: (
@@ -127,6 +220,7 @@ const resolvedChildren = Array.isArray(children)
         children={resolvedChildren}
         contentListWidth={contentListWidth}
         setSelectedElement={setSelectedElement}
+        isPreviewMode={isPreviewMode}
       />
     ),
     footer: (
@@ -134,7 +228,7 @@ const resolvedChildren = Array.isArray(children)
         configuration={configuration}
         id={id}
         key={id}
-        isEditing={true}
+        isEditing={!isPreviewMode}
         contentListWidth={contentListWidth}
       />
     ),
@@ -143,27 +237,146 @@ const resolvedChildren = Array.isArray(children)
         configuration={configuration}
         id={id}
         key={id}
-        isEditing={true}
+        isEditing={!isPreviewMode}
         contentListWidth={contentListWidth}
       />
     ),
-    table: <Table id={id} key={id} />,
-    anchor: <Anchor id={id} key={id} />,
-    textarea: <Textarea id={id} key={id} />,
-    select: <Select id={id} key={id} />,
-    video: <Video id={id} key={id} />,
-    audio: <Audio id={id} key={id} />,
-    iframe: <Iframe id={id} key={id} />,
-    label: <Label id={id} key={id} />,
-    fieldset: <Fieldset id={id} key={id} />,
-    legend: <Legend id={id} key={id} />,
-    progress: <Progress id={id} key={id} />,
-    meter: <Meter id={id} key={id} />,
-    blockquote: <Blockquote id={id} key={id} />,
-    code: <Code id={id} key={id} />,
-    pre: <Pre id={id} key={id} />,
-    hr: <Hr id={id} key={id} />,
-    caption: <Caption id={id} key={id} />,
+    table: (
+      <Table
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    anchor: (
+      <Anchor
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    textarea: (
+      <Textarea
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    select: (
+      <Select
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    video: (
+      <Video
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    audio: (
+      <Audio
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    iframe: (
+      <Iframe
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    label: (
+      <Label
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    fieldset: (
+      <Fieldset
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    legend: (
+      <Legend
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    progress: (
+      <Progress
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    meter: (
+      <Meter
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    blockquote: (
+      <Blockquote
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    code: (
+      <Code
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    pre: (
+      <Pre
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    hr: (
+      <Hr
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
+    caption: (
+      <Caption
+        id={id}
+        key={id}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
     mintingSection: (
       <DraggableWeb3Elements
         id={id}
@@ -173,11 +386,27 @@ const resolvedChildren = Array.isArray(children)
         setElements={setElements}
         setSelectedElement={setSelectedElement}
         handlePanelToggle={handlePanelToggle}
+        isPreviewMode={isPreviewMode}
       />
     ),
-    connectWalletButton: <ConnectWalletButton id={id} key={id} content={element.content} handlePanelToggle={handlePanelToggle} />,
-
-    date: <DateComponent id={id} key={id} styles={element.styles} />
+    connectWalletButton: (
+      <ConnectWalletButton
+        id={id}
+        key={id}
+        content={element.content}
+        handlePanelToggle={handlePanelToggle}
+        isPreviewMode={isPreviewMode}
+      />
+    ),
+    date: (
+      <DateComponent
+        id={id}
+        key={id}
+        styles={element.styles}
+        isPreviewMode={isPreviewMode}
+        setSelectedElement={setSelectedElement}
+      />
+    ),
   };
 
   // Ensure content is string for date
@@ -195,5 +424,5 @@ const resolvedChildren = Array.isArray(children)
     return null;
   }
 
-  return <React.Fragment key={id} >{component}</React.Fragment>;
+  return <React.Fragment key={id}>{component}</React.Fragment>;
 };

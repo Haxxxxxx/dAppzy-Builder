@@ -4,7 +4,7 @@ import './css/Topbar.css';
 import ReactDOMServer from 'react-dom/server';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 
-const Topbar = ({ onExport, onResize }) => {
+const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) => {
   const { elements, buildHierarchy } = useContext(EditableContext);
   const [customSize, setCustomSize] = useState('');
   const [dezoomPercent, setDezoomPercent] = useState(100); // Default to 100% for no scaling
@@ -94,6 +94,8 @@ const Topbar = ({ onExport, onResize }) => {
     }, 1000); // Simulating save delay of 1 second
   };
 
+
+  
   return (
     <div className="topbar">
       <div className="project-info">
@@ -107,9 +109,9 @@ const Topbar = ({ onExport, onResize }) => {
       <div className="actions">
         <button className="undo-button">↺</button>
         <button className="redo-button">↻</button>
-        <button className="preview-button">
-        <span className="material-symbols-outlined">visibility</span>
-        </button>
+        <button className="preview-button" onClick={onPreviewToggle}>
+          {isPreviewMode ? <span className="material-symbols-outlined">visibility_off</span> : <span className="material-symbols-outlined">visibility</span>}
+        </button>      
       </div>
 
       <div className="resize-controls">
@@ -125,6 +127,8 @@ const Topbar = ({ onExport, onResize }) => {
           onChange={(e) => setCustomSize(e.target.value)}
           onKeyDown={handleCustomResize} // Resize on Enter key
         />
+                <span className="scale-percentage">Scale: {Math.round(scale * 100)}%</span>
+
       </div>
 
       <div className="export-section">

@@ -17,6 +17,8 @@ function App() {
   const [openPanel, setOpenPanel] = useState(''); // Track which panel is open
   const [contentListWidth, setContentListWidth] = useState(1200); // Default width for PC
   const { setSelectedElement } = useContext(EditableContext); // Access setSelectedElement from context
+  const [scale, setScale] = useState(1); // Add scale state
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const contentRef = useRef(null); // Reference to the content-list
   const mainContentRef = useRef(null); // Reference to the main-content
@@ -27,6 +29,10 @@ function App() {
     author: '',
   });
 
+  const handlePreviewToggle = () => {
+    setIsPreviewMode((prevMode) => !prevMode);
+  };
+  
   const handleExport = (elements) => {
     console.log('Export function called with elements:', elements);
     exportFiles(elements);
@@ -61,8 +67,8 @@ function App() {
           onShowSettingsPanel={() => handlePanelToggle('settings')}
         />
         <div className="app">
-          <Topbar onExport={handleExport} onResize={handleResize} />
-          <div className="content-container">
+        <Topbar onExport={handleExport} onResize={handleResize} scale={scale} isPreviewMode={isPreviewMode} onPreviewToggle={handlePreviewToggle} />
+        <div className="content-container">
             {openPanel === 'sidebar' && (
               <div className="sidebar" id="sidebar">
                 <SideBar contentListWidth={contentListWidth} />
@@ -94,6 +100,10 @@ function App() {
                 leftBarWidth={40}
                 handlePanelToggle={handlePanelToggle}
                 ref={contentRef} // Pass ref to ContentList
+                scale={scale}
+                setScale={setScale} // Pass setScale to ContentList
+                isPreviewMode={isPreviewMode} // Pass isPreviewMode here
+
               />
             </div>
           </div>
