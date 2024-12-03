@@ -1,46 +1,271 @@
 // src/components/MediaPanel.js
 import React, { useState } from 'react';
+import './css/MediaPanel.css'; // Ensure this file includes necessary styles
 
 const MediaPanel = () => {
-  // Initial media list (could be images, videos, documents, etc.)
-  const [mediaItems] = useState([
-    { id: 1, type: 'image', name: 'Example Image', src: 'https://via.placeholder.com/150' },
-    { id: 2, type: 'video', name: 'Example Video', src: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-    { id: 3, type: 'file', name: 'Example File', src: 'https://example.com/sample.pdf' },
+  // Media list with state to allow adding new items
+  const [mediaItems, setMediaItems] = useState([
+    { id: 1, type: 'image', name: 'Example Image', src: 'https://via.placeholder.com/300' },
+    { id: 2, type: 'image', name: 'Another Image', src: 'https://via.placeholder.com/300/0000FF/808080' },
+    { id: 3, type: 'video', name: 'Example Video', src: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+    { id: 4, type: 'file', name: 'Example File', src: 'https://example.com/sample.pdf' },
+    // Add more media items as needed
   ]);
 
+  const [previewItem, setPreviewItem] = useState(null); // State for full-size preview
+  const [filterType, setFilterType] = useState('all'); // 'all', 'media', 'documents'
+
+  // State for editing media name
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingName, setEditingName] = useState('');
+
+  // State for search query
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleRemoveClick = (itemId) => {
+    // Remove the media item from the list
+    setMediaItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
+  };
+
+  const handlePreviewClick = (item) => {
+    // Show the full-size preview of the media item
+    setPreviewItem(item);
+  };
+
+  const closePreviewModal = () => {
+    setPreviewItem(null);
+  };
+
+  // Handle file uploads from file explorer
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
+    handleFiles(files);
+  };
+
+  // Handle files dropped into the dropzone
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    handleFiles(files);
+  };
+
+  // Prevent default behavior for drag over
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  // Process the files and update mediaItems state
+  const handleFiles = (files) => {
+    const newMediaItems = files.map((file) => {
+      const id = Date.now() + Math.random();
+      const name = file.name;
+      const type = getFileType(file);
+      const src = URL.createObjectURL(file);
+      return { id, type, name, src };
+    });
+    setMediaItems((prevItems) => [...newMediaItems, ...prevItems]);
+  };
+
+  // Determine file type based on MIME type
+  const getFileType = (file) => {
+    if (file.type.startsWith('image/')) return 'image';
+    if (file.type.startsWith('video/')) return 'video';
+    if (file.type === 'application/pdf') return 'file';
+    return 'file';
+  };
+
+  // Handle double-click on media name to start editing
+  const handleNameDoubleClick = (item) => {
+    setEditingItemId(item.id);
+    setEditingName(item.name);
+  };
+
+  // Handle changes in the input field
+  const handleNameChange = (e) => {
+    setEditingName(e.target.value);
+  };
+
+  // Handle blur event to save the new name
+  const handleNameBlur = () => {
+    setMediaItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === editingItemId ? { ...item, name: editingName } : item
+      )
+    );
+    setEditingItemId(null);
+    setEditingName('');
+  };
+
+  // Handle Enter key press to save the new name
+  const handleNameKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleNameBlur();
+    }
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Filtered media items based on filterType and search query
+  const filteredItems = mediaItems.filter((item) => {
+    // Filter by type
+    let typeMatch = false;
+    if (filterType === 'all') {
+      typeMatch = true;
+    } else if (filterType === 'media') {
+      typeMatch = item.type === 'image' || item.type === 'video';
+    } else if (filterType === 'documents') {
+      typeMatch = item.type === 'file';
+    }
+
+    // Filter by search query
+    const nameMatch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // If search query matches multiple items with similar names but different types, automatically filter by type
+    if (searchQuery && nameMatch) {
+      if (filterType === 'all') {
+        setFilterType(item.type === 'file' ? 'documents' : 'media');
+      }
+    }
+
+    return typeMatch && nameMatch;
+  });
+
   return (
-<div className="media-panel scrollable-panel">
-  <h3>Media Library</h3>
-  <div className="media-list">
-    {mediaItems.map((item) => (
-      <div key={item.id} className="media-item">
-        {item.type === 'image' && (
-          <div className="media-image">
-            <img src={item.src} alt={item.name} />
-            <p>{item.name}</p>
-          </div>
-        )}
-        {item.type === 'video' && (
-          <div className="media-video">
-            <video controls>
-              <source src={item.src} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            <p>{item.name}</p>
-          </div>
-        )}
-        {item.type === 'file' && (
-          <div className="media-file">
-            <a href={item.src} target="_blank" rel="noopener noreferrer">
-              {item.name}
-            </a>
-          </div>
-        )}
+    <div className="media-panel scrollable-panel">
+      <h3>Media Library</h3>
+      {/* Filter Buttons */}
+      <div className="filter-buttons">
+        <button
+          className={filterType === 'media' ? 'active' : ''}
+          onClick={() => setFilterType('media')}
+        >
+          Media
+        </button>
+        <button
+          className={filterType === 'documents' ? 'active' : ''}
+          onClick={() => setFilterType('documents')}
+        >
+          Documents
+        </button>
+        <button
+          className={filterType === 'all' ? 'active' : ''}
+          onClick={() => setFilterType('all')}
+        >
+          All
+        </button>
       </div>
-    ))}
-  </div>
-</div>
+
+      {/* Search Bar */}
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
+      </div>
+
+      <hr />
+
+      {/* Upload and Dropzone Buttons */}
+      <div className="upload-buttons">
+        <label htmlFor="file-upload" className="upload-button">
+          Upload Files
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
+        </label>
+        <div
+          className="dropzone"
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+        >
+          Drag & Drop Files Here
+        </div>
+      </div>
+
+      {/* Media Grid */}
+      <div className="media-grid">
+        {filteredItems.map((item) => (
+          <div
+            key={item.id}
+            className={`media-item ${editingItemId === item.id ? 'editing' : ''}`}
+          >
+            <div className="media-preview">
+              {item.type === 'image' && <img src={item.src} alt={item.name} />}
+              {item.type === 'video' && (
+                <video>
+                  <source src={item.src} type="video/mp4" />
+                </video>
+              )}
+              {item.type === 'file' && <div className="file-icon">📄</div>}
+
+              {/* Overlay content on hover */}
+              <div className="overlay">
+                {editingItemId === item.id ? (
+                  <input
+                    type="text"
+                    className="media-name-input"
+                    value={editingName}
+                    onChange={handleNameChange}
+                    onBlur={handleNameBlur}
+                    onKeyDown={handleNameKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <p
+                    className="media-name"
+                    onDoubleClick={() => handleNameDoubleClick(item)}
+                  >
+                    {item.name}
+                  </p>
+                )}
+                <div className="overlay-buttons">
+                  <button
+                    className="overlay-button remove-button"
+                    onClick={() => handleRemoveClick(item.id)}
+                  >
+                    Remove
+                  </button>
+                  <button
+                    className="overlay-button preview-button"
+                    onClick={() => handlePreviewClick(item)}
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Full-size preview modal */}
+      {previewItem && (
+        <div className="preview-modal" onClick={closePreviewModal}>
+          <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+            {previewItem.type === 'image' && (
+              <img src={previewItem.src} alt={previewItem.name} />
+            )}
+            {previewItem.type === 'video' && (
+              <video controls autoPlay>
+                <source src={previewItem.src} type="video/mp4" />
+              </video>
+            )}
+            <button className="close-button" onClick={closePreviewModal}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
