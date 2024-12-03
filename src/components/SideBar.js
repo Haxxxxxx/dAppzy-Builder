@@ -1,3 +1,4 @@
+// src/SideBar.js
 import React, { useState, useContext } from 'react';
 import NewElementPanel from './LeftbarPanels/NewElementPanel';
 import EditorPanel from './LeftbarPanels/EditorPanel';
@@ -10,21 +11,28 @@ const SideBar = ({ contentListWidth }) => {
 
   return (
     <div className="sidebar-container">
-      {/* Sidebar header buttons */}
-      <div className="sidebar-toggle-buttons">
-        <button
-          onClick={() => setViewMode('elements')}
-          className={viewMode === 'elements' ? 'active' : ''}
-        >
-          Elements
-        </button>
-        <button
-          onClick={() => setViewMode('layout')}
-          className={viewMode === 'layout' ? 'active' : ''}
-        >
-          Layout
-        </button>
-      </div>
+      {/* Conditional Title */}
+      <h2 className="sidebar-title">
+        {selectedElement ? 'Style Editors' : 'Elements Menu'}
+      </h2>
+
+      {/* Display buttons only when no element is selected */}
+      {!selectedElement && (
+        <div className="sidebar-toggle-buttons">
+          <button
+            onClick={() => setViewMode('elements')}
+            className={viewMode === 'elements' ? 'active' : ''}
+          >
+            Elements
+          </button>
+          <button
+            onClick={() => setViewMode('layout')}
+            className={viewMode === 'layout' ? 'active' : ''}
+          >
+            Layout
+          </button>
+        </div>
+      )}
 
       {/* Display EditorPanel if an element is selected; otherwise, show default panel */}
       {selectedElement ? (

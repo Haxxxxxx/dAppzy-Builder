@@ -27,11 +27,13 @@ const Div = ({ id }) => {
   });
 
   const handleSelect = (e) => {
-    e.stopPropagation();
-    setSelectedElement({ id, type: 'div', styles });
-    setIsModalOpen(true);
+    if (e.target === e.currentTarget) {
+      e.stopPropagation();
+      setSelectedElement({ id, type: 'div', styles });
+      setIsModalOpen(true);
+    }
   };
-
+  
   return (
     <>
       <div
