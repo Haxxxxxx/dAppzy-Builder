@@ -1,12 +1,12 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Image = ({ id, styles: customStyles, width = 'auto', height = 'auto', src }) => {
+const Image = ({ id, styles: customStyles, src, isLogo }) => {
   const { selectedElement, setSelectedElement, elements, updateContent } = useContext(EditableContext);
-  const imageElement = elements.find((el) => el.id === id) || {}; // Fallback to avoid undefined errors
+  const imageElement = elements.find((el) => el.id === id) || {};
   const { content = '', styles = {} } = imageElement;
   const [showModal, setShowModal] = useState(false);
-  const [newSrc, setNewSrc] = useState(content || src || ''); // Initialize with current content or src
+  const [newSrc, setNewSrc] = useState(content || src || '');
   const modalRef = useRef(null);
 
   const defaultSrc = `https://ipfs.io/ipfs/QmPYNr9i6RR2bFpW9jnaME4NLCm9qcMDMEhxtFKqK3uvwM`;
@@ -69,17 +69,29 @@ const Image = ({ id, styles: customStyles, width = 'auto', height = 'auto', src 
       onClick={handleSelect}
       style={{
         ...styles,
-        ...customStyles, // Custom styles take precedence
+        ...customStyles,
+        ...(isLogo && {
+          width: '160px',
+          height: '160px',
+          borderRadius: '50%',
+          overflow: 'hidden', // Ensures image fits within the circular container
+        }),
         position: 'relative',
         cursor: 'pointer',
-        alignContent: 'center',
       }}
       aria-label="Editable image"
     >
       <img
-        src={content || src || defaultSrc} // Use content from context, or src prop, or default IPFS hash
+        src={content || src || defaultSrc}
         alt="Editable element"
-        style={{ maxWidth: '100%', height, width }}
+        style={{
+          objectFit: 'cover', // Ensures the image covers the container completely
+          width: '100%',
+          height: '100%',
+          ...(isLogo && {
+            borderRadius: '50%', // Ensures the image itself is round
+          }),
+        }}
       />
       {showModal && (
         <div

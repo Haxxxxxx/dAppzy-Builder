@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import MintingSection from '../Sections/Web3Related/MintingSection';
 import { structureConfigurations } from '../../configs/structureConfigurations';
 
-const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription = false, contentListWidth,handlePanelToggle}) => {
+const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription = false, contentListWidth, handlePanelToggle }) => {
   const { addNewElement, setElements, elements, setSelectedElement, findElementById, handleRemoveElement } = useContext(EditableContext);
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -21,33 +21,37 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
       }
     },
   }), [configuration, isEditing, addNewElement, setElements]);
-
+  console.log('Configuration:', configuration); // Ensure the configuration is correct
+  console.log('Structure:', structureConfigurations[configuration]); // Ensure the key matches
+  
   const mintPage = findElementById(id, elements);
-  const resolvedChildren = mintPage?.children?.map((childId) => findElementById(childId, elements)) || [];
 
+  // Fetch the corresponding configuration structure dynamically
+  const structure = structureConfigurations[configuration.type] || {};
+
+  // Enrich children with configuration data
+  const resolvedChildren = mintPage?.children?.map((childId) => {
+    const child = findElementById(childId, elements);
+    if (!child) return null;
+  
+    // Match child type with structure configuration
+    const configChild = structure.children?.find((config) => config.type === child.type);
+  
+    return {
+      ...child,
+      label: child.label || configChild?.label || '', // Prefer the child's label if it exists
+      content: child.content || configChild?.content || '', // Default to child's content if not in structure
+    };
+  }).filter(Boolean) || [];
+  
+  useEffect(() => {
+    console.log('Resolved Children with Labels and Content:', resolvedChildren);
+    console.log('Structure Configuration:', structure);
+  }, [resolvedChildren, structure]);
 
   const handleRemove = () => {
     handleRemoveElement(id);
   };
-
-  if (showDescription) {
-    return (
-      <div
-        ref={drag}
-        style={{
-          opacity: isDragging ? 0.5 : 1,
-          padding: '8px',
-          margin: '8px 0',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'move',
-        }}
-      >
-        <strong>Minting Section</strong>
-        <p>A section designed for minting NFTs with title, description, and rare items.</p>
-      </div>
-    );
-  }
 
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
@@ -69,6 +73,26 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
       );
     }
   };
+
+  if (showDescription) {
+    return (
+      <div
+        ref={drag}
+        style={{
+          opacity: isDragging ? 0.5 : 1,
+          padding: '8px',
+          margin: '8px 0',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'move',
+        }}
+      >
+        <strong>Minting Section</strong>
+        <p>A section designed for minting NFTs with title, description, and rare items.</p>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={drag}
@@ -77,14 +101,14 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
         border: isDragging ? '1px dashed #000' : 'none',
       }}
     >
-      <MintingSection 
+      <MintingSection
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={resolvedChildren} // Pass enriched children
         onDropItem={onDropItem}
         setSelectedElement={setSelectedElement}
         handlePanelToggle={handlePanelToggle}
-       />
+      />
       <button
         onClick={handleRemove}
         style={{

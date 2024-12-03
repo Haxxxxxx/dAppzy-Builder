@@ -1,8 +1,10 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
 import '../components/css/Sidebar.css';
+import '../components/css/dropzone.css'
 
-const DropZone = ({ onDrop, parentId, onClick, text }) => {
+
+const DropZone = ({ onDrop, parentId, onClick, text, className }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'ELEMENT',
     drop: (item) => {
@@ -15,32 +17,26 @@ const DropZone = ({ onDrop, parentId, onClick, text }) => {
     }),
   });
 
-  // Force custom cursor for drop zone
   React.useEffect(() => {
     if (isOver) {
-      document.body.style.cursor = 'pointer'; // Custom pointer cursor on hover
+      document.body.style.cursor = 'grab';
     } else {
-      document.body.style.cursor = 'default'; // Reset cursor
+      document.body.style.cursor = 'default';
     }
     return () => {
-      document.body.style.cursor = 'default'; // Clean up on unmount
+      document.body.style.cursor = 'default';
     };
   }, [isOver]);
 
   return (
     <div
       ref={drop}
-      className="dropzone"
-      style={{
-        minHeight: '40px',
-        backgroundColor: isOver ? 'lightgray' : 'transparent',
-        border: isOver ? '2px solid #007bff' : '1px dashed #ccc',
-        marginBottom: '20px',
-        transition: 'background-color 0.3s, border 0.3s',
-      }}
+      className={`dropzone ${className} ${isOver ? 'dropzone-hover' : ''}`}
       onClick={onClick}
     >
-      {isOver ? 'Release to drop here' : text || 'Click to add a section'}
+      <div className="dropzone-text">
+        {isOver ? 'Drop here to add an element' : text || 'Click to add a section'}
+      </div>
     </div>
   );
 };

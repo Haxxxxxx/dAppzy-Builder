@@ -45,6 +45,7 @@ export const EditableProvider = ({ children }) => {
       styles: {},
       level,
       children: [],
+      label: '', // Default empty label
       parentId: parentId || null,
       content: (() => {
         switch (type) {
@@ -75,6 +76,7 @@ export const EditableProvider = ({ children }) => {
         type: child.type,
         content: child.content || '',
         styles: child.styles || {},
+        label: child.label || '', // Ensure label is passed here
         parentId: newId,
       }));
   

@@ -103,12 +103,12 @@ export const structureConfigurations = {
       { type: 'image', content: 'logo-image-url' }, // Logo
       { type: 'title', content: 'Mint {Collection Name}' }, // Title
       { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
-      { type: 'timer', content: '17d 5h 38m 34s' }, // Timer
-      { type: 'remaining', content: '1000/1000', label: 'Remaining' }, // Remaining
-      { type: 'value', content: '1.5', label: 'Price' }, // Price Value
+      { type: 'timer', label:'Time before minting', content: '17d 5h 38m 34s' }, // Timer
+      { type: 'remaining', label: 'Remaining', content: '1000/1000'}, // Remaining
+      { type: 'value'  , label: 'Price'  , content: '1.5'}, // Price Value
       { type: 'currency', content: 'SOL' }, // Currency
-      { type: 'quantity', content: '2', label: 'Quantity' }, // Quantity Value
-      { type: 'price', content: '3 SOL', label: 'Total Price' }, // Total Price
+      { type: 'quantity' , label: 'Quantity', content: '2' }, // Quantity Value
+      { type: 'price' , label: 'Total Price' , content: '3 SOL'}, // Total Price
       { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items 
       { type: 'docItemsTitle', content: 'Document Items' }, // Document Items 
       { type: 'rare-item', content: 'rare-item-1-image-url' }, // Rare Items

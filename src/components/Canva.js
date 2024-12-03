@@ -94,14 +94,15 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
         transformOrigin: 'top left',
         transition: 'width 0.3s ease, transform 0.3s ease',
         margin: scale < 1 ? '0 auto' : '0',
-        overflow: 'auto',
+        position:'relative'
       }}
     >
       {elements.length === 0 && (
         <DropZone
           index={0}
           onDrop={(item) => handleDrop(item, 0)}
-          text="Click or Drop items here to start creating"
+          text="Click here to open the elements / Layout menu and drop items here to see them being created !"
+          className="first-dropzone" // Add a custom class
           onClick={(e) => {
             e.stopPropagation();
             handlePanelToggle('sidebar'); // Open the sidebar on click
@@ -127,6 +128,8 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
           index={elements.length}
           onDrop={(item) => handleDrop(item, null)}
           text="Click or Drop items here to add to the page"
+          className="default-dropzone" // Default styling
+
           onClick={(e) => {
             e.stopPropagation();
             handlePanelToggle('sidebar'); // Open the sidebar on click

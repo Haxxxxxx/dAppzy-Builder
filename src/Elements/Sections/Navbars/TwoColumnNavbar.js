@@ -2,11 +2,11 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
-import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import ConnectWalletButton
+import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import RemovableWrapper from '../../../utils/RemovableWrapper';
 
-const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, handlePanelToggle}) => {
+const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, handlePanelToggle }) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,7 +79,7 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
                   {child.type === 'span' && <Span id={child.id} content={child.content} />}
                   {child.type === 'button' && <Button id={child.id} content={child.content} />}
                   {child.type === 'connectWalletButton' && (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} handlePanelToggle={handlePanelToggle}/>
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   )}
                 </RemovableWrapper>
               ))}
@@ -90,8 +90,24 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
 
       {/* Standard Menu */}
       {!isCompact && (
-        <>
-          <ul style={{ display: 'flex', listStyle: 'none', gap: '16px', padding: 0, margin: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            gap: '16px',
+            flex: 1,
+          }}
+        >
+          <ul
+            style={{
+              display: 'flex',
+              listStyle: 'none',
+              gap: '16px',
+              padding: 0,
+              margin: 0,
+            }}
+          >
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
@@ -114,7 +130,7 @@ const TwoColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, han
                 </RemovableWrapper>
               ))}
           </div>
-        </>
+        </div>
       )}
     </nav>
   );
