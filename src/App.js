@@ -1,6 +1,6 @@
 // src/App.js
-import React, { useState } from 'react';
-import { EditableProvider } from './context/EditableContext';
+import React, { useState, useRef, useContext } from 'react';
+import { EditableContext } from './context/EditableContext'; // Import EditableContext
 import ContentList from './components/Canva';
 import SideBar from './components/SideBar';
 import { DndProvider } from 'react-dnd';
@@ -14,8 +14,12 @@ import MediaPanel from './components/LeftbarPanels/MediaPanel';
 import SettingsPanel from './components/LeftbarPanels/SettingsPanel';
 
 function App() {
-  const [openPanel, setOpenPanel] = useState(''); // Track which panel is open (null means no panel is open)
+  const [openPanel, setOpenPanel] = useState(''); // Track which panel is open
   const [contentListWidth, setContentListWidth] = useState(1200); // Default width for PC
+  const { setSelectedElement } = useContext(EditableContext); // Access setSelectedElement from context
+
+  const contentRef = useRef(null); // Reference to the content-list
+  const mainContentRef = useRef(null); // Reference to the main-content
   const [pageSettings, setPageSettings] = useState({
     title: 'My Webpage',
     iconUrl: '',
@@ -38,56 +42,64 @@ function App() {
   };
 
   const handlePanelToggle = (panelName) => {
-    setOpenPanel((prevPanel) => (prevPanel === panelName ? null : panelName));
+    setOpenPanel((prevPanel) => (prevPanel === panelName ? '' : panelName));
   };
 
+  const handleMainContentClick = (e) => {
+    if (contentRef.current && !contentRef.current.contains(e.target)) {
+      setSelectedElement(null); // Set to null to clear selection
+    }
+  };
 
   return (
-    <EditableProvider>
-      <DndProvider backend={HTML5Backend}>
-        <div className="layout">
-          <LeftBar
-            onShowSidebar={() => handlePanelToggle('sidebar')}
-            onShowStructurePanel={() => handlePanelToggle('structure')}
-            onShowMediaPanel={() => handlePanelToggle('media')}
-            onShowSettingsPanel={() => handlePanelToggle('settings')}
-          />
-          <div className="app">
-            <Topbar onExport={handleExport} onResize={handleResize} />
-            <div className="content-container">
-              {openPanel === 'sidebar' && (
-                <div className="sidebar" id="sidebar">
-                  <SideBar contentListWidth={contentListWidth} />
-                </div>
-              )}
-              {openPanel === 'structure' && (
-                <div id="structure-panel">
-                  <StructurePanel />
-                </div>
-              )}
-              {openPanel === 'media' && (
-                <div id="media-panel">
-                  <MediaPanel />
-                </div>
-              )}
-              {openPanel === 'settings' && (
-                <div id="settings-panel">
-                  <SettingsPanel onUpdateSettings={handleUpdateSettings} />
-                </div>
-              )}
-              <div className="main-content">
-                <ContentList
-                  contentListWidth={contentListWidth}
-                  isSideBarVisible={openPanel === 'sidebar'}
-                  leftBarWidth={40}
-                  handlePanelToggle={handlePanelToggle} // Add this line
-                />
+    <DndProvider backend={HTML5Backend}>
+      <div className="layout">
+        <LeftBar
+          onShowSidebar={() => handlePanelToggle('sidebar')}
+          onShowStructurePanel={() => handlePanelToggle('structure')}
+          onShowMediaPanel={() => handlePanelToggle('media')}
+          onShowSettingsPanel={() => handlePanelToggle('settings')}
+        />
+        <div className="app">
+          <Topbar onExport={handleExport} onResize={handleResize} />
+          <div className="content-container">
+            {openPanel === 'sidebar' && (
+              <div className="sidebar" id="sidebar">
+                <SideBar contentListWidth={contentListWidth} />
               </div>
+            )}
+            {openPanel === 'structure' && (
+              <div id="structure-panel">
+                <StructurePanel />
+              </div>
+            )}
+            {openPanel === 'media' && (
+              <div id="media-panel">
+                <MediaPanel />
+              </div>
+            )}
+            {openPanel === 'settings' && (
+              <div id="settings-panel">
+                <SettingsPanel onUpdateSettings={handleUpdateSettings} />
+              </div>
+            )}
+            <div
+              className="main-content"
+              onClick={handleMainContentClick}
+              ref={mainContentRef}
+            >
+              <ContentList
+                contentListWidth={contentListWidth}
+                isSideBarVisible={openPanel === 'sidebar'}
+                leftBarWidth={40}
+                handlePanelToggle={handlePanelToggle}
+                ref={contentRef} // Pass ref to ContentList
+              />
             </div>
           </div>
         </div>
-      </DndProvider>
-    </EditableProvider>
+      </div>
+    </DndProvider>
   );
 }
 

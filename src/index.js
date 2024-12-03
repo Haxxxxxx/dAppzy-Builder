@@ -1,13 +1,17 @@
+// src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { EditableProvider } from './context/EditableContext'; // Import EditableProvider
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <EditableProvider>
+      <App />
+    </EditableProvider>
   </React.StrictMode>
 );
 

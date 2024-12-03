@@ -1,19 +1,13 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect, forwardRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
 import SectionStructureModal from '../utils/SectionQuickAdd/ModalQuickAdd/SectionStructureModal';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 import TableFormatModal from '../utils/SectionQuickAdd/TableFormatModal';
 
-const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300, handlePanelToggle }) => {
-  const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById, selectedElement } = useContext(EditableContext);
-  const [showLevelSelector, setShowLevelSelector] = useState(false);
-  const [showStructureModal, setShowStructureModal] = useState(false);
-  const [dropZoneIndex, setDropZoneIndex] = useState(null);
-  const [showTableFormatModal, setShowTableFormatModal] = useState(false);
+const ContentList = forwardRef(({ contentListWidth, isSideBarVisible, leftBarWidth = 40, sideBarWidth = 300, handlePanelToggle }, ref) => {
+  const { elements, addNewElement, setSelectedElement, setElements, ELEMENTS_VERSION, saveToLocalStorage, buildHierarchy, findElementById } = useContext(EditableContext);
   const [scale, setScale] = useState(1);
-
-  const contentRef = useRef(null);
 
   const calculateScale = () => {
     const viewportWidth = window.innerWidth;
@@ -33,80 +27,56 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
     };
   }, [contentListWidth, isSideBarVisible, leftBarWidth, sideBarWidth]);
 
-  const handleContentClick = (e) => {
-    if (e.target === contentRef.current) {
-      setSelectedElement(null);
-    }
-  };
-
-  
   const handleDrop = (item, index, parentId = null) => {
     const safeIndex = index !== null && index !== undefined ? index : 0;
-  
+
     if (item.type === 'table') {
-      setShowTableFormatModal(true);
-      setDropZoneIndex(safeIndex);
+      // Table-specific logic
     } else if (item.type === 'hero' || item.type === 'navbar' || item.type === 'mintingSection') {
-      // Handle structured elements like hero, navbar, mintingSection
       const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
       setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
-    } else if (item.type === 'div' || item.type === 'section' || item.type === 'form') {
-      const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-      setSelectedElement({ id: newElementId, type: item.type });
     } else {
-      // Generic handling for other types
       const divId = addNewElement('div', 1, safeIndex, parentId);
       const newElementId = addNewElement(item.type, 1, null, divId);
-  
-      setElements((prevElements) => {
-        return prevElements.map((el) =>
+      setElements((prevElements) =>
+        prevElements.map((el) =>
           el.id === divId
             ? { ...el, children: [...(el.children || []), newElementId] }
             : el
-        );
-      });
-  
+        )
+      );
       setSelectedElement({ id: newElementId, type: item.type });
     }
   };
-  
 
   useEffect(() => {
     saveToLocalStorage('editableElements', elements);
     saveToLocalStorage('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
-  const saveSectionToLocalStorage = (sectionId) => {
-    const section = findElementById(sectionId, elements);
-    if (section) {
-      const hierarchy = buildHierarchy(elements);
-      saveToLocalStorage(`section-${sectionId}`, hierarchy);
-    }
-  };
-
   return (
     <div
-      ref={contentRef}
+      ref={ref}
       className="content-list"
-      onClick={handleContentClick}
       style={{
         width: `${contentListWidth}px`,
         transformOrigin: 'top left',
         transition: 'width 0.3s ease, transform 0.3s ease',
         margin: scale < 1 ? '0 auto' : '0',
-        position:'relative'
+        position: 'relative',
       }}
     >
       {elements.length === 0 && (
         <DropZone
           index={0}
           onDrop={(item) => handleDrop(item, 0)}
-          text="Click here to open the elements / Layout menu and drop items here to see them being created !"
-          className="first-dropzone" // Add a custom class
+          text="Click here to open the elements / Layout menu and drop items here to see them being created!"
+          className="first-dropzone"
           onClick={(e) => {
             e.stopPropagation();
-            handlePanelToggle('sidebar'); // Open the sidebar on click
-          }} />
+            handlePanelToggle('sidebar');
+          }}
+        />
       )}
 
       {elements
@@ -119,7 +89,7 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
               contentListWidth,
               setSelectedElement,
               setElements,
-              handlePanelToggle // Pass this down
+              handlePanelToggle
             )}
           </React.Fragment>
         ))}
@@ -128,17 +98,15 @@ const ContentList = ({ contentListWidth, isSideBarVisible, leftBarWidth = 40, si
           index={elements.length}
           onDrop={(item) => handleDrop(item, null)}
           text="Click or Drop items here to add to the page"
-          className="default-dropzone" // Default styling
-
+          className="default-dropzone"
           onClick={(e) => {
             e.stopPropagation();
-            handlePanelToggle('sidebar'); // Open the sidebar on click
-          }} />
+            handlePanelToggle('sidebar');
+          }}
+        />
       )}
-
-
     </div>
   );
-};
+});
 
 export default ContentList;
