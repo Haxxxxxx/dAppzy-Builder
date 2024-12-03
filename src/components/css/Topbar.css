@@ -31,6 +31,10 @@
     font-size: 1.25rem;
   }
   
+  .project-description{
+    font-size: 0.85rem;
+  }
+  
   .project-url {
     font-size: 0.875rem;
     color: #666;

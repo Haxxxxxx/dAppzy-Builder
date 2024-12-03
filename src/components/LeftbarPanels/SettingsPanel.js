@@ -1,3 +1,4 @@
+// src/components/LeftbarPanels/SettingsPanel.js
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import CandyMachineSettings from './SettingsPanels/CandyMachineSettings';
@@ -33,18 +34,24 @@ const SettingsPanel = ({ onUpdateSettings }) => {
       }
     } else {
       // Default settings for general or no selection
-      setSettings({
+      setSettings((prevSettings) => ({
+        ...prevSettings,
         siteTitle: 'My Website',
         faviconUrl: '',
         description: '',
         author: '',
-      });
+      }));
     }
   }, [selectedElement]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSettings((prev) => ({ ...prev, [name]: value }));
+
+    // Call onUpdateSettings on every change to update in real-time
+    if (onUpdateSettings) {
+      onUpdateSettings({ ...settings, [name]: value });
+    }
   };
 
   const handleSave = () => {

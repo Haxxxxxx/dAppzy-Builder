@@ -1,22 +1,36 @@
+// src/components/Topbar.js
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import './css/Topbar.css';
 import ReactDOMServer from 'react-dom/server';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 
-const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) => {
+const Topbar = ({
+  onExport,
+  onResize,
+  scale,
+  onPreviewToggle,
+  isPreviewMode,
+  pageSettings,
+}) => {
   const { elements, buildHierarchy } = useContext(EditableContext);
   const [customSize, setCustomSize] = useState('');
-  const [dezoomPercent, setDezoomPercent] = useState(100); // Default to 100% for no scaling
-  const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved'); // Default save status
+  const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
 
-  const projectName = "My Project"; // Replace with dynamic value if needed
-  const projectURL = "https://www.myproject.com"; // Replace with dynamic value if needed
+  // Use the page settings or default values
+  const projectName = pageSettings.siteTitle || 'My Project';
+  const description = pageSettings.description || 'My Project';
+
+  const faviconUrl = pageSettings.faviconUrl || '';
 
   // Export to JSON file
   const handleExportClick = () => {
     const nestedElements = buildHierarchy(elements);
-    downloadFile('website_structure.json', JSON.stringify(nestedElements, null, 2), 'application/json');
+    downloadFile(
+      'website_structure.json',
+      JSON.stringify(nestedElements, null, 2),
+      'application/json'
+    );
   };
 
   // Export to HTML file
@@ -33,9 +47,10 @@ const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) =
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Exported Website</title>
+          <title>${projectName}</title>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          ${faviconUrl ? `<link rel="icon" href="${faviconUrl}" />` : ''}
           <link rel="stylesheet" href="styles.css">
         </head>
         <body>
@@ -63,16 +78,6 @@ const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) =
     if (onResize) {
       onResize(size);
       setCustomSize(size);
-
-      // Calculate dezoom percentage if the content width exceeds viewport width
-      const viewportWidth = window.innerWidth;
-      if (size > viewportWidth) {
-        const newScale = viewportWidth / size;
-        const percentage = Math.round(newScale * 100);
-        setDezoomPercent(percentage);
-      } else {
-        setDezoomPercent(100); // No scaling needed
-      }
     }
   };
 
@@ -94,15 +99,17 @@ const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) =
     }, 1000); // Simulating save delay of 1 second
   };
 
-
-  
   return (
     <div className="topbar">
       <div className="project-info">
         <button className="return-button">⬅️</button>
+        {faviconUrl && (
+          <img src={faviconUrl} alt="Favicon" className="favicon" />
+        )}
         <div className="project-details">
           <span className="project-name">{projectName}</span>
-          <span className="project-url">{projectURL}</span>
+          <span className="project-description">{description}</span>
+
         </div>
       </div>
 
@@ -110,15 +117,27 @@ const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) =
         <button className="undo-button">↺</button>
         <button className="redo-button">↻</button>
         <button className="preview-button" onClick={onPreviewToggle}>
-          {isPreviewMode ? <span className="material-symbols-outlined">visibility_off</span> : <span className="material-symbols-outlined">visibility</span>}
-        </button>      
+          {isPreviewMode ? (
+            <span className="material-symbols-outlined">visibility_off</span>
+          ) : (
+            <span className="material-symbols-outlined">visibility</span>
+          )}
+        </button>
       </div>
 
       <div className="resize-controls">
-        <button className="resize-button" onClick={() => handleResize(1440)}>Big PC</button>
-        <button className="resize-button" onClick={() => handleResize(1200)}>PC</button>
-        <button className="resize-button" onClick={() => handleResize(768)}>Tablet</button>
-        <button className="resize-button" onClick={() => handleResize(375)}>Phone</button>
+        <button className="resize-button" onClick={() => handleResize(1440)}>
+          Big PC
+        </button>
+        <button className="resize-button" onClick={() => handleResize(1200)}>
+          PC
+        </button>
+        <button className="resize-button" onClick={() => handleResize(768)}>
+          Tablet
+        </button>
+        <button className="resize-button" onClick={() => handleResize(375)}>
+          Phone
+        </button>
         <input
           type="text"
           className="input"
@@ -127,14 +146,19 @@ const Topbar = ({ onExport, onResize, scale, onPreviewToggle, isPreviewMode }) =
           onChange={(e) => setCustomSize(e.target.value)}
           onKeyDown={handleCustomResize} // Resize on Enter key
         />
-                <span className="scale-percentage">Scale: {Math.round(scale * 100)}%</span>
-
+        <span className="scale-percentage">
+          Scale: {Math.round(scale * 100)}%
+        </span>
       </div>
 
       <div className="export-section">
         <span className="autosave-status">{autoSaveStatus}</span>
-        <button className="button" onClick={handleExportClick}>Export JSON</button>
-        <button className="button" onClick={handleExportHtmlClick}>Export as HTML</button>
+        <button className="button" onClick={handleExportClick}>
+          Export JSON
+        </button>
+        <button className="button" onClick={handleExportHtmlClick}>
+          Export as HTML
+        </button>
       </div>
     </div>
   );

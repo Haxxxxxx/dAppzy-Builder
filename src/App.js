@@ -23,8 +23,8 @@ function App() {
   const contentRef = useRef(null); // Reference to the content-list
   const mainContentRef = useRef(null); // Reference to the main-content
   const [pageSettings, setPageSettings] = useState({
-    title: 'My Webpage',
-    iconUrl: '',
+    siteTitle: 'My Webpage',
+    faviconUrl: '',
     description: '',
     author: '',
   });
@@ -32,7 +32,7 @@ function App() {
   const handlePreviewToggle = () => {
     setIsPreviewMode((prevMode) => !prevMode);
   };
-  
+
   const handleExport = (elements) => {
     console.log('Export function called with elements:', elements);
     exportFiles(elements);
@@ -67,8 +67,15 @@ function App() {
           onShowSettingsPanel={() => handlePanelToggle('settings')}
         />
         <div className="app">
-        <Topbar onExport={handleExport} onResize={handleResize} scale={scale} isPreviewMode={isPreviewMode} onPreviewToggle={handlePreviewToggle} />
-        <div className="content-container">
+          <Topbar
+            onExport={handleExport}
+            onResize={handleResize}
+            scale={scale}
+            isPreviewMode={isPreviewMode}
+            onPreviewToggle={handlePreviewToggle}
+            pageSettings={pageSettings} // Pass pageSettings to Topbar
+          />
+          <div className="content-container">
             {openPanel === 'sidebar' && (
               <div className="sidebar" id="sidebar">
                 <SideBar contentListWidth={contentListWidth} />
@@ -103,7 +110,6 @@ function App() {
                 scale={scale}
                 setScale={setScale} // Pass setScale to ContentList
                 isPreviewMode={isPreviewMode} // Pass isPreviewMode here
-
               />
             </div>
           </div>
