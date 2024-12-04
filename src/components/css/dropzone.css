@@ -2,14 +2,12 @@
 .first-dropzone {
   position: absolute;
   top: 40%;
-  left: 10%;
   min-height: 60px;
-  width: 80%;
-  padding: 2vh;
-  border: 2px solid grey;
-  border-radius: 12px;
+  width: 99.75%;
+  border: 2px solid #007bff;
   background-color: whitesmoke!important;
   display: flex;
+  color: #007bff;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);

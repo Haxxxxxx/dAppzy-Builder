@@ -14,7 +14,7 @@ import MediaPanel from './components/LeftbarPanels/MediaPanel';
 import SettingsPanel from './components/LeftbarPanels/SettingsPanel';
 
 function App() {
-  const [openPanel, setOpenPanel] = useState(''); // Track which panel is open
+  const [openPanel, setOpenPanel] = useState('sidebar'); // Track which panel is open
   const [contentListWidth, setContentListWidth] = useState(1200); // Default width for PC
   const { setSelectedElement } = useContext(EditableContext); // Access setSelectedElement from context
   const [scale, setScale] = useState(1); // Add scale state

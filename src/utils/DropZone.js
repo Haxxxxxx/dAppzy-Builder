@@ -31,7 +31,7 @@ const DropZone = ({ onDrop, parentId, onClick, text, className }) => {
   return (
     <div
       ref={drop}
-      className={`dropzone ${className} ${isOver ? 'dropzone-hover' : ''}`}
+      className={`${className} ${isOver ? 'dropzone-hover' : ''}`}
       onClick={onClick}
     >
       <div className="dropzone-text">
