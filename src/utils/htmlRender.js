@@ -54,14 +54,37 @@ const stylesMap = {
   customTemplate: CustomTemplateNavbarStyles,
 };
 
+// Utility function to extract file extension
+export function getFileExtension(url) {
+  if (!url || typeof url !== 'string') {
+    console.warn(`Invalid URL provided to getFileExtension: ${url}. Using default 'png' extension.`);
+    return 'png'; // Default extension or handle as needed
+  }
+  return url.split('.').pop().split(/\#|\?/)[0];
+}
+
 // Function to flatten styles into valid CSS strings
 function flattenStyles(styles) {
-  return Object.entries(styles || {})
-    .map(([key, value]) => {
+  let cssString = '';
+
+  Object.entries(styles || {}).forEach(([key, value]) => {
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      // Handle nested styles or media queries
+      cssString += `\n  ${key} {\n`;
+      cssString += Object.entries(value)
+        .map(
+          ([nestedKey, nestedValue]) =>
+            `    ${nestedKey.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${nestedValue};`
+        )
+        .join('\n');
+      cssString += `\n  }`;
+    } else {
       const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-      return `${cssKey}: ${value};`;
-    })
-    .join('\n  ');
+      cssString += `${cssKey}: ${value};\n  `;
+    }
+  });
+
+  return cssString.trim();
 }
 
 // Generate consolidated CSS for all collected styles
@@ -120,19 +143,26 @@ function buildAttributesString(type, attributes, src) {
   return attributesString;
 }
 
-function renderNavbarElement(element, collectedStyles) {
+// Function to render Navbar elements to HTML
+export function renderNavbarElement(element, collectedStyles) {
   const { id, children = [], configuration = 'default' } = element;
   const configStyles =
     configuration === 'customTemplate'
       ? CustomTemplateNavbarStyles
       : defaultNavbarStyles;
 
-  // Add a prefix for the class name based on the configuration
-  const classPrefix = configuration === 'customTemplate' ? 'customTemplate' : 'default';
-  const className = `element-${id} ${classPrefix}-nav`;
+  // Define separate class names
+  const elementClassName = `element-${id}`;
+  const configClassName = `${configuration}-nav`;
+
+  // Collect styles for each class independently
+  collectedStyles.push({
+    className: elementClassName,
+    styles: configStyles.nav,
+  });
 
   collectedStyles.push({
-    className,
+    className: configClassName,
     styles: configStyles.nav,
   });
 
@@ -140,12 +170,19 @@ function renderNavbarElement(element, collectedStyles) {
   const logoHtml = children
     .filter((child) => child.type === 'image')
     .map((child) => {
-      const logoClassName = `element-${child.id} ${classPrefix}-logoContainer`;
+      const logoElementClass = `element-${child.id}`;
+      const logoConfigClass = `${configuration}-logoContainer`;
       collectedStyles.push({
-        className: logoClassName,
+        className: logoElementClass,
         styles: configStyles.logoContainer,
       });
-      return `<img class="${logoClassName}" src="${child.src}" alt="${child.content || 'Logo'}">`;
+      collectedStyles.push({
+        className: logoConfigClass,
+        styles: configStyles.logoContainer,
+      });
+
+      const imageFilename = `${child.id}.${getFileExtension(child.src)}`;
+      return `<img class="${logoElementClass} ${logoConfigClass}" src="images/${imageFilename}" alt="${child.content || 'Logo'}">`;
     })
     .join('');
 
@@ -153,12 +190,17 @@ function renderNavbarElement(element, collectedStyles) {
   const navItemsHtml = children
     .filter((child) => child.type === 'span')
     .map((child) => {
-      const navClassName = `element-${child.id} ${classPrefix}-navList`;
+      const navElementClass = `element-${child.id}`;
+      const navConfigClass = `${configuration}-navList`;
       collectedStyles.push({
-        className: navClassName,
+        className: navElementClass,
         styles: configStyles.navList,
       });
-      return `<li><a href="#" class="${navClassName}">${child.content}</a></li>`;
+      collectedStyles.push({
+        className: navConfigClass,
+        styles: configStyles.navList,
+      });
+      return `<li><a href="#" class="${navElementClass} ${navConfigClass}">${child.content}</a></li>`;
     })
     .join('');
 
@@ -166,21 +208,139 @@ function renderNavbarElement(element, collectedStyles) {
   const buttonItemsHtml = children
     .filter((child) => child.type === 'button')
     .map((child) => {
-      const buttonClassName = `element-${child.id} ${classPrefix}-buttonContainer`;
+      const buttonElementClass = `element-${child.id}`;
+      const buttonConfigClass = `${configuration}-buttonContainer`;
       collectedStyles.push({
-        className: buttonClassName,
+        className: buttonElementClass,
         styles: configStyles.buttonContainer,
       });
-      return `<button class="${buttonClassName}">${child.content}</button>`;
+      collectedStyles.push({
+        className: buttonConfigClass,
+        styles: configStyles.buttonContainer,
+      });
+      return `<button class="${buttonElementClass} ${buttonConfigClass}">${child.content}</button>`;
     })
     .join('');
 
   // Return the complete HTML for the navbar
-  return `<nav class="${className}">
-    <div class="${classPrefix}-logoContainer">${logoHtml}</div>
-    <ul class="${classPrefix}-navList">${navItemsHtml}</ul>
-    <div class="${classPrefix}-buttonContainer">${buttonItemsHtml}</div>
+  return `<nav class="${elementClassName} ${configClassName}">
+    <div class="${configuration}-logoContainer">${logoHtml}</div>
+    <ul class="${configuration}-navList">${navItemsHtml}</ul>
+    <div class="${configuration}-buttonContainer">${buttonItemsHtml}</div>
   </nav>`;
+}
+
+// Async function to render Navbar elements with Base64 images (Optional)
+export async function renderNavbarElementAsync(element, collectedStyles) {
+  const { id, children = [], configuration = 'default' } = element;
+  const configStyles =
+    configuration === 'customTemplate'
+      ? CustomTemplateNavbarStyles
+      : defaultNavbarStyles;
+
+  // Define separate class names
+  const elementClassName = `element-${id}`;
+  const configClassName = `${configuration}-nav`;
+
+  // Collect styles for each class independently
+  collectedStyles.push({
+    className: elementClassName,
+    styles: configStyles.nav,
+  });
+
+  collectedStyles.push({
+    className: configClassName,
+    styles: configStyles.nav,
+  });
+
+  // Generate logo HTML with async image conversion (Not recommended if using separate assets)
+  const logoHtmlPromises = children
+    .filter((child) => child.type === 'image')
+    .map(async (child) => {
+      const logoElementClass = `element-${child.id}`;
+      const logoConfigClass = `${configuration}-logoContainer`;
+      collectedStyles.push({
+        className: logoElementClass,
+        styles: configStyles.logoContainer,
+      });
+      collectedStyles.push({
+        className: logoConfigClass,
+        styles: configStyles.logoContainer,
+      });
+
+      const base64 = await convertImageToBase64(child.src);
+      return `<img class="${logoElementClass} ${logoConfigClass}" src="${base64}" alt="${child.content || 'Logo'}">`;
+    });
+
+  const logoHtml = (await Promise.all(logoHtmlPromises)).join('');
+
+  // Generate navigation links HTML
+  const navItemsHtml = children
+    .filter((child) => child.type === 'span')
+    .map((child) => {
+      const navElementClass = `element-${child.id}`;
+      const navConfigClass = `${configuration}-navList`;
+      collectedStyles.push({
+        className: navElementClass,
+        styles: configStyles.navList,
+      });
+      collectedStyles.push({
+        className: navConfigClass,
+        styles: configStyles.navList,
+      });
+      return `<li><a href="#" class="${navElementClass} ${navConfigClass}">${child.content}</a></li>`;
+    })
+    .join('');
+
+  // Generate buttons HTML
+  const buttonItemsHtml = children
+    .filter((child) => child.type === 'button')
+    .map((child) => {
+      const buttonElementClass = `element-${child.id}`;
+      const buttonConfigClass = `${configuration}-buttonContainer`;
+      collectedStyles.push({
+        className: buttonElementClass,
+        styles: configStyles.buttonContainer,
+      });
+      collectedStyles.push({
+        className: buttonConfigClass,
+        styles: configStyles.buttonContainer,
+      });
+      return `<button class="${buttonElementClass} ${buttonConfigClass}">${child.content}</button>`;
+    })
+    .join('');
+
+  // Return the complete HTML for the navbar
+  return `<nav class="${elementClassName} ${configClassName}">
+    <div class="${configuration}-logoContainer">${logoHtml}</div>
+    <ul class="${configuration}-navList">${navItemsHtml}</ul>
+    <div class="${configuration}-buttonContainer">${buttonItemsHtml}</div>
+  </nav>`;
+}
+
+// Function to convert image to Base64 (if needed)
+export async function convertImageToBase64(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${url}`);
+    }
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => {
+        reader.abort();
+        reject(new Error('Problem parsing input file.'));
+      };
+      reader.onload = () => {
+        resolve(reader.result);
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to Base64:', error);
+    return '';
+  }
 }
 
 // Render generic elements to HTML
@@ -203,12 +363,12 @@ export function renderElementToHtml(element, collectedStyles) {
   attributesString += buildAttributesString(type, attributes, src);
 
   const selfClosingTags = ['img', 'input', 'hr', 'br', 'meta', 'link', 'source'];
-  const childrenElements = element.children || [];
 
   if (type === 'navbar') {
     return renderNavbarElement(element, collectedStyles);
   }
 
+  const childrenElements = element.children || [];
   const childrenHtml = childrenElements
     .map((childElement) => renderElementToHtml(childElement, collectedStyles))
     .join('');
@@ -219,124 +379,3 @@ export function renderElementToHtml(element, collectedStyles) {
     return `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
   }
 }
-
-  
-
-function renderHeroElement(element, collectedStyles) {
-    const { id, styles, configuration, children = [] } = element;
-    const className = `element-${id}`;
-    let attributes = `class="hero ${className}"`;
-  
-    // Collect styles
-    collectedStyles.push({
-      className,
-      styles,
-    });
-  
-    let heroHtml = '';
-  
-    if (configuration === 'heroOne') {
-      // Generate HTML for HeroOne
-      const headingChild = children.find(child => child.type === 'span' && child.content === 'Welcome to Our Website');
-      const paragraphChild = children.find(child => child.type === 'span' && child.content === 'Building a better future together.');
-      const buttonChild = children.find(child => child.type === 'button');
-      const imageChild = children.find(child => child.type === 'image');
-  
-      const headingHtml = headingChild ? renderElementToHtml(headingChild, collectedStyles) : '';
-      const paragraphHtml = paragraphChild ? renderElementToHtml(paragraphChild, collectedStyles) : '';
-      const buttonHtml = buttonChild ? renderElementToHtml(buttonChild, collectedStyles) : '';
-      const imageHtml = imageChild ? renderElementToHtml(imageChild, collectedStyles) : '';
-  
-      heroHtml = `<div class="hero-one">
-        ${imageHtml}
-        ${headingHtml}
-        ${paragraphHtml}
-        ${buttonHtml}
-      </div>`;
-    } else if (configuration === 'heroTwo') {
-      // Handle HeroTwo similarly
-    } else {
-      // Default hero layout
-      const heroContentHtml = children.map(childElement => renderElementToHtml(childElement, collectedStyles)).join('');
-      heroHtml = `<div class="hero-default">
-        ${heroContentHtml}
-      </div>`;
-    }
-  
-    return `<section ${attributes}>${heroHtml}</section>`;
-}
-  
-// Function to render CTA element
-function renderCtaElement(element, collectedStyles) {
-  const { id, styles, children = [], configuration } = element;
-  const className = `element-${id}`;
-  let attributes = `class="cta ${className}"`;
-
-  // Collect styles
-  collectedStyles.push({
-    className,
-    styles,
-  });
-
-  let ctaHtml = '';
-
-  if (configuration === 'ctaOne') {
-    // Generate HTML for CTA One
-    const headingChild = children.find(child => child.type === 'heading');
-    const buttonChild = children.find(child => child.type === 'button');
-
-    const headingHtml = headingChild ? renderElementToHtml(headingChild, collectedStyles) : '';
-    const buttonHtml = buttonChild ? renderElementToHtml(buttonChild, collectedStyles) : '';
-
-    ctaHtml = `<div class="cta-one">
-      ${headingHtml}
-      ${buttonHtml}
-    </div>`;
-  } else {
-    // Default CTA layout
-    const ctaContentHtml = children.map(childElement => renderElementToHtml(childElement, collectedStyles)).join('');
-    ctaHtml = `<div class="cta-default">
-      ${ctaContentHtml}
-    </div>`;
-  }
-
-  return `<section ${attributes}>${ctaHtml}</section>`;
-}
-
-// Function to render footer element
-function renderFooterElement(element, collectedStyles) {
-  const { id, styles, children = [], configuration } = element;
-  const className = `element-${id}`;
-  let attributes = `class="footer ${className}"`;
-
-  // Collect styles
-  collectedStyles.push({
-    className,
-    styles,
-  });
-
-  let footerHtml = '';
-
-  if (configuration === 'simple') {
-    // Generate HTML for SimpleFooter
-    const contentHtml = children.map(childElement => renderElementToHtml(childElement, collectedStyles)).join('');
-    footerHtml = `<div class="footer-simple">
-      ${contentHtml}
-    </div>`;
-  } else if (configuration === 'detailed') {
-    // Generate HTML for DetailedFooter
-    // ...
-  } else if (configuration === 'template') {
-    // Generate HTML for TemplateFooter
-    // ...
-  } else {
-    // Default footer layout
-    const footerContentHtml = children.map(childElement => renderElementToHtml(childElement, collectedStyles)).join('');
-    footerHtml = `<div class="footer-default">
-      ${footerContentHtml}
-    </div>`;
-  }
-
-  return `<footer ${attributes}>${footerHtml}</footer>`;
-}
-

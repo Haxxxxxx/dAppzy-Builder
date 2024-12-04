@@ -88,6 +88,11 @@ const ContentList = forwardRef(
           margin: scale < 1 ? '0 auto' : '0',
           position: 'relative',
         }}
+        onClick={(e) => {
+          if (e.target === ref.current) {
+            setSelectedElement(null); // Clear the selected element
+          }
+        }}
       >
         {!isPreviewMode && elements.length === 0 && (
           <DropZone
@@ -114,6 +119,7 @@ const ContentList = forwardRef(
                 setElements,
                 handlePanelToggle,
                 isPreviewMode // Pass isPreviewMode to renderElement
+                
               )}
             </React.Fragment>
           ))}
