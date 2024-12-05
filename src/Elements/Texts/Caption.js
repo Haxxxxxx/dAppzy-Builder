@@ -23,7 +23,7 @@ const Caption = ({ id }) => {
       suppressContentEditableWarning={true}
       onClick={handleSelect}
       onBlur={handleBlur}
-      style={{ padding: '4px', border: isSelected ? '1px dashed blue' : 'none' }}
+      style={{ padding: '4px', }}
     >
       {content}
     </caption>

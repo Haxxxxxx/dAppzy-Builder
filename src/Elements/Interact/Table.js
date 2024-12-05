@@ -30,7 +30,7 @@ const TableCell = ({ id }) => {
         cursor: 'text',
         padding: '8px',
         border: '1px solid #ccc',
-        outline: isSelected ? '1px dashed blue' : 'none',
+        outline: 'none',
       }}
     >
       {content || 'Editable Cell'}

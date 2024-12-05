@@ -32,7 +32,7 @@ const Input = ({ id }) => {
       onChange={handleChange}
       style={{
         ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : '1px solid #ccc', // Add visual cue for selected input
+        border:  '1px solid #ccc', // Add visual cue for selected input
         padding: '5px',
         margin: '5px',
       }}

@@ -16,7 +16,6 @@ const Fieldset = ({ id }) => {
     <fieldset
       onClick={handleSelect}
       style={{
-        border: isSelected ? '2px dashed blue' : '1px solid #ccc',
         padding: '10px',
         margin: '10px 0',
       }}

@@ -23,7 +23,7 @@ const Label = ({ id }) => {
       suppressContentEditableWarning={true}
       onClick={handleSelect}
       onBlur={handleBlur}
-      style={{ border: isSelected ? '1px dashed blue' : 'none', padding: '4px' }}
+      style={{ padding: '4px' }}
     >
       {content}
     </label>

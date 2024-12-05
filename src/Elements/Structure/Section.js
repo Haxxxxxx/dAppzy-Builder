@@ -43,7 +43,6 @@ const Section = ({ id }) => {
         onClick={handleSelect}
         style={{
           ...styles,
-          border: selectedElement?.id === id ? '2px solid blue' : '1px solid #ccc',
           padding: styles.padding || '10px',
           margin: styles.margin || '10px 0',
           backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',

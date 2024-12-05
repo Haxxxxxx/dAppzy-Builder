@@ -37,7 +37,6 @@ const DateComponent = ({ id, styles = {}, label }) => {
         flexDirection: 'column', // Stack elements vertically
         alignItems: 'center', // Center align for a neat look
         ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
       }}
     >
       {label && (

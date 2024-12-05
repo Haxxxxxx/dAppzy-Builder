@@ -1,5 +1,3 @@
-// src/Elements/Structures/Navbars/ThreeColumnNavbar.js
-
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
@@ -7,8 +5,13 @@ import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
-import RemovableWrapper from '../../../utils/RemovableWrapper';
 import { defaultNavbarStyles } from './DefaultNavbarStyles';
+import withSelectable from '../../../utils/withSelectable';
+
+const SelectableSpan = withSelectable(Span);
+const SelectableButton = withSelectable(Button);
+const SelectableImage = withSelectable(Image);
+const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
 const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) => {
   const navRef = useRef(null);
@@ -43,9 +46,7 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <RemovableWrapper key={child.id} id={child.id}>
-              <Image id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
-            </RemovableWrapper>
+            <SelectableImage id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
           ))}
       </div>
 
@@ -58,13 +59,13 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
           {isMenuOpen && (
             <div style={defaultNavbarStyles.compactMenu}>
               {children.map((child) => (
-                <RemovableWrapper key={child.id} id={child.id}>
-                  {child.type === 'span' && <Span id={child.id} content={child.content} />}
-                  {child.type === 'button' && <Button id={child.id} content={child.content} />}
+                <>
+                  {child.type === 'span' && <SelectableSpan id={child.id} content={child.content} />}
+                  {child.type === 'button' && <SelectableButton id={child.id} content={child.content} />}
                   {child.type === 'connectWalletButton' && (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   )}
-                </RemovableWrapper>
+                </>
               ))}
             </div>
           )}
@@ -78,9 +79,7 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <RemovableWrapper key={child.id} id={child.id}>
-                  <Span id={child.id} content={child.content} />
-                </RemovableWrapper>
+                <SelectableSpan id={child.id} content={child.content} />
               ))}
           </ul>
 
@@ -88,13 +87,13 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
             {children
               .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
-                <RemovableWrapper key={child.id} id={child.id}>
+                <>
                   {child.type === 'connectWalletButton' ? (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   ) : (
-                    <Button id={child.id} content={child.content} />
+                    <SelectableButton id={child.id} content={child.content} />
                   )}
-                </RemovableWrapper>
+                </>
               ))}
           </div>
         </div>

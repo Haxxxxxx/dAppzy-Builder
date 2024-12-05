@@ -134,7 +134,6 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
         style={{
           ...styles,
           ...customStyles,
-          border: selectedElement?.id === id ? '1px dashed blue' : 'none',
           cursor: 'pointer',
         }}
       >

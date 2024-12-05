@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Span from '../../Texts/Span';
 import Image from '../../Media/Image';
-import RemovableWrapper from '../../../utils/RemovableWrapper';
+import withSelectable from '../../../utils/withSelectable';
+
+const SelectableSpan = withSelectable(Span);
+const SelectableImage = withSelectable(Image);
 
 const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
   const [isCompact, setIsCompact] = useState(false);
@@ -20,16 +23,15 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
         color: '#D1D5DB',
         padding: '24px',
         display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
+        flexDirection: isCompact ? 'column' : 'row',
         alignItems: isCompact ? 'center' : 'stretch',
-        textAlign: isCompact ? 'center' : 'left',
+        gap: '16px',
+        textAlign:'center',
+        alignContent:'center',
       }}
     >
       {isCompact ? (
-        // Compact Display Layout
         <>
-          {/* Sections */}
           <div
             style={{
               display: 'flex',
@@ -40,15 +42,17 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
             }}
           >
             {children
-              ?.filter((child) => child.type === 'span')
+              .filter((child) => child.type === 'span')
               .map((child) => (
-                <RemovableWrapper key={child.id} id={child.id}>
-                  <Span id={child.id} content={child.content} styles={child.styles} />
-                </RemovableWrapper>
+                <SelectableSpan
+                  key={child.id}
+                  id={child.id}
+                  content={child.content}
+                  styles={child.styles}
+                />
               ))}
           </div>
 
-          {/* Logo and Title */}
           <div
             style={{
               display: 'flex',
@@ -59,104 +63,43 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
             }}
           >
             {children
-              ?.filter((child) => child.type === 'image' && child.content.includes('logo'))
+              .filter((child) => child.type === 'image')
               .map((logo) => (
-                <RemovableWrapper key={logo.id} id={logo.id}>
-                  <Image id={logo.id} src={logo.content} styles={logo.styles} />
-                </RemovableWrapper>
-              ))}
-            {children
-              ?.filter((child) => child.type === 'span' && child.content.includes('Template'))
-              .map((title) => (
-                <RemovableWrapper key={title.id} id={title.id}>
-                  <Span id={title.id} content={title.content} styles={title.styles} />
-                </RemovableWrapper>
+                <SelectableImage
+                  key={logo.id}
+                  id={logo.id}
+                  src={logo.content}
+                  styles={logo.styles}
+                />
               ))}
           </div>
-
-          {/* Social Icons */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '8px',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: '16px',
-            }}
-          >
-            {children
-              ?.filter((child) => child.type === 'image' && child.styles?.social)
-              .map((icon) => (
-                <RemovableWrapper key={icon.id} id={icon.id}>
-                  <Image id={icon.id} src={icon.content} styles={{ width: '24px', height: '24px' }} />
-                </RemovableWrapper>
-              ))}
-          </div>
-
-          {/* Rights */}
-          {children
-            ?.filter((child) => child.content.includes('rights'))
-            .map((rights) => (
-              <RemovableWrapper key={rights.id} id={rights.id}>
-                <Span id={rights.id} content={rights.content} styles={rights.styles} />
-              </RemovableWrapper>
-            ))}
         </>
       ) : (
-        // Normal Display Layout
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* Sections */}
             <div style={{ display: 'flex', gap: '32px' }}>
               {children
-                ?.filter((child) => child.type === 'span')
+                .filter((child) => child.type === 'span')
                 .map((child) => (
-                  <RemovableWrapper key={child.id} id={child.id}>
-                    <Span id={child.id} content={child.content} styles={child.styles} />
-                  </RemovableWrapper>
+                  <SelectableSpan
+                    key={child.id}
+                    id={child.id}
+                    content={child.content}
+                    styles={child.styles}
+                  />
                 ))}
             </div>
-
-            {/* Logo and Title */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                {children
-                  ?.filter((child) => child.type === 'image' && child.content.includes('logo'))
-                  .map((logo) => (
-                    <RemovableWrapper key={logo.id} id={logo.id}>
-                      <Image id={logo.id} src={logo.content} styles={logo.styles} />
-                    </RemovableWrapper>
-                  ))}
-                {children
-                  ?.filter((child) => child.type === 'span' && child.content.includes('Template'))
-                  .map((title) => (
-                    <RemovableWrapper key={title.id} id={title.id}>
-                      <Span id={title.id} content={title.content} styles={title.styles} />
-                    </RemovableWrapper>
-                  ))}
-              </div>
-            </div>
-
-            {/* Social Icons */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {children
-                ?.filter((child) => child.type === 'image' && child.styles?.social)
+                .filter((child) => child.type === 'image')
                 .map((icon) => (
-                  <RemovableWrapper key={icon.id} id={icon.id}>
-                    <Image id={icon.id} src={icon.content} styles={{ width: '24px', height: '24px' }} />
-                  </RemovableWrapper>
+                  <SelectableImage
+                    key={icon.id}
+                    id={icon.id}
+                    src={icon.content}
+                    styles={icon.styles}
+                  />
                 ))}
             </div>
-          </div>
-
-          {/* Rights */}
-          {children
-            ?.filter((child) => child.content.includes('rights'))
-            .map((rights) => (
-              <RemovableWrapper key={rights.id} id={rights.id}>
-                <Span id={rights.id} content={rights.content} styles={{ marginTop: '16px', fontSize: '0.875rem', alignSelf: 'center' }} />
-              </RemovableWrapper>
-            ))}
         </>
       )}
     </footer>

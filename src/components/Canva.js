@@ -1,4 +1,3 @@
-// src/components/ContentList.js
 import React, { useContext, useEffect, forwardRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
@@ -25,6 +24,8 @@ const ContentList = forwardRef(
       setElements,
       ELEMENTS_VERSION,
       saveToLocalStorage,
+      selectedStyle,
+      selectedElement,
     } = useContext(EditableContext);
 
     const calculateScale = () => {
@@ -47,7 +48,7 @@ const ContentList = forwardRef(
 
     const handleDrop = (item, index, parentId = null) => {
       const safeIndex = index !== null && index !== undefined ? index : 0;
-
+    
       if (item.type === 'table') {
         // Table-specific logic
       } else if (
@@ -57,7 +58,12 @@ const ContentList = forwardRef(
       ) {
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
         setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
+      } else if (item.type === 'button') {
+        // Directly add the button without wrapping it in a div
+        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
+        setSelectedElement({ id: newElementId, type: item.type });
       } else {
+        // Default logic for other elements
         const divId = addNewElement('div', 1, safeIndex, parentId);
         const newElementId = addNewElement(item.type, 1, null, divId);
         setElements((prevElements) =>
@@ -70,6 +76,7 @@ const ContentList = forwardRef(
         setSelectedElement({ id: newElementId, type: item.type });
       }
     };
+    
 
     useEffect(() => {
       saveToLocalStorage('editableElements', elements);
@@ -90,7 +97,7 @@ const ContentList = forwardRef(
         }}
         onClick={(e) => {
           if (e.target === ref.current) {
-            setSelectedElement(null); // Clear the selected element
+            setSelectedElement(null);
           }
         }}
       >
@@ -109,20 +116,19 @@ const ContentList = forwardRef(
 
         {elements
           .filter((element) => !element.parentId)
-          .map((element) => (
-            <React.Fragment key={element.id}>
-              {renderElement(
-                element,
-                elements,
-                contentListWidth,
-                setSelectedElement,
-                setElements,
-                handlePanelToggle,
-                isPreviewMode // Pass isPreviewMode to renderElement
-                
-              )}
-            </React.Fragment>
-          ))}
+          .map((element) =>
+            renderElement(
+              element,
+              elements,
+              contentListWidth,
+              setSelectedElement,
+              setElements,
+              handlePanelToggle,
+              selectedElement,
+              selectedStyle,
+              isPreviewMode
+            )
+          )}
 
         {!isPreviewMode && elements.length > 0 && (
           <DropZone

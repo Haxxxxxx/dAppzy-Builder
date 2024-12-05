@@ -62,7 +62,6 @@ const Form = ({ id }) => {
           style={{
             ...styles,
             padding: '10px',
-            border: selectedElement?.id === id ? '1px dashed blue' : '1px solid #ccc',
           }}
         >
           {children.map((childId) => {

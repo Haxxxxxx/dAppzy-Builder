@@ -2,26 +2,29 @@ import React, { useRef, useState, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
-import ConnectWalletButton from '../Web3Related/ConnectWalletButton'; // Import the ConnectWalletButton
+import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
-import RemovableWrapper from '../../../utils/RemovableWrapper';
 import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
+import withSelectable from '../../../utils/withSelectable';
+
+const SelectableSpan = withSelectable(Span);
+const SelectableButton = withSelectable(Button);
+const SelectableImage = withSelectable(Image);
+const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
 const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem }) => {
   const navRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
 
-  const { isOverCurrent, canDrop, drop } = useElementDrop({
+  const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: navRef,
     onDropItem,
   });
 
   useEffect(() => {
-    if (typeof contentListWidth === 'number' && !isNaN(contentListWidth)) {
-      setIsCompact(contentListWidth < 768); // Adjust the breakpoint as needed
-    }
+    setIsCompact(contentListWidth < 768); // Adjust breakpoint
   }, [contentListWidth]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
@@ -32,77 +35,60 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         navRef.current = node;
         drop(node);
       }}
-     style={{
-    ...CustomTemplateNavbarStyles.nav, // Apply specific styles
-  }}
+      style={{
+        ...CustomTemplateNavbarStyles.nav, // Apply specific styles
+      }}
     >
       {/* Logo and Title */}
       <div style={{ ...CustomTemplateNavbarStyles.logoContainer }}>
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <RemovableWrapper key={child.id} id={child.id}>
-              <Image id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
-            </RemovableWrapper>
+            <SelectableImage id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
           ))}
         {children
           .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
           .map((child) => (
-            <RemovableWrapper key={child.id} id={child.id}>
-              <Span id={child.id} content={child.content} styles={{ fontSize: '1.5rem', cursor: 'pointer' }} />
-            </RemovableWrapper>
+            <SelectableSpan id={child.id} content={child.content} styles={{ fontSize: '1.5rem', cursor: 'pointer' }} />
           ))}
       </div>
 
-      {/* Hamburger Menu Icon for Compact View */}
-      {isCompact && (
-        <div
-          style={{
-            ...CustomTemplateNavbarStyles.compactMenuIcon,
-          }}
-          onClick={toggleMenu}
-        >
-          ☰
-        </div>
-      )}
-
       {/* Compact Menu */}
-      {isCompact && isMenuOpen && (
-        <div
-          style={{
-            ...CustomTemplateNavbarStyles.compactMenu,
-          }}
-        >
-          {children
-            .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
-            .map((child) => (
-              <RemovableWrapper key={child.id} id={child.id}>
-                <Span id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
-              </RemovableWrapper>
-            ))}
-          {children
-            .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton') // Include ConnectWalletButton
-            .map((child) => (
-              <RemovableWrapper key={child.id} id={child.id}>
-                {child.type === 'connectWalletButton' ? (
-                  <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
-                ) : (
-                  <Button
-                    id={child.id}
-                    content={child.content}
-                    styles={{
-                      ...child.styles,
-                      border: 'none',
-                      padding: '12px 20px',
-                      fontFamily: 'Roboto, sans-serif',
-                      backgroundColor: child.styles?.backgroundColor || '#ffffff',
-                      color: child.styles?.color || '#000',
-                    }}
-                  />
-                )}
-              </RemovableWrapper>
-            ))}
-        </div>
+      {isCompact && (
+        <>
+          <div
+            style={{
+              ...CustomTemplateNavbarStyles.compactMenuIcon,
+            }}
+            onClick={toggleMenu}
+          >
+            ☰
+          </div>
+          {isMenuOpen && (
+            <div
+              style={{
+                ...CustomTemplateNavbarStyles.compactMenu,
+              }}
+            >
+              {children
+                .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+                .map((child) => (
+                  <SelectableSpan id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
+                ))}
+              {children
+                .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
+                .map((child) => (
+                  <>
+                    {child.type === 'connectWalletButton' ? (
+                      <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    ) : (
+                      <SelectableButton id={child.id} content={child.content} />
+                    )}
+                  </>
+                ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Desktop Links and Buttons */}
@@ -112,34 +98,27 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
             {children
               .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
               .map((child) => (
-                <RemovableWrapper key={child.id} id={child.id}>
-                  <Span id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
-                </RemovableWrapper>
+                <SelectableSpan id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
               ))}
           </div>
 
-          <div style={{ ...CustomTemplateNavbarStyles.buttonContainer}}>
+          <div style={{ ...CustomTemplateNavbarStyles.buttonContainer }}>
             {children
-              .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton') // Include ConnectWalletButton
+              .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
-                <RemovableWrapper key={child.id} id={child.id}>
+                <>
                   {child.type === 'connectWalletButton' ? (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} preventHeroModal={true} // Pass preventHeroModal as true
-                    />
+                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   ) : (
-                    <Button
-                      id={child.id}
-                      content={child.content}
-                      styles={{
-                        ...child.styles,
-                        border: 'none',
-                        padding: '16px 28px',
-                        backgroundColor: child.styles?.backgroundColor || '#334155',
-                        color: child.styles?.color || '#fff',
-                      }}
-                    />
+                    <SelectableButton id={child.id} content={child.content} styles={{
+                      ...child.styles,
+                      border: 'none',
+                      padding: '10px 20px',
+                      backgroundColor: child.styles?.backgroundColor || '#334155',
+                      color: child.styles?.color || '#fff',
+                    }} />
                   )}
-                </RemovableWrapper>
+                </>
               ))}
           </div>
         </>

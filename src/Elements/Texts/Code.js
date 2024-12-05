@@ -35,7 +35,6 @@ const Code = ({ id }) => {
         padding: '4px',
         backgroundColor: '#f5f5f5',
         borderRadius: '3px',
-        border: isSelected ? '1px dashed blue' : 'none',
         fontFamily: 'monospace',
       }}
     >

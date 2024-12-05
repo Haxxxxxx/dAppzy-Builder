@@ -3,8 +3,9 @@ import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import useElementDrop from '../../../utils/useElementDrop';
-import RemovableWrapper from '../../../utils/RemovableWrapper';
-import { EditableContext } from '../../../context/EditableContext';
+import withSelectable from '../../../utils/withSelectable';
+const SelectableSpan = withSelectable(Span);
+const SelectableButton = withSelectable(Button);
 
 const HeroTwo = ({ uniqueId, children, onDropItem }) => {
   const sectionRef = useRef(null);
@@ -15,18 +16,9 @@ const HeroTwo = ({ uniqueId, children, onDropItem }) => {
     onDropItem,
   });
 
-  // Find child elements or use defaults from the configuration
-  const title =
-    children?.find((child) => child.type === 'span' && child.content === heroTwo.children[0].content) ||
-    heroTwo.children[0];
-
-  const subtitle =
-    children?.find((child) => child.type === 'span' && child.content === heroTwo.children[1].content) ||
-    heroTwo.children[1];
-
-  const button =
-    children?.find((child) => child.type === 'button' && child.content === heroTwo.children[2].content) ||
-    heroTwo.children[2];
+  const title = children?.find((child) => child.type === 'span' && child.content === heroTwo.children[0].content) || heroTwo.children[0];
+  const subtitle = children?.find((child) => child.type === 'span' && child.content === heroTwo.children[1].content) || heroTwo.children[1];
+  const button = children?.find((child) => child.type === 'button' && child.content === heroTwo.children[2].content) || heroTwo.children[2];
 
   return (
     <section
@@ -46,32 +38,11 @@ const HeroTwo = ({ uniqueId, children, onDropItem }) => {
         border: isOverCurrent ? '2px dashed blue' : 'none',
       }}
     >
-      {/* Render Title */}
-      <RemovableWrapper id={title.id || `title-${uniqueId}`}>
-        <Span
-          id={title.id || `title-${uniqueId}`}
-          content={title.content}
-          styles={title.styles || { fontSize: '2rem', fontWeight: 'bold' }}
-        />
-      </RemovableWrapper>
+        <SelectableSpan id={title.id || `title-${uniqueId}`} content={title.content} styles={title.styles || { fontSize: '2rem', fontWeight: 'bold' }} />
 
-      {/* Render Subtitle */}
-      <RemovableWrapper id={subtitle.id || `subtitle-${uniqueId}`}>
-        <Span
-          id={subtitle.id || `subtitle-${uniqueId}`}
-          content={subtitle.content}
-          styles={subtitle.styles || { fontSize: '1.25rem', margin: '16px 0' }}
-        />
-      </RemovableWrapper>
+        <SelectableSpan id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={subtitle.styles || { fontSize: '1.25rem', margin: '16px 0' }} />
 
-      {/* Render Button */}
-      <RemovableWrapper id={button.id || `button-${uniqueId}`}>
-        <Button
-          id={button.id || `button-${uniqueId}`}
-          content={button.content}
-          styles={button.styles || { padding: '10px 20px', backgroundColor: '#2563EB', color: '#fff', border: 'none', borderRadius: '4px' }}
-        />
-      </RemovableWrapper>
+        <SelectableButton id={button.id || `button-${uniqueId}`} content={button.content} styles={button.styles || { padding: '10px 20px', backgroundColor: '#2563EB', color: '#fff', border: 'none', borderRadius: '4px' }} />
     </section>
   );
 };

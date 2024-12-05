@@ -30,7 +30,7 @@ const Select = ({ id }) => {
       onChange={handleChange}
       style={{
         padding: '8px',
-        border: isSelected ? '1px dashed blue' : '1px solid #ccc',
+        border: '1px solid #ccc',
         borderRadius: '4px',
       }}
     >

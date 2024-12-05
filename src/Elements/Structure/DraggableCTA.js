@@ -3,7 +3,7 @@ import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import CTAOne from '../Sections/CTAs/CTAOne';
 import CTATwo from '../Sections/CTAs/CTATwo';
-
+import { structureConfigurations } from '../../configs/structureConfigurations';
 const DraggableCTA = ({ id, configuration, isEditing, showDescription = false }) => {
   const { addNewElement, elements, setElements, findElementById } = useContext(EditableContext);
 
@@ -16,12 +16,42 @@ const DraggableCTA = ({ id, configuration, isEditing, showDescription = false })
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
         const newId = addNewElement('cta', 1, null, null, configuration);
+  
+        // Add children based on configuration
+        const config = structureConfigurations[configuration];
+        if (config?.children) {
+          config.children.forEach((child, index) => {
+            const childId = addNewElement(
+              child.type,
+              2,
+              null,
+              newId,
+              null,
+              child.content,
+              child.styles
+            );
+            setElements((prev) =>
+              prev.map((el) =>
+                el.id === newId
+                  ? {
+                      ...el,
+                      children: [...(el.children || []), childId],
+                    }
+                  : el
+              )
+            );
+          });
+        }
+  
         setElements((prev) =>
-          prev.map((el) => (el.id === newId ? { ...el, configuration } : el))
+          prev.map((el) =>
+            el.id === newId ? { ...el, configuration } : el
+          )
         );
       }
     },
   }));
+  
 
   const uniqueId = useMemo(() => `cta-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
   const ctaElement = findElementById(id, elements);
@@ -44,12 +74,14 @@ const DraggableCTA = ({ id, configuration, isEditing, showDescription = false })
       case 'ctaTwo':
         return <CTATwo uniqueId={id} children={children} />;
       default:
-        return null;
+        console.warn(`Unsupported CTA configuration: ${configuration}`);
+        return;
     }
   };
 
   const CTAComponent = renderCTAComponent();
 
+  // Render description if requested
   if (showDescription) {
     return (
       <div
@@ -69,7 +101,22 @@ const DraggableCTA = ({ id, configuration, isEditing, showDescription = false })
     );
   }
 
-  return <>{CTAComponent}</>;
+  // Render the draggable CTA component
+  return (
+    <div
+      ref={drag}
+      style={{
+        opacity: isDragging ? 0.5 : 1,
+        padding: '8px',
+        backgroundColor: '#f9f9f9',
+        borderRadius: '4px',
+        border: '1px solid #ccc',
+        cursor: 'move',
+      }}
+    >
+      {CTAComponent}
+    </div>
+  );
 };
 
 export default DraggableCTA;

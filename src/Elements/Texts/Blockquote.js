@@ -36,7 +36,6 @@ const Blockquote = ({ id }) => {
         paddingLeft: '10px',
         margin: '10px 0',
         fontStyle: 'italic',
-        border: isSelected ? '1px dashed blue' : 'none',
       }}
     >
       {content}

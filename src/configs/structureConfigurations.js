@@ -112,6 +112,7 @@ export const structureConfigurations = {
       { type: 'currency', content: 'SOL' }, // Currency
       { type: 'quantity' , label: 'Quantity', content: '2' }, // Quantity Value
       { type: 'price' , label: 'Total Price' , content: '3 SOL'}, // Total Price
+      { type: 'mint-button'  , content: 'Mint'}, // Price Value
       { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items 
       { type: 'docItemsTitle', content: 'Document Items' }, // Document Items 
       { type: 'rare-item', content: 'rare-item-1-image-url' }, // Rare Items

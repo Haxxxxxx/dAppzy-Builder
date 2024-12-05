@@ -109,21 +109,7 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
         setSelectedElement={setSelectedElement}
         handlePanelToggle={handlePanelToggle}
       />
-      <button
-        onClick={handleRemove}
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          background: 'red',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-      >
-        ✕
-      </button>
+
     </div>
   );
 };

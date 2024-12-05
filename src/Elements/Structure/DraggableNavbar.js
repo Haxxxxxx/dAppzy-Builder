@@ -5,7 +5,6 @@ import DropZone from '../../utils/DropZone';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
-import HeroSelectionModal from '../../utils/SectionQuickAdd/HeroSelectionModal'; // Import the modal component
 
 const DraggableNavbar = ({
   id,
@@ -51,9 +50,9 @@ const DraggableNavbar = ({
         prevElements.map((el) =>
           el.id === parentId
             ? {
-                ...el,
-                children: [...new Set([...el.children, newId])], // Ensure unique children
-              }
+              ...el,
+              children: [...new Set([...el.children, newId])], // Ensure unique children
+            }
             : el
         )
       );
@@ -171,31 +170,8 @@ const DraggableNavbar = ({
       onClick={toggleModal}
     >
       {NavbarComponent}
-      <button
-        onClick={handleRemove}
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          background: 'red',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        }}
-      >
-        ✕
-      </button>
 
-      {isModalOpen && (
-        <div ref={modalRef}>
-          <HeroSelectionModal
-            isOpen={isModalOpen}
-            onClose={() => setModalOpen(false)}
-            onHeroSelect={handleHeroSelection}
-          />
-        </div>
-      )}
+
     </div>
   );
 };

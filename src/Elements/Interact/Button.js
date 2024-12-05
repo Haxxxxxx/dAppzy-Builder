@@ -42,7 +42,6 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
       style={{
         ...styles, // Apply dynamic styles first
         ...customStyles, // Override with custom styles
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'text',
       }}
     >

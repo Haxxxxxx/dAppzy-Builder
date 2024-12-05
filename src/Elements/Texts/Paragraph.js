@@ -4,7 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 const Paragraph = ({ id, content: initialContent }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id) || {};
-  const { content = initialContent, styles = {} } = element;
+  const { content = initialContent, styles } = element;
   const paragraphRef = useRef(null);
 
   const handleSelect = (e) => {
@@ -30,21 +30,23 @@ const Paragraph = ({ id, content: initialContent }) => {
     }
   }, [selectedElement, id]);
 
+  const isSelected = selectedElement?.id === id;
+
   return (
     <p
       id={id}
       ref={paragraphRef}
       onClick={handleSelect}
-      contentEditable={selectedElement?.id === id}
+      contentEditable={isSelected}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
         ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         wordWrap: 'break-word',
         wordBreak: 'break-word',
         whiteSpace: 'normal',
         overflowWrap: 'break-word',
+
       }}
     >
       {content || 'New Paragraph'}

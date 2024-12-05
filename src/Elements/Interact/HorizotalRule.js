@@ -15,7 +15,7 @@ const Hr = ({ id }) => {
     <hr
       onClick={handleSelect}
       style={{
-        border: isSelected ? '2px dashed blue' : '1px solid #ccc',
+        border: '1px solid #ccc',
         margin: '10px 0',
       }}
     />

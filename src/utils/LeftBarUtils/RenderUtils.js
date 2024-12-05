@@ -1,40 +1,46 @@
 // src/utils/RenderUtils.js
 import React from 'react';
-import Paragraph from '../../Elements/Texts/Paragraph';
-import Heading from '../../Elements/Texts/Heading';
-import Section from '../../Elements/Structure/Section';
-import Div from '../../Elements/Structure/Div';
-import Button from '../../Elements/Interact/Button';
-import Image from '../../Elements/Media/Image';
-import Form from '../../Elements/Interact/Form';
-import Span from '../../Elements/Texts/Span';
-import Input from '../../Elements/Interact/Input';
-import { List, ListItem } from '../../Elements/Texts/List';
-import { Table, TableRow, TableCell } from '../../Elements/Interact/Table';
-import DraggableNavbar from '../../Elements/Structure/DraggableNavbar';
-import DraggableFooter from '../../Elements/Structure/DraggableFooter';
-import DraggableHero from '../../Elements/Structure/DraggableHero';
-import DraggableCTA from '../../Elements/Structure/DraggableCTA';
-import Anchor from '../../Elements/Interact/Anchor';
-import Textarea from '../../Elements/Interact/Textarea';
-import Select from '../../Elements/Interact/Select';
-import Video from '../../Elements/Media/Video';
-import Audio from '../../Elements/Media/Audio';
-import Iframe from '../../Elements/Media/Iframe';
-import Label from '../../Elements/Interact/Label';
-import Fieldset from '../../Elements/Interact/FieldSet';
-import Legend from '../../Elements/Texts/Legend';
-import Progress from '../../Elements/Interact/Progress';
-import Meter from '../../Elements/Interact/Meter';
-import Blockquote from '../../Elements/Texts/Blockquote';
-import Code from '../../Elements/Texts/Code';
-import Pre from '../../Elements/Texts/Pre';
-import Hr from '../../Elements/Interact/HorizotalRule';
-import Caption from '../../Elements/Texts/Caption';
-import DraggableWeb3Elements from '../../Elements/Structure/DraggableWeb3Elements';
-import DateComponent from '../../Elements/Interact/DateComponent';
-import ConnectWalletButton from '../../Elements/Sections/Web3Related/ConnectWalletButton';
+import {
+  Paragraph,
+  Heading,
+  Section,
+  Div,
+  Button,
+  Span,
+  Image,
+  Form,
+  Input,
+  List,
+  Anchor,
+  Textarea,
+  Select,
+  Video,
+  Audio,
+  Iframe,
+  Label,
+  Fieldset,
+  Legend,
+  Progress,
+  Meter,
+  Blockquote,
+  Code,
+  Pre,
+  Hr,
+  Caption,
+  Table,
+  TableRow,
+  TableCell,
+  DraggableNavbar,
+  DraggableFooter,
+  DraggableHero,
+  DraggableCTA,
+  DraggableWeb3Elements,
+  DateComponent,
+  ConnectWalletButton,
+} from '../../Elements/SelectableElements';
+
 import { structureConfigurations } from '../../configs/structureConfigurations';
+
 const warnedElements = new Set();
 
 export const renderElement = (
@@ -44,180 +50,116 @@ export const renderElement = (
   setSelectedElement,
   setElements,
   handlePanelToggle,
+  selectedElement,
+  selectedStyle,
   isPreviewMode = true // Default to true for static rendering
 ) => {
-  const { id, type, children, configuration } = element;
 
-  if (!element || !id || !type) {
-    console.warn(`Skipping invalid or undefined element:`, element);
+  if (!element || !element.id || !element.type) {
     return null; // Skip invalid elements
   }
+  const { id, type, children, configuration } = element;
 
-  // Resolve children
-  const resolvedChildren = Array.isArray(children)
-    ? children
-        .map((childId) => elements.find((el) => el.id === childId))
-        .filter(Boolean) // Filters out null/undefined children
-    : [];
 
-  // Warn for missing children in `hero`
-  if (type === 'hero') {
-    const requiredChildren =
-      structureConfigurations[configuration]?.children.map((child) => child.type) || [];
-    const hasRequiredChildren = requiredChildren.every((childType) =>
-      resolvedChildren.some((child) => child?.type === childType)
-    );
+
+
+const renderChildren = (resolvedChildren) => {
+  if (!resolvedChildren || resolvedChildren.length === 0) {
+    return null;
   }
+  return resolvedChildren
+    .filter((child) => child) // Filter out undefined children
+    .map((child) =>
+      renderElement(
+        child,
+        elements,
+        contentListWidth,
+        setSelectedElement,
+        setElements,
+        handlePanelToggle,
+        selectedElement,
+        selectedStyle,
+        isPreviewMode
+      )
+    );
+};
 
-  // Handle missing configuration for `navbar`, `hero`, and `mintingSection`
-  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection') && !configuration) {
+
+const renderConfiguredChildren = (configKey) => {
+  const config = structureConfigurations[configKey];
+  if (!config) {
+    return null;
+  }
+  return config.children
+    .filter((childConfig) => childConfig && childConfig.type) // Ensure valid children
+    .map((childConfig, index) => {
+      const childElement = {
+        id: `${id}-child-${index}`,
+        type: childConfig.type,
+        content: childConfig.content,
+        styles: childConfig.styles || {},
+      };
+      return renderElement(
+        childElement,
+        elements,
+        contentListWidth,
+        setSelectedElement,
+        setElements,
+        handlePanelToggle,
+        selectedElement,
+        selectedStyle,
+        isPreviewMode
+      );
+    });
+};
+
+  
+  
+
+  // Warn for missing configurations in structured elements
+  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' || type === 'cta' || type === 'footer') && !configuration) {
     if (!warnedElements.has(id)) {
-      console.warn(`${type.charAt(0).toUpperCase() + type.slice(1)} with ID ${id} is missing a configuration.`);
       warnedElements.add(id);
     }
-
-    if (setElements || type !== 'footer') {
-      setElements((prev) => {
-        const updatedElements = prev.filter((el) => el.id !== id);
-        localStorage.setItem('editableElements', JSON.stringify(updatedElements));
-        return updatedElements;
-      });
-    }
-
-    return null; // Skip rendering
+    return null;
   }
-
-  // Recursive child rendering
-  const renderChildren = () =>
-    resolvedChildren.map((child) =>
-      child
-        ? renderElement(
-            child,
-            elements,
-            contentListWidth,
-            setSelectedElement,
-            setElements,
-            handlePanelToggle,
-            isPreviewMode // Pass isPreviewMode recursively
-          )
-        : null
-    );
-
   // Define component mappings
   const componentMap = {
-    paragraph: (
-      <Paragraph
-        id={id}
-        key={id}
-        content={element.content}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
+    paragraph: <Paragraph id={id} key={id} content={element.content} styles={element.styles} />,
+    heading: <Heading id={id} key={id} content={element.content} styles={element.styles} />,
     section: (
-      <Section id={id} key={id} isPreviewMode={isPreviewMode} setSelectedElement={setSelectedElement}>
-        {resolvedChildren.length > 0 && (
-          <div className="nested-elements" style={{ padding: '10px' }}>
-            {renderChildren()}
-          </div>
-        )}
+      <Section id={id} key={id} styles={element.styles}>
+        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
       </Section>
     ),
     div: (
-      <Div id={id} key={id} isPreviewMode={isPreviewMode} setSelectedElement={setSelectedElement}>
-        {resolvedChildren.length > 0 && (
-          <div className="nested-elements" style={{ padding: '10px' }}>
-            {renderChildren()}
-          </div>
-        )}
+      <Div id={id} key={id} styles={element.styles}>
+        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
       </Div>
     ),
-    heading: (
-      <Heading
-        id={id}
-        key={id}
-        content={element.content}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    button: (
-      <Button
-        id={id}
-        key={id}
-        content={element.content}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    span: (
-      <Span
-        id={id}
-        key={id}
-        content={element.content}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    image: (
-      <Image
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    input: (
-      <Input
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    form: (
-      <Form
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    ul: (
-      <List
-        id={id}
-        key={id}
-        type="ul"
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    ol: (
-      <List
-        id={id}
-        key={id}
-        type="ol"
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
+    button: <Button id={id} key={id} content={element.content} styles={element.styles} />,
+    span: <Span id={id} key={id} content={element.content} styles={element.styles} />,
+    image: <Image id={id} key={id} styles={element.styles} handlePanelToggle={handlePanelToggle}/>,
+    input: <Input id={id} key={id} styles={element.styles} />,
+    form: <Form id={id} key={id} styles={element.styles} />,
+    ul: <List id={id} key={id} type="ul" styles={element.styles} />,
+    ol: <List id={id} key={id} type="ol" styles={element.styles} />,
     navbar: (
       <DraggableNavbar
-        configuration={configuration}
         id={id}
         key={id}
-        isEditing={!isPreviewMode}
-        children={resolvedChildren}
+        configuration={configuration}
+        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
       />
-    ),
+    ), 
     hero: (
       <DraggableHero
         id={id}
-        configuration={configuration}
         key={id}
-        children={resolvedChildren}
+        configuration={configuration}
+        children={renderConfiguredChildren(configuration)}
         contentListWidth={contentListWidth}
         setSelectedElement={setSelectedElement}
         isPreviewMode={isPreviewMode}
@@ -225,202 +167,68 @@ export const renderElement = (
     ),
     footer: (
       <DraggableFooter
-        configuration={configuration}
         id={id}
         key={id}
-        isEditing={!isPreviewMode}
+        configuration={configuration}
+        children={renderConfiguredChildren(configuration)}
         contentListWidth={contentListWidth}
       />
     ),
     cta: (
       <DraggableCTA
-        configuration={configuration}
         id={id}
         key={id}
-        isEditing={!isPreviewMode}
+        configuration={configuration}
+        children={renderConfiguredChildren(configuration)}
         contentListWidth={contentListWidth}
       />
     ),
-    table: (
-      <Table
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    anchor: (
-      <Anchor
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    textarea: (
-      <Textarea
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    select: (
-      <Select
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    video: (
-      <Video
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    audio: (
-      <Audio
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    iframe: (
-      <Iframe
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    label: (
-      <Label
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    fieldset: (
-      <Fieldset
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    legend: (
-      <Legend
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    progress: (
-      <Progress
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    meter: (
-      <Meter
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    blockquote: (
-      <Blockquote
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    code: (
-      <Code
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    pre: (
-      <Pre
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    hr: (
-      <Hr
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
-    caption: (
-      <Caption
-        id={id}
-        key={id}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
-      />
-    ),
+    table: <Table id={id} key={id} styles={element.styles} />,
+    tableRow: <TableRow id={id} key={id} styles={element.styles} />,
+    tableCell: <TableCell id={id} key={id} styles={element.styles} />,
+    anchor: <Anchor id={id} key={id} content={element.content} styles={element.styles} />,
+    textarea: <Textarea id={id} key={id} styles={element.styles} />,
+    select: <Select id={id} key={id} styles={element.styles} />,
+    video: <Video id={id} key={id} styles={element.styles} />,
+    audio: <Audio id={id} key={id} styles={element.styles} />,
+    iframe: <Iframe id={id} key={id} styles={element.styles} />,
+    label: <Label id={id} key={id} styles={element.styles} />,
+    fieldset: <Fieldset id={id} key={id} styles={element.styles} />,
+    legend: <Legend id={id} key={id} content={element.content} styles={element.styles} />,
+    progress: <Progress id={id} key={id} styles={element.styles} />,
+    meter: <Meter id={id} key={id} styles={element.styles} />,
+    blockquote: <Blockquote id={id} key={id} content={element.content} styles={element.styles} />,
+    code: <Code id={id} key={id} content={element.content} styles={element.styles} />,
+    pre: <Pre id={id} key={id} content={element.content} styles={element.styles} />,
+    hr: <Hr id={id} key={id} styles={element.styles} />,
+    caption: <Caption id={id} key={id} content={element.content} styles={element.styles} />,
     mintingSection: (
       <DraggableWeb3Elements
         id={id}
-        configuration={configuration}
         key={id}
-        elements={elements}
+        configuration={configuration}
+        children={renderConfiguredChildren(configuration)}
         setElements={setElements}
         setSelectedElement={setSelectedElement}
         handlePanelToggle={handlePanelToggle}
         isPreviewMode={isPreviewMode}
       />
     ),
+    date: <DateComponent id={id} key={id} styles={element.styles} />,
     connectWalletButton: (
       <ConnectWalletButton
         id={id}
         key={id}
         content={element.content}
-        handlePanelToggle={handlePanelToggle}
-        isPreviewMode={isPreviewMode}
-      />
-    ),
-    date: (
-      <DateComponent
-        id={id}
-        key={id}
         styles={element.styles}
-        isPreviewMode={isPreviewMode}
-        setSelectedElement={setSelectedElement}
+        handlePanelToggle={handlePanelToggle}
       />
     ),
   };
 
-  // Ensure content is string for date
-  if (type === 'date' && element.content instanceof Date) {
-    element.content = element.content.toLocaleString();
-  }
-
-  // Ensure component exists in the map
   const component = componentMap[type];
+
   if (!component) {
-    if (!warnedElements.has(id)) {
-      console.warn(`Unsupported element type: ${type}`);
-      warnedElements.add(id);
-    }
     return null;
   }
 

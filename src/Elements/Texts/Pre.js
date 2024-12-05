@@ -36,7 +36,6 @@ const Pre = ({ id }) => {
         backgroundColor: '#f5f5f5',
         borderRadius: '3px',
         overflow: 'auto',
-        border: isSelected ? '1px dashed blue' : 'none',
       }}
     >
       {content}

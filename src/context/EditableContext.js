@@ -22,7 +22,12 @@ export const EditableProvider = ({ children }) => {
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
     return savedVersion === ELEMENTS_VERSION && Array.isArray(savedElements) ? savedElements : [];
   });
-
+  
+  const selectedStyle = {
+    outline: '1px solid #4D70FF',
+    boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
+  };
+  
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const existingElement = elements.find(
       (el) => el.type === type && el.parentId === parentId && el.structure === structure
@@ -61,6 +66,8 @@ export const EditableProvider = ({ children }) => {
             return 'Preformatted text...';
           case 'list-item':
             return 'Editable Item';
+          case 'button':
+            return 'Click Me'; // Ensure a meaningful default for buttons
           default:
             return ''; // Default to an empty string
         }
@@ -69,7 +76,7 @@ export const EditableProvider = ({ children }) => {
       configuration: structure || null,
       settings: {},
     };
-  
+    
     if (structure && structureConfigurations[structure]) {
       const children = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
@@ -77,7 +84,7 @@ export const EditableProvider = ({ children }) => {
         content: child.content || '',
         styles: child.styles,
         label: child.label || '', // Ensure label is passed here
-        parentId: newId,
+        parentId: type === 'button' ? null : newId, // Avoid wrapping buttons
       }));
   
       baseElement.children = children.map((child) => child.id);
@@ -166,6 +173,7 @@ export const EditableProvider = ({ children }) => {
         handleRemoveElement,
         saveToLocalStorage,
         updateConfiguration,
+        selectedStyle
       }}
     >
       {children}

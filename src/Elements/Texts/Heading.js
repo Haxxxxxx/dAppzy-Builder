@@ -40,7 +40,6 @@ const Heading = ({ id, content: initialContent }) => {
       suppressContentEditableWarning={true}
       style={{
         ...styles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none', // Add visual cue for selected heading
         wordWrap: 'break-word',
         wordBreak: 'break-word',
         whiteSpace: 'normal',

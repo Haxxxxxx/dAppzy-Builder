@@ -23,7 +23,7 @@ const Legend = ({ id }) => {
       suppressContentEditableWarning={true}
       onClick={handleSelect}
       onBlur={handleBlur}
-      style={{ padding: '2px', border: isSelected ? '1px dashed blue' : 'none' }}
+      style={{ padding: '2px',  }}
     >
       {content}
     </legend>

@@ -62,7 +62,6 @@ const Audio = ({ id, isPreviewMode }) => {
       style={{
         position: 'relative',
         cursor: 'pointer',
-        border: isOver ? '2px dashed blue' : isSelected ? '1px dashed blue' : 'none',
         display: 'inline-block',
         ...styles,
       }}

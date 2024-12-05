@@ -46,7 +46,6 @@ const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
       style={{
         ...styles,
         ...customStyles,
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
         cursor: 'pointer',
         textDecoration: 'underline',
         color: '#007BFF',

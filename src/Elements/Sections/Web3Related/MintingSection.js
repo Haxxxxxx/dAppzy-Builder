@@ -3,9 +3,15 @@ import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import DateComponent from '../../Interact/DateComponent';
-import RemovableWrapper from '../../../utils/RemovableWrapper';
 import useElementDrop from '../../../utils/useElementDrop';
+import withSelectable from '../../../utils/withSelectable';
 import { EditableContext } from '../../../context/EditableContext';
+
+// Make elements selectable
+const SelectableSpan = withSelectable(Span);
+const SelectableImage = withSelectable(Image);
+const SelectableButton = withSelectable(Button);
+const SelectableDateComponent = withSelectable(DateComponent);
 
 const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem, handlePanelToggle }) => {
   const sectionRef = useRef(null);
@@ -14,9 +20,8 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
     elementRef: sectionRef,
     onDropItem,
   });
-  const { elements } = useContext(EditableContext);
 
-  // Helper function to get a child by type
+  // Helper functions to get children by type
   const getChildByType = (type) => children.find((child) => child.type === type);
   const getChildrenByType = (type) => children.filter((child) => child.type === type);
 
@@ -25,6 +30,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   const title = getChildByType('title');
   const description = getChildByType('description');
   const timer = getChildByType('timer');
+  const mintButton = getChildByType('mint-button');
   const remaining = getChildByType('remaining');
   const value = getChildByType('value');
   const currency = getChildByType('currency');
@@ -38,12 +44,12 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   // Handle section click
   const handleClick = () => {
     setSelectedElement({ id: uniqueId, type: 'candyMachine' });
-    handlePanelToggle('settings');
   };
 
   useEffect(() => {
     console.log('Children passed to MintingSection:', children);
   }, [children]);
+  
 
   return (
     <section
@@ -76,45 +82,33 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
       >
         {/* Logo */}
         {logo && (
-          <RemovableWrapper id={logo.id}>
-            <div
-              style={{
-                position: 'relative',
-                width: '200px',
-                height: '200px',
-                borderRadius: '50%',
-                backgroundColor: '#fff',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginBottom: '1rem',
-              }}
-            >
-              <Image
-                id={logo.id}
-                src={logo.content || 'Default Logo'}
-                styles={{ width: '160px', height: '160px', borderRadius: '50%', overflow:'hidden', objectFit:'cover'}}
-              />
-            </div>
-          </RemovableWrapper>
+          <SelectableImage
+            id={logo.id}
+            src={logo.content || 'Default Logo'}
+            styles={{
+              width: '160px',
+              height: '160px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              marginBottom: '1rem',
+            }}
+          />
         )}
 
         {/* Timer */}
         {timer && (
-          <RemovableWrapper id={timer.id}>
-            <DateComponent
-              id={timer.id}
-              content={timer.content || 'N/A'}
-              label={timer.label || 'Time before minting'}
-              styles={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem', display:'flex' }}
-            />
-          </RemovableWrapper>
+          <SelectableDateComponent
+            id={timer.id}
+            content={timer.content || 'N/A'}
+            label={timer.label || 'Time before minting'}
+            styles={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem', display: 'flex' }}
+          />
         )}
 
         {/* Details */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '1rem 0', gap: '1vh', width:'80%', alignContent:'space-between'}}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', width: '80%' }}>
           {remaining && (
-            <Span
+            <SelectableSpan
               id={remaining.id}
               label={remaining.label || 'Remaining'}
               content={remaining.content || '0/0'}
@@ -122,7 +116,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
             />
           )}
           {value && currency && (
-            <Span
+            <SelectableSpan
               id={`${value.id}-${currency.id}`}
               label={value.label || 'Price'}
               content={`${value.content || '0'} ${currency.content || 'N/A'}`}
@@ -130,41 +124,33 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
             />
           )}
           {quantity && totalPrice && (
-            <Span
-              id={totalPrice.id}
-              label={totalPrice.label || 'Quantity'}
-              content={`${totalPrice.content || '0'} (${totalPrice.label || 'Total Price'}: ${totalPrice.content || '0'})`}
-              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
-            />
-          )}
-          {quantity && (
-            <Span
+            <SelectableSpan
               id={quantity.id}
               label={quantity.label || 'Quantity'}
               content={`${quantity.content || '0'} (${totalPrice.label || 'Total Price'}: ${totalPrice.content || '0'})`}
               styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
             />
           )}
-
         </div>
 
-        {/* Mint Button */}
-        <Button
-          id={`${uniqueId}-mint-button`}
-          content="Mint"
-          styles={{
-            width: '80%',
-            padding: '1rem',
-            border: '1px solid #fff',
-            borderRadius: '8px',
-            color: '#fff',
-            backgroundColor :'rgba(255, 255, 255, 0.1)',
-            fontSize: '1rem',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-          }}
-        />
-        <Span
+        {mintButton && (
+          <SelectableButton
+            id={mintButton.id || `${uniqueId}-mint-button`}
+            content={mintButton.content || 'Mint'}
+            styles={{
+              width: '80%',
+              padding: '1rem',
+              border: '1px solid #fff',
+              borderRadius: '8px',
+              color: '#fff',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+          />
+        )}
+        <SelectableSpan
           id={`${uniqueId}-terms`}
           content="By clicking 'Mint', you agree to our Terms of Service and Privacy Policy"
           styles={{ fontSize: '0.8rem', color: '#aaa', textAlign: 'center', marginTop: '0.5rem' }}
@@ -174,45 +160,49 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
       {/* Right Section */}
       <div style={{ padding: '1rem' }}>
         {title && (
-          <RemovableWrapper id={title.id}>
-            <Span
-              id={title.id}
-              content={title.content || 'Default Title'}
-              styles={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}
-            />
-          </RemovableWrapper>
+          <SelectableSpan
+            id={title.id}
+            content={title.content || 'Default Title'}
+            styles={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}
+          />
         )}
         {description && (
-          <RemovableWrapper id={description.id}>
-            <Span
-              id={description.id}
-              content={description.content || 'Default Description'}
-              styles={{ fontSize: '1rem', color: '#ccc', marginBottom: '2rem' }}
-            />
-          </RemovableWrapper>
+          <SelectableSpan
+            id={description.id}
+            content={description.content || 'Default Description'}
+            styles={{ fontSize: '1rem', color: '#ccc', marginBottom: '2rem' }}
+          />
         )}
-        <Span
-          id={rareItemsTitle?.id}
-          content={rareItemsTitle?.content || ''}
-          styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
-        />
+        {rareItemsTitle && (
+          <SelectableSpan
+            id={rareItemsTitle.id}
+            content={rareItemsTitle.content || ''}
+            styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
+          />
+        )}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
           {rareItems.map((item) => (
-            <RemovableWrapper key={item.id} id={item.id}>
-              <Image id={item.id} src={item.content || 'Default Rare Item'} styles={{ width: '80px', height: '80px', borderRadius: '8px' }} />
-            </RemovableWrapper>
+            <SelectableImage
+              id={item.id}
+              src={item.content || 'Default Rare Item'}
+              styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
+            />
           ))}
         </div>
-        <Span
-          id={docItemsTitle?.id}
-          content={docItemsTitle?.content || ''}
-          styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
-        />
+        {docItemsTitle && (
+          <SelectableSpan
+            id={docItemsTitle.id}
+            content={docItemsTitle.content || ''}
+            styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
+          />
+        )}
         <div style={{ display: 'flex', gap: '1rem' }}>
           {documentItems.map((item) => (
-            <RemovableWrapper key={item.id} id={item.id}>
-              <Image id={item.id} src={item.content || 'Default Document Item'} styles={{ width: '80px', height: '80px', borderRadius: '8px' }} />
-            </RemovableWrapper>
+            <SelectableImage
+              id={item.id}
+              src={item.content || 'Default Document Item'}
+              styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
+            />
           ))}
         </div>
       </div>

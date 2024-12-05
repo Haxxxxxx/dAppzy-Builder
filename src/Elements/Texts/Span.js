@@ -61,7 +61,6 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
             ...styles, // Apply dynamic styles first
             fontSize: '1rem',
             color: '#fff', // Content styling
-            border: selectedElement?.id === id ? '1px dashed blue' : 'none',
             cursor: 'text',
             wordWrap: 'break-word',
           }}
@@ -84,7 +83,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
       style={{
         ...styles, // Apply dynamic styles first
         ...customStyles, // Override with custom styles
-        border: selectedElement?.id === id ? '1px dashed blue' : 'none',
+        border: 'none',
         cursor: 'text',
       }}
     >
