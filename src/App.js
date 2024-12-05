@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import { EditableContext } from './context/EditableContext'; // Import EditableContext
 import ContentList from './components/Canva';
 import SideBar from './components/SideBar';
@@ -48,19 +48,45 @@ function App() {
   };
 
   const handlePanelToggle = (panelName) => {
-    setOpenPanel((prevPanel) => (prevPanel === panelName ? '' : panelName));
+    console.log(`Toggling panel to: ${panelName}`);
+    setOpenPanel((prevPanel) => {
+      const newPanel = prevPanel === panelName ? '' : panelName;
+      console.log(`New openPanel state: ${newPanel}`);
+      return newPanel;
+    });
   };
+  
+  
 
+  const handleOpenMediaPanel = () => {
+    console.log("passed for opening the media panel");
+  
+    setOpenPanel((prevPanel) => {
+      if (prevPanel === 'media') {
+        console.log("Media Panel is already open, not toggling");
+        return prevPanel; // Keep the Media Panel open
+      }
+      console.log("Opening Media Panel");
+      return 'media'; // Open the Media Panel
+    });
+  };
+  
+  
   const handleMainContentClick = (e) => {
     if (contentRef.current && !contentRef.current.contains(e.target)) {
       setSelectedElement(null); // Set to null to clear selection
     }
   };
-
+  useEffect(() => {
+    console.log("Current openPanel:", openPanel);
+  }, [openPanel]);
+  
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="layout">
         <LeftBar
+          openPanel={openPanel} // Pass openPanel to LeftBar
+
           onShowSidebar={() => handlePanelToggle('sidebar')}
           onShowStructurePanel={() => handlePanelToggle('structure')}
           onShowMediaPanel={() => handlePanelToggle('media')}
@@ -86,11 +112,15 @@ function App() {
                 <StructurePanel />
               </div>
             )}
-            {openPanel === 'media' && (
+            {openPanel === 'media' ? (
               <div id="media-panel">
+                {console.log("Rendering MediaPanel")}
                 <MediaPanel />
               </div>
+            ) : (
+              console.log("MediaPanel not rendered. Current openPanel:", openPanel)
             )}
+
             {openPanel === 'settings' && (
               <div id="settings-panel">
                 <SettingsPanel onUpdateSettings={handleUpdateSettings} />
@@ -110,6 +140,7 @@ function App() {
                 scale={scale}
                 setScale={setScale} // Pass setScale to ContentList
                 isPreviewMode={isPreviewMode} // Pass isPreviewMode here
+                handleOpenMediaPanel={handleOpenMediaPanel}
               />
             </div>
           </div>

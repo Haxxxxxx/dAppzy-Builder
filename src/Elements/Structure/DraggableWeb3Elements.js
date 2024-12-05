@@ -4,7 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 import MintingSection from '../Sections/Web3Related/MintingSection';
 import { structureConfigurations } from '../../configs/structureConfigurations';
 
-const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription = false, contentListWidth, handlePanelToggle }) => {
+const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription = false, contentListWidth, handlePanelToggle, handleOpenMediaPanel }) => {
   const { addNewElement, setElements, elements, setSelectedElement, findElementById, handleRemoveElement } = useContext(EditableContext);
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -102,6 +102,7 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
       }}
     >
       <MintingSection
+        handleOpenMediaPanel={handleOpenMediaPanel}
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={resolvedChildren} // Pass enriched children

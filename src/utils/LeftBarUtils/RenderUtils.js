@@ -52,7 +52,8 @@ export const renderElement = (
   handlePanelToggle,
   selectedElement,
   selectedStyle,
-  isPreviewMode = true // Default to true for static rendering
+  isPreviewMode = true, // Default to true for static rendering
+  handleOpenMediaPanel = () => {} ,
 ) => {
 
   if (!element || !element.id || !element.type) {
@@ -133,13 +134,13 @@ const renderConfiguredChildren = (configKey) => {
       </Section>
     ),
     div: (
-      <Div id={id} key={id} styles={element.styles}>
+      <Div id={id} key={id} styles={element.styles} handleOpenMediaPanel={handleOpenMediaPanel}>
         {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
       </Div>
     ),
     button: <Button id={id} key={id} content={element.content} styles={element.styles} />,
     span: <Span id={id} key={id} content={element.content} styles={element.styles} />,
-    image: <Image id={id} key={id} styles={element.styles} handlePanelToggle={handlePanelToggle}/>,
+    image: <Image id={id} key={id} styles={element.styles} handleOpenMediaPanel={handleOpenMediaPanel}/>,
     input: <Input id={id} key={id} styles={element.styles} />,
     form: <Form id={id} key={id} styles={element.styles} />,
     ul: <List id={id} key={id} type="ul" styles={element.styles} />,
@@ -152,6 +153,7 @@ const renderConfiguredChildren = (configKey) => {
         children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     ), 
     hero: (
@@ -163,6 +165,7 @@ const renderConfiguredChildren = (configKey) => {
         contentListWidth={contentListWidth}
         setSelectedElement={setSelectedElement}
         isPreviewMode={isPreviewMode}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     ),
     footer: (
@@ -172,6 +175,8 @@ const renderConfiguredChildren = (configKey) => {
         configuration={configuration}
         children={renderConfiguredChildren(configuration)}
         contentListWidth={contentListWidth}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+
       />
     ),
     cta: (
@@ -181,6 +186,8 @@ const renderConfiguredChildren = (configKey) => {
         configuration={configuration}
         children={renderConfiguredChildren(configuration)}
         contentListWidth={contentListWidth}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+
       />
     ),
     table: <Table id={id} key={id} styles={element.styles} />,
@@ -212,6 +219,8 @@ const renderConfiguredChildren = (configKey) => {
         setSelectedElement={setSelectedElement}
         handlePanelToggle={handlePanelToggle}
         isPreviewMode={isPreviewMode}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+
       />
     ),
     date: <DateComponent id={id} key={id} styles={element.styles} />,

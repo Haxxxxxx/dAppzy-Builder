@@ -32,6 +32,20 @@
   }
   
 
-  /* CANDY MACHINE SETTINGS PANEL */
+  
+  .icon-button:hover {
+    color: #333;
+    transform: scale(1.1);
+  }
+  
+  .icon-button.active {
+    color: #007bff; /* Active color */
+    transform: scale(1.2);
+    font-weight: bold;
+  }
 
+  
+  .help-center-button:hover {
+    color: #007bff;
+  }
   

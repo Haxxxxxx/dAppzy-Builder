@@ -5,7 +5,7 @@ import SimpleFooter from '../Sections/Footers/SimpleFooter';
 import DetailedFooter from '../Sections/Footers/DetailedFooter';
 import TemplateFooter from '../Sections/Footers/TemplateFooter';
 
-const DraggableFooter = ({ id, configuration, isEditing, showDescription = false, contentListWidth }) => {
+const DraggableFooter = ({ id, configuration, isEditing, showDescription = false, contentListWidth, handleOpenMediaPanel}) => {
   const { addNewElement, elements, setElements, setSelectedElement, findElementById } = useContext(EditableContext);
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -38,11 +38,11 @@ const DraggableFooter = ({ id, configuration, isEditing, showDescription = false
   const renderFooter = () => {
     switch (configuration) {
       case 'simple':
-        return <SimpleFooter uniqueId={id} children={children} />;
+        return <SimpleFooter handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} />;
       case 'detailed':
-        return <DetailedFooter uniqueId={id} children={children} />;
+        return <DetailedFooter handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} />;
       case 'template':
-        return <TemplateFooter uniqueId={id} children={children} contentListWidth={contentListWidth} />;
+        return <TemplateFooter handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} contentListWidth={contentListWidth} />;
       default:
         return null;
     }

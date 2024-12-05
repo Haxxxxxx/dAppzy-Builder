@@ -6,7 +6,7 @@ import withSelectable from '../../../utils/withSelectable';
 const SelectableSpan = withSelectable(Span);
 const SelectableImage = withSelectable(Image);
 
-const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
+const TemplateFooter = ({ uniqueId, contentListWidth, children, handleOpenMediaPanel }) => {
   const [isCompact, setIsCompact] = useState(false);
 
   // Update `isCompact` state based on `contentListWidth`
@@ -70,6 +70,7 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children }) => {
                   id={logo.id}
                   src={logo.content}
                   styles={logo.styles}
+                  handleOpenMediaPanel={handleOpenMediaPanel}
                 />
               ))}
           </div>

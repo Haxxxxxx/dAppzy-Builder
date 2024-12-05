@@ -13,7 +13,7 @@ const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
-const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth }) => {
+const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -46,7 +46,7 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth })
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
+            <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
           ))}
       </div>
 

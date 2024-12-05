@@ -6,7 +6,7 @@ import HeroTwo from '../Sections/Heros/HeroTwo';
 import HeroThree from '../Sections/Heros/HeroThree';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
-const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth, children }) => {
+const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth, children,handleOpenMediaPanel }) => {
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
 
 
@@ -122,6 +122,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         contentListWidth={contentListWidth}
         children={resolvedChildren}
         onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     );
   } else if (configuration === 'heroTwo') {
@@ -140,6 +141,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         contentListWidth={contentListWidth}
         children={resolvedChildren}
         onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     );
   }

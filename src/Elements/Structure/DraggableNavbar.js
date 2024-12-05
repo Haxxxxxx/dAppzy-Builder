@@ -13,6 +13,7 @@ const DraggableNavbar = ({
   showDescription = false,
   contentListWidth,
   handlePanelToggle,
+  handleOpenMediaPanel,
 }) => {
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
@@ -133,6 +134,7 @@ const DraggableNavbar = ({
         children={children}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     );
   } else if (configuration === 'twoColumn') {
@@ -142,6 +144,7 @@ const DraggableNavbar = ({
         children={children}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     );
   } else if (configuration === 'threeColumn') {
@@ -152,6 +155,7 @@ const DraggableNavbar = ({
         children={children}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
       />
     );
   }

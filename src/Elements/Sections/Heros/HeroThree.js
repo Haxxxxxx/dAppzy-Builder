@@ -8,7 +8,7 @@ const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 
-const HeroThree = ({ children, onDropItem }) => {
+const HeroThree = ({ children, onDropItem, handleOpenMediaPanel }) => {
   const caption = children?.find((child) => child.type === 'span' && child.content?.includes('CAPTION'));
   const heroTitle = children?.find((child) => child.type === 'span' && child.content?.includes('Lorem ipsum'));
   const heroDescription = children?.find((child) => child.type === 'span' && child.content?.includes('Rhoncus morbi'));
@@ -49,7 +49,7 @@ const HeroThree = ({ children, onDropItem }) => {
         </div>
       </div>
       <div style={{ flex: 1, minWidth: '300px', maxWidth: '600px', textAlign: 'center', marginTop: '20px' }}>
-        {heroImage && <SelectableImage id={heroImage.id} styles={{ maxWidth: '100%', height: '400px', backgroundColor: '#334155' }} />}
+        {heroImage && <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={heroImage.id} styles={{ maxWidth: '100%', height: '400px', backgroundColor: '#334155' }} />}
       </div>
     </section>
   );

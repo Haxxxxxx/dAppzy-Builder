@@ -1,5 +1,5 @@
 // src/components/LeftbarPanels/MediaPanel.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './css/MediaPanel.css'; // Ensure this file includes necessary styles
 import { useDrag } from 'react-dnd';
 
@@ -210,7 +210,9 @@ const MediaPanel = () => {
 
     return typeMatch && nameMatch;
   });
-
+  useEffect(() => {
+    console.log("MediaPanel mounted");
+  }, []);
   return (
     <div className="media-panel scrollable-panel">
       <h3>Media Library</h3>

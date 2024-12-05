@@ -4,7 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 import CTAOne from '../Sections/CTAs/CTAOne';
 import CTATwo from '../Sections/CTAs/CTATwo';
 import { structureConfigurations } from '../../configs/structureConfigurations';
-const DraggableCTA = ({ id, configuration, isEditing, showDescription = false }) => {
+const DraggableCTA = ({ id, configuration, isEditing, showDescription = false, handleOpenMediaPanel }) => {
   const { addNewElement, elements, setElements, findElementById } = useContext(EditableContext);
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -70,9 +70,9 @@ const DraggableCTA = ({ id, configuration, isEditing, showDescription = false })
   const renderCTAComponent = () => {
     switch (configuration) {
       case 'ctaOne':
-        return <CTAOne uniqueId={id} children={children} />;
+        return <CTAOne handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} />;
       case 'ctaTwo':
-        return <CTATwo uniqueId={id} children={children} />;
+        return <CTATwo handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} />;
       default:
         console.warn(`Unsupported CTA configuration: ${configuration}`);
         return;

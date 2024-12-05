@@ -12,7 +12,7 @@ const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
-const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem }) => {
+const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem, handleOpenMediaPanel }) => {
   const navRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
@@ -44,7 +44,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
+            <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
           ))}
         {children
           .filter((child) => child?.type === 'span' && child?.content === '3S.Template')

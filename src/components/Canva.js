@@ -14,6 +14,7 @@ const ContentList = forwardRef(
       scale,
       setScale,
       isPreviewMode,
+      handleOpenMediaPanel = () => {} ,
     },
     ref
   ) => {
@@ -27,7 +28,9 @@ const ContentList = forwardRef(
       selectedStyle,
       selectedElement,
     } = useContext(EditableContext);
-
+    console.log("handlePanelToggle in ContentList:", handlePanelToggle);
+    console.log("handleOpenMediaPanel in ContentList:", handleOpenMediaPanel);
+    
     const calculateScale = () => {
       const viewportWidth = window.innerWidth;
       const activeSidebarWidth = isSideBarVisible ? sideBarWidth : 0;
@@ -48,7 +51,11 @@ const ContentList = forwardRef(
 
     const handleDrop = (item, index, parentId = null) => {
       const safeIndex = index !== null && index !== undefined ? index : 0;
-    
+      if (item.type === 'image') {
+        // Example handling logic
+        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
+        setSelectedElement({ id: newElementId, type: item.type });
+      }
       if (item.type === 'table') {
         // Table-specific logic
       } else if (
@@ -126,7 +133,8 @@ const ContentList = forwardRef(
               handlePanelToggle,
               selectedElement,
               selectedStyle,
-              isPreviewMode
+              isPreviewMode,
+              handleOpenMediaPanel,
             )
           )}
 

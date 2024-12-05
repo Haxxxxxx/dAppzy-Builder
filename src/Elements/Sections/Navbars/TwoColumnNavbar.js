@@ -19,7 +19,7 @@ const TwoColumnNavbar = ({
   children,
   onDropItem,
   contentListWidth,
-  handlePanelToggle,
+  handleOpenMediaPanel,
 }) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
@@ -58,7 +58,7 @@ const TwoColumnNavbar = ({
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-              <SelectableImage id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
+              <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
           ))}
       </div>
 

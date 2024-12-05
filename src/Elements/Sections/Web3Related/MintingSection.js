@@ -13,7 +13,7 @@ const SelectableImage = withSelectable(Image);
 const SelectableButton = withSelectable(Button);
 const SelectableDateComponent = withSelectable(DateComponent);
 
-const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem, handlePanelToggle }) => {
+const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem, handleOpenMediaPanel }) => {
   const sectionRef = useRef(null);
   const { isOverCurrent, canDrop, drop } = useElementDrop({
     id: uniqueId,
@@ -92,6 +92,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
               objectFit: 'cover',
               marginBottom: '1rem',
             }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
           />
         )}
 
@@ -186,6 +187,8 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
               id={item.id}
               src={item.content || 'Default Rare Item'}
               styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+
             />
           ))}
         </div>
@@ -202,6 +205,8 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
               id={item.id}
               src={item.content || 'Default Document Item'}
               styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+
             />
           ))}
         </div>

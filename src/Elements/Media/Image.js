@@ -3,7 +3,9 @@ import React, { useContext, useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { useDrop } from 'react-dnd';
 
-const Image = ({ id, styles: customStyles, src, isLogo, isPreviewMode }) => {
+// src/Elements/Media/Image.js
+// src/Elements/Media/Image.js
+const Image = ({ id, styles: customStyles, src, isLogo, isPreviewMode, handleOpenMediaPanel = () => {}  }) => {
   const { elements, updateContent, setSelectedElement } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id) || {};
   const { content = '', styles = {} } = imageElement;
@@ -13,15 +15,24 @@ const Image = ({ id, styles: customStyles, src, isLogo, isPreviewMode }) => {
   const defaultSrc = `https://via.placeholder.com/150`;
 
   const handleSelect = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent parent click handling
     setSelectedElement({ id, type: 'image' });
+  
+    // Debug log to confirm invocation
+    console.log("Image clicked. Triggering handleOpenMediaPanel.");
+    if (handleOpenMediaPanel) {
+      handleOpenMediaPanel(); // Open the Media Panel or keep it open
+    } else {
+      console.error("handleOpenMediaPanel is not defined.");
+    }
+  };
+  
 
+  const handleImageLoad = (e) => {
+    const { naturalWidth, naturalHeight } = e.target;
+    setImageDimensions({ width: naturalWidth, height: naturalHeight });
   };
 
-
-
-
-  // Setup drop functionality
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'mediaItem',
     drop: (item) => {
@@ -34,12 +45,6 @@ const Image = ({ id, styles: customStyles, src, isLogo, isPreviewMode }) => {
       isOver: !!monitor.isOver(),
     }),
   }));
-
-  // Function to handle image load and get its natural dimensions
-  const handleImageLoad = (e) => {
-    const { naturalWidth, naturalHeight } = e.target;
-    setImageDimensions({ width: naturalWidth, height: naturalHeight });
-  };
 
   return (
     <div
@@ -58,7 +63,7 @@ const Image = ({ id, styles: customStyles, src, isLogo, isPreviewMode }) => {
         position: 'relative',
         cursor: 'pointer',
         border: isOver ? '2px dashed blue' : 'none',
-        display: 'inline-block', // Ensure the div doesn't take full width
+        display: 'inline-block',
       }}
       aria-label="Editable image"
     >

@@ -4,7 +4,7 @@ import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import StructureAndElementsModal from '../../utils/SectionQuickAdd/StructureAndElementsModal';
 import useElementDrop from '../../utils/useElementDrop';
 
-const Div = ({ id }) => {
+const Div = ({ id, handleOpenMediaPanel }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
   const divElement = elements.find((el) => el.id === id);
   const { styles, children = [] } = divElement || {};
@@ -52,7 +52,7 @@ const Div = ({ id }) => {
         }}
       >
         {children.map((childId) =>
-          renderElement(elements.find((el) => el.id === childId), elements, selectedElement)
+          renderElement( handleOpenMediaPanel={handleOpenMediaPanel}, elements.find((el) => el.id === childId), elements, selectedElement)
         )}
       </div>
       {isModalOpen && (
