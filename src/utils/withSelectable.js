@@ -27,6 +27,7 @@ const withSelectable = (WrappedComponent) => {
           width: 'auto',
           position: 'relative',
           boxSizing: 'border-box', // Ensure the element size stays consistent
+          cursor:'text',
           ...props.styles,
           ...(isSelected ? selectedStyle : {}),
         }}

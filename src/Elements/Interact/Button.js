@@ -40,7 +40,6 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
-        ...styles, // Apply dynamic styles first
         ...customStyles, // Override with custom styles
         cursor: 'text',
       }}

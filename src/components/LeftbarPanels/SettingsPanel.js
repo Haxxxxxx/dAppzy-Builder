@@ -20,19 +20,7 @@ const SettingsPanel = ({ onUpdateSettings }) => {
 
   // Update settings based on selectedElement type
   useEffect(() => {
-    if (selectedElement) {
-      if (selectedElement.type === 'connectWalletButton') {
-        setSettings(selectedElement.settings || { wallets: [] }); // Use existing settings if available
-      } else if (selectedElement.type === 'candyMachine') {
-        // Specific logic for Candy Machine
-        setSettings({
-          siteTitle: 'My Website',
-          faviconUrl: '',
-          description: 'My Project',
-          author: '',
-        });
-      }
-    } else {
+    
       // Default settings for general or no selection
       setSettings((prevSettings) => ({
         ...prevSettings,
@@ -41,7 +29,7 @@ const SettingsPanel = ({ onUpdateSettings }) => {
         description: 'My Project',
         author: '',
       }));
-    }
+    
   }, [selectedElement]);
 
   const handleInputChange = (e) => {
@@ -62,29 +50,10 @@ const SettingsPanel = ({ onUpdateSettings }) => {
     }
   };
 
-  const handleUpdateSettings = (updatedSettings) => {
-    console.log('Updated settings received:', updatedSettings); // Debugging
-    setSettings((prev) => ({ ...prev, ...updatedSettings }));
-
-    // Propagate to parent if onUpdateSettings is defined
-    if (onUpdateSettings) {
-      onUpdateSettings({ ...settings, ...updatedSettings });
-    }
-  };
 
   return (
     <div className="settings-panel scrollable-panel">
-      {selectedElement?.type === 'connectWalletButton' ? (
-        <WalletSettingsPanel
-          settings={settings}
-          onUpdateSettings={handleUpdateSettings}
-        />
-      ) : selectedElement?.type === 'candyMachine' ? (
-        <CandyMachineSettings
-          settings={settings}
-          onUpdateSettings={handleUpdateSettings}
-        />
-      ) : (
+     
         <>
           <h3>Website Settings</h3>
           <div className="settings-group">
@@ -130,7 +99,6 @@ const SettingsPanel = ({ onUpdateSettings }) => {
             Save Settings
           </button>
         </>
-      )}
     </div>
   );
 };

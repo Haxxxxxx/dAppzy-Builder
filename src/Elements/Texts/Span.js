@@ -37,7 +37,6 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          width: '80%',
           alignItems: 'center',
         }}
       >

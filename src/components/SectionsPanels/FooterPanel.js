@@ -7,14 +7,13 @@ const FooterPanel = ({ contentListWidth }) => {
     <div>
       <h3>Create New Footer</h3>
       <div className='bento-display-elements' style={{ marginTop: '16px' }}>
-        {/* Split footer components into individual ones */}
+        <DraggableFooter configuration="template" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
+        />
         <DraggableFooter configuration="simple" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
         />
         <DraggableFooter configuration="detailed" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
         />
-        {/* Add new footer based on provided template */}
-        <DraggableFooter configuration="template" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
-        />
+
       </div>
     </div>
   );

@@ -213,6 +213,7 @@ const renderConfiguredChildren = (configKey) => {
       <DraggableWeb3Elements
         id={id}
         key={id}
+        type={'candyMachine'}
         configuration={configuration}
         children={renderConfiguredChildren(configuration)}
         setElements={setElements}
@@ -228,6 +229,7 @@ const renderConfiguredChildren = (configKey) => {
       <ConnectWalletButton
         id={id}
         key={id}
+        type={'connectWalletButton'}
         content={element.content}
         styles={element.styles}
         handlePanelToggle={handlePanelToggle}

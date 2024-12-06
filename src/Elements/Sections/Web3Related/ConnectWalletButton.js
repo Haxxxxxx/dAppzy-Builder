@@ -111,7 +111,6 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
     e.stopPropagation(); // Prevent click from triggering parent behavior
     setSelectedElement({ id, type: 'connectWalletButton', styles });
     setShowPopup(!showPopup);
-    handlePanelToggle('settings');
   };
 
   // Close editing panel

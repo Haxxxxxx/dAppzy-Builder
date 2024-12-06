@@ -59,7 +59,9 @@
   opacity: 0.8;
 }
 
-
+.sidebar-title{
+  margin-bottom: 10px;
+}
 
 /* Content section styling */
 .content-section {

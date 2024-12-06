@@ -36,14 +36,26 @@ const HeroThree = ({ children, onDropItem, handleOpenMediaPanel }) => {
             <SelectableButton
               id={primaryButton.id}
               content={primaryButton.content}
-              styles={{ backgroundColor: '#334155', color: '#ffffff', padding: '12px 24px', fontWeight: 'bold', border: 'none' }}
+              styles={{
+                backgroundColor: '#334155',
+                color: '#ffffff',
+                padding: '12px 24px',
+                fontWeight: 'bold',
+                border: 'none',
+              }}
             />
           )}
           {secondaryButton && (
             <SelectableButton
               id={secondaryButton.id}
               content={secondaryButton.content}
-              styles={{ backgroundColor: 'transparent', color: '#334155', padding: '12px 24px', border: '2px solid #334155', fontWeight: 'bold' }}
+              styles={{
+                backgroundColor: 'transparent',
+                color: '#334155',
+                padding: '12px 24px',
+                border: '2px solid #334155',
+                fontWeight: 'bold',
+              }}
             />
           )}
         </div>

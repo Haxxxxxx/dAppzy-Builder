@@ -30,7 +30,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   const title = getChildByType('title');
   const description = getChildByType('description');
   const timer = getChildByType('timer');
-  const mintButton = getChildByType('mint-button');
+  const mintButton = getChildByType('button');
   const remaining = getChildByType('remaining');
   const value = getChildByType('value');
   const currency = getChildByType('currency');
@@ -49,7 +49,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   useEffect(() => {
     console.log('Children passed to MintingSection:', children);
   }, [children]);
-  
+
 
   return (
     <section
@@ -80,7 +80,6 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
           padding: '1.5rem',
         }}
       >
-        {/* Logo */}
         {logo && (
           <SelectableImage
             id={logo.id}
@@ -88,13 +87,14 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
             styles={{
               width: '160px',
               height: '160px',
-              borderRadius: '50%',
+              borderRadius: '50%', // Ensures round effect
               objectFit: 'cover',
               marginBottom: '1rem',
             }}
             handleOpenMediaPanel={handleOpenMediaPanel}
           />
         )}
+
 
         {/* Timer */}
         {timer && (
@@ -107,7 +107,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
         )}
 
         {/* Details */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', width: '80%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '80%' }}>
           {remaining && (
             <SelectableSpan
               id={remaining.id}
@@ -136,15 +136,16 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
 
         {mintButton && (
           <SelectableButton
-            id={mintButton.id || `${uniqueId}-mint-button`}
-            content={mintButton.content || 'Mint'}
+            id={mintButton.id}
+            content={mintButton.content}
             styles={{
               width: '80%',
               padding: '1rem',
-              border: '1px solid #fff',
+              display: 'flex',
+              justifyContent: 'center',
+              backgroundColor: 'transparent',
               borderRadius: '8px',
               color: '#fff',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
               fontSize: '1rem',
               fontWeight: 'bold',
               cursor: 'pointer',

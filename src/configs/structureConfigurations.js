@@ -1,7 +1,7 @@
 export const structureConfigurations = {
   customTemplate: {
     children: [
-      { type: 'image', content: 'Logo' },
+      { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' },
       { type: 'span', content: '3S.Template' },
       { type: 'span', content: 'Link 1' },
       { type: 'span', content: 'Link 2' },
@@ -13,7 +13,7 @@ export const structureConfigurations = {
   },
   twoColumn: {
     children: [
-      { type: 'image', content: 'Logo' },
+      { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' },
       { type: 'span', content: 'Home' },
       { type: 'span', content: 'About' },
       { type: 'span', content: 'Contact' },
@@ -21,7 +21,7 @@ export const structureConfigurations = {
   },
   threeColumn: {
     children: [
-      { type: 'image', content: 'Logo' },
+      { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' },
       { type: 'span', content: 'Home' },
       { type: 'span', content: 'Services' },
       { type: 'span', content: 'Contact' },
@@ -31,10 +31,10 @@ export const structureConfigurations = {
   heroOne: {
     type: 'hero',
     children: [
-      { type: 'image', content: 'background-image-url' },
-      { type: 'span', content: 'Welcome to Our Website'},
+      { type: 'image', content: 'https://via.placeholder.com/1200x600?text=Background' },
+      { type: 'span', content: 'Welcome to Our Website' },
       { type: 'span', content: 'Building a better future together.' },
-      { type: 'button', content: 'Get Started'},
+      { type: 'button', content: 'Get Started' },
     ],
   },
   heroTwo: {
@@ -53,7 +53,7 @@ export const structureConfigurations = {
       { type: 'span', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.' },
       { type: 'button', content: 'Primary Action' },
       { type: 'button', content: 'Secondary Action' },
-      { type: 'image', content: '' },
+      { type: 'image', content: 'https://via.placeholder.com/150?text=Image' },
     ],
   },
   ctaOne: {
@@ -91,37 +91,37 @@ export const structureConfigurations = {
       { type: 'span', content: 'Eleven' },
       { type: 'span', content: 'Twelve' },
       { type: 'span', content: 'Thirteen' },
-      { type: 'image', content: 'default-logo.png', styles: { width: '40px', height: '40px', borderRadius: '50%' } },
+      { type: 'image', content: 'https://via.placeholder.com/40', styles: { width: '40px', height: '40px', borderRadius: '50%' } },
       { type: 'span', content: '3S Template', styles: { fontSize: '1.5rem', fontWeight: 'bold' } },
-      { type: 'image', content: 'social-youtube-icon.png', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'social-facebook-icon.png', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'social-twitter-icon.png', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'social-instagram-icon.png', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'social-linkedin-icon.png', styles: { width: '24px', height: '24px', social: true } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=YouTube', styles: { width: '24px', height: '24px', social: true } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Facebook', styles: { width: '24px', height: '24px', social: true } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Twitter', styles: { width: '24px', height: '24px', social: true } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Instagram', styles: { width: '24px', height: '24px', social: true } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=LinkedIn', styles: { width: '24px', height: '24px', social: true } },
       { type: 'span', content: 'CompanyName @ 202X. All rights reserved.', styles: { fontSize: '0.875rem' } },
     ],
   },
-  mintingSection :{
+  mintingSection: {
     children: [
-      { type: 'image', content: 'logo-image-url' }, // Logo
+      { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' }, // Logo
       { type: 'title', content: 'Mint {Collection Name}' }, // Title
       { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
-      { type: 'timer', label:'Time before minting', content: '17d 5h 38m 34s' }, // Timer
-      { type: 'remaining', label: 'Remaining', content: '1000/1000'}, // Remaining
-      { type: 'value'  , label: 'Price'  , content: '1.5'}, // Price Value
+      { type: 'timer', label: 'Time before minting', content: '17d 5h 38m 34s' }, // Timer
+      { type: 'remaining', label: 'Remaining', content: '1000/1000' }, // Remaining
+      { type: 'value', label: 'Price', content: '1.5' }, // Price Value
       { type: 'currency', content: 'SOL' }, // Currency
-      { type: 'quantity' , label: 'Quantity', content: '2' }, // Quantity Value
-      { type: 'price' , label: 'Total Price' , content: '3 SOL'}, // Total Price
-      { type: 'mint-button'  , content: 'Mint'}, // Price Value
-      { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items 
-      { type: 'docItemsTitle', content: 'Document Items' }, // Document Items 
-      { type: 'rare-item', content: 'rare-item-1-image-url' }, // Rare Items
-      { type: 'rare-item', content: 'rare-item-2-image-url' },
-      { type: 'rare-item', content: 'rare-item-3-image-url' },
-      { type: 'rare-item', content: 'rare-item-4-image-url' },
-      { type: 'document-item', content: 'document-item-1-image-url' }, // Document Items
-      { type: 'document-item', content: 'document-item-2-image-url' },
-      { type: 'document-item', content: 'document-item-3-image-url' },
+      { type: 'quantity', label: 'Quantity', content: '2' }, // Quantity Value
+      { type: 'price', label: 'Total Price', content: '3 SOL' }, // Total Price
+      { type: 'button', content: 'Mint', label: 'mintButton' }, // Mint Button
+      { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items
+      { type: 'docItemsTitle', content: 'Document Items' }, // Document Items
+      { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' }, // Rare Items
+      { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' },
+      { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' },
+      { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' },
+      { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' }, // Document Items
+      { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' },
+      { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' },
     ],
   },
 };

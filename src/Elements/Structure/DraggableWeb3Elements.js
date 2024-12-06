@@ -32,17 +32,9 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
   // Enrich children with configuration data
   const resolvedChildren = mintPage?.children?.map((childId) => {
     const child = findElementById(childId, elements);
-    if (!child) return null;
-  
-    // Match child type with structure configuration
-    const configChild = structure.children?.find((config) => config.type === child.type);
-  
-    return {
-      ...child,
-      label: child.label || configChild?.label || '', // Prefer the child's label if it exists
-      content: child.content || configChild?.content || '', // Default to child's content if not in structure
-    };
-  }).filter(Boolean) || [];
+    return child || null;
+  }).filter(Boolean);
+
   
   useEffect(() => {
     console.log('Resolved Children with Labels and Content:', resolvedChildren);

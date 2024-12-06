@@ -1,14 +1,14 @@
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
-import StyleEditor from '../../Editors/TypographyEditor';
+import TypographyEditor from '../../Editors/TypographyEditor';
 import BorderEditor from '../../Editors/BorderEditor';
 import SizeEditor from '../../Editors/SizeEditor';
 import SpacingEditor from '../../Editors/SpacingEditor';
 import DisplayEditor from '../../Editors/DisplayEditor';
 import EffectEditor from '../../Editors/EffectEditor';
 import ButtonEditor from '../../Editors/ButtonEditor';
-import SectionDivEditor from '../../Editors/SectionDivEditor';
-
+import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
+import WalletSettingsPanel from '../LeftbarPanels/SettingsPanels/WalletSettingsPanel';
 const CollapsiblePanel = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -44,54 +44,81 @@ const CollapsiblePanel = ({ title, children }) => {
     </div>
   );
 };
+const EditorPanel = ({ onUpdateSettings }) => {
+  const { selectedElement, setElements, elements } = useContext(EditableContext);
+  const [viewMode, setViewMode] = useState('style'); // Default to 'style' view
 
-const EditorPanel = ({ editorRef }) => {
-  const { selectedElement, elements, updateStyles, setElements } = useContext(EditableContext);
-
-  if (!selectedElement) {
-    return <p>Select an element to edit its properties.</p>;
-  }
-
-  const element = elements.find((el) => el.id === selectedElement.id);
-
-  if (!element) {
-    return <p>Selected element not found. Please select a different element.</p>;
-  }
-
-  if (element.type === 'div' || element.type === 'section') {
-    return (
-      <div ref={editorRef}>
-        <h3>Edit Section/Div Properties</h3>
-        <SectionDivEditor element={element} updateStyles={updateStyles} setElements={setElements} />
-      </div>
-    );
-  }
+  const renderSettingsView = () => {
+    if (selectedElement?.type === 'connectWalletButton') {
+      return (
+        <WalletSettingsPanel
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }
+    if (selectedElement?.type === 'candyMachine') {
+      return (
+        <CandyMachineSettings
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }
+    return <p>No settings available for this element yet.</p>;
+  };
 
   return (
-    <div ref={editorRef}>
+    <div className="editor-panel">
+      {/* Toggle between Settings and Style Views */}
+      <div className="sidebar-toggle-buttons">
+        <button
+          onClick={() => setViewMode('style')}
+          className={viewMode === 'style' ? 'active' : ''}
+        >
+          Style Editor
+        </button>
+        <button
+          onClick={() => setViewMode('settings')}
+          className={viewMode === 'settings' ? 'active' : ''}
+        >
+          Element Setting
+        </button>
+      </div>
 
-      <CollapsiblePanel title="Typography">
-        <StyleEditor />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Borders">
-        <BorderEditor />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Size">
-        <SizeEditor />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Spacing">
-        <SpacingEditor />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Display">
-        <DisplayEditor />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Effects">
-        <EffectEditor />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Button">
-        <ButtonEditor />
-      </CollapsiblePanel>
-
+      {/* Conditional rendering based on viewMode */}
+      {viewMode === 'style' ? (
+        <div className="style-editor">
+          <CollapsiblePanel title="Typography">
+            <TypographyEditor />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Borders">
+            <BorderEditor />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Size">
+            <SizeEditor />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Spacing">
+            <SpacingEditor />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Display">
+            <DisplayEditor />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Effects">
+            <EffectEditor />
+          </CollapsiblePanel>
+          {selectedElement?.type === 'button' && (
+            <CollapsiblePanel title="Button">
+              <ButtonEditor />
+            </CollapsiblePanel>
+          )}
+        </div>
+      ) : (
+        <div className="settings-view">
+          <h3>Element Settings</h3>
+          {renderSettingsView()}
+        </div>
+      )}
       {elements.length > 0 && (
         <button
           onClick={() => setElements([])}

@@ -13,7 +13,7 @@ const SideBar = ({ contentListWidth }) => {
     <div className="sidebar-container">
       {/* Conditional Title */}
       <h2 className="sidebar-title">
-        {selectedElement ? 'Style Editors' : 'Elements Menu'}
+        {selectedElement ? 'Editors' : 'Elements Menu'}
       </h2>
 
       {/* Display buttons only when no element is selected */}

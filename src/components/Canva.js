@@ -51,28 +51,27 @@ const ContentList = forwardRef(
 
     const handleDrop = (item, index, parentId = null) => {
       const safeIndex = index !== null && index !== undefined ? index : 0;
-      if (item.type === 'image') {
-        // Example handling logic
+    
+      if (item.type === 'button') {
+        // Directly add button without wrapping it in a div
         const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
         setSelectedElement({ id: newElementId, type: item.type });
-      }
-      if (item.type === 'table') {
-        // Table-specific logic
+      } else if (item.type === 'image') {
+        // Handle images
+        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
+        setSelectedElement({ id: newElementId, type: item.type });
       } else if (
         item.type === 'hero' ||
         item.type === 'navbar' ||
         item.type === 'mintingSection'
       ) {
+        // Handle structured elements
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
         setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
-      } else if (item.type === 'button') {
-        // Directly add the button without wrapping it in a div
-        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-        setSelectedElement({ id: newElementId, type: item.type });
       } else {
         // Default logic for other elements
         const divId = addNewElement('div', 1, safeIndex, parentId);
-        const newElementId = addNewElement(item.type, 1, null, divId);
+        const newElementId = addNewElement(item.type, 1, divId, null);
         setElements((prevElements) =>
           prevElements.map((el) =>
             el.id === divId
@@ -83,6 +82,7 @@ const ContentList = forwardRef(
         setSelectedElement({ id: newElementId, type: item.type });
       }
     };
+    
     
 
     useEffect(() => {
