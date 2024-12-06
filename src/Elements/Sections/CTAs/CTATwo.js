@@ -2,59 +2,46 @@ import React from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import withSelectable from '../../../utils/withSelectable';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { ctaTwoStyles } from './defaultCtaStyles';
 
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 
-const CTATwo = ({ uniqueId, children }) => {
-  const titleChild = children?.find((child) => child.id === `${uniqueId}-cta-title`);
-  const primaryButton = children?.find((child) => child.id === `${uniqueId}-primary-button`);
-  const secondaryButton = children?.find((child) => child.id === `${uniqueId}-secondary-button`);
+const CTATwo = ({ uniqueId, children = [] }) => {
+  const { ctaTwo } = structureConfigurations;
+
+  // Merge default children from structureConfigurations with any overrides
+  const mergedChildren = ctaTwo.children.map((defaultChild, index) => {
+    const overrideChild = children.find((child) => child.type === defaultChild.type);
+    return overrideChild || { ...defaultChild, id: `${uniqueId}-cta-child-${index}` };
+  });
+
+  const titleChild = mergedChildren.find((child) => child.type === 'span');
+  const [primaryButton, secondaryButton] = mergedChildren.filter((child) => child.type === 'button');
 
   return (
-    <section
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px',
-        backgroundColor: '#ffffff',
-        textAlign: 'center',
-      }}
-    >
+    <section style={ctaTwoStyles.cta}>
       {titleChild && (
         <SelectableSpan
           id={titleChild.id}
           content={titleChild.content}
-          styles={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '16px' }}
+          styles={ctaTwoStyles.ctaTitle}
         />
       )}
-      <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+      <div style={ctaTwoStyles.buttonContainer}>
         {primaryButton && (
           <SelectableButton
             id={primaryButton.id}
             content={primaryButton.content}
-            styles={{
-              padding: '12px 24px',
-              backgroundColor: '#1a1aff',
-              color: '#ffffff',
-              fontWeight: 'bold',
-              border: 'none',
-            }}
+            styles={ctaTwoStyles.primaryButton}
           />
         )}
         {secondaryButton && (
           <SelectableButton
             id={secondaryButton.id}
             content={secondaryButton.content}
-            styles={{
-              padding: '12px 24px',
-              backgroundColor: 'transparent',
-              color: '#1a1aff',
-              border: '2px solid #1a1aff',
-              fontWeight: 'bold',
-            }}
+            styles={ctaTwoStyles.secondaryButton}
           />
         )}
       </div>

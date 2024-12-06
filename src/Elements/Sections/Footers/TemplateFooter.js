@@ -2,12 +2,30 @@ import React, { useEffect, useState } from 'react';
 import Span from '../../Texts/Span';
 import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { TemplateFooterStyles } from './defaultFooterStyles.js';
 
 const SelectableSpan = withSelectable(Span);
 const SelectableImage = withSelectable(Image);
 
-const TemplateFooter = ({ uniqueId, contentListWidth, children, handleOpenMediaPanel }) => {
+const TemplateFooter = ({ uniqueId, contentListWidth, children = [] }) => {
   const [isCompact, setIsCompact] = useState(false);
+
+  // Load the `template` configuration
+  const { template } = structureConfigurations;
+
+  // Merge default children with overrides
+  const mergedChildren = template.children.map((defaultChild, index) => {
+    const overrideChild = children.find((child) => child.id === `${uniqueId}-footer-child-${index}`);
+    return overrideChild || { ...defaultChild, id: `${uniqueId}-footer-child-${index}` };
+  });
+
+  // Split spans into two groups
+  const spans = mergedChildren.filter((child) => child.type === 'span');
+  const images = mergedChildren.filter((child) => child.type === 'image');
+
+  const firstSpans = spans.slice(0, -2);
+  const lastSpans = spans.slice(-2);
 
   // Update `isCompact` state based on `contentListWidth`
   useEffect(() => {
@@ -19,90 +37,41 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children, handleOpenMediaP
   return (
     <footer
       style={{
-        backgroundColor: '#4B5563',
-        color: '#D1D5DB',
-        padding: '24px',
-        display: 'flex',
+        ...TemplateFooterStyles.footer,
         flexDirection: isCompact ? 'column' : 'row',
-        alignItems: isCompact ? 'center' : 'stretch',
-        gap: '16px',
-        textAlign:'center',
-        alignContent:'center',
+        textAlign: isCompact ? 'center' : 'left',
       }}
     >
-      {isCompact ? (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: '16px',
-            }}
-          >
-            {children
-              .filter((child) => child.type === 'span')
-              .map((child) => (
-                <SelectableSpan
-                  key={child.id}
-                  id={child.id}
-                  content={child.content}
-                  styles={child.styles}
-                />
-              ))}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '16px',
-            }}
-          >
-            {children
-              .filter((child) => child.type === 'image')
-              .map((logo) => (
-                <SelectableImage
-                  key={logo.id}
-                  id={logo.id}
-                  src={logo.content}
-                  styles={logo.styles}
-                  handleOpenMediaPanel={handleOpenMediaPanel}
-                />
-              ))}
-          </div>
-        </>
-      ) : (
-        <>
-            <div style={{ display: 'flex', gap: '32px' }}>
-              {children
-                .filter((child) => child.type === 'span')
-                .map((child) => (
-                  <SelectableSpan
-                    key={child.id}
-                    id={child.id}
-                    content={child.content}
-                    styles={child.styles}
-                  />
-                ))}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              {children
-                .filter((child) => child.type === 'image')
-                .map((icon) => (
-                  <SelectableImage
-                    key={icon.id}
-                    id={icon.id}
-                    src={icon.content}
-                    styles={icon.styles}
-                  />
-                ))}
-            </div>
-        </>
-      )}
+      <div style={TemplateFooterStyles.templateSections}>
+        {firstSpans.map((child) => (
+          <SelectableSpan
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={child.styles || TemplateFooterStyles.span}
+          />
+        ))}
+      </div>
+      <div style={TemplateFooterStyles.middleSpans}>
+        {lastSpans.map((child) => (
+          <SelectableSpan
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={child.styles || TemplateFooterStyles.middleSpan}
+          />
+        ))}
+      </div>
+      <div style={TemplateFooterStyles.templateSocialIcons}>
+        {images.map((child) => (
+          <SelectableImage
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={child.styles || TemplateFooterStyles.socialIcon}
+          />
+        ))}
+      </div>
     </footer>
   );
 };

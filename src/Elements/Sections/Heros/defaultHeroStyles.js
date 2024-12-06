@@ -4,7 +4,7 @@ export const defaultHeroStyles = {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     padding: '40px',
     backgroundColor: '#ffffff',
   },
@@ -14,6 +14,9 @@ export const defaultHeroStyles = {
     maxWidth: '600px',
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
+    gap:'2rem',
+
   },
   caption: {
     fontWeight: 'bold',
@@ -66,5 +69,109 @@ export const defaultHeroStyles = {
     backgroundColor: '#334155',
     objectFit: 'cover',
     borderRadius: '8px',
+  },
+};
+
+
+export const heroThreeStyles = {
+  heroSection: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '40px',
+    backgroundColor: '#ffffff',
+
+  },
+  heroContent: {
+    flex: 1,
+    minWidth: '300px',
+    maxWidth: '600px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap:'1rem',
+
+  },
+  caption: {
+    fontWeight: 'bold',
+    color: '#334155',
+    marginBottom: '8px',
+  },
+  heroTitle: {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    marginBottom: '16px',
+  },
+  heroDescription: {
+    fontSize: '1rem',
+    lineHeight: '1.5',
+    marginBottom: '24px',
+  },
+  buttonContainer: {
+    display: 'flex',
+    gap: '12px',
+  },
+  primaryButton: {
+    backgroundColor: '#334155',
+    color: '#ffffff',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    border: 'none',
+    cursor: 'pointer',
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    color: '#334155',
+    padding: '12px 24px',
+    border: '2px solid #334155',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+  },
+  heroImageContainer: {
+    flex: 1,
+    minWidth: '300px',
+    maxWidth: '600px',
+    textAlign: 'center',
+    marginTop: '20px',
+  },
+  heroImage: {
+    maxWidth: '100%',
+    height: '400px',
+    backgroundColor: '#334155',
+    objectFit: 'cover',
+    borderRadius: '8px',
+  },
+};
+
+export const heroTwoStyles = {
+  heroSection: {
+    backgroundColor: '#6B7280',
+    color: '#fff',
+    padding: '60px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    borderRadius: '8px',
+    gap:'1rem',
+  },
+  heroSectionWithDrop: {
+    border: '2px dashed blue',
+  },
+  title: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: '1.25rem',
+    margin: '16px 0',
+  },
+  button: {
+    padding: '10px 20px',
+    backgroundColor: '#2563EB',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
   },
 };

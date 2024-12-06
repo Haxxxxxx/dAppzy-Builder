@@ -91,20 +91,20 @@ export const structureConfigurations = {
       { type: 'span', content: 'Eleven' },
       { type: 'span', content: 'Twelve' },
       { type: 'span', content: 'Thirteen' },
-      { type: 'image', content: 'https://via.placeholder.com/40', styles: { width: '40px', height: '40px', borderRadius: '50%' } },
-      { type: 'span', content: '3S Template', styles: { fontSize: '1.5rem', fontWeight: 'bold' } },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=YouTube', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=Facebook', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=Twitter', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=Instagram', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=LinkedIn', styles: { width: '24px', height: '24px', social: true } },
-      { type: 'span', content: 'CompanyName @ 202X. All rights reserved.', styles: { fontSize: '0.875rem' } },
+      { type: 'image', content: 'https://via.placeholder.com/40' },
+      { type: 'span', content: '3S Template' },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=YouTube' },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Facebook'},
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Twitter'},
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Instagram'  },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=LinkedIn'},
+      { type: 'span', content: 'CompanyName @ 202X. All rights reserved.'},
     ],
   },
   mintingSection: {
     children: [
       { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' }, // Logo
-      { type: 'title', content: 'Mint {Collection Name}' }, // Title
+      { type: 'title', content: 'Mint {Collection Name}', label:'title' }, // Title
       { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
       { type: 'timer', label: 'Time before minting', content: '17d 5h 38m 34s' }, // Timer
       { type: 'remaining', label: 'Remaining', content: '1000/1000' }, // Remaining

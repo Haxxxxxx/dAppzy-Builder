@@ -1,16 +1,18 @@
-import React, { useContext, useRef } from 'react';
+import React, { useRef } from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import useElementDrop from '../../../utils/useElementDrop';
 import withSelectable from '../../../utils/withSelectable';
+import { heroTwoStyles } from './defaultHeroStyles';
+
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 
 const HeroTwo = ({ uniqueId, children, onDropItem }) => {
   const sectionRef = useRef(null);
   const { heroTwo } = structureConfigurations;
-  const { isOverCurrent, canDrop, drop } = useElementDrop({
+  const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
     onDropItem,
@@ -20,29 +22,33 @@ const HeroTwo = ({ uniqueId, children, onDropItem }) => {
   const subtitle = children?.find((child) => child.type === 'span' && child.content === heroTwo.children[1].content) || heroTwo.children[1];
   const button = children?.find((child) => child.type === 'button' && child.content === heroTwo.children[2].content) || heroTwo.children[2];
 
+  const sectionStyles = isOverCurrent
+    ? { ...heroTwoStyles.heroSection, ...heroTwoStyles.heroSectionWithDrop }
+    : heroTwoStyles.heroSection;
+
   return (
     <section
       ref={(node) => {
         sectionRef.current = node;
         drop(node);
       }}
-      style={{
-        backgroundColor: '#6B7280',
-        color: '#fff',
-        padding: '60px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        borderRadius: '8px',
-        border: isOverCurrent ? '2px dashed blue' : 'none',
-      }}
+      style={sectionStyles}
     >
-        <SelectableSpan id={title.id || `title-${uniqueId}`} content={title.content} styles={title.styles || { fontSize: '2rem', fontWeight: 'bold' }} />
-
-        <SelectableSpan id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={subtitle.styles || { fontSize: '1.25rem', margin: '16px 0' }} />
-
-        <SelectableButton id={button.id || `button-${uniqueId}`} content={button.content} styles={button.styles || { padding: '10px 20px', backgroundColor: '#2563EB', color: '#fff', border: 'none', borderRadius: '4px' }} />
+      <SelectableSpan
+        id={title.id || `title-${uniqueId}`}
+        content={title.content}
+        styles={title.styles || heroTwoStyles.title}
+      />
+      <SelectableSpan
+        id={subtitle.id || `subtitle-${uniqueId}`}
+        content={subtitle.content}
+        styles={subtitle.styles || heroTwoStyles.subtitle}
+      />
+      <SelectableButton
+        id={button.id || `button-${uniqueId}`}
+        content={button.content}
+        styles={button.styles || heroTwoStyles.button}
+      />
     </section>
   );
 };

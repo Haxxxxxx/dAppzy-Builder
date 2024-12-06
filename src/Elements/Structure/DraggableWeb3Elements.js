@@ -21,9 +21,6 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
       }
     },
   }), [configuration, isEditing, addNewElement, setElements]);
-  console.log('Configuration:', configuration); // Ensure the configuration is correct
-  console.log('Structure:', structureConfigurations[configuration]); // Ensure the key matches
-  
   const mintPage = findElementById(id, elements);
 
   // Fetch the corresponding configuration structure dynamically

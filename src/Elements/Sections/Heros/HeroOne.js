@@ -3,51 +3,40 @@ import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
-
+import { defaultHeroStyles } from './defaultHeroStyles';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 
-const HeroOne = ({ uniqueId, children, handleOpenMediaPanel }) => {
-  const backgroundImage = children.find((child) => child.type === 'image') || {
-    id: `placeholder-image-${uniqueId}`,
-    content: '/placeholder-image.png',
-  };
+const HeroOne = ({ uniqueId, children = [], handleOpenMediaPanel }) => {
+  const defaultChildren = structureConfigurations.heroOne.children;
 
-  const heroTitle = children.find((child) => child.type === 'span' && child.content === 'Welcome to Our Website') || {
-    id: `placeholder-title-${uniqueId}`,
-    content: 'Welcome to Our Website',
-  };
+  const mergedChildren = defaultChildren.map((defaultChild) => {
+    const overrideChild = children.find((child) => child.type === defaultChild.type);
+    return overrideChild || defaultChild;
+  });
 
-  const heroSubtitle = children.find((child) => child.type === 'span' && child.content === 'Building a better future together.') || {
-    id: `placeholder-subtitle-${uniqueId}`,
-    content: 'Building a better future together.',
-  };
-
-  const heroButton = children.find((child) => child.type === 'button') || {
-    id: `placeholder-button-${uniqueId}`,
-    content: 'Learn More',
-  };
+  const backgroundImage = mergedChildren.find((child) => child.type === 'image');
+  const title = mergedChildren.find((child) => child.type === 'span' && child.content === 'Welcome to Our Website');
+  const subtitle = mergedChildren.find((child) => child.type === 'span' && child.content === 'Building a better future together.');
+  const button = mergedChildren.find((child) => child.type === 'button');
 
   return (
-    <section
-      style={{
-        backgroundColor: '#282c34',
-        color: '#ffffff',
-        padding: '40px',
-        textAlign: 'center',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'column',
-      }}
-    >
-        <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={backgroundImage.id} content={backgroundImage.content} />
-
-        <SelectableSpan id={heroTitle.id} content={heroTitle.content} />
-
-        <SelectableSpan id={heroSubtitle.id} content={heroSubtitle.content} />
-
-        <SelectableButton id={heroButton.id} content={heroButton.content} />
+    <section style={{ ...defaultHeroStyles.hero, backgroundImage: `url(${backgroundImage?.content || ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div style={defaultHeroStyles.heroContent}>
+        {title && <SelectableSpan id={title.id || `title-${uniqueId}`} content={title.content} styles={defaultHeroStyles.heroTitle} />}
+        {subtitle && <SelectableSpan id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={defaultHeroStyles.heroDescription} />}
+        {button && (
+          <div style={defaultHeroStyles.buttonContainer}>
+            <SelectableButton
+              id={button.id || `button-${uniqueId}`}
+              content={button.content}
+              styles={defaultHeroStyles.primaryButton}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 };

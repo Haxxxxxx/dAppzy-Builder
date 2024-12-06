@@ -14,6 +14,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent from being selected
     setSelectedElement({ id, type: 'span', styles });
+    
   };
 
   // Update content on blur

@@ -9,6 +9,8 @@ import EffectEditor from '../../Editors/EffectEditor';
 import ButtonEditor from '../../Editors/ButtonEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettingsPanel from '../LeftbarPanels/SettingsPanels/WalletSettingsPanel';
+import ButtonSettingsPanel from './SettingsPanels/ButtonSettings';
+import LinkSettingsPanel from './SettingsPanels/LinkSettings';
 const CollapsiblePanel = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -47,7 +49,7 @@ const CollapsiblePanel = ({ title, children }) => {
 const EditorPanel = ({ onUpdateSettings }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
   const [viewMode, setViewMode] = useState('style'); // Default to 'style' view
-
+  console.log("Selected Element type in EditorPanel : "+ selectedElement.type);
   const renderSettingsView = () => {
     if (selectedElement?.type === 'connectWalletButton') {
       return (
@@ -65,6 +67,22 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
+    if (selectedElement?.type === 'button') {
+      return (
+      <ButtonSettingsPanel 
+        settings={selectedElement.settings || {}}
+        onUpdateSettings={onUpdateSettings}
+      />
+    );
+    }
+    if (selectedElement?.type === 'span' || selectedElement?.type === 'link' && selectedElement.label ==! 'title') {
+      return (
+        <LinkSettingsPanel 
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
+      }
     return <p>No settings available for this element yet.</p>;
   };
 

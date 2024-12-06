@@ -28,7 +28,6 @@ const withSelectable = (WrappedComponent) => {
           position: 'relative',
           boxSizing: 'border-box', // Ensure the element size stays consistent
           cursor:'text',
-          ...props.styles,
           ...(isSelected ? selectedStyle : {}),
         }}
       >
@@ -49,7 +48,7 @@ const withSelectable = (WrappedComponent) => {
               alignItems: 'center',
               justifyContent: 'space-between',
               zIndex: 1000,
-              maxWidth: '200px', // Max width of the label
+              maxWidth: '1500px', // Max width of the label
               whiteSpace: 'nowrap', // Prevent wrapping
               overflow: 'hidden', // Hide overflow
               textOverflow: 'ellipsis', // Add ellipsis for overflow text

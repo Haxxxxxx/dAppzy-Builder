@@ -110,7 +110,7 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
                   {child.type === 'connectWalletButton' ? (
                     <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   ) : (
-                    <SelectableButton id={child.id} content={child.content} styles={{
+                    <SelectableButton  id={child.id} content={child.content} styles={{
                       ...child.styles,
                       border: 'none',
                       padding: '10px 20px',

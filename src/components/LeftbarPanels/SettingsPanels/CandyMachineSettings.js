@@ -145,7 +145,7 @@ const CandyMachineSettings = () => {
     };
     
 
-    const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
+      const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
 
     return Object.keys(localSettings).map((key) => {
       switch (inputTypes[key]) {

@@ -221,7 +221,6 @@ const renderConfiguredChildren = (configKey) => {
         handlePanelToggle={handlePanelToggle}
         isPreviewMode={isPreviewMode}
         handleOpenMediaPanel={handleOpenMediaPanel}
-
       />
     ),
     date: <DateComponent id={id} key={id} styles={element.styles} />,

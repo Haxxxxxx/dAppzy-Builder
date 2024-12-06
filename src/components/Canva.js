@@ -28,8 +28,6 @@ const ContentList = forwardRef(
       selectedStyle,
       selectedElement,
     } = useContext(EditableContext);
-    console.log("handlePanelToggle in ContentList:", handlePanelToggle);
-    console.log("handleOpenMediaPanel in ContentList:", handleOpenMediaPanel);
     
     const calculateScale = () => {
       const viewportWidth = window.innerWidth;
@@ -52,37 +50,21 @@ const ContentList = forwardRef(
     const handleDrop = (item, index, parentId = null) => {
       const safeIndex = index !== null && index !== undefined ? index : 0;
     
-      if (item.type === 'button') {
-        // Directly add button without wrapping it in a div
+      if (item.type === 'button' || item.type === 'image') {
+        // Directly add the element without wrapping
         const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
         setSelectedElement({ id: newElementId, type: item.type });
-      } else if (item.type === 'image') {
-        // Handle images
-        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-        setSelectedElement({ id: newElementId, type: item.type });
-      } else if (
-        item.type === 'hero' ||
-        item.type === 'navbar' ||
-        item.type === 'mintingSection'
-      ) {
+      } else if (item.type === 'hero' || item.type === 'navbar' || item.type === 'mintingSection') {
         // Handle structured elements
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
         setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
       } else {
-        // Default logic for other elements
-        const divId = addNewElement('div', 1, safeIndex, parentId);
-        const newElementId = addNewElement(item.type, 1, divId, null);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === divId
-              ? { ...el, children: [...(el.children || []), newElementId] }
-              : el
-          )
-        );
+        // Directly add other elements without wrapping
+        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
         setSelectedElement({ id: newElementId, type: item.type });
       }
     };
-    
+        
     
 
     useEffect(() => {

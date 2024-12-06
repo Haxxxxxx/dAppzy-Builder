@@ -1,75 +1,61 @@
 import React from 'react';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
+import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { SimplefooterStyles } from './defaultFooterStyles.js';
 
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
+const SelectableImage = withSelectable(Image);
 
-const DetailedFooter = ({ uniqueId, children }) => (
-  <footer
-    style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '24px',
-      backgroundColor: '#444',
-      color: '#eee',
-    }}
-  >
-    {/* Left Section: Company Info */}
-    <div>
-      {children
-        .filter((child) => child.type === 'span')
-        .map((child) => (
-          <SelectableSpan
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={child.styles}
-          />
-        ))}
-    </div>
+const DetailedFooter = ({ uniqueId, children = [] }) => {
+  const { detailed } = structureConfigurations;
 
-    {/* Center Section: Policies */}
-    <ul style={{ listStyleType: 'none', margin: 0, padding: 0 }}>
-      {children
-        .filter((child) => child.type === 'span' && child.content.includes('Policy'))
-        .map((child) => (
-          <li key={child.id}>
-            <SelectableSpan
-              id={child.id}
-              content={child.content}
-              styles={child.styles}
-            />
-          </li>
-        ))}
-    </ul>
+  // Merge default children with overrides
+  const mergedChildren = detailed.children.map((defaultChild, index) => {
+    const overrideChild = children.find((child) => child.type === defaultChild.type);
+    return overrideChild || { ...defaultChild, id: `${uniqueId}-footer-child-${index}` };
+  });
 
-    {/* Right Section: Social Media */}
-    <div>
-      {children
-        .filter((child) => child.type === 'span' && child.content.includes('Follow'))
-        .map((child) => (
-          <SelectableSpan
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={child.styles}
-          />
-        ))}
-      {children
-        .filter((child) => child.type === 'button')
-        .map((child) => (
-          <SelectableButton
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={child.styles}
-          />
-        ))}
-    </div>
-  </footer>
-);
+  return (
+    <footer style={SimplefooterStyles.detailedFooter}>
+      {mergedChildren.map((child) => {
+        switch (child.type) {
+          case 'span':
+            return (
+              <SelectableSpan
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={child.styles || SimplefooterStyles.companyInfo}
+              />
+            );
+          case 'button':
+            return (
+              <SelectableButton
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={child.styles || SimplefooterStyles.socialButton}
+              />
+            );
+          case 'image':
+            return (
+              <SelectableImage
+                key={child.id}
+                id={child.id}
+                src={child.content}
+                styles={child.styles || SimplefooterStyles.socialButton}
+              />
+            );
+          default:
+            return null;
+        }
+      })}
+    </footer>
+  );
+};
 
 export default DetailedFooter;

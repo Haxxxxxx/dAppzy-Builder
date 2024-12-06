@@ -136,21 +136,22 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
 
         {mintButton && (
           <SelectableButton
-            id={mintButton.id}
-            content={mintButton.content}
+            id={mintButton.id || `${uniqueId}-mint-button`}
+            content={mintButton.content || 'Mint'}
             styles={{
-              width: '80%',
+              width: '100%',
+              marginTop:'1vh',
               padding: '1rem',
-              display: 'flex',
-              justifyContent: 'center',
-              backgroundColor: 'transparent',
+              border: '1px solid #fff',
               borderRadius: '8px',
               color: '#fff',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
               fontSize: '1rem',
               fontWeight: 'bold',
               cursor: 'pointer',
             }}
           />
+
         )}
         <SelectableSpan
           id={`${uniqueId}-terms`}
