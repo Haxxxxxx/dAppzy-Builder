@@ -3,7 +3,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import CandyMachineSettings from './SettingsPanels/CandyMachineSettings';
 import WalletSettingsPanel from './SettingsPanels/WalletSettingsPanel';
-
+import '../css/SettingsPanel.css'
 const SettingsPanel = ({ onUpdateSettings }) => {
   const { selectedElement } = useContext(EditableContext); // Access selectedElement from context
   const [settings, setSettings] = useState({

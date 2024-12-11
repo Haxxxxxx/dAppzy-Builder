@@ -29,6 +29,12 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src); // Update the image's content dynamically
+    }
+  };
+
   return (
     <nav
       ref={(node) => {
@@ -44,12 +50,31 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={child.id} styles={{ ...child.styles, width: '40px', height: '40px', borderRadius: '50%' }} />
+            <SelectableImage
+              key={child.id}
+              id={child.id}
+              src={child.content || 'Default Logo'}
+              styles={{
+                ...child.styles,
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+              }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={handleImageDrop}
+            />
           ))}
         {children
           .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
           .map((child) => (
-            <SelectableSpan id={child.id} content={child.content} styles={{ fontSize: '1.5rem', cursor: 'pointer' }} />
+            <SelectableSpan
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...child.styles,
+                cursor: 'pointer',
+              }}            />
           ))}
       </div>
 
@@ -73,16 +98,37 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
               {children
                 .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
                 .map((child) => (
-                  <SelectableSpan id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
+                  <SelectableSpan
+                    key={child.id}
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      cursor: 'pointer',
+                    }}                  />
                 ))}
               {children
                 .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
                 .map((child) => (
                   <>
                     {child.type === 'connectWalletButton' ? (
-                      <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                      <SelectableConnectWalletButton
+                        key={child.id}
+                        id={child.id}
+                        content={child.content}
+                        styles={{
+                          ...child.styles,
+                          cursor: 'pointer',
+                        }}                      />
                     ) : (
-                      <SelectableButton id={child.id} content={child.content} />
+                      <SelectableButton
+                        key={child.id}
+                        id={child.id}
+                        content={child.content}
+                        styles={{
+                          ...child.styles,
+                          cursor: 'pointer',
+                        }}                      />
                     )}
                   </>
                 ))}
@@ -98,8 +144,17 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
             {children
               .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
               .map((child) => (
-                <SelectableSpan id={child.id} content={child.content} styles={{ fontSize: '1rem', cursor: 'pointer' }} />
+                <SelectableSpan
+                  key={child.id}
+                  id={child.id}
+                  content={child.content}
+                  styles={{
+                    ...child.styles,
+                    cursor: 'pointer',
+                  }}
+                />
               ))}
+
           </div>
 
           <div style={{ ...CustomTemplateNavbarStyles.buttonContainer }}>
@@ -108,15 +163,25 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
               .map((child) => (
                 <>
                   {child.type === 'connectWalletButton' ? (
-                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <SelectableConnectWalletButton
+                      key={child.id}
+                      id={child.id}
+                      content={child.content}
+                      styles={child.styles}
+                    />
                   ) : (
-                    <SelectableButton  id={child.id} content={child.content} styles={{
-                      ...child.styles,
-                      border: 'none',
-                      padding: '10px 20px',
-                      backgroundColor: child.styles?.backgroundColor || '#334155',
-                      color: child.styles?.color || '#fff',
-                    }} />
+                    <SelectableButton
+                      key={child.id}
+                      id={child.id}
+                      content={child.content}
+                      styles={{
+                        ...child.styles,
+                        border: 'none',
+                        padding: '10px 20px',
+                        backgroundColor: child.styles?.backgroundColor || '#334155',
+                        color: child.styles?.color || '#fff',
+                      }}
+                    />
                   )}
                 </>
               ))}
@@ -128,3 +193,4 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
 };
 
 export default CustomTemplateNavbar;
+

@@ -84,6 +84,9 @@ const DraggableCTA = ({ id, configuration, isEditing, showDescription = false, h
   // Render description if requested
   if (showDescription) {
     return (
+      <div className='bento-extract-display'>
+                <strong>{titles[configuration]}</strong>
+
       <div
         ref={drag}
         style={{
@@ -93,10 +96,12 @@ const DraggableCTA = ({ id, configuration, isEditing, showDescription = false, h
           border: '1px solid #ccc',
           borderRadius: '4px',
           cursor: 'move',
-        }}
+          backgroundColor: "#FBFBFB",
+          color: '#686868'
+          }}
       >
-        <strong>{titles[configuration]}</strong>
         <p>{descriptions[configuration]}</p>
+      </div>
       </div>
     );
   }

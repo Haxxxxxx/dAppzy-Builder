@@ -1,22 +1,11 @@
 import { useDrop } from 'react-dnd';
 
 const useElementDrop = ({ id, elementRef, onDropItem }) => {
-  const [{ isOverCurrent, canDrop }, drop] = useDrop({
+  const [{ isOverCurrent, canDrop }, drop] = useDrop(() => ({
     accept: 'ELEMENT',
     drop: (item, monitor) => {
-      const hoverBoundingRect = elementRef.current?.getBoundingClientRect();
-      const clientOffset = monitor.getClientOffset();
-
-      if (!hoverBoundingRect || !clientOffset) return;
-
-      // Ensure the drop happens only if the mouse is inside this element
-      const isInside =
-        clientOffset.x >= hoverBoundingRect.left &&
-        clientOffset.x <= hoverBoundingRect.right &&
-        clientOffset.y >= hoverBoundingRect.top &&
-        clientOffset.y <= hoverBoundingRect.bottom;
-
-      if (isInside) {
+      // Only drop if the pointer is over this element
+      if (monitor.isOver({ shallow: true })) {
         onDropItem(item, id);
       }
     },
@@ -24,7 +13,7 @@ const useElementDrop = ({ id, elementRef, onDropItem }) => {
       isOverCurrent: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
     }),
-  });
+  }), [id, onDropItem]);
 
   return { isOverCurrent, canDrop, drop };
 };

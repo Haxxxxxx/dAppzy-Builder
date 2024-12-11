@@ -5,10 +5,16 @@ import HeroOne from '../Sections/Heros/HeroOne';
 import HeroTwo from '../Sections/Heros/HeroTwo';
 import HeroThree from '../Sections/Heros/HeroThree';
 
-import { structureConfigurations } from '../../configs/structureConfigurations';
-const DraggableHero = ({ id, configuration, isEditing, showDescription = false, contentListWidth, children,handleOpenMediaPanel }) => {
+const DraggableHero = ({
+  id,
+  configuration,
+  isEditing,
+  showDescription = false,
+  contentListWidth,
+  children,
+  handleOpenMediaPanel,
+}) => {
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
-
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -18,36 +24,10 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
+        // Just add the hero element with configuration as structure
         const newId = addNewElement('hero', 1, null, null, configuration);
-        const heroStructure = structureConfigurations[configuration];
 
-        if (heroStructure && heroStructure.children) {
-          heroStructure.children.forEach((child) => {
-            const childId = addNewElement(
-              child.type,
-              2,
-              null,
-              newId,
-              null,
-              child.content,
-              child.styles,
-              child.attributes
-            );
-
-            // Update the parent hero element to include this child
-            setElements((prevElements) =>
-              prevElements.map((el) =>
-                el.id === newId
-                  ? {
-                      ...el,
-                      children: [...(el.children || []), { ...child, id: childId }],
-                    }
-                  : el
-              )
-            );
-          });
-        }
-
+        // Now update the element with the given configuration
         setElements((prevElements) =>
           prevElements.map((el) =>
             el.id === newId ? { ...el, configuration } : el
@@ -57,7 +37,10 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
     },
   }), [configuration, isEditing, addNewElement, setElements]);
 
-  const uniqueId = useMemo(() => `hero-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
+  const uniqueId = useMemo(
+    () => `hero-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`,
+    []
+  );
 
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
@@ -71,17 +54,19 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         prevElements.map((el) =>
           el.id === parentId
             ? {
-                ...el,
-                children: [...new Set([...el.children, newId])], // Ensure unique children
-              }
+              ...el,
+              children: [...new Set([...el.children, newId])],
+            }
             : el
         )
       );
     }
   };
 
+
   const hero = findElementById(id, elements);
-  const resolvedChildren = hero?.children?.map((childId) => findElementById(childId, elements)) || [];
+  const resolvedChildren =
+    hero?.children?.map((childId) => findElementById(childId, elements)) || [];
 
   const descriptions = {
     heroOne: 'A simple hero section with title, subtitle, and a button.',
@@ -97,20 +82,27 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
 
   if (showDescription) {
     return (
-      <div
-        ref={drag}
-        style={{
-          opacity: isDragging ? 0.5 : 1,
-          padding: '8px',
-          margin: '8px 0',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'move',
-        }}
-      >
-        <strong>{titles[configuration]}</strong>
-        <p>{descriptions[configuration]}</p>
+
+      <div className='bento-extract-display'>
+          <strong>{titles[configuration]}</strong>
+
+        <div
+          ref={drag}
+          style={{
+            opacity: isDragging ? 0.5 : 1,
+            padding: '8px',
+            margin: '8px 0',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            cursor: 'move',
+            backgroundColor: "#FBFBFB",
+            color: '#686868'
+          }}
+        >
+          <p>{descriptions[configuration]}</p>
+        </div>
       </div>
+
     );
   }
 
@@ -155,10 +147,7 @@ const DraggableHero = ({ id, configuration, isEditing, showDescription = false, 
         backgroundColor: '#f9f9f9',
       }}
     >
-      {/* Render the Hero Component */}
       {HeroComponent}
-
-
     </div>
   );
 };

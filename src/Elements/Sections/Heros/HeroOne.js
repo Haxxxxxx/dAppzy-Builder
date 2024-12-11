@@ -3,42 +3,56 @@ import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
-import { defaultHeroStyles } from './defaultHeroStyles';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { heroThreeStyles } from './defaultHeroStyles';
+
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 
-const HeroOne = ({ uniqueId, children = [], handleOpenMediaPanel }) => {
-  const defaultChildren = structureConfigurations.heroOne.children;
+const HeroThree = ({ children, onDropItem, handleOpenMediaPanel }) => {
+  const caption = children?.find((child) => child.type === 'span' && child.content?.includes('CAPTION'));
+  const heroTitle = children?.find((child) => child.type === 'span' && child.content?.includes('Lorem ipsum'));
+  const heroDescription = children?.find((child) => child.type === 'span' && child.content?.includes('Rhoncus morbi'));
+  const primaryButton = children?.find((child) => child.type === 'button' && child.content?.includes('Primary Action'));
+  const secondaryButton = children?.find((child) => child.type === 'button' && child.content?.includes('Secondary Action'));
+  const heroImage = children?.find((child) => child.type === 'image');
 
-  const mergedChildren = defaultChildren.map((defaultChild) => {
-    const overrideChild = children.find((child) => child.type === defaultChild.type);
-    return overrideChild || defaultChild;
-  });
-
-  const backgroundImage = mergedChildren.find((child) => child.type === 'image');
-  const title = mergedChildren.find((child) => child.type === 'span' && child.content === 'Welcome to Our Website');
-  const subtitle = mergedChildren.find((child) => child.type === 'span' && child.content === 'Building a better future together.');
-  const button = mergedChildren.find((child) => child.type === 'button');
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src);
+    }
+  };
 
   return (
-    <section style={{ ...defaultHeroStyles.hero, backgroundImage: `url(${backgroundImage?.content || ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div style={defaultHeroStyles.heroContent}>
-        {title && <SelectableSpan id={title.id || `title-${uniqueId}`} content={title.content} styles={defaultHeroStyles.heroTitle} />}
-        {subtitle && <SelectableSpan id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={defaultHeroStyles.heroDescription} />}
-        {button && (
-          <div style={defaultHeroStyles.buttonContainer}>
-            <SelectableButton
-              id={button.id || `button-${uniqueId}`}
-              content={button.content}
-              styles={defaultHeroStyles.primaryButton}
-            />
-          </div>
+    <section style={heroThreeStyles.heroSection}>
+      <div style={heroThreeStyles.heroContent}>
+        {caption && <SelectableSpan id={caption.id} content={caption.content} styles={heroThreeStyles.caption} />}
+        {heroTitle && <SelectableSpan id={heroTitle.id} content={heroTitle.content} styles={heroThreeStyles.heroTitle} />}
+        {heroDescription && (
+          <SelectableSpan id={heroDescription.id} content={heroDescription.content} styles={heroThreeStyles.heroDescription} />
+        )}
+        <div style={heroThreeStyles.buttonContainer}>
+          {primaryButton && (
+            <SelectableButton id={primaryButton.id} content={primaryButton.content} styles={heroThreeStyles.primaryButton} />
+          )}
+          {secondaryButton && (
+            <SelectableButton id={secondaryButton.id} content={secondaryButton.content} styles={heroThreeStyles.secondaryButton} />
+          )}
+        </div>
+      </div>
+      <div style={heroThreeStyles.heroImageContainer}>
+        {heroImage && (
+          <SelectableImage
+            id={heroImage.id}
+            src={heroImage.content}
+            styles={heroThreeStyles.heroImage}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+          />
         )}
       </div>
     </section>
   );
 };
 
-export default HeroOne;
+export default HeroThree;

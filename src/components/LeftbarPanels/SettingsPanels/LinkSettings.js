@@ -32,17 +32,6 @@ const LinkSettingsPanel = ({ onUpdateSettings, settings }) => {
     <div className="link-settings-panel">
       <h3>Link Settings</h3>
       <div className="settings-group">
-        <label htmlFor="textContent">Text Content:</label>
-        <input
-          type="text"
-          name="textContent"
-          value={localSettings.textContent}
-          onChange={handleInputChange}
-          placeholder="Enter link text"
-          className="settings-input"
-        />
-      </div>
-      <div className="settings-group">
         <label htmlFor="redirectUrl">Redirect URL:</label>
         <input
           type="url"

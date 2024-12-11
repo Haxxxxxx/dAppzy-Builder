@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useContext } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
@@ -30,6 +30,12 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, h
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src); // Update the image's content dynamically
+    }
+  };
+
   return (
     <nav
       ref={(node) => {
@@ -46,7 +52,14 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, h
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
+            <SelectableImage
+              key={child.id}
+              id={child.id}
+              src={child.content || 'Default Logo'}
+              styles={{ ...child.styles, width: '40px', height: '40px' }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={handleImageDrop}
+            />
           ))}
       </div>
 
@@ -79,7 +92,7 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, h
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <SelectableSpan id={child.id} content={child.content} />
+                <SelectableSpan key={child.id} id={child.id} content={child.content} />
               ))}
           </ul>
 

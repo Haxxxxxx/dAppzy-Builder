@@ -65,13 +65,17 @@ const MediaItem = ({
               className="overlay-button remove-button"
               onClick={() => onRemoveClick(item.id)}
             >
-              Remove
+              <span class="material-symbols-outlined">
+                delete_forever
+              </span>
             </button>
             <button
               className="overlay-button preview-button"
               onClick={() => onPreviewClick(item)}
             >
-              Preview
+              <span class="material-symbols-outlined">
+                preview
+              </span>            
             </button>
           </div>
         </div>

@@ -50,6 +50,9 @@ const DraggableFooter = ({ id, configuration, isEditing, showDescription = false
 
   if (showDescription) {
     return (
+      <div className='bento-extract-display'>
+        <strong>{configuration}</strong>
+
       <div
         ref={drag}
         style={{
@@ -59,11 +62,14 @@ const DraggableFooter = ({ id, configuration, isEditing, showDescription = false
           border: '1px solid #ccc',
           borderRadius: '4px',
           cursor: 'move',
-        }}
+          backgroundColor: "#FBFBFB",
+          color: '#686868'
+          }}
       >
-        <strong>{configuration}</strong>
         <p>{descriptions[configuration]}</p>
       </div>
+            </div>
+
     );
   }
 

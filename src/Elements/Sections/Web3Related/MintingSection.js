@@ -46,6 +46,12 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
     setSelectedElement({ id: uniqueId, type: 'candyMachine' });
   };
 
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src); // Update the image's content
+    }
+  };
+
   useEffect(() => {
     console.log('Children passed to MintingSection:', children);
   }, [children]);
@@ -92,6 +98,8 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
               marginBottom: '1rem',
             }}
             handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+
           />
         )}
 
@@ -190,6 +198,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
               src={item.content || 'Default Rare Item'}
               styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
               handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={handleImageDrop}
 
             />
           ))}
@@ -208,6 +217,7 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
               src={item.content || 'Default Document Item'}
               styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
               handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={handleImageDrop}
 
             />
           ))}

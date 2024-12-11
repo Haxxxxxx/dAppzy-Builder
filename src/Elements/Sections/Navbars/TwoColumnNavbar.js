@@ -1,5 +1,3 @@
-// src/Elements/Structures/Navbars/TwoColumnNavbar.js
-
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
@@ -9,6 +7,7 @@ import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import { defaultNavbarStyles } from './DefaultNavbarStyles';
 import withSelectable from '../../../utils/withSelectable';
+
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
@@ -29,7 +28,7 @@ const TwoColumnNavbar = ({
   const navbarElement = elements.find((el) => el.id === id) || {};
   const { styles = {} } = navbarElement;
 
-  const { isOverCurrent, canDrop, drop } = useElementDrop({
+  const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: navRef,
     onDropItem,
@@ -40,6 +39,12 @@ const TwoColumnNavbar = ({
   }, [contentListWidth]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src); // Update the image's content dynamically
+    }
+  };
 
   return (
     <nav
@@ -58,7 +63,14 @@ const TwoColumnNavbar = ({
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-              <SelectableImage handleOpenMediaPanel={handleOpenMediaPanel} id={child.id} styles={{ ...child.styles, width: '40px', height: '40px' }} />
+            <SelectableImage
+              key={child.id}
+              id={child.id}
+              src={child.content || 'Default Logo'}
+              styles={{ ...child.styles, width: '40px', height: '40px' }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={handleImageDrop}
+            />
           ))}
       </div>
 
@@ -91,9 +103,7 @@ const TwoColumnNavbar = ({
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <>
-                  <SelectableSpan id={child.id} content={child.content} />
-                </>
+                <SelectableSpan key={child.id} id={child.id} content={child.content} />
               ))}
           </ul>
 

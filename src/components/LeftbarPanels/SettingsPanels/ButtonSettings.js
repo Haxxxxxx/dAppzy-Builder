@@ -39,55 +39,6 @@ const ButtonSettingsPanel = () => {
   return (
     <div className="button-settings-panel">
       <h3>Button Settings</h3>
-      {/* Button Text */}
-      <div className="settings-group">
-        <label htmlFor="text">Button Text:</label>
-        <input
-          type="text"
-          name="text"
-          value={localSettings.text || ''}
-          onChange={handleInputChange}
-          placeholder="Enter button text"
-          className="settings-input"
-        />
-      </div>
-      {/* Background Color */}
-      <div className="settings-group">
-        <label htmlFor="backgroundColor">Background Color:</label>
-        <input
-          type="color"
-          name="backgroundColor"
-          value={localSettings.backgroundColor || '#ffffff'}
-          onChange={handleInputChange}
-          className="settings-input"
-        />
-      </div>
-      {/* Text Color */}
-      <div className="settings-group">
-        <label htmlFor="textColor">Text Color:</label>
-        <input
-          type="color"
-          name="textColor"
-          value={localSettings.textColor || '#000000'}
-          onChange={handleInputChange}
-          className="settings-input"
-        />
-      </div>
-      {/* Border Style */}
-      <div className="settings-group">
-        <label htmlFor="borderStyle">Border Style:</label>
-        <select
-          name="borderStyle"
-          value={localSettings.borderStyle || 'solid'}
-          onChange={handleInputChange}
-          className="settings-input"
-        >
-          <option value="solid">Solid</option>
-          <option value="dashed">Dashed</option>
-          <option value="dotted">Dotted</option>
-          <option value="none">None</option>
-        </select>
-      </div>
       {/* Button Action */}
       <div className="settings-group">
         <label htmlFor="action">Button Action:</label>

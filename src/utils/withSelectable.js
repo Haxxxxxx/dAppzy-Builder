@@ -5,7 +5,7 @@ import { EditableContext } from '../context/EditableContext';
 const withSelectable = (WrappedComponent) => {
   return (props) => {
     const { id } = props;
-    const { selectedElement, setSelectedElement, selectedStyle, handleRemoveElement } =
+    const { selectedElement, setSelectedElement, selectedStyle, handleRemoveElement, updateStyles } =
       useContext(EditableContext);
     const isSelected = selectedElement?.id === id;
 
@@ -18,7 +18,9 @@ const withSelectable = (WrappedComponent) => {
       e.stopPropagation(); // Prevent triggering the select event
       handleRemoveElement(id);
     };
-
+    const handleStyleChange = (styleKey, value) => {
+      updateStyles(id, { [styleKey]: value });
+    };
     return (
       <div
         id={id}

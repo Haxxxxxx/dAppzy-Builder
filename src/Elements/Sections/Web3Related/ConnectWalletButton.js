@@ -1,8 +1,15 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 
-const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles, preventHeroModal,   handlePanelToggle = () => {},}) => {
-  const { selectedElement, setSelectedElement, elements, findElementById, updateStyles } = useContext(EditableContext);
+const ConnectWalletButton = ({
+  id,
+  content: initialContent,
+  styles: customStyles,
+  preventHeroModal,
+  handlePanelToggle = () => {},
+}) => {
+  const { selectedElement, setSelectedElement, elements, findElementById, updateStyles } =
+    useContext(EditableContext);
   const buttonRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [enabledWallets, setEnabledWallets] = useState([]);
@@ -10,7 +17,6 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
   const elementData = findElementById(id, elements) || {};
   const { content = initialContent, styles = {}, settings = {} } = elementData;
 
-  // Update enabled wallets based on settings
   useEffect(() => {
     if (settings?.wallets) {
       const activeWallets = settings.wallets.filter((wallet) => wallet.enabled);
@@ -18,110 +24,21 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
     }
   }, [settings]);
 
-  // Common signature request
-  const requestSignature = async (message) => {
-    try {
-      const encodedMessage = new TextEncoder().encode(message);
-      const signedMessage = await window.solana.signMessage(encodedMessage, 'utf8');
-      console.log('Signature:', signedMessage.signature);
-      alert('Signature approved. Proceeding to connect...');
-      return true;
-    } catch (err) {
-      console.error('Signature request failed:', err);
-      alert('Signature approval required to proceed.');
-      return false;
-    }
+  const handleStyleChange = (newStyles) => {
+    updateStyles(id, newStyles);
   };
 
-  // Wallet connection handlers
-  const connectPhantom = async () => {
-    try {
-      if (window.solana && window.solana.isPhantom) {
-        const message = "Please sign this message to confirm your identity.";
-        const isSigned = await requestSignature(message);
-        if (isSigned) {
-          const wallet = await window.solana.connect();
-          console.log('Phantom wallet connected:', wallet.publicKey.toString());
-          alert(`Phantom wallet connected: ${wallet.publicKey.toString()}`);
-        }
-      } else {
-        alert('Please install the Phantom wallet extension.');
-      }
-    } catch (err) {
-      console.error('Phantom connection failed:', err);
-    }
-  };
-
-  const connectMetaMask = async () => {
-    try {
-      if (window.ethereum) {
-        const message = "Please sign this message to confirm your identity.";
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        console.log('MetaMask connected:', accounts[0]);
-        alert(`MetaMask connected: ${accounts[0]}`);
-      } else {
-        alert('Please install the MetaMask extension.');
-      }
-    } catch (err) {
-      console.error('MetaMask connection failed:', err);
-    }
-  };
-
-  const connectFreighter = async () => {
-    try {
-      if (window.freighterApi) {
-        const message = "Please sign this message to confirm your identity.";
-        const isSigned = await requestSignature(message);
-        if (isSigned) {
-          const publicKey = await window.freighterApi.getPublicKey();
-          console.log('Freighter connected:', publicKey);
-          alert(`Freighter connected: ${publicKey}`);
-        }
-      } else {
-        alert('Please install the Freighter wallet extension.');
-      }
-    } catch (err) {
-      console.error('Freighter connection failed:', err);
-    }
-  };
-
-  // Handle wallet selection
-  const handleWalletSelection = (walletName) => {
-    switch (walletName) {
-      case 'Phantom':
-        connectPhantom();
-        break;
-      case 'MetaMask':
-        connectMetaMask();
-        break;
-      case 'Freighter':
-        connectFreighter();
-        break;
-      default:
-        alert(`Wallet ${walletName} is not supported.`);
-    }
-    setShowPopup(false);
-  };
-
-  // Button click handler
   const handleButtonClick = (e) => {
     if (preventHeroModal) {
-      e.stopPropagation(); // Prevent click from triggering parent behavior
+      e.stopPropagation();
     }
-    e.stopPropagation(); // Prevent click from triggering parent behavior
     setSelectedElement({ id, type: 'connectWalletButton', styles });
     setShowPopup(!showPopup);
   };
 
-  // Close editing panel
   const handleCloseEditing = () => {
     setIsEditing(false);
-    buttonRef.current?.focus(); // Retain focus on the button
-  };
-
-  // Update styles
-  const handleStyleChange = (newStyles) => {
-    updateStyles(id, newStyles);
+    buttonRef.current?.focus();
   };
 
   return (
@@ -134,7 +51,14 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
           ...styles,
           ...customStyles,
           cursor: 'pointer',
+          padding: '8px 12px',
+          border: '2px solid #4caf50', // Default border style
+          fontFamily: "'Roboto', sans-serif",
+          fontWeight: 'bold',
+          backgroundColor: styles.backgroundColor || '#4caf50',
+          color: styles.color || '#ffffff',
         }}
+        className="connect-wallet-button"
       >
         {content || 'Connect Wallet'}
       </button>
@@ -148,8 +72,15 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
               enabledWallets.map((wallet) => (
                 <button
                   key={wallet.name}
-                  onClick={() => handleWalletSelection(wallet.name)}
+                  onClick={() => alert(`Connecting to ${wallet.name}`)}
                   className="wallet-option"
+                  style={{
+                    margin: '5px 0',
+                    padding: '10px 15px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    cursor: 'pointer',
+                  }}
                 >
                   Connect with {wallet.name}
                 </button>
@@ -157,7 +88,19 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
             ) : (
               <p>No wallets available for connection.</p>
             )}
-            <button onClick={() => setShowPopup(false)} className="close-button">
+            <button
+              onClick={() => setShowPopup(false)}
+              className="close-button"
+              style={{
+                padding: '8px 12px',
+                marginTop: '10px',
+                border: 'none',
+                borderRadius: '4px',
+                backgroundColor: '#d9534f',
+                color: '#ffffff',
+                cursor: 'pointer',
+              }}
+            >
               Cancel
             </button>
           </div>
@@ -173,7 +116,7 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
               Background Color:
               <input
                 type="color"
-                value={styles.backgroundColor || '#ffffff'}
+                value={styles.backgroundColor || '#4caf50'}
                 onChange={(e) => handleStyleChange({ backgroundColor: e.target.value })}
               />
             </label>
@@ -183,12 +126,36 @@ const ConnectWalletButton = ({ id, content: initialContent, styles: customStyles
               Text Color:
               <input
                 type="color"
-                value={styles.color || '#000000'}
+                value={styles.color || '#ffffff'}
                 onChange={(e) => handleStyleChange({ color: e.target.value })}
               />
             </label>
           </div>
-          <button onClick={handleCloseEditing} className="close-button">
+          <div>
+            <label>
+              Border Radius:
+              <input
+                type="range"
+                min="0"
+                max="20"
+                value={styles.borderRadius || 8}
+                onChange={(e) => handleStyleChange({ borderRadius: `${e.target.value}px` })}
+              />
+            </label>
+          </div>
+          <button
+            onClick={handleCloseEditing}
+            className="close-button"
+            style={{
+              marginTop: '10px',
+              padding: '8px 12px',
+              backgroundColor: '#007bff',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
             Close
           </button>
         </div>

@@ -4,6 +4,34 @@ import "./css/TypographyEditor.css";
 
 const TypographyEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
+  function rgbToHex(rgb) {
+    const result = rgb.match(/\d+/g).map(Number);
+    return `#${result.map(x => x.toString(16).padStart(2, '0')).join('')}`;
+  }
+  function convertToPx(element, fontSizeStr) {
+    if (fontSizeStr.endsWith('px')) {
+      return parseFloat(fontSizeStr);
+    } else if (fontSizeStr.endsWith('rem')) {
+      // Get the root font size
+      const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      return parseFloat(fontSizeStr) * rootFontSize;
+    } else if (fontSizeStr.endsWith('em')) {
+      // Get the font size of the parent element, fallback to document root if not available
+      const parentFontSize = parseFloat(getComputedStyle(element.parentElement || document.documentElement).fontSize);
+      return parseFloat(fontSizeStr) * parentFontSize;
+    } else if (fontSizeStr.endsWith('vw')) {
+      // Viewport width units
+      const vw = window.innerWidth / 100;
+      return parseFloat(fontSizeStr) * vw;
+    } else if (fontSizeStr.endsWith('vh')) {
+      // Viewport height units
+      const vh = window.innerHeight / 100;
+      return parseFloat(fontSizeStr) * vh;
+    }
+
+    // If no recognized unit, default to a fallback (e.g. 16px)
+    return parseFloat(fontSizeStr) || 16;
+  }
 
   const [styles, setStyles] = useState({
     fontSize: "",
@@ -19,17 +47,31 @@ const TypographyEditor = () => {
       const element = document.getElementById(selectedElement.id);
       if (element) {
         const computedStyles = getComputedStyle(element);
+        const computedColor = computedStyles.color;
+        const hexColor = rgbToHex(computedColor);
+
+        // Convert font-size to px regardless of the initial unit
+        const pixelFontSize = convertToPx(element, computedStyles.fontSize);
+
         setStyles({
-          fontSize: parseFloat(computedStyles.fontSize) || "",
+          fontSize: pixelFontSize,
           fontFamily: computedStyles.fontFamily || "Arial",
           fontWeight: computedStyles.fontWeight || "normal",
-          color: computedStyles.color || "#217BF4",
+          color: hexColor || "#217BF4",
           textAlign: computedStyles.textAlign || "left",
           textDecoration: computedStyles.textDecoration || "none",
         });
+
+        console.log("Computed font size from element:", computedStyles.fontSize);
+        console.log("Font size stored in state:", pixelFontSize);
       }
     }
   }, [selectedElement]);
+
+
+  useEffect(() => {
+    console.log("Current styles:", styles);
+  }, [styles]);
 
   if (!selectedElement) return null;
 
@@ -61,27 +103,28 @@ const TypographyEditor = () => {
 
       <div className="editor-regroup">
 
-      <div className="editor-group">
-        <label>Weight</label>
-        <select
-          value={styles.fontWeight}
-          onChange={(e) => handleStyleChange("fontWeight", e.target.value)}
-        >
-          <option value="normal">Normal</option>
-          <option value="bold">Bold</option>
-          <option value="lighter">Lighter</option>
-          <option value="bolder">Bolder</option>
-        </select>
-      </div>
+        <div className="editor-group">
+          <label>Weight</label>
+          <select
+            value={styles.fontWeight}
+            onChange={(e) => handleStyleChange("fontWeight", e.target.value)}
+          >
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+            <option value="lighter">Lighter</option>
+            <option value="bolder">Bolder</option>
+          </select>
+        </div>
 
-      <div className="editor-group">
-        <label>Size</label>
-        <input
-          type="number"
-          value={styles.fontSize}
-          onChange={(e) => handleStyleChange("fontSize", e.target.value)}
-        />
-      </div>
+        <div className="editor-group">
+          <label>Size</label>
+          <input
+            type="number"
+            value={styles.fontSize !== "" ? parseFloat(styles.fontSize) : ""}
+            onChange={(e) => handleStyleChange("fontSize", e.target.value + "px")}
+          />
+
+        </div>
       </div>
 
       <div className="editor-group">
@@ -125,12 +168,12 @@ const TypographyEditor = () => {
             <span className="material-symbols-outlined">strikethrough_s</span>
           </button>
           <button
-            className={styles.textDecoration === "line-through" ? "active" : ""}
+            className={styles.textDecoration === "none" ? "active" : ""}
             onClick={() =>
-              handleStyleChange("textDecoration", "line-through")
+              handleStyleChange("textDecoration", "none")
             }
           >
-            <span className="material-symbols-outlined">strikethrough_s</span>
+            <span className="material-symbols-outlined">format_clear</span>
           </button>
         </div>
       </div>

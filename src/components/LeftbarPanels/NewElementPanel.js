@@ -20,9 +20,14 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
         <div className="content-section">
           <h4>Sections Created</h4>
           <NavbarPanel contentListWidth={contentListWidth} />
-          <Web3SectionPanel/>
+          <hr></hr>
+
+          <Web3SectionPanel />
+          <hr></hr>
           <HeroPanel />
+          <hr></hr>
           <CTAPanel />
+          <hr></hr>
           <FooterPanel />
         </div>
       </div>
@@ -46,7 +51,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="pre" label="Preformatted Text" description="Text with preserved formatting." />
         </div>
       </div>
-
+      <hr></hr>
       {/* Container Elements Section */}
       <div className="content-section">
         <h4>Container Elements</h4>
@@ -59,6 +64,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="fieldset" label="Fieldset" description="Groups related form elements." />
         </div>
       </div>
+      <hr></hr>
 
       {/* Form Elements Section */}
       <div className="content-section">
@@ -72,6 +78,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="legend" label="Legend" description="A title for a fieldset." />
         </div>
       </div>
+      <hr></hr>
 
       {/* Media Elements Section */}
       <div className="content-section">
@@ -83,6 +90,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="iframe" label="Iframe" description="An inline frame for external content." />
         </div>
       </div>
+      <hr></hr>
 
       {/* Interactive Elements Section */}
       <div className="content-section">
@@ -94,6 +102,7 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
 
         </div>
       </div>
+      <hr></hr>
 
       {/* Structural Elements Section */}
       <div className="content-section">
@@ -103,9 +112,11 @@ const NewElementPanel = ({ contentListWidth, viewMode }) => {
           <DraggableElement type="caption" label="Caption" description="A caption for a table." />
         </div>
       </div>
+      <hr></hr>
+
       <div className="content-section">
-        <Web3ElementPanel/>
-        </div>
+        <Web3ElementPanel />
+      </div>
 
 
     </div>

@@ -30,17 +30,25 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
   }, [isDragging]);
 
   return (
+      <div className='bento-extract-display'>
+        <strong>{label}</strong>
+
     <div
       ref={drag}
       className={`draggable-element ${isDragging ? 'dragging' : ''}`}
       style={{
         cursor: isDragging ? 'grab' : 'grab', // Consistent cursor during drag
         opacity: isDragging ? 0.5 : 1,
-        marginBottom: '8px',
+        padding: '8px',
+        margin: '8px 0',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        cursor: 'move',
+        backgroundColor: "#FBFBFB",
+        color: '#686868'
       }}
     >
       <div>
-        <strong>{label}</strong>
       </div>
       {description && (
         <div style={{ fontSize: '0.875rem', color: '#666' }}>
@@ -48,6 +56,8 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
         </div>
       )}
     </div>
+          </div>
+
   );
 };
 

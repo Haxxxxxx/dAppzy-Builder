@@ -103,6 +103,8 @@ export const EditableProvider = ({ children }) => {
     setElements((prevElements) => {
       const updatedElements = removeElementById(id, prevElements);
       localStorage.setItem('editableElements', JSON.stringify(updatedElements));
+      setSelectedElement(null);
+
       return updatedElements;
     });
   };
@@ -114,6 +116,8 @@ export const EditableProvider = ({ children }) => {
   };
 
   const updateStyles = (id, newStyles) => {
+    console.log(`Updating styles for ${id}:`, newStyles);
+
     setElements((prev) =>
       prev.map((el) => (el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el))
     );

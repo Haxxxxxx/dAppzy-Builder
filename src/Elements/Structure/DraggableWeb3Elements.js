@@ -32,7 +32,7 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
     return child || null;
   }).filter(Boolean);
 
-  
+
   useEffect(() => {
     console.log('Resolved Children with Labels and Content:', resolvedChildren);
     console.log('Structure Configuration:', structure);
@@ -54,9 +54,9 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
         prevElements.map((el) =>
           el.id === parentId
             ? {
-                ...el,
-                children: [...new Set([...el.children, newId])], // Ensure unique children
-              }
+              ...el,
+              children: [...new Set([...el.children, newId])], // Ensure unique children
+            }
             : el
         )
       );
@@ -65,19 +65,24 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
 
   if (showDescription) {
     return (
-      <div
-        ref={drag}
-        style={{
-          opacity: isDragging ? 0.5 : 1,
-          padding: '8px',
-          margin: '8px 0',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'move',
-        }}
-      >
+      <div className='bento-extract-display'>
         <strong>Minting Section</strong>
-        <p>A section designed for minting NFTs with title, description, and rare items.</p>
+
+        <div
+          ref={drag}
+          style={{
+            opacity: isDragging ? 0.5 : 1,
+            padding: '8px',
+            margin: '8px 0',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            cursor: 'move',
+            backgroundColor: "#FBFBFB",
+            color: '#686868'
+          }}
+        >
+          <p>A section designed for minting NFTs with title, description, and rare items.</p>
+        </div>
       </div>
     );
   }

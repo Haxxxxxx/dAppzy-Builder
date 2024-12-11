@@ -103,24 +103,32 @@ const DraggableNavbar = ({
   const titles = {
     twoColumn: 'Two Columns',
     threeColumn: 'Three Columns',
-    customTemplate: '3S Template Navbar',
+    customTemplate: '3S Navbar',
   };
 
   if (showDescription) {
     return (
-      <div
-        ref={drag}
-        style={{
-          opacity: isDragging ? 0.5 : 1,
-          padding: '8px',
-          margin: '8px 0',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'move',
-        }}
-      >
+      <div className='bento-extract-display'>
+
         <strong>{titles[configuration]}</strong>
-        <p>{descriptions[configuration]}</p>
+
+
+        <div
+          ref={drag}
+          style={{
+            opacity: isDragging ? 0.5 : 1,
+            padding: '8px',
+            margin: '8px 0',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            cursor: 'move',
+            backgroundColor: "#FBFBFB",
+            color: '#686868',
+
+          }}
+        >
+          <p>{descriptions[configuration]}</p>
+        </div>
       </div>
     );
   }

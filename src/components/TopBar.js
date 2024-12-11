@@ -198,26 +198,30 @@ const Topbar = ({
           className="resize-button"
           onClick={() => handleResize(1440)}
         >
-          Big PC
-        </button>
+          <span class="material-symbols-outlined">
+            computer
+          </span>        </button>
         <button
           className="resize-button"
           onClick={() => handleResize(1200)}
         >
-          PC
-        </button>
+          <span class="material-symbols-outlined">
+            laptop_mac
+          </span>        </button>
         <button
           className="resize-button"
           onClick={() => handleResize(768)}
         >
-          Tablet
-        </button>
+          <span class="material-symbols-outlined">
+            tablet_mac
+          </span>        </button>
         <button
           className="resize-button"
           onClick={() => handleResize(375)}
         >
-          Phone
-        </button>
+          <span class="material-symbols-outlined">
+            smartphone
+          </span>        </button>
         <input
           type="text"
           className="input"

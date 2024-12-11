@@ -26,12 +26,12 @@ const StructureAndElementsModal = ({ isOpen, onClose, onSelectStructure, onAddEl
           >
             Elements
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab('structure')}
             className={activeTab === 'structure' ? 'active' : ''}
           >
             Structure
-          </button>
+          </button> */}
         </div>
 
         {/* Body */}
