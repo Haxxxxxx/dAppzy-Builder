@@ -6,7 +6,7 @@ import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
 import withSelectable from '../../../utils/withSelectable';
-
+import { saveToLocalStorage } from '../../../utils/LeftBarUtils/storageUtils';
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
@@ -29,6 +29,21 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
+  useEffect(() => {
+    const navbarData = {
+      id: uniqueId,
+      type: 'navbar',
+      styles: CustomTemplateNavbarStyles.nav,
+      children: children.map((child) => ({
+        id: child.id,
+        type: child.type,
+        content: child.content,
+        styles: child.styles,
+      })),
+    };
+    saveToLocalStorage(uniqueId, navbarData);
+  }, [children, uniqueId]);
+  
   const handleImageDrop = (droppedItem, imageId) => {
     if (droppedItem.mediaType === 'image') {
       onDropItem(imageId, droppedItem.src); // Update the image's content dynamically

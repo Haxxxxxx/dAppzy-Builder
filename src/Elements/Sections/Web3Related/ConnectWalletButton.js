@@ -1,21 +1,31 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { buttonStyles } from './DefaultWeb3Styles';
 
 const ConnectWalletButton = ({
   id,
-  content: initialContent,
-  styles: customStyles,
   preventHeroModal,
   handlePanelToggle = () => {},
 }) => {
-  const { selectedElement, setSelectedElement, elements, findElementById, updateStyles } =
+  const { selectedElement, setSelectedElement, updateStyles, findElementById, elements } =
     useContext(EditableContext);
+
   const buttonRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [enabledWallets, setEnabledWallets] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Load configuration for ConnectWalletButton
+  const { connectWalletButton } = structureConfigurations.connectWalletButton;
+
+  // Find the element by ID or use defaults
   const elementData = findElementById(id, elements) || {};
-  const { content = initialContent, styles = {}, settings = {} } = elementData;
+  const {
+    content = connectWalletButton.content,
+    styles = connectWalletButton.styles,
+    settings = connectWalletButton.settings,
+  } = elementData;
 
   useEffect(() => {
     if (settings?.wallets) {
@@ -24,21 +34,81 @@ const ConnectWalletButton = ({
     }
   }, [settings]);
 
-  const handleStyleChange = (newStyles) => {
-    updateStyles(id, newStyles);
+  // Request Signature
+  const requestSignature = async (message) => {
+    try {
+      const encodedMessage = new TextEncoder().encode(message);
+      const signedMessage = await window.solana.signMessage(encodedMessage, 'utf8');
+      alert('Signature approved. Proceeding to connect...');
+      return true;
+    } catch (err) {
+      alert('Signature approval required to proceed.');
+      return false;
+    }
   };
 
-  const handleButtonClick = (e) => {
-    if (preventHeroModal) {
-      e.stopPropagation();
+  // Wallet Connection Handlers
+  const connectPhantom = async () => {
+    if (window.solana && window.solana.isPhantom) {
+      const isSigned = await requestSignature("Please sign this message to confirm your identity.");
+      if (isSigned) {
+        const wallet = await window.solana.connect();
+        alert(`Phantom wallet connected: ${wallet.publicKey.toString()}`);
+      }
+    } else {
+      alert('Please install the Phantom wallet extension.');
     }
+  };
+
+  const connectMetaMask = async () => {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      alert(`MetaMask connected: ${accounts[0]}`);
+    } else {
+      alert('Please install the MetaMask extension.');
+    }
+  };
+
+  const connectFreighter = async () => {
+    if (window.freighterApi) {
+      const isSigned = await requestSignature("Please sign this message to confirm your identity.");
+      if (isSigned) {
+        const publicKey = await window.freighterApi.getPublicKey();
+        alert(`Freighter connected: ${publicKey}`);
+      }
+    } else {
+      alert('Please install the Freighter wallet extension.');
+    }
+  };
+
+  // Handle wallet selection
+  const handleWalletSelection = (walletName) => {
+    switch (walletName) {
+      case 'Phantom':
+        connectPhantom();
+        break;
+      case 'MetaMask':
+        connectMetaMask();
+        break;
+      case 'Freighter':
+        connectFreighter();
+        break;
+      default:
+        alert(`Wallet ${walletName} is not supported.`);
+    }
+    setShowPopup(false);
+  };
+
+  // Handle button click
+  const handleButtonClick = (e) => {
+    if (preventHeroModal) e.stopPropagation();
     setSelectedElement({ id, type: 'connectWalletButton', styles });
     setShowPopup(!showPopup);
   };
 
-  const handleCloseEditing = () => {
-    setIsEditing(false);
-    buttonRef.current?.focus();
+  // Update styles
+  const handleStyleChange = (newStyles) => {
+    updateStyles(id, newStyles);
   };
 
   return (
@@ -47,121 +117,39 @@ const ConnectWalletButton = ({
         id={id}
         ref={buttonRef}
         onClick={handleButtonClick}
-        style={{
-          ...styles,
-          ...customStyles,
-          cursor: 'pointer',
-          padding: '8px 12px',
-          border: '2px solid #4caf50', // Default border style
-          fontFamily: "'Roboto', sans-serif",
-          fontWeight: 'bold',
-          backgroundColor: styles.backgroundColor || '#4caf50',
-          color: styles.color || '#ffffff',
-        }}
-        className="connect-wallet-button"
+        style={{ ...styles, ...buttonStyles.button }}
       >
-        {content || 'Connect Wallet'}
+        {content}
       </button>
 
       {/* Wallet Selection Popup */}
       {showPopup && (
-        <div className="wallet-popup">
-          <div className="popup-content">
+        <div style={buttonStyles.popup}>
+          <div style={buttonStyles.popupContent}>
             <h3>Select Wallet</h3>
             {enabledWallets.length > 0 ? (
               enabledWallets.map((wallet) => (
                 <button
                   key={wallet.name}
-                  onClick={() => alert(`Connecting to ${wallet.name}`)}
-                  className="wallet-option"
-                  style={{
-                    margin: '5px 0',
-                    padding: '10px 15px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    cursor: 'pointer',
-                  }}
+                  onClick={() => handleWalletSelection(wallet.name)}
+                  style={buttonStyles.walletOption}
                 >
                   Connect with {wallet.name}
                 </button>
               ))
             ) : (
-              <p>No wallets available for connection.</p>
+              <p style={buttonStyles.noWallets}>No wallets available for connection.</p>
             )}
-            <button
-              onClick={() => setShowPopup(false)}
-              className="close-button"
-              style={{
-                padding: '8px 12px',
-                marginTop: '10px',
-                border: 'none',
-                borderRadius: '4px',
-                backgroundColor: '#d9534f',
-                color: '#ffffff',
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={() => setShowPopup(false)} style={buttonStyles.closeButton}>
               Cancel
             </button>
           </div>
         </div>
       )}
 
-      {/* Style Editing Panel */}
-      {isEditing && (
-        <div className="settings-popup">
-          <h3>Edit Button Styles</h3>
-          <div>
-            <label>
-              Background Color:
-              <input
-                type="color"
-                value={styles.backgroundColor || '#4caf50'}
-                onChange={(e) => handleStyleChange({ backgroundColor: e.target.value })}
-              />
-            </label>
-          </div>
-          <div>
-            <label>
-              Text Color:
-              <input
-                type="color"
-                value={styles.color || '#ffffff'}
-                onChange={(e) => handleStyleChange({ color: e.target.value })}
-              />
-            </label>
-          </div>
-          <div>
-            <label>
-              Border Radius:
-              <input
-                type="range"
-                min="0"
-                max="20"
-                value={styles.borderRadius || 8}
-                onChange={(e) => handleStyleChange({ borderRadius: `${e.target.value}px` })}
-              />
-            </label>
-          </div>
-          <button
-            onClick={handleCloseEditing}
-            className="close-button"
-            style={{
-              marginTop: '10px',
-              padding: '8px 12px',
-              backgroundColor: '#007bff',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Close
-          </button>
-        </div>
-      )}
     </>
   );
 };
 
 export default ConnectWalletButton;
+

@@ -124,4 +124,15 @@ export const structureConfigurations = {
       { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' },
     ],
   },
-};
+    connectWalletButton: {
+      content: 'Connect Wallet', // Default button text
+      settings: {
+        wallets: [
+          { name: 'Phantom', enabled: true },
+          { name: 'MetaMask', enabled: true },
+          { name: 'Freighter', enabled: true },
+        ],
+      },
+    },
+  };
+  

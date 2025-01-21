@@ -2,7 +2,7 @@ import React, { useContext, useEffect, forwardRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
-
+import { loadFromLocalStorage } from '../utils/LeftBarUtils/storageUtils';
 const ContentList = forwardRef(
   (
     {
@@ -38,6 +38,13 @@ const ContentList = forwardRef(
       setScale(newScale < 1 ? newScale : 1);
     };
 
+    useEffect(() => {
+      const savedNavbar = loadFromLocalStorage('editableElements') || [];
+      if (savedNavbar) {
+        setElements(savedNavbar);
+      }
+    }, []);
+    
     useEffect(() => {
       calculateScale();
       window.addEventListener('resize', calculateScale);

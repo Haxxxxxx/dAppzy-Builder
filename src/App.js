@@ -7,7 +7,6 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import './App.css';
 import Topbar from './components/TopBar';
-import { exportFiles } from './utils/ExportContent';
 import LeftBar from './components/LeftBar';
 import StructurePanel from './components/LeftbarPanels/StructurePanel';
 import MediaPanel from './components/LeftbarPanels/MediaPanel';
@@ -31,11 +30,6 @@ function App() {
 
   const handlePreviewToggle = () => {
     setIsPreviewMode((prevMode) => !prevMode);
-  };
-
-  const handleExport = (elements) => {
-    console.log('Export function called with elements:', elements);
-    exportFiles(elements);
   };
 
   const handleResize = (size) => {
@@ -103,7 +97,6 @@ function App() {
         />
         <div className="app">
           <Topbar
-            onExport={handleExport}
             onResize={handleResize}
             scale={scale}
             isPreviewMode={isPreviewMode}

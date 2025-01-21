@@ -140,8 +140,8 @@ const CandyMachineSettings = () => {
       image: 'image', // Add this line
       rareItemsTitle: 'text',
       docItemsTitle: 'text',
-      'rare-item': 'image-array',
-      'document-item': 'image-array',
+      // 'rare-item': 'image-array',
+      // 'document-item': 'image-array',
     };
     
 

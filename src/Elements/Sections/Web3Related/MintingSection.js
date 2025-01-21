@@ -1,11 +1,12 @@
-import React, { useRef, useContext, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import DateComponent from '../../Interact/DateComponent';
 import useElementDrop from '../../../utils/useElementDrop';
 import withSelectable from '../../../utils/withSelectable';
-import { EditableContext } from '../../../context/EditableContext';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { mintingSectionStyles } from './DefaultWeb3Styles';
 
 // Make elements selectable
 const SelectableSpan = withSelectable(Span);
@@ -13,33 +14,47 @@ const SelectableImage = withSelectable(Image);
 const SelectableButton = withSelectable(Button);
 const SelectableDateComponent = withSelectable(DateComponent);
 
-const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropItem, handleOpenMediaPanel }) => {
+const MintingSection = ({
+  uniqueId,
+  children = [],
+  setSelectedElement,
+  onDropItem,
+  handleOpenMediaPanel,
+}) => {
   const sectionRef = useRef(null);
-  const { isOverCurrent, canDrop, drop } = useElementDrop({
+  const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
     onDropItem,
   });
 
-  // Helper functions to get children by type
-  const getChildByType = (type) => children.find((child) => child.type === type);
-  const getChildrenByType = (type) => children.filter((child) => child.type === type);
+  // Load the `mintingSection` configuration
+  const { mintingSection } = structureConfigurations;
 
-  // Extract specific children
+  // Merge default children with overrides
+  const mergedChildren = mintingSection.children.map((defaultChild, index) => {
+    const overrideChild = children.find((child) => child.id === `${uniqueId}-minting-child-${index}`);
+    return overrideChild || { ...defaultChild, id: `${uniqueId}-minting-child-${index}` };
+  });
+
+  // Extract specific elements
+  const getChildByType = (type) => mergedChildren.find((child) => child.type === type);
+  const getChildrenByType = (type) => mergedChildren.filter((child) => child.type === type);
+
   const logo = getChildByType('image');
-  const title = getChildByType('title');
-  const description = getChildByType('description');
   const timer = getChildByType('timer');
-  const mintButton = getChildByType('button');
   const remaining = getChildByType('remaining');
   const value = getChildByType('value');
   const currency = getChildByType('currency');
   const quantity = getChildByType('quantity');
   const totalPrice = getChildByType('price');
+  const title = getChildByType('title');
+  const description = getChildByType('description');
+  const mintButton = getChildByType('button');
   const rareItemsTitle = getChildByType('rareItemsTitle');
   const docItemsTitle = getChildByType('docItemsTitle');
-  const rareItems = getChildrenByType('rare-item').slice(0, 4);
-  const documentItems = getChildrenByType('document-item').slice(0, 3);
+  const rareItems = getChildrenByType('rare-item');
+  const documentItems = getChildrenByType('document-item');
 
   // Handle section click
   const handleClick = () => {
@@ -53,9 +68,8 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
   };
 
   useEffect(() => {
-    console.log('Children passed to MintingSection:', children);
-  }, [children]);
-
+    console.log('Merged Children for MintingSection:', mergedChildren);
+  }, [mergedChildren]);
 
   return (
     <section
@@ -64,161 +78,115 @@ const MintingSection = ({ uniqueId, children = [], setSelectedElement, onDropIte
         drop(node);
       }}
       style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '2rem',
-        padding: '2rem',
-        backgroundColor: '#14141D',
-        color: '#fff',
-        alignItems: 'center',
+        ...mintingSectionStyles.section,
         border: isOverCurrent ? '2px dashed blue' : 'none',
       }}
       onClick={handleClick}
     >
       {/* Left Section */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          backgroundColor: '#1D1C2B',
-          borderRadius: '16px',
-          padding: '1.5rem',
-        }}
-      >
+      <div style={mintingSectionStyles.leftSection}>
         {logo && (
           <SelectableImage
             id={logo.id}
-            src={logo.content || 'Default Logo'}
-            styles={{
-              width: '160px',
-              height: '160px',
-              borderRadius: '50%', // Ensures round effect
-              objectFit: 'cover',
-              marginBottom: '1rem',
-            }}
+            src={logo.content}
+            styles={mintingSectionStyles.logo}
             handleOpenMediaPanel={handleOpenMediaPanel}
             handleDrop={handleImageDrop}
 
           />
         )}
-
-
-        {/* Timer */}
         {timer && (
           <SelectableDateComponent
             id={timer.id}
-            content={timer.content || 'N/A'}
-            label={timer.label || 'Time before minting'}
-            styles={{ fontSize: '1.2rem', color: '#fff', marginBottom: '1rem', display: 'flex' }}
+            content={timer.content}
+            label={timer.label}
+            styles={mintingSectionStyles.timer}
           />
         )}
-
-        {/* Details */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '80%' }}>
+        <div style={mintingSectionStyles.details}>
           {remaining && (
             <SelectableSpan
               id={remaining.id}
-              label={remaining.label || 'Remaining'}
-              content={remaining.content || '0/0'}
-              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
+              label={remaining.label}
+              content={remaining.content}
+              styles={mintingSectionStyles.remaining}
             />
           )}
           {value && currency && (
             <SelectableSpan
               id={`${value.id}-${currency.id}`}
-              label={value.label || 'Price'}
-              content={`${value.content || '0'} ${currency.content || 'N/A'}`}
-              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
+              content={`${value.content} ${currency.content}`}
+              label={value.label}
+              styles={mintingSectionStyles.price}
             />
           )}
           {quantity && totalPrice && (
             <SelectableSpan
               id={quantity.id}
-              label={quantity.label || 'Quantity'}
-              content={`${quantity.content || '0'} (${totalPrice.label || 'Total Price'}: ${totalPrice.content || '0'})`}
-              styles={{ fontSize: '1rem', color: '#ccc', display: 'block' }}
+              content={`${quantity.content} (${totalPrice.label}: ${totalPrice.content})`}
+              label={quantity.label}
+              styles={mintingSectionStyles.quantity}
             />
           )}
         </div>
-
         {mintButton && (
           <SelectableButton
-            id={mintButton.id || `${uniqueId}-mint-button`}
-            content={mintButton.content || 'Mint'}
-            styles={{
-              width: '100%',
-              marginTop:'1vh',
-              padding: '1rem',
-              border: '1px solid #fff',
-              borderRadius: '8px',
-              color: '#fff',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-            }}
+            id={mintButton.id}
+            content={mintButton.content}
+            styles={mintingSectionStyles.mintButton}
           />
-
         )}
-        <SelectableSpan
-          id={`${uniqueId}-terms`}
-          content="By clicking 'Mint', you agree to our Terms of Service and Privacy Policy"
-          styles={{ fontSize: '0.8rem', color: '#aaa', textAlign: 'center', marginTop: '0.5rem' }}
-        />
       </div>
 
       {/* Right Section */}
-      <div style={{ padding: '1rem' }}>
+      <div style={mintingSectionStyles.rightSection}>
         {title && (
           <SelectableSpan
             id={title.id}
-            content={title.content || 'Default Title'}
-            styles={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}
+            content={title.content}
+            styles={mintingSectionStyles.title}
           />
         )}
         {description && (
           <SelectableSpan
             id={description.id}
-            content={description.content || 'Default Description'}
-            styles={{ fontSize: '1rem', color: '#ccc', marginBottom: '2rem' }}
+            content={description.content}
+            styles={mintingSectionStyles.description}
           />
         )}
         {rareItemsTitle && (
           <SelectableSpan
             id={rareItemsTitle.id}
-            content={rareItemsTitle.content || ''}
-            styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
+            content={rareItemsTitle.content}
+            styles={mintingSectionStyles.sectionTitle}
           />
         )}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={mintingSectionStyles.itemsContainer}>
           {rareItems.map((item) => (
             <SelectableImage
+              key={item.id}
               id={item.id}
-              src={item.content || 'Default Rare Item'}
-              styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
+              src={item.content}
+              styles={mintingSectionStyles.itemImage}
               handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={handleImageDrop}
-
             />
           ))}
         </div>
         {docItemsTitle && (
           <SelectableSpan
             id={docItemsTitle.id}
-            content={docItemsTitle.content || ''}
-            styles={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}
+            content={docItemsTitle.content}
+            styles={mintingSectionStyles.sectionTitle}
           />
         )}
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={mintingSectionStyles.itemsContainer}>
           {documentItems.map((item) => (
             <SelectableImage
+              key={item.id}
               id={item.id}
-              src={item.content || 'Default Document Item'}
-              styles={{ width: '80px', height: '80px', borderRadius: '8px' }}
+              src={item.content}
+              styles={mintingSectionStyles.itemImage}
               handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={handleImageDrop}
-
             />
           ))}
         </div>
