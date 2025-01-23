@@ -1,12 +1,23 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import SimpleFooter from '../Sections/Footers/SimpleFooter';
 import DetailedFooter from '../Sections/Footers/DetailedFooter';
 import TemplateFooter from '../Sections/Footers/TemplateFooter';
 
-const DraggableFooter = ({ id, configuration, isEditing, showDescription = false, contentListWidth, handleOpenMediaPanel}) => {
-  const { addNewElement, elements, setElements, setSelectedElement, findElementById } = useContext(EditableContext);
+const DraggableFooter = ({
+  id,
+  configuration,
+  isEditing,
+  showDescription = false,
+  contentListWidth,
+  handleOpenMediaPanel,
+  imgSrc,
+  label,
+}) => {
+  const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const modalRef = useRef(null);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -18,16 +29,59 @@ const DraggableFooter = ({ id, configuration, isEditing, showDescription = false
       if (monitor.didDrop() && !isEditing) {
         const newId = addNewElement('footer', 1, null, null, configuration);
         setElements((prevElements) =>
-          prevElements.map((el) => (el.id === newId ? { ...el, configuration } : el))
+          prevElements.map((el) =>
+            el.id === newId ? { ...el, configuration } : el
+          )
         );
-        setSelectedElement({ id: newId, type: 'footer' });
       }
     },
-  }), [configuration, isEditing, addNewElement, setElements, setSelectedElement]);
+  }), [configuration, isEditing, addNewElement, setElements]);
 
-  const uniqueId = useMemo(() => `footer-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
-  const footerElement = findElementById(id, elements);
-  const children = footerElement?.children.map((childId) => findElementById(childId, elements)) || [];
+  const onDropItem = (item, parentId) => {
+    if (!item || !parentId) return;
+
+    const parentElement = findElementById(parentId, elements);
+
+    if (parentElement) {
+      const newId = addNewElement(item.type, 1, null, parentId);
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === parentId
+            ? {
+                ...el,
+                children: [...new Set([...el.children, newId])],
+              }
+            : el
+        )
+      );
+    }
+  };
+
+  const footer = findElementById(id, elements);
+  const resolvedChildren =
+    footer?.children?.map((childId) => findElementById(childId, elements)) || [];
+
+  // Toggle modal state
+  const toggleModal = () => setModalOpen((prev) => !prev);
+
+  // Close modal if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModalOpen]);
 
   const descriptions = {
     simple: 'A simple footer with basic company info and a subscription button.',
@@ -35,45 +89,90 @@ const DraggableFooter = ({ id, configuration, isEditing, showDescription = false
     template: 'A template footer with sections and social media icons.',
   };
 
-  const renderFooter = () => {
-    switch (configuration) {
-      case 'simple':
-        return <SimpleFooter handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} />;
-      case 'detailed':
-        return <DetailedFooter handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} />;
-      case 'template':
-        return <TemplateFooter handleOpenMediaPanel={handleOpenMediaPanel} uniqueId={id} children={children} contentListWidth={contentListWidth} />;
-      default:
-        return null;
-    }
+  const titles = {
+    simple: 'Simple Footer',
+    detailed: 'Detailed Footer',
+    template: 'Template Footer',
   };
 
   if (showDescription) {
     return (
-      <div className='bento-extract-display'>
-        <strong>{configuration}</strong>
-
-      <div
-        ref={drag}
-        style={{
-          opacity: isDragging ? 0.5 : 1,
-          padding: '8px',
-          margin: '8px 0',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'move',
-          backgroundColor: "#FBFBFB",
-          color: '#686868'
+      <div className='bento-extract-display' onClick={toggleModal}>
+        <div
+          ref={drag}
+          style={{
+            opacity: isDragging ? 0.5 : 1,
+            padding: '8px',
+            margin: '8px 0',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            cursor: 'move',
+            backgroundColor: '#FBFBFB',
+            color: '#686868',
           }}
-      >
-        <p>{descriptions[configuration]}</p>
+        >
+          <img
+            src={imgSrc}
+            alt={label}
+            style={{
+              width: '100%',
+              height: 'auto',
+              marginBottom: '8px',
+              borderRadius: '4px',
+              border: '1px solid #ddd',
+            }}
+          />
+        </div>
+        <strong className='element-name'>{label}</strong>
       </div>
-            </div>
-
     );
   }
 
-  return renderFooter();
+  let FooterComponent;
+  if (configuration === 'simple') {
+    FooterComponent = (
+      <SimpleFooter
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={resolvedChildren}
+        onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+      />
+    );
+  } else if (configuration === 'detailed') {
+    FooterComponent = (
+      <DetailedFooter
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={resolvedChildren}
+        onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+      />
+    );
+  } else if (configuration === 'template') {
+    FooterComponent = (
+      <TemplateFooter
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={resolvedChildren}
+        onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+      />
+    );
+  }
+
+  return (
+    <div
+      ref={drag}
+      style={{
+        position: 'relative',
+        border: isDragging ? '1px dashed #000' : 'none',
+        backgroundColor: '#f9f9f9',
+      }}
+    >
+      {FooterComponent}
+    </div>
+  );
 };
 
 export default DraggableFooter;

@@ -30,33 +30,34 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
   }, [isDragging]);
 
   return (
-      <div className='bento-extract-display'>
-        <strong>{label}</strong>
+    <div className='bento-extract-display'>
 
-    <div
-      ref={drag}
-      className={`draggable-element ${isDragging ? 'dragging' : ''}`}
-      style={{
-        cursor: isDragging ? 'grab' : 'grab', // Consistent cursor during drag
-        opacity: isDragging ? 0.5 : 1,
-        padding: '8px',
-        margin: '8px 0',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        cursor: 'move',
-        backgroundColor: "#FBFBFB",
-        color: '#686868'
-      }}
-    >
-      <div>
-      </div>
-      {description && (
-        <div style={{ fontSize: '0.875rem', color: '#666' }}>
-          {description}
+      <div
+        ref={drag}
+        className={`draggable-element ${isDragging ? 'dragging' : ''}`}
+        style={{
+          cursor: isDragging ? 'grab' : 'grab', // Consistent cursor during drag
+          opacity: isDragging ? 0.5 : 1,
+          padding: '8px',
+          margin: '8px 0',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          cursor: 'move',
+          backgroundColor: "#FBFBFB",
+          color: '#686868'
+        }}
+      >
+        <div>
         </div>
-      )}
-    </div>
+        {description && (
+          <div style={{ fontSize: '0.875rem', color: '#666' }}>
+            {description}
           </div>
+        )}
+      </div>
+      <strong className='element-name'>{label}</strong>
+
+    </div>
 
   );
 };

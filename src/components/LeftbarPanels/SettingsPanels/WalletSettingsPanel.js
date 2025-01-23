@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import './CandyMachineSettings.css';
 
-const WalletSettingsPanel = ({ onUpdateSettings }) => {
+const WalletSettingsPanel = ({ onUpdateSettings = () => {} }) => {
     const { selectedElement, updateConfiguration } = useContext(EditableContext);
     const [wallets, setWallets] = useState([
       { name: 'Phantom', enabled: true },

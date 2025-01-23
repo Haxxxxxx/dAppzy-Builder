@@ -52,7 +52,7 @@ const CollapsiblePanel = ({ title, children }) => {
 const EditorPanel = ({ onUpdateSettings }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
   const [viewMode, setViewMode] = useState('style'); // Default to 'style' view
-  console.log("Selected Element type in EditorPanel : "+ selectedElement?.type);
+  console.log("Selected Element type in EditorPanel : " + selectedElement?.type);
 
   const renderSettingsView = () => {
     if (selectedElement?.type === 'connectWalletButton') {
@@ -73,7 +73,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
     }
     if (selectedElement?.type === 'button') {
       return (
-        <ButtonSettingsPanel 
+        <ButtonSettingsPanel
           settings={selectedElement.settings || {}}
           onUpdateSettings={onUpdateSettings}
         />
@@ -81,7 +81,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
     }
     if ((selectedElement?.type === 'span' || selectedElement?.type === 'link') && selectedElement.label !== 'title') {
       return (
-        <LinkSettingsPanel 
+        <LinkSettingsPanel
           settings={selectedElement.settings || {}}
           onUpdateSettings={onUpdateSettings}
         />
@@ -91,8 +91,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
   };
 
   return (
-    <div className="editor-panel">
-      {/* Toggle between Settings and Style Views */}
+    <>
       <div className="sidebar-toggle-buttons">
         <button
           onClick={() => setViewMode('style')}
@@ -107,64 +106,68 @@ const EditorPanel = ({ onUpdateSettings }) => {
           Element Setting
         </button>
       </div>
+      <div className="editor-panel">
+        {/* Toggle between Settings and Style Views */}
 
-      {/* Conditional rendering based on viewMode */}
-      {viewMode === 'style' ? (
-        <div className="style-editor">
-          <CollapsiblePanel title="Typography">
-            <TypographyEditor />
-          </CollapsiblePanel>
-
-          {/* New panel for Background & Global Settings */}
-          <CollapsiblePanel title="Background & Global Settings">
-            <BackgroundEditor />
-          </CollapsiblePanel>
-
-          <CollapsiblePanel title="Borders">
-            <BorderEditor />
-          </CollapsiblePanel>
-          <CollapsiblePanel title="Size">
-            <SizeEditor />
-          </CollapsiblePanel>
-          <CollapsiblePanel title="Spacing">
-            <SpacingEditor />
-          </CollapsiblePanel>
-          <CollapsiblePanel title="Display">
-            <DisplayEditor />
-          </CollapsiblePanel>
-          <CollapsiblePanel title="Effects">
-            <EffectEditor />
-          </CollapsiblePanel>
-          {selectedElement?.type === 'button' && (
-            <CollapsiblePanel title="Button">
-              <ButtonEditor />
+        {/* Conditional rendering based on viewMode */}
+        {viewMode === 'style' ? (
+          <div className="style-editor">
+            <CollapsiblePanel title="Typography">
+              <TypographyEditor />
             </CollapsiblePanel>
-          )}
-        </div>
-      ) : (
-        <div className="settings-view">
-          <h3>Element Settings</h3>
-          {renderSettingsView()}
-        </div>
-      )}
 
-      {elements.length > 0 && (
-        <button
-          onClick={() => setElements([])}
-          style={{
-            marginTop: '16px',
-            padding: '8px',
-            cursor: 'pointer',
-            background: '#d9534f',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-          }}
-        >
-          Clear All Elements
-        </button>
-      )}
-    </div>
+            {/* New panel for Background & Global Settings */}
+            <CollapsiblePanel title="Background & Global Settings">
+              <BackgroundEditor />
+            </CollapsiblePanel>
+
+            <CollapsiblePanel title="Borders">
+              <BorderEditor />
+            </CollapsiblePanel>
+            <CollapsiblePanel title="Size">
+              <SizeEditor />
+            </CollapsiblePanel>
+            <CollapsiblePanel title="Spacing">
+              <SpacingEditor />
+            </CollapsiblePanel>
+            <CollapsiblePanel title="Display">
+              <DisplayEditor />
+            </CollapsiblePanel>
+            <CollapsiblePanel title="Effects">
+              <EffectEditor />
+            </CollapsiblePanel>
+            {selectedElement?.type === 'button' && (
+              <CollapsiblePanel title="Button">
+                <ButtonEditor />
+              </CollapsiblePanel>
+            )}
+          </div>
+        ) : (
+          <div className="settings-view">
+            <h3>Element Settings</h3>
+            {renderSettingsView()}
+          </div>
+        )}
+
+        {elements.length > 0 && (
+          <button
+            onClick={() => setElements([])}
+            style={{
+              marginTop: '16px',
+              padding: '8px',
+              cursor: 'pointer',
+              background: '#d9534f',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+            }}
+          >
+            Clear All Elements
+          </button>
+        )}
+      </div>
+    </>
+
   );
 };
 

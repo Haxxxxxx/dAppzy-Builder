@@ -1,11 +1,14 @@
 // src/components/ResizeControls.js
 import React, { useState } from 'react';
+import '../css/Topbar.css';
 
 const ResizeControls = ({ scale, onResize }) => {
   const [customSize, setCustomSize] = useState('');
+  const [selectedSize, setSelectedSize] = useState(null);
 
   const handleResize = (size) => {
     if (onResize) onResize(size);
+    setSelectedSize(size);
   };
 
   const handleCustomResize = (e) => {
@@ -19,16 +22,28 @@ const ResizeControls = ({ scale, onResize }) => {
 
   return (
     <div className="resize-controls">
-      <button className="resize-button" onClick={() => handleResize(1440)}>
+      <button
+        className={`resize-button ${selectedSize === 1440 ? 'selected' : ''}`}
+        onClick={() => handleResize(1440)}
+      >
         <span className="material-symbols-outlined">computer</span>
       </button>
-      <button className="resize-button" onClick={() => handleResize(1200)}>
+      <button
+        className={`resize-button ${selectedSize === 1200 ? 'selected' : ''}`}
+        onClick={() => handleResize(1200)}
+      >
         <span className="material-symbols-outlined">laptop_mac</span>
       </button>
-      <button className="resize-button" onClick={() => handleResize(768)}>
+      <button
+        className={`resize-button ${selectedSize === 768 ? 'selected' : ''}`}
+        onClick={() => handleResize(768)}
+      >
         <span className="material-symbols-outlined">tablet_mac</span>
       </button>
-      <button className="resize-button" onClick={() => handleResize(375)}>
+      <button
+        className={`resize-button ${selectedSize === 375 ? 'selected' : ''}`}
+        onClick={() => handleResize(375)}
+      >
         <span className="material-symbols-outlined">smartphone</span>
       </button>
       <input

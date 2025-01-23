@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import JSZip from 'jszip';
-import { renderElementToHtml } from '../../utils/htmlRender'
+import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
 
 const ExportSection = ({ elements, buildHierarchy }) => {
@@ -61,9 +61,13 @@ const ExportSection = ({ elements, buildHierarchy }) => {
 
   return (
     <div className="export-section">
+      <span class="material-symbols-outlined export-cloud" style={{color:'white'}}>
+        cloud_done
+      </span>
       <span className="autosave-status">{autoSaveStatus}</span>
+
       <button className="button" onClick={handleExportHtml}>
-        Export as HTML
+        Publish
       </button>
     </div>
   );

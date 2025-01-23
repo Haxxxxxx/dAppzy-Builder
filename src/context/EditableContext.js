@@ -22,12 +22,13 @@ export const EditableProvider = ({ children }) => {
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
     return savedVersion === ELEMENTS_VERSION && Array.isArray(savedElements) ? savedElements : [];
   });
-  
+  console.log(elements);
+
   const selectedStyle = {
     outline: '1px solid #4D70FF',
     boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
   };
-  
+
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     const existingElement = elements.find(
       (el) => el.type === type && el.parentId === parentId && el.structure === structure
@@ -36,21 +37,21 @@ export const EditableProvider = ({ children }) => {
       console.warn(`Element of type ${type} already exists for parentId ${parentId}`);
       return existingElement.id;
     }
-  
+
     let newId = generateUniqueId(type);
-  
+
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
-  
+
     const baseElement = {
       id: newId,
       type,
       styles: {},
       level,
       children: [],
-      label: '', // Default empty label
+      label: '',
       parentId: parentId || null,
       content: (() => {
         switch (type) {
@@ -67,42 +68,43 @@ export const EditableProvider = ({ children }) => {
           case 'list-item':
             return 'Editable Item';
           case 'button':
-            return 'Click Me'; // Ensure a meaningful default for buttons
+            return 'Click Me';
           default:
-            return ''; // Default to an empty string
+            return '';
         }
       })(),
       structure: structure || null,
       configuration: structure || null,
       settings: {},
     };
-    
+
     if (structure && structureConfigurations[structure]) {
+      baseElement.styles = structureConfigurations[structure].styles || {};
+
       const children = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
         content: child.content || '',
-        styles: child.styles,
-        label: child.label || '', // Ensure label is passed here
-        parentId: type === 'button' ? null : newId, // Avoid wrapping buttons
+        styles: child.styles || {},
+        label: child.label || '',
+        parentId: newId,
       }));
-  
+
       baseElement.children = children.map((child) => child.id);
-  
+
       setElements((prev) => [...prev, baseElement, ...children]);
     } else {
       setElements((prev) => [...prev, baseElement]);
     }
-  
+
     console.log('Added new element:', baseElement);
     return newId;
   };
-  
 
   const handleRemoveElement = (id) => {
     setElements((prevElements) => {
       const updatedElements = removeElementById(id, prevElements);
-      localStorage.setItem('editableElements', JSON.stringify(updatedElements));
+      saveToLocalStorage('editableElements', updatedElements);
       setSelectedElement(null);
 
       return updatedElements;
@@ -126,14 +128,50 @@ export const EditableProvider = ({ children }) => {
   const saveSectionToLocalStorage = (sectionId) => {
     const section = findElementById(sectionId, elements);
     if (section) {
-      const hierarchy = buildHierarchy(elements);
-      saveToLocalStorage(`section-${sectionId}`, hierarchy);
+      // Recursively build a nested structure
+      const buildNestedStructure = (parentId) => {
+        const parent = findElementById(parentId, elements);
+        if (!parent) return null;
+  
+        // Map child elements to include their styles and content
+        const children = parent.children.map((childId) => buildNestedStructure(childId));
+        return {
+          id: parent.id,
+          type: parent.type,
+          styles: parent.styles,
+          content: parent.content,
+          children, // Nest the child elements here
+        };
+      };
+  
+      const navbarHierarchy = buildNestedStructure(sectionId);
+  
+      // Save the nested structure to local storage
+      saveToLocalStorage(`section-${sectionId}`, navbarHierarchy);
     }
   };
+  
 
   const loadSectionFromLocalStorage = (sectionId) => {
-    return loadFromLocalStorage(`section-${sectionId}`);
+    const savedSection = loadFromLocalStorage(`section-${sectionId}`);
+    if (savedSection) {
+      const flattenNestedStructure = (node, accumulator = []) => {
+        if (!node) return accumulator;
+  
+        const { children, ...rest } = node;
+        accumulator.push(rest);
+  
+        children.forEach((child) => flattenNestedStructure(child, accumulator));
+  
+        return accumulator;
+      };
+  
+      const flattenedElements = flattenNestedStructure(savedSection);
+      setElements(flattenedElements);
+    }
   };
+  
+  
 
   const updateConfiguration = (id, key, value) => {
     setElements((prevElements) =>
@@ -147,7 +185,7 @@ export const EditableProvider = ({ children }) => {
             },
             settings: {
               ...el.settings,
-              [key]: value, // Ensure settings are updated
+              [key]: value,
             },
           }
           : el
@@ -177,7 +215,7 @@ export const EditableProvider = ({ children }) => {
         handleRemoveElement,
         saveToLocalStorage,
         updateConfiguration,
-        selectedStyle
+        selectedStyle,
       }}
     >
       {children}

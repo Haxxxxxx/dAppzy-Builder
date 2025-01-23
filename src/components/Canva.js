@@ -3,18 +3,18 @@ import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 import { loadFromLocalStorage } from '../utils/LeftBarUtils/storageUtils';
+
 const ContentList = forwardRef(
   (
     {
       contentListWidth,
-      isSideBarVisible,
-      leftBarWidth = 40,
-      sideBarWidth = 300,
-      handlePanelToggle,
+      canvasWidth,
       scale,
       setScale,
       isPreviewMode,
-      handleOpenMediaPanel = () => {} ,
+      handleOpenMediaPanel = () => { },
+      isSideBarVisible,
+      handlePanelToggle,
     },
     ref
   ) => {
@@ -28,56 +28,35 @@ const ContentList = forwardRef(
       selectedStyle,
       selectedElement,
     } = useContext(EditableContext);
-    
-    const calculateScale = () => {
-      const viewportWidth = window.innerWidth;
-      const activeSidebarWidth = isSideBarVisible ? sideBarWidth : 0;
-      const availableWidth = viewportWidth - leftBarWidth - activeSidebarWidth;
 
-      const newScale = availableWidth / contentListWidth;
+    const calculateScale = () => {
+      const newScale = canvasWidth / contentListWidth;
       setScale(newScale < 1 ? newScale : 1);
     };
 
-    useEffect(() => {
-      const savedNavbar = loadFromLocalStorage('editableElements') || [];
-      if (savedNavbar) {
-        setElements(savedNavbar);
-      }
-    }, []);
     
     useEffect(() => {
       calculateScale();
-      window.addEventListener('resize', calculateScale);
-
-      return () => {
-        window.removeEventListener('resize', calculateScale);
-      };
-    }, [contentListWidth, isSideBarVisible, leftBarWidth, sideBarWidth]);
+    }, [contentListWidth, canvasWidth]);
 
     const handleDrop = (item, index, parentId = null) => {
       const safeIndex = index !== null && index !== undefined ? index : 0;
-    
+
       if (item.type === 'button' || item.type === 'image') {
-        // Directly add the element without wrapping
         const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
         setSelectedElement({ id: newElementId, type: item.type });
-      } else if (item.type === 'hero' || item.type === 'navbar' || item.type === 'mintingSection') {
-        // Handle structured elements
+      } else if (
+        item.type === 'hero' ||
+        item.type === 'navbar' ||
+        item.type === 'mintingSection'
+      ) {
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
         setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
       } else {
-        // Directly add other elements without wrapping
         const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
         setSelectedElement({ id: newElementId, type: item.type });
       }
     };
-        
-    
-
-    useEffect(() => {
-      saveToLocalStorage('editableElements', elements);
-      saveToLocalStorage('elementsVersion', ELEMENTS_VERSION);
-    }, [elements]);
 
     return (
       <div
@@ -87,7 +66,7 @@ const ContentList = forwardRef(
           width: `${contentListWidth}px`,
           transformOrigin: 'top center',
           transform: `scale(${scale})`,
-          transition: 'width 0.3s ease, transform 0.3s ease',
+          transition: 'transform 0.3s ease',
           margin: scale < 1 ? '0 auto' : '0',
           position: 'relative',
         }}
@@ -101,11 +80,11 @@ const ContentList = forwardRef(
           <DropZone
             index={0}
             onDrop={(item) => handleDrop(item, 0)}
-            text="Click here to open the elements / Layout menu and drop items here to see them being created!"
+            text="Add layout"
             className="first-dropzone"
+            scale={scale} // Pass scale to DropZone
             onClick={(e) => {
               e.stopPropagation();
-              handlePanelToggle('sidebar');
             }}
           />
         )}
@@ -123,7 +102,7 @@ const ContentList = forwardRef(
               selectedElement,
               selectedStyle,
               isPreviewMode,
-              handleOpenMediaPanel,
+              handleOpenMediaPanel
             )
           )}
 
@@ -141,6 +120,7 @@ const ContentList = forwardRef(
         )}
       </div>
     );
+
   }
 );
 

@@ -1,21 +1,31 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
+import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
 import Image from '../../Media/Image';
 import Span from '../../Texts/Span';
 import Button from '../../Interact/Button';
 import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
-import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
 import withSelectable from '../../../utils/withSelectable';
-import { saveToLocalStorage } from '../../../utils/LeftBarUtils/storageUtils';
+
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
-const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem, handleOpenMediaPanel }) => {
+const CustomTemplateNavbar = ({
+  uniqueId,
+  contentListWidth,
+  children,
+  onDropItem,
+  handleOpenMediaPanel,
+}) => {
   const navRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+
+  // 1) Access elements & updateStyles from context
+  const { elements, updateStyles } = useContext(EditableContext);
 
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
@@ -23,30 +33,32 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
     onDropItem,
   });
 
+  // 2) Find the Navbar element in the global state by its ID
+  const navbarElement = elements.find((el) => el.id === uniqueId);
+
+  // 3) Apply default styles only if we detect an empty `styles` object
   useEffect(() => {
-    setIsCompact(contentListWidth < 768); // Adjust breakpoint
+    if (!navbarElement) return;
+    const noCustomStyles =
+      !navbarElement.styles || Object.keys(navbarElement.styles).length === 0;
+
+    if (noCustomStyles) {
+      // This merges your custom defaults into element.styles and saves them
+      updateStyles(navbarElement.id, {
+        ...CustomTemplateNavbarStyles.nav,
+      });
+    }
+  }, [navbarElement, updateStyles]);
+
+  useEffect(() => {
+    setIsCompact(contentListWidth < 768); // Breakpoint logic
   }, [contentListWidth]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
-  useEffect(() => {
-    const navbarData = {
-      id: uniqueId,
-      type: 'navbar',
-      styles: CustomTemplateNavbarStyles.nav,
-      children: children.map((child) => ({
-        id: child.id,
-        type: child.type,
-        content: child.content,
-        styles: child.styles,
-      })),
-    };
-    saveToLocalStorage(uniqueId, navbarData);
-  }, [children, uniqueId]);
-  
   const handleImageDrop = (droppedItem, imageId) => {
     if (droppedItem.mediaType === 'image') {
-      onDropItem(imageId, droppedItem.src); // Update the image's content dynamically
+      onDropItem(imageId, droppedItem.src);
     }
   };
 
@@ -57,7 +69,10 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
         drop(node);
       }}
       style={{
-        ...CustomTemplateNavbarStyles.nav, // Apply specific styles
+        // 4) Merge your local default styles + the styles from state,
+        //    so they actually render in the browser
+        ...CustomTemplateNavbarStyles.nav,
+        ...(navbarElement?.styles || {}),
       }}
     >
       {/* Logo and Title */}
@@ -89,7 +104,8 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
               styles={{
                 ...child.styles,
                 cursor: 'pointer',
-              }}            />
+              }}
+            />
           ))}
       </div>
 
@@ -120,32 +136,36 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
                     styles={{
                       ...child.styles,
                       cursor: 'pointer',
-                    }}                  />
+                    }}
+                  />
                 ))}
               {children
-                .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
+                .filter(
+                  (child) =>
+                    child?.type === 'button' || child?.type === 'connectWalletButton'
+                )
                 .map((child) => (
-                  <>
+                  <React.Fragment key={child.id}>
                     {child.type === 'connectWalletButton' ? (
                       <SelectableConnectWalletButton
-                        key={child.id}
                         id={child.id}
                         content={child.content}
                         styles={{
                           ...child.styles,
                           cursor: 'pointer',
-                        }}                      />
+                        }}
+                      />
                     ) : (
                       <SelectableButton
-                        key={child.id}
                         id={child.id}
                         content={child.content}
                         styles={{
                           ...child.styles,
                           cursor: 'pointer',
-                        }}                      />
+                        }}
+                      />
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
             </div>
           )}
@@ -169,36 +189,36 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
                   }}
                 />
               ))}
-
           </div>
 
           <div style={{ ...CustomTemplateNavbarStyles.buttonContainer }}>
             {children
-              .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
+              .filter(
+                (child) => child?.type === 'button' || child?.type === 'connectWalletButton'
+              )
               .map((child) => (
-                <>
+                <React.Fragment key={child.id}>
                   {child.type === 'connectWalletButton' ? (
                     <SelectableConnectWalletButton
-                      key={child.id}
                       id={child.id}
                       content={child.content}
                       styles={child.styles}
                     />
                   ) : (
                     <SelectableButton
-                      key={child.id}
                       id={child.id}
                       content={child.content}
                       styles={{
                         ...child.styles,
                         border: 'none',
                         padding: '10px 20px',
-                        backgroundColor: child.styles?.backgroundColor || '#334155',
+                        backgroundColor:
+                          child.styles?.backgroundColor || '#334155',
                         color: child.styles?.color || '#fff',
                       }}
                     />
                   )}
-                </>
+                </React.Fragment>
               ))}
           </div>
         </>
@@ -208,4 +228,3 @@ const CustomTemplateNavbar = ({ uniqueId, contentListWidth, children, onDropItem
 };
 
 export default CustomTemplateNavbar;
-

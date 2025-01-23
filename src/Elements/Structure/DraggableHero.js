@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import HeroOne from '../Sections/Heros/HeroOne';
@@ -13,8 +13,13 @@ const DraggableHero = ({
   contentListWidth,
   children,
   handleOpenMediaPanel,
+  imgSrc, // Image source for the navbar preview
+  label, // Label for the navbar
 }) => {
+
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+  const [isModalOpen, setModalOpen] = useState(false); // Modal state
+  const modalRef = useRef(null);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -37,10 +42,6 @@ const DraggableHero = ({
     },
   }), [configuration, isEditing, addNewElement, setElements]);
 
-  const uniqueId = useMemo(
-    () => `hero-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`,
-    []
-  );
 
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
@@ -65,8 +66,29 @@ const DraggableHero = ({
 
 
   const hero = findElementById(id, elements);
-  const resolvedChildren =
-    hero?.children?.map((childId) => findElementById(childId, elements)) || [];
+  const resolvedChildren = hero?.children?.map((childId) => findElementById(childId, elements)) || [];
+
+  // Toggle the modal state
+  const toggleModal = () => setModalOpen((prev) => !prev);
+
+  // Close modal if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModalOpen]);
 
   const descriptions = {
     heroOne: 'A simple hero section with title, subtitle, and a button.',
@@ -83,8 +105,8 @@ const DraggableHero = ({
   if (showDescription) {
     return (
 
-      <div className='bento-extract-display'>
-          <strong>{titles[configuration]}</strong>
+      <div className='bento-extract-display' onClick={toggleModal}
+      >
 
         <div
           ref={drag}
@@ -99,8 +121,20 @@ const DraggableHero = ({
             color: '#686868'
           }}
         >
-          <p>{descriptions[configuration]}</p>
+          <img
+            src={imgSrc}
+            alt={label}
+            style={{
+              width: '100%',
+              height: 'auto',
+              marginBottom: '8px',
+              borderRadius: '4px',
+              border: '1px solid #ddd',
+            }}
+          />
         </div>
+        {/* <p>{descriptions[configuration]}</p> */}
+        <strong className='element-name'>{label}</strong>
       </div>
 
     );
@@ -146,7 +180,10 @@ const DraggableHero = ({
         border: isDragging ? '1px dashed #000' : 'none',
         backgroundColor: '#f9f9f9',
       }}
+
     >
+
+
       {HeroComponent}
     </div>
   );

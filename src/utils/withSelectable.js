@@ -5,8 +5,13 @@ import { EditableContext } from '../context/EditableContext';
 const withSelectable = (WrappedComponent) => {
   return (props) => {
     const { id } = props;
-    const { selectedElement, setSelectedElement, selectedStyle, handleRemoveElement, updateStyles } =
-      useContext(EditableContext);
+    const {
+      selectedElement,
+      setSelectedElement,
+      selectedStyle,
+      handleRemoveElement,
+      updateStyles,
+    } = useContext(EditableContext);
     const isSelected = selectedElement?.id === id;
 
     const handleSelect = (e) => {
@@ -18,28 +23,18 @@ const withSelectable = (WrappedComponent) => {
       e.stopPropagation(); // Prevent triggering the select event
       handleRemoveElement(id);
     };
+
     const handleStyleChange = (styleKey, value) => {
       updateStyles(id, { [styleKey]: value });
     };
+
     return (
-      <div
-        id={id}
-        onClick={handleSelect}
-        style={{
-          width: 'auto',
-          position: 'relative',
-          boxSizing: 'border-box', // Ensure the element size stays consistent
-          cursor:'text',
-          ...(isSelected ? selectedStyle : {}),
-        }}
-      >
-        {/* Display the ID and delete button */}
+      <>
         {isSelected && (
           <div
             style={{
               position: 'absolute',
-              top: '-30px', // Position above the element
-              left: '50%',
+              top: '0px', // Position above the element
               transform: 'translateX(-50%)',
               backgroundColor: '#4D70FF',
               color: '#fff',
@@ -82,10 +77,19 @@ const withSelectable = (WrappedComponent) => {
             </span>
           </div>
         )}
-
-       
-        <WrappedComponent {...props} />
-      </div>
+        <WrappedComponent
+          {...props}
+          onClick={handleSelect}
+          id={id}
+          style={{
+            ...(isSelected ? selectedStyle : {}),
+            cursor: 'text',
+            position: 'relative', // If needed for other styles
+            boxSizing: 'border-box', // Ensure consistency
+            ...props.style, // Merge styles from props
+          }}
+        />
+      </>
     );
   };
 };

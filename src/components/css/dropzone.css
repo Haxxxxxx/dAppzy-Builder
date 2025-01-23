@@ -2,17 +2,32 @@
 .first-dropzone {
   position: absolute;
   top: 40%;
-  min-height: 60px;
-  width: 99.75%;
-  border: 2px solid #007bff;
-  background-color: whitesmoke!important;
-  display: flex;
-  color: #007bff;
-  align-items: center;
+  left: 45%;
+  width: 10%;
+  display: inline-flex;
+  padding: 9px 13px;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+  align-items: center;
+  gap: 10px;
+
+  color: var(----white, #FFF);
+  text-align: center;
+  font-family: Montserrat;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+
+  border-radius: 5px;
+  background: var(----purple, #5C4EFA);
 }
+
+@media (max-width: 768px) {
+  .first-dropzone {
+    width: calc(20% * var(--scale, 1));
+  }
+}
+
 
 .first-dropzone:hover {
   background-color: #d0ebff;

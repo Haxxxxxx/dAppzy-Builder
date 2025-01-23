@@ -1,20 +1,36 @@
-// FooterPanel.js
-import React from 'react';
+import React, { useState } from 'react';
 import DraggableFooter from '../../Elements/Structure/DraggableFooter';
 
-const FooterPanel = ({ contentListWidth }) => {
+const FooterPanel = ({ contentListWidth, searchQuery }) => {
+  const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand
+
+  const footerConfigurations = [
+    { imgSrc: './previewcomponent.png', configuration: 'template', label: 'Template Footer' },
+    { imgSrc: './previewcomponent.png', configuration: 'simple', label: 'Simple Footer' },
+    { imgSrc: './previewcomponent.png', configuration: 'detailed', label: 'Detailed Footer' },
+  ];
+
+  // Filter footer configurations based on search query
+  const filteredFooters = footerConfigurations.filter((footer) =>
+    footer.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div>
-      <h3>Create New Footer</h3>
-      <div className='bento-display-elements' style={{ marginTop: '16px' }}>
-        <DraggableFooter configuration="template" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
-        />
-        <DraggableFooter configuration="simple" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
-        />
-        <DraggableFooter configuration="detailed" isEditing={false} showDescription={true} contentListWidth={contentListWidth}
-        />
-
-      </div>
+        <div className="bento-display-elements" style={{ marginTop: '16px' }}>
+          {filteredFooters.map(({ configuration, label, imgSrc }) => (
+            <DraggableFooter
+              key={configuration}
+              configuration={configuration}
+              label={label}
+              isEditing={false}
+              showDescription={true}
+              contentListWidth={contentListWidth}
+              imgSrc={imgSrc} // Pass the image source correctly
+            />
+          ))}
+          {filteredFooters.length === 0 && <p>No footers found.</p>}
+        </div>
     </div>
   );
 };

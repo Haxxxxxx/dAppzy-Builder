@@ -103,6 +103,7 @@ const ConnectWalletButton = ({
   const handleButtonClick = (e) => {
     if (preventHeroModal) e.stopPropagation();
     setSelectedElement({ id, type: 'connectWalletButton', styles });
+    console.log(selectedElement);
     setShowPopup(!showPopup);
   };
 

@@ -66,7 +66,6 @@ const DraggableWeb3Elements = ({ id, configuration, isEditing, showDescription =
   if (showDescription) {
     return (
       <div className='bento-extract-display'>
-        <strong>Minting Section</strong>
 
         <div
           ref={drag}

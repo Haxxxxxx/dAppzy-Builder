@@ -34,13 +34,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
   if (label) {
     // Render label and content with flex layout
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
+      <>
         <span
           style={{
             fontSize: '1rem',
@@ -67,7 +61,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
         >
           {content || 'Editable Span'}
         </span>
-      </div>
+      </>
     );
   }
 

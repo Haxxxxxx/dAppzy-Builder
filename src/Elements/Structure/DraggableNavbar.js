@@ -14,11 +14,13 @@ const DraggableNavbar = ({
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
+  imgSrc, // Image source for the navbar preview
+  label, // Label for the navbar
 }) => {
   const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
-
+  // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { type: 'navbar', configuration },
@@ -37,8 +39,10 @@ const DraggableNavbar = ({
     },
   }), [configuration, isEditing, addNewElement, setElements]);
 
+  // Generate a unique ID for the navbar
   const uniqueId = useMemo(() => `navbar-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
 
+  // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
 
@@ -60,20 +64,12 @@ const DraggableNavbar = ({
     }
   };
 
+  // Find the current navbar and its children
   const navbar = findElementById(id, elements);
   const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || [];
 
+  // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
-
-  const handleRemove = () => {
-    handleRemoveElement(id);
-  };
-
-  const handleHeroSelection = (heroType) => {
-    setModalOpen(false);
-    const newHeroId = addNewElement('hero', 1, null, null, heroType);
-    console.log(`Added hero section of type '${heroType}' at the same level as navbar with ID '${id}'.`);
-  };
 
   // Close modal if clicked outside
   useEffect(() => {
@@ -94,6 +90,7 @@ const DraggableNavbar = ({
     };
   }, [isModalOpen]);
 
+  // Descriptions for different configurations
   const descriptions = {
     twoColumn: 'A two-column navbar with logo and links.',
     threeColumn: 'A three-column navbar with logo, links, and a button.',
@@ -106,33 +103,27 @@ const DraggableNavbar = ({
     customTemplate: '3S Navbar',
   };
 
+  // Handle preview display with description
   if (showDescription) {
     return (
-      <div className='bento-extract-display'>
-
-        <strong>{titles[configuration]}</strong>
-
-
-        <div
-          ref={drag}
+      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+        <img
+          src={imgSrc}
+          alt={label}
           style={{
-            opacity: isDragging ? 0.5 : 1,
-            padding: '8px',
-            margin: '8px 0',
-            border: '1px solid #ccc',
+            width: '100%',
+            height: 'auto',
+            marginBottom: '8px',
             borderRadius: '4px',
-            cursor: 'move',
-            backgroundColor: "#FBFBFB",
-            color: '#686868',
-
           }}
-        >
-          <p>{descriptions[configuration]}</p>
-        </div>
+        />
+        <strong className='element-name'>{titles[configuration]}</strong>
+        {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );
   }
 
+  // Assign the correct navbar component
   let NavbarComponent;
   if (configuration === 'customTemplate') {
     NavbarComponent = (
@@ -168,6 +159,7 @@ const DraggableNavbar = ({
     );
   }
 
+  // Render draggable navbar with preview
   return (
     <div
       ref={drag}
@@ -175,15 +167,26 @@ const DraggableNavbar = ({
         position: 'relative',
         cursor: 'pointer',
         border: isDragging ? '1px dashed #000' : 'none',
-        padding: '8px',
         backgroundColor: '#f9f9f9',
         borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
       }}
       onClick={toggleModal}
     >
+      <img
+        src={imgSrc}
+        alt={label}
+        style={{
+          width: '100%',
+          height: 'auto',
+          marginBottom: '8px',
+          borderRadius: '4px',
+          border: '1px solid #ddd',
+        }}
+      />
+      <strong>{label}</strong>
       {NavbarComponent}
-
-
     </div>
   );
 };

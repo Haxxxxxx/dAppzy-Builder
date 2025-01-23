@@ -20,12 +20,13 @@ const Topbar = ({
   const projectName = pageSettings.siteTitle || 'My Website';
   const description = pageSettings.description || 'My Website';
   const faviconUrl = pageSettings.faviconUrl || '';
-
+  const hostingUrl = 'https://jesuisuneurl/';
   return (
     <div className="topbar">
       <WebsiteInfo
         projectName={projectName}
         description={description}
+        url={hostingUrl}
         faviconUrl={faviconUrl}
       />
       <Visibility
