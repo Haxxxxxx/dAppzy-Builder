@@ -71,15 +71,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if (selectedElement?.type === 'button') {
-      return (
-        <ButtonSettingsPanel
-          settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
-        />
-      );
-    }
-    if ((selectedElement?.type === 'span' || selectedElement?.type === 'link') && selectedElement.label !== 'title') {
+    if ((selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
         <LinkSettingsPanel
           settings={selectedElement.settings || {}}
@@ -144,7 +136,6 @@ const EditorPanel = ({ onUpdateSettings }) => {
           </div>
         ) : (
           <div className="settings-view">
-            <h3>Element Settings</h3>
             {renderSettingsView()}
           </div>
         )}

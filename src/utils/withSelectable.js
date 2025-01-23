@@ -34,8 +34,12 @@ const withSelectable = (WrappedComponent) => {
           <div
             style={{
               position: 'absolute',
-              top: '0px', // Position above the element
+              top: '0',
+              // left or other positioning if desired
               transform: 'translateX(-50%)',
+              zIndex: 1000,
+              // This is the critical line: let clicks pass through!
+              pointerEvents: 'none',
               backgroundColor: '#4D70FF',
               color: '#fff',
               padding: '4px 8px',
@@ -44,20 +48,19 @@ const withSelectable = (WrappedComponent) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              zIndex: 1000,
-              maxWidth: '1500px', // Max width of the label
-              whiteSpace: 'nowrap', // Prevent wrapping
-              overflow: 'hidden', // Hide overflow
-              textOverflow: 'ellipsis', // Add ellipsis for overflow text
+              maxWidth: '1500px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             <span
               style={{
-                flex: 1, // Allow ID to take up as much space as possible
+                flex: 1,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }}
-              title={id} // Tooltip for full ID
+              title={id}
             >
               {id}
             </span>
@@ -65,10 +68,11 @@ const withSelectable = (WrappedComponent) => {
               className="material-symbols-outlined"
               onClick={handleRemove}
               style={{
+                // Re-enable clicks on the icon
+                pointerEvents: 'auto',
                 cursor: 'pointer',
                 color: '#fff',
                 fontSize: '1rem',
-                pointerEvents: 'all', // Ensure the icon is clickable
                 marginLeft: '8px',
               }}
               title="Remove element"
@@ -84,13 +88,14 @@ const withSelectable = (WrappedComponent) => {
           style={{
             ...(isSelected ? selectedStyle : {}),
             cursor: 'text',
-            position: 'relative', // If needed for other styles
-            boxSizing: 'border-box', // Ensure consistency
-            ...props.style, // Merge styles from props
+            position: 'relative',
+            boxSizing: 'border-box',
+            ...props.style,
           }}
         />
       </>
     );
+    
   };
 };
 

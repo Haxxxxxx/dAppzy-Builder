@@ -107,16 +107,16 @@ export const structureConfigurations = {
     type: 'hero',
     children: [
       { type: 'image', content: 'https://via.placeholder.com/1200x600?text=Background' },
-      { type: 'span', content: 'Welcome to Our Website' },
-      { type: 'span', content: 'Building a better future together.' },
+      { type: 'title', content: 'Welcome to Our Website' },
+      { type: 'paragraph', content: 'Building a better future together.' },
       { type: 'button', content: 'Get Started' },
     ],
   },
   heroTwo: {
     type: 'hero',
     children: [
-      { type: 'span', content: 'Discover Your Potential' },
-      { type: 'span', content: 'Join us today and start making an impact.' },
+      { type: 'title', content: 'Discover Your Potential' },
+      { type: 'paragraph', content: 'Join us today and start making an impact.' },
       { type: 'button', content: 'Join Now' },
     ],
   },
@@ -124,8 +124,8 @@ export const structureConfigurations = {
     type: 'hero',
     children: [
       { type: 'span', content: 'CAPTION' },
-      { type: 'span', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
-      { type: 'span', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.' },
+      { type: 'title', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
+      { type: 'paragraph', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.' },
       { type: 'button', content: 'Primary Action' },
       { type: 'button', content: 'Secondary Action' },
       { type: 'image', content: 'https://via.placeholder.com/150?text=Image' },
@@ -133,14 +133,14 @@ export const structureConfigurations = {
   },
   ctaOne: {
     children: [
-      { type: 'span', content: 'Get Started Today!' },
-      { type: 'span', content: 'Sign up now and take the first step towards a better future.' },
+      { type: 'title', content: 'Get Started Today!' },
+      { type: 'paragraph', content: 'Sign up now and take the first step towards a better future.' },
       { type: 'button', content: 'Join Now' },
     ],
   },
   ctaTwo: {
     children: [
-      { type: 'span', content: 'Take Action Now!' },
+      { type: 'title', content: 'Take Action Now!' },
       { type: 'button', content: 'Primary Action' },
       { type: 'button', content: 'Secondary Action' },
     ],

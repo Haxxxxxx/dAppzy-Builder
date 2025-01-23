@@ -7,11 +7,11 @@ const Heading = ({ id, content: initialContent }) => {
 
   // Fetch the latest element data, including `level`, from `elements`
   const elementData = findElementById(id, elements);
-  const { content = '', styles = {}, level = 1 } = elementData || {}; // Use default level 1 if undefined
+  const { content = initialContent, styles = {}, level = 1 } = elementData || {}; // Use default level 1 if undefined
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent bubbling to parent elements
-    setSelectedElement({ id, type: 'heading', level, styles }); // Include styles when selecting
+    setSelectedElement({ id, type: 'title', level, styles }); // Include styles when selecting
   };
 
   const handleBlur = (e) => {
