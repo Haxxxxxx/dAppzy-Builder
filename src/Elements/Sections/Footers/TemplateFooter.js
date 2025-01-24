@@ -8,7 +8,7 @@ import { TemplateFooterStyles } from './defaultFooterStyles.js';
 const SelectableSpan = withSelectable(Span);
 const SelectableImage = withSelectable(Image);
 
-const TemplateFooter = ({ uniqueId, contentListWidth, children = [] }) => {
+const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelect }) => {
   const [isCompact, setIsCompact] = useState(false);
 
   // Load the `template` configuration
@@ -41,6 +41,8 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children = [] }) => {
         flexDirection: isCompact ? 'column' : 'row',
         textAlign: isCompact ? 'center' : 'left',
       }}
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+
     >
       <div style={TemplateFooterStyles.templateSections}>
         {firstSpans.map((child) => (

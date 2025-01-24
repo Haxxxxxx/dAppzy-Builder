@@ -17,9 +17,10 @@ const DraggableNavbar = ({
   imgSrc, // Image source for the navbar preview
   label, // Label for the navbar
 }) => {
-  const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
+
   // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -103,6 +104,12 @@ const DraggableNavbar = ({
     customTemplate: '3S Navbar',
   };
 
+  // Inside DraggableNavbar.js
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent parent selections
+    setSelectedElement({ id, type: 'navbar', styles: navbar?.styles });
+  };
+
   // Handle preview display with description
   if (showDescription) {
     return (
@@ -134,6 +141,8 @@ const DraggableNavbar = ({
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+
       />
     );
   } else if (configuration === 'twoColumn') {
@@ -144,6 +153,8 @@ const DraggableNavbar = ({
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+
       />
     );
   } else if (configuration === 'threeColumn') {
@@ -155,6 +166,7 @@ const DraggableNavbar = ({
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
       />
     );
   }
@@ -172,7 +184,9 @@ const DraggableNavbar = ({
         display: 'flex',
         flexDirection: 'column',
       }}
-      onClick={toggleModal}
+      onClick={(e) => {
+        toggleModal();    // show/hide your modal
+      }}
     >
       <img
         src={imgSrc}

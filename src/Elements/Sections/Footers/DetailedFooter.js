@@ -10,7 +10,7 @@ const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 
-const DetailedFooter = ({ uniqueId, children = [] }) => {
+const DetailedFooter = ({ uniqueId, children = [], handleSelect }) => {
   const { detailed } = structureConfigurations;
 
   // Merge default children with overrides
@@ -20,7 +20,8 @@ const DetailedFooter = ({ uniqueId, children = [] }) => {
   });
 
   return (
-    <footer style={SimplefooterStyles.detailedFooter}>
+    <footer style={SimplefooterStyles.detailedFooter} onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+    >
       {mergedChildren.map((child) => {
         switch (child.type) {
           case 'span':

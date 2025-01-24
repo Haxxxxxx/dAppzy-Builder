@@ -14,6 +14,7 @@ const SelectableImage = withSelectable(Image);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
 const CustomTemplateNavbar = ({
+  handleSelect,
   uniqueId,
   contentListWidth,
   children,
@@ -74,6 +75,8 @@ const CustomTemplateNavbar = ({
         ...CustomTemplateNavbarStyles.nav,
         ...(navbarElement?.styles || {}),
       }}
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+
     >
       {/* Logo and Title */}
       <div style={{ ...CustomTemplateNavbarStyles.logoContainer }}>

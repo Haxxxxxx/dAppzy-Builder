@@ -16,7 +16,7 @@ const SelectableHeading = withSelectable(Heading);
 const SelectableParagraph = withSelectable(Paragraph);
 
 
-const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel }) => {
+const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel, handleSelect }) => {
   const heroRef = useRef(null);
   const { heroThree } = structureConfigurations;
 
@@ -56,7 +56,9 @@ const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel }) => 
         heroRef.current = node;
         drop(node);
       }}
-      style={heroThreeStyles.hero}
+      style={heroThreeStyles.heroSection}
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+
     >
       <div style={heroThreeStyles.heroContent}>
       {caption && (

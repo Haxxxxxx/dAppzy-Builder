@@ -19,6 +19,7 @@ const TwoColumnNavbar = ({
   onDropItem,
   contentListWidth,
   handleOpenMediaPanel,
+  handleSelect
 }) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
@@ -57,6 +58,7 @@ const TwoColumnNavbar = ({
         borderBottom: isOverCurrent ? '2px solid blue' : defaultNavbarStyles.nav.borderBottom,
         ...styles, // Merge navbar's styles from state
       }}
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
     >
       {/* Logo */}
       <div style={defaultNavbarStyles.logoContainer} className="navbar-logo-container">

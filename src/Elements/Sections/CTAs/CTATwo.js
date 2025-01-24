@@ -8,20 +8,25 @@ import { ctaTwoStyles } from './defaultCtaStyles';
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 
-const CTATwo = ({ uniqueId, children = [] }) => {
+const CTATwo = ({ children = [], uniqueId, onDropItem, handleOpenMediaPanel, handleSelect }) => {
   const { ctaTwo } = structureConfigurations;
 
-  // Merge default children from structureConfigurations with any overrides
-  const mergedChildren = ctaTwo.children.map((defaultChild, index) => {
-    const overrideChild = children.find((child) => child.type === defaultChild.type);
-    return overrideChild || { ...defaultChild, id: `${uniqueId}-cta-child-${index}` };
-  });
 
-  const titleChild = mergedChildren.find((child) => child.type === 'span');
-  const [primaryButton, secondaryButton] = mergedChildren.filter((child) => child.type === 'button');
+  const findChild = (type, defaultIndex) => {
+    return (
+      children.find((child) => child.type === type) ||
+      ctaTwo.children[defaultIndex] || // Fallback to default configuration
+      {}
+    );
+  };
+
+  const titleChild = findChild('title', 0);
+  const primaryButton = findChild('button', 1);
+  const secondaryButton = findChild('button', 2);
 
   return (
-    <section style={ctaTwoStyles.cta}>
+    <section style={ctaTwoStyles.cta} onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+    >
       {titleChild && (
         <SelectableSpan
           id={titleChild.id}

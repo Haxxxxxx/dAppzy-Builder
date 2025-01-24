@@ -53,7 +53,7 @@ export const renderElement = (
   selectedElement,
   selectedStyle,
   isPreviewMode = true, // Default to true for static rendering
-  handleOpenMediaPanel = () => {} ,
+  handleOpenMediaPanel = () => { },
 ) => {
 
   if (!element || !element.id || !element.type) {
@@ -64,58 +64,58 @@ export const renderElement = (
 
 
 
-const renderChildren = (resolvedChildren) => {
-  if (!resolvedChildren || resolvedChildren.length === 0) {
-    return null;
-  }
-  return resolvedChildren
-    .filter((child) => child) // Filter out undefined children
-    .map((child) =>
-      renderElement(
-        child,
-        elements,
-        contentListWidth,
-        setSelectedElement,
-        setElements,
-        handlePanelToggle,
-        selectedElement,
-        selectedStyle,
-        isPreviewMode
-      )
-    );
-};
-
-
-const renderConfiguredChildren = (configKey) => {
-  const config = structureConfigurations[configKey];
-  if (!config) {
-    return null;
-  }
-  return config.children
-    .filter((childConfig) => childConfig && childConfig.type) // Ensure valid children
-    .map((childConfig, index) => {
-      const childElement = {
-        id: `${id}-child-${index}`,
-        type: childConfig.type,
-        content: childConfig.content,
-        styles: {...childConfig.styles} || {},
-      };
-      return renderElement(
-        childElement,
-        elements,
-        contentListWidth,
-        setSelectedElement,
-        setElements,
-        handlePanelToggle,
-        selectedElement,
-        selectedStyle,
-        isPreviewMode
+  const renderChildren = (resolvedChildren) => {
+    if (!resolvedChildren || resolvedChildren.length === 0) {
+      return null;
+    }
+    return resolvedChildren
+      .filter((child) => child) // Filter out undefined children
+      .map((child) =>
+        renderElement(
+          child,
+          elements,
+          contentListWidth,
+          setSelectedElement,
+          setElements,
+          handlePanelToggle,
+          selectedElement,
+          selectedStyle,
+          isPreviewMode
+        )
       );
-    });
-};
+  };
 
-  
-  
+
+  const renderConfiguredChildren = (configKey) => {
+    const config = structureConfigurations[configKey];
+    if (!config) {
+      return null;
+    }
+    return config.children
+      .filter((childConfig) => childConfig && childConfig.type) // Ensure valid children
+      .map((childConfig, index) => {
+        const childElement = {
+          id: `${id}-child-${index}`,
+          type: childConfig.type,
+          content: childConfig.content,
+          styles: { ...childConfig.styles } || {},
+        };
+        return renderElement(
+          childElement,
+          elements,
+          contentListWidth,
+          setSelectedElement,
+          setElements,
+          handlePanelToggle,
+          selectedElement,
+          selectedStyle,
+          isPreviewMode
+        );
+      });
+  };
+
+
+
 
   // Warn for missing configurations in structured elements
   if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' || type === 'cta' || type === 'footer') && !configuration) {
@@ -126,25 +126,25 @@ const renderConfiguredChildren = (configKey) => {
   }
   // Define component mappings
   const componentMap = {
-    paragraph: <Paragraph id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    heading: <Heading id={id} key={id} content={element.content} styles={{...element.styles}} />,
+    paragraph: <Paragraph id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    heading: <Heading id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
     section: (
-      <Section id={id} key={id} styles={{...element.styles}}>
+      <Section id={id} key={id} styles={{ ...element.styles }}>
         {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
       </Section>
     ),
     div: (
-      <Div id={id} key={id} styles={{...element.styles}} handleOpenMediaPanel={handleOpenMediaPanel}>
+      <Div id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel}>
         {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
       </Div>
     ),
-    button: <Button id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    span: <Span id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    image: <Image id={id} key={id} styles={{...element.styles}} handleOpenMediaPanel={handleOpenMediaPanel}/>,
-    input: <Input id={id} key={id} styles={{...element.styles}} />,
-    form: <Form id={id} key={id} styles={{...element.styles}} />,
-    ul: <List id={id} key={id} type="ul" styles={{...element.styles}} />,
-    ol: <List id={id} key={id} type="ol" styles={{...element.styles}} />,
+    button: <Button id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    span: <Span id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    image: <Image id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
+    input: <Input id={id} key={id} styles={{ ...element.styles }} />,
+    form: <Form id={id} key={id} styles={{ ...element.styles }} />,
+    ul: <List id={id} key={id} type="ul" styles={{ ...element.styles }} />,
+    ol: <List id={id} key={id} type="ol" styles={{ ...element.styles }} />,
     navbar: (
       <DraggableNavbar
         id={id}
@@ -155,16 +155,15 @@ const renderConfiguredChildren = (configKey) => {
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
       />
-    ), 
+    ),
     hero: (
       <DraggableHero
         id={id}
         key={id}
         configuration={configuration}
-        children={renderConfiguredChildren(configuration)}
+        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
-        setSelectedElement={setSelectedElement}
-        isPreviewMode={isPreviewMode}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
       />
     ),
@@ -173,8 +172,9 @@ const renderConfiguredChildren = (configKey) => {
         id={id}
         key={id}
         configuration={configuration}
-        children={renderConfiguredChildren(configuration)}
+        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
 
       />
@@ -184,31 +184,32 @@ const renderConfiguredChildren = (configKey) => {
         id={id}
         key={id}
         configuration={configuration}
-        children={renderConfiguredChildren(configuration)}
+        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
 
       />
     ),
-    table: <Table id={id} key={id} styles={{...element.styles}} />,
-    tableRow: <TableRow id={id} key={id} styles={{...element.styles}} />,
-    tableCell: <TableCell id={id} key={id} styles={{...element.styles}} />,
-    anchor: <Anchor id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    textarea: <Textarea id={id} key={id} styles={{...element.styles}} />,
-    select: <Select id={id} key={id} styles={{...element.styles}} />,
-    video: <Video id={id} key={id} styles={{...element.styles}} />,
-    audio: <Audio id={id} key={id} styles={{...element.styles}} />,
-    iframe: <Iframe id={id} key={id} styles={{...element.styles}} />,
-    label: <Label id={id} key={id} styles={{...element.styles}} />,
-    fieldset: <Fieldset id={id} key={id} styles={{...element.styles}} />,
-    legend: <Legend id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    progress: <Progress id={id} key={id} styles={{...element.styles}} />,
-    meter: <Meter id={id} key={id} styles={{...element.styles}} />,
-    blockquote: <Blockquote id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    code: <Code id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    pre: <Pre id={id} key={id} content={element.content} styles={{...element.styles}} />,
-    hr: <Hr id={id} key={id} styles={{...element.styles}} />,
-    caption: <Caption id={id} key={id} content={element.content} styles={{...element.styles}} />,
+    table: <Table id={id} key={id} styles={{ ...element.styles }} />,
+    tableRow: <TableRow id={id} key={id} styles={{ ...element.styles }} />,
+    tableCell: <TableCell id={id} key={id} styles={{ ...element.styles }} />,
+    anchor: <Anchor id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    textarea: <Textarea id={id} key={id} styles={{ ...element.styles }} />,
+    select: <Select id={id} key={id} styles={{ ...element.styles }} />,
+    video: <Video id={id} key={id} styles={{ ...element.styles }} />,
+    audio: <Audio id={id} key={id} styles={{ ...element.styles }} />,
+    iframe: <Iframe id={id} key={id} styles={{ ...element.styles }} />,
+    label: <Label id={id} key={id} styles={{ ...element.styles }} />,
+    fieldset: <Fieldset id={id} key={id} styles={{ ...element.styles }} />,
+    legend: <Legend id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    progress: <Progress id={id} key={id} styles={{ ...element.styles }} />,
+    meter: <Meter id={id} key={id} styles={{ ...element.styles }} />,
+    blockquote: <Blockquote id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    code: <Code id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    pre: <Pre id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    hr: <Hr id={id} key={id} styles={{ ...element.styles }} />,
+    caption: <Caption id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
     mintingSection: (
       <DraggableWeb3Elements
         id={id}
@@ -223,14 +224,14 @@ const renderConfiguredChildren = (configKey) => {
         handleOpenMediaPanel={handleOpenMediaPanel}
       />
     ),
-    date: <DateComponent id={id} key={id} styles={{...element.styles}} />,
+    date: <DateComponent id={id} key={id} styles={{ ...element.styles }} />,
     connectWalletButton: (
       <ConnectWalletButton
         id={id}
         key={id}
         type={'connectWalletButton'}
         content={element.content}
-        styles={{...element.styles}}
+        styles={{ ...element.styles }}
         handlePanelToggle={handlePanelToggle}
       />
     ),

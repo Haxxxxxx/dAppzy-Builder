@@ -13,7 +13,7 @@ const SelectableImage = withSelectable(Image);
 const SelectableHeading = withSelectable(Heading);
 const SelectableParagraph = withSelectable(Paragraph);
 
-const HeroTwo = ({ uniqueId, children, onDropItem }) => {
+const HeroTwo = ({ uniqueId, children, onDropItem, handleSelect }) => {
   const sectionRef = useRef(null);
   const { heroTwo } = structureConfigurations;
   const { isOverCurrent, drop } = useElementDrop({
@@ -44,6 +44,8 @@ const HeroTwo = ({ uniqueId, children, onDropItem }) => {
         drop(node);
       }}
       style={sectionStyles}
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+
     >
       <SelectableHeading id={title.id || `title-${uniqueId}`} content={title.content} styles={title.styles || heroTwoStyles.title} />
       <SelectableParagraph id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={subtitle.styles || heroTwoStyles.subtitle} />

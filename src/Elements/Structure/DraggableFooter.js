@@ -15,7 +15,7 @@ const DraggableFooter = ({
   imgSrc,
   label,
 }) => {
-  const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
 
@@ -94,6 +94,10 @@ const DraggableFooter = ({
     detailed: 'Detailed Footer',
     template: 'Template Footer',
   };
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent parent selections
+    setSelectedElement({ id, type: 'footer', styles: footer?.styles });
+  };
 
   if (showDescription) {
     return (
@@ -137,7 +141,8 @@ const DraggableFooter = ({
         children={resolvedChildren}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
-      />
+        handleSelect={handleSelect}
+/>
     );
   } else if (configuration === 'detailed') {
     FooterComponent = (
@@ -147,7 +152,8 @@ const DraggableFooter = ({
         children={resolvedChildren}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
-      />
+        handleSelect={handleSelect}
+/>
     );
   } else if (configuration === 'template') {
     FooterComponent = (
@@ -157,7 +163,8 @@ const DraggableFooter = ({
         children={resolvedChildren}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
-      />
+        handleSelect={handleSelect}
+/>
     );
   }
 

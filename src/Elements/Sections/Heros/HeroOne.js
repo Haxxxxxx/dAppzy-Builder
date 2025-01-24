@@ -14,7 +14,7 @@ const SelectableImage = withSelectable(Image);
 const SelectableHeading = withSelectable(Heading);
 const SelectableParagraph = withSelectable(Paragraph);
 
-const HeroOne = ({ children = [], onDropItem, handleOpenMediaPanel }) => {
+const HeroOne = ({ children = [], onDropItem, handleOpenMediaPanel,handleSelect }) => {
   const { heroOne } = structureConfigurations;
 
   // Helper function to find a child or fallback to default content
@@ -39,7 +39,8 @@ const HeroOne = ({ children = [], onDropItem, handleOpenMediaPanel }) => {
   };
 
   return (
-    <section style={defaultHeroStyles.hero}>
+    <section style={defaultHeroStyles.hero}       onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+>
       <div style={defaultHeroStyles.heroContent}>
         {/* Title */}
         {heroTitle.content && (

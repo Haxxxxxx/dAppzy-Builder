@@ -8,7 +8,6 @@ const CTAPanel = ({ contentListWidth, searchQuery }) => {
     const CTAConfigurations = [
       { imgSrc: './previewcomponent.png', configuration: 'CTAOne', label: 'CTA One' },
       { imgSrc: './previewcomponent.png', configuration: 'CTATwo', label: 'CTA Two' },
-      { imgSrc: './previewcomponent.png', configuration: 'CTAThree', label: 'CTA Three' },
     ];
   
     // Filter hero configurations based on search query

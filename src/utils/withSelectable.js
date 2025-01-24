@@ -36,7 +36,6 @@ const withSelectable = (WrappedComponent) => {
               position: 'absolute',
               top: '0',
               // left or other positioning if desired
-              transform: 'translateX(-50%)',
               zIndex: 1000,
               // This is the critical line: let clicks pass through!
               pointerEvents: 'none',
@@ -88,14 +87,16 @@ const withSelectable = (WrappedComponent) => {
           style={{
             ...(isSelected ? selectedStyle : {}),
             cursor: 'text',
-            position: 'relative',
+            // Only apply relative positioning if isSelected is true
+            ...(isSelected ? { position: 'relative' } : {}),
             boxSizing: 'border-box',
             ...props.style,
           }}
         />
+
       </>
     );
-    
+
   };
 };
 

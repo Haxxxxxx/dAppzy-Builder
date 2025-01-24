@@ -11,13 +11,13 @@ const DraggableHero = ({
   isEditing,
   showDescription = false,
   contentListWidth,
-  children,
+  handlePanelToggle,
   handleOpenMediaPanel,
   imgSrc, // Image source for the navbar preview
   label, // Label for the navbar
 }) => {
 
-  const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
@@ -90,18 +90,11 @@ const DraggableHero = ({
     };
   }, [isModalOpen]);
 
-  const descriptions = {
-    heroOne: 'A simple hero section with title, subtitle, and a button.',
-    heroTwo: 'Another hero section with a different layout and styling.',
-    heroThree: 'A more detailed hero section.',
+  // Inside DraggableNavbar.js
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent parent selections
+    setSelectedElement({ id, type: 'hero', styles: hero?.styles });
   };
-
-  const titles = {
-    heroOne: 'Hero Section One',
-    heroTwo: 'Hero Section Two',
-    heroThree: 'Hero Section Three',
-  };
-
   if (showDescription) {
     return (
 
@@ -149,6 +142,8 @@ const DraggableHero = ({
         children={resolvedChildren}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+
       />
     );
   } else if (configuration === 'heroTwo') {
@@ -158,6 +153,7 @@ const DraggableHero = ({
         contentListWidth={contentListWidth}
         children={resolvedChildren}
         onDropItem={onDropItem}
+        handleSelect={handleSelect}
       />
     );
   } else if (configuration === 'heroThree') {
@@ -168,6 +164,7 @@ const DraggableHero = ({
         children={resolvedChildren}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
       />
     );
   }

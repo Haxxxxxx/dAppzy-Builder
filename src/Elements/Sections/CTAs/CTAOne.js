@@ -4,40 +4,54 @@ import Button from '../../Interact/Button';
 import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { ctaOneStyles } from './defaultCtaStyles.js';
+
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);
 
-const CTAOne = ({ uniqueId, children = [] }) => {
+const CTAOne = ({ children = [], uniqueId, onDropItem, handleOpenMediaPanel,handleSelect }) => {
   const { ctaOne } = structureConfigurations;
 
-  const mergedChildren = ctaOne.children.map((defaultChild, index) => {
-    const overrideChild = children.find((child) => child.type === defaultChild.type);
-    return overrideChild || { ...defaultChild, id: `${uniqueId}-cta-child-${index}` };
-  });
+  // Helper function to find a child or fallback to default
+  const findChild = (type, defaultIndex) => {
+    return (
+      children.find((child) => child.type === type) ||
+      ctaOne.children[defaultIndex] || // Fallback to default configuration
+      {}
+    );
+  };
 
-  const [titleChild, descriptionChild, buttonChild] = mergedChildren;
+  // Retrieve content or fallbacks
+  const ctaTitle = findChild('title', 0);
+  const ctaDescription = findChild('paragraph', 1);
+  const ctaButton = findChild('button', 2);
 
   return (
-    <section style={ctaOneStyles.cta}>
-      {titleChild && (
+    <section style={ctaOneStyles.cta}      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+>
+      {/* Title */}
+      {ctaTitle.content && (
         <SelectableSpan
-          id={titleChild.id}
-          content={titleChild.content}
-          styles={ctaOneStyles.ctaTitle}
+          id={ctaTitle.id || `default-title-${uniqueId}`}
+          content={ctaTitle.content}
+          styles={ctaTitle.styles || ctaOneStyles.ctaTitle}
         />
       )}
-      {descriptionChild && (
+
+      {/* Description */}
+      {ctaDescription.content && (
         <SelectableSpan
-          id={descriptionChild.id}
-          content={descriptionChild.content}
-          styles={ctaOneStyles.ctaDescription}
+          id={ctaDescription.id || `default-description-${uniqueId}`}
+          content={ctaDescription.content}
+          styles={ctaDescription.styles || ctaOneStyles.ctaDescription}
         />
       )}
-      {buttonChild && (
+
+      {/* Button */}
+      {ctaButton.content && (
         <SelectableButton
-          id={buttonChild.id}
-          content={buttonChild.content}
-          styles={ctaOneStyles.primaryButton}
+          id={ctaButton.id || `default-button-${uniqueId}`}
+          content={ctaButton.content}
+          styles={ctaButton.styles || ctaOneStyles.primaryButton}
         />
       )}
     </section>

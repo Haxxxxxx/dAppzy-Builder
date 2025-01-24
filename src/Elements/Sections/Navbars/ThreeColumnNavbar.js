@@ -13,7 +13,7 @@ const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
-const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
+const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -46,7 +46,8 @@ const ThreeColumnNavbar = ({ uniqueId, children, onDropItem, contentListWidth, h
         ...defaultNavbarStyles.nav,
         borderBottom: isOverCurrent ? '2px solid blue' : defaultNavbarStyles.nav.borderBottom,
       }}
-    >
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+      >
       {/* Logo Section */}
       <div style={defaultNavbarStyles.logoContainer}>
         {children

@@ -3,7 +3,6 @@ import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import CTAOne from '../Sections/CTAs/CTAOne';
 import CTATwo from '../Sections/CTAs/CTATwo';
-import { structureConfigurations } from '../../configs/structureConfigurations';
 
 const DraggableCTA = ({
   id,
@@ -16,7 +15,7 @@ const DraggableCTA = ({
   label, // Label for the navbar
 }) => {
 
-  const { addNewElement, setElements, elements, findElementById, handleRemoveElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
@@ -28,42 +27,18 @@ const DraggableCTA = ({
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
+        // Just add the hero element with configuration as structure
         const newId = addNewElement('cta', 1, null, null, configuration);
 
-        // Add children based on configuration
-        const config = structureConfigurations[configuration];
-        if (config?.children) {
-          config.children.forEach((child, index) => {
-            const childId = addNewElement(
-              child.type,
-              2,
-              null,
-              newId,
-              null,
-              child.content,
-              child.styles
-            );
-            setElements((prev) =>
-              prev.map((el) =>
-                el.id === newId
-                  ? {
-                    ...el,
-                    children: [...(el.children || []), childId],
-                  }
-                  : el
-              )
-            );
-          });
-        }
-
-        setElements((prev) =>
-          prev.map((el) =>
+        // Now update the element with the given configuration
+        setElements((prevElements) =>
+          prevElements.map((el) =>
             el.id === newId ? { ...el, configuration } : el
           )
         );
       }
     },
-  }));
+  }), [configuration, isEditing, addNewElement, setElements]);
 
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
@@ -87,7 +62,7 @@ const DraggableCTA = ({
   };
 
   const ctaElement = findElementById(id, elements);
-  const children = ctaElement?.children?.map((childId) => findElementById(childId, elements)) || [];
+  const children = ctaElement?.children?.map((childId) => findElementById(childId, elements));
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
 
@@ -110,43 +85,10 @@ const DraggableCTA = ({
     };
   }, [isModalOpen]);
 
-  const descriptions = {
-    ctaOne: 'A simple CTA with a title, description, and a button.',
-    ctaTwo: 'A CTA with a title and two action buttons.',
+  const handleSelect = (e) => {
+    e.stopPropagation(); // Prevent parent selections
+    setSelectedElement({ id, type: 'CTA', styles: ctaElement?.styles });
   };
-
-  const titles = {
-    ctaOne: 'CTA One',
-    ctaTwo: 'CTA Two',
-  };
-
-  const renderCTAComponent = () => {
-    switch (configuration) {
-      case 'ctaOne':
-        return <CTAOne
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          uniqueId={id}
-          children={children}
-          onDropItem={onDropItem}
-          contentListWidth={contentListWidth}
-
-        />;
-      case 'ctaTwo':
-        return <CTATwo
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          uniqueId={id}
-          children={children}
-          onDropItem={onDropItem}
-          contentListWidth={contentListWidth}
-
-        />;
-      default:
-        console.warn(`Unsupported CTA configuration: ${configuration}`);
-        return;
-    }
-  };
-
-  const CTAComponent = renderCTAComponent();
 
   // Render description if requested
   if (showDescription) {
@@ -177,13 +119,34 @@ const DraggableCTA = ({
               border: '1px solid #ddd',
             }}
           />
-          {/* <p>{descriptions[configuration]}</p> */}
         </div>
         <strong className='element-name'>{label}</strong>
       </div>
     );
   }
-
+  let CTAComponent;
+  if (configuration === 'CTAOne') {
+    CTAComponent = (
+      <CTAOne
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+        onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+      />
+    );
+  } else if (configuration === 'CTATwo') {
+    CTAComponent = (
+      <CTATwo
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+        onDropItem={onDropItem}
+        handleSelect={handleSelect}
+      />
+    );
+  }
   // Render the draggable CTA component
   return (
     <div
