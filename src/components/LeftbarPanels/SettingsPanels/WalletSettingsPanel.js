@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import './CandyMachineSettings.css';
+import './css/CandyMachineSettings.css';
 
 const WalletSettingsPanel = ({ onUpdateSettings = () => {} }) => {
     const { selectedElement, updateConfiguration } = useContext(EditableContext);

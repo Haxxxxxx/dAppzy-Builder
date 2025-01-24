@@ -2,8 +2,9 @@ let elementCounter = 0;
 
 export const generateUniqueId = (type) => {
   elementCounter += 1;
-  const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '');
-  return `${type}-${timestamp}-${elementCounter}`;
+  const timestamp = Date.now(); // Use milliseconds since epoch for precision
+  const randomPart = Math.random().toString(36).substr(2, 5); // Generate a random string
+  return `${type}-${timestamp}-${randomPart}-${elementCounter}`;
 };
 
 export const buildHierarchy = (elements) => {

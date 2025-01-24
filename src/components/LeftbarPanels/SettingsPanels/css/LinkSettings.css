@@ -1,0 +1,149 @@
+
+
+.full-size-input select{
+    width: 100% !important;
+}
+
+.target-input{
+    height: 100%;
+    display: flex;
+    gap: 15px;
+    flex-direction: row;
+}
+
+.target-blank{
+    padding-left: 10%;
+    justify-content: center;
+}
+
+/* Dropdown options styling */
+.link-settings-panel select option {
+    background-color: rgba(0, 0, 0, 0.9);
+    /* Default option background */
+    color: #838389;
+    /* Option text color */
+    padding: 10px;
+    /* Spacing inside options */
+    font-size: 12px;
+    font-weight: 500;
+    font-family: Montserrat;
+    border: none;
+    /* Remove default borders */
+    box-sizing: border-box;
+}
+
+/* Dropdown option hover and selected */
+.link-settings-panel select option:hover,
+.link-settings-panel select option:checked {
+    background-color: rgba(0, 0, 0, 0.45);
+    /* Match the selected background color */
+    color: #fff;
+    /* Text color for readability */
+    -webkit-appearance: none;
+    /* Remove browser-specific styles */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+
+/* Dropdown focus and hover */
+.link-settings-panel select:hover,
+.link-settings-panel select:focus {
+    background-color: rgba(0, 0, 0, 0.45);
+    /* Consistent background color */
+    outline: none;
+    /* Remove focus outline */
+    color: #fff;
+    /* Optional: Ensure consistent text color */
+}
+
+
+/* Dropdown container header */
+.link-settings-panel h3 {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    display: flex;
+    justify-content: space-between;
+}
+
+.link-settings-wrapper-target {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+    width: 100%;
+    margin: 15px 0 15px 0;
+}
+
+.link-settings-panel .target-input {
+    color: var(----editor-text, #D9D9D9);
+    font-family: Montserrat;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+/* Base checkbox styles */
+input[type="checkbox"].rounded-checkbox {
+    -webkit-appearance: none;
+    /* Remove default appearance */
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    /* Outer size of the checkbox */
+    height: 20px;
+    border: 2px solid var(----editor-text, #D9D9D9);
+    /* Blue border */
+    border-radius: 6px;
+    /* Rounded corners */
+    background-color: transparent;
+    /* Transparent background */
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    /* Smooth transitions */
+    margin: 0;
+}
+
+/* Hover effect */
+input[type="checkbox"].rounded-checkbox:hover {
+    background-color: rgba(33, 123, 244, 0.1);
+    /* Light blue hover background */
+    box-shadow: 0 0 0 2px #217bf4;
+    /* Add a slight blue glow */
+}
+
+/* Visual feedback when checkbox is clicked */
+input[type="checkbox"].rounded-checkbox:active {
+    background-color: rgba(33, 123, 244, 0.3);
+    /* Darker blue on click */
+}
+
+/* Checked state */
+input[type="checkbox"].rounded-checkbox:checked {
+    background-color: transparent;
+    /* Ensure background is transparent */
+}
+
+/* Checkmark styling */
+input[type="checkbox"].rounded-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    /* Adjust to center the checkmark */
+    left: 3px;
+    width: 8px;
+    height: 8px;
+    /* Checkmark color */
+    border-radius: 2px;
+    border: 1px solid var(----editor-text, #D9D9D9);
+    background: var(----editor-text, #D9D9D9);
+}

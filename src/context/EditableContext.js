@@ -30,21 +30,13 @@ export const EditableProvider = ({ children }) => {
   };
 
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
-    const existingElement = elements.find(
-      (el) => el.type === type && el.parentId === parentId && el.structure === structure
-    );
-    if (existingElement) {
-      console.warn(`Element of type ${type} already exists for parentId ${parentId}`);
-      return existingElement.id;
-    }
-
     let newId = generateUniqueId(type);
-
+  
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
-
+  
     const baseElement = {
       id: newId,
       type,
@@ -77,10 +69,10 @@ export const EditableProvider = ({ children }) => {
       configuration: structure || null,
       settings: {},
     };
-
+  
     if (structure && structureConfigurations[structure]) {
       baseElement.styles = structureConfigurations[structure].styles || {};
-
+  
       const children = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
@@ -89,18 +81,18 @@ export const EditableProvider = ({ children }) => {
         label: child.label || '',
         parentId: newId,
       }));
-
+  
       baseElement.children = children.map((child) => child.id);
-
+  
       setElements((prev) => [...prev, baseElement, ...children]);
     } else {
       setElements((prev) => [...prev, baseElement]);
     }
-
+  
     console.log('Added new element:', baseElement);
     return newId;
   };
-
+  
   const handleRemoveElement = (id) => {
     setElements((prevElements) => {
       const updatedElements = removeElementById(id, prevElements);

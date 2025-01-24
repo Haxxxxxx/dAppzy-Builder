@@ -9,9 +9,11 @@ import EffectEditor from '../../Editors/EffectEditor';
 import ButtonEditor from '../../Editors/ButtonEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettingsPanel from '../LeftbarPanels/SettingsPanels/WalletSettingsPanel';
-import ButtonSettingsPanel from './SettingsPanels/ButtonSettings';
 import LinkSettingsPanel from './SettingsPanels/LinkSettings';
 import BackgroundEditor from '../../Editors/BackgroundEditor'; // Import the new component
+import TextualSettings from './SettingsPanels/TextualSettings';
+import ListSettings from './SettingsPanels/ListSettings';
+
 
 const CollapsiblePanel = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,6 +57,14 @@ const EditorPanel = ({ onUpdateSettings }) => {
   console.log("Selected Element type in EditorPanel : " + selectedElement?.type);
 
   const renderSettingsView = () => {
+    if (selectedElement?.type === 'title' || selectedElement?.type === 'paragraph' || selectedElement?.type === 'blockquote' || selectedElement?.type === 'code' || selectedElement?.type === 'pre' || selectedElement?.type === 'caption') {
+      return (
+        <TextualSettings
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }
     if (selectedElement?.type === 'connectWalletButton') {
       return (
         <WalletSettingsPanel
@@ -71,7 +81,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if ((selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
+    if ((selectedElement?.type === 'anchor' ||selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
         <LinkSettingsPanel
           settings={selectedElement.settings || {}}
@@ -79,6 +89,15 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
+    if ((selectedElement?.type === 'ul' ||selectedElement?.type === 'ol' ||selectedElement?.type === 'list-item')) {
+      return (
+        <ListSettings
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }
+    
     return <p>No settings available for this element yet.</p>;
   };
 

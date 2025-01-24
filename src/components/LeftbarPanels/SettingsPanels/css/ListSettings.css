@@ -1,0 +1,171 @@
+.list-settings-panel {
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.list-settings-panel hr {
+    width: 100%;
+}
+
+.list-items-wrapper {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+
+.add-item-button {
+    display: flex;
+    color: var(----editor-text, #D9D9D9);
+    background-color: transparent;
+    text-align: center;
+    font-family: Montserrat;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    border:none;    
+    background-color: var(----not-selected, #838389);
+    width: fit-content;
+    justify-content: left;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 3px;
+
+}
+
+.add-item-button button{
+    background-color: transparent;
+    border: none;
+    color: var(----editor-text, #D9D9D9);
+    text-align: center;
+    font-family: Montserrat;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.list-item-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.list-item {
+    padding-left: 30px;
+    /* Adjust to leave space for the button */
+    flex-grow: 1;
+}
+
+.remove-item-button {
+    position: absolute;
+    left: 88%;
+    /* Position it inside the input */
+    z-index: 1;
+    background: transparent;
+    border: none;
+    color: #ff4d4f;
+    /* Red color for the button */
+    font-size: 14px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.remove-item-button:hover {
+    color: #ff7875;
+    /* Lighter red on hover */
+}
+
+.list-item-container textarea {
+    max-height: 200px;
+    /* Maximum height */
+    min-height: 24px;
+    /* Smaller initial height for a single line */
+    overflow-y: auto;
+    /* Adds a scroll if the content exceeds max height */
+    resize: none;
+    /* Disables manual resizing */
+    width: 100%;
+    /* Ensures full width inside the container */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: left;
+    /* Aligns text to the left */
+    line-height: 1.4;
+    /* Adjusts line spacing */
+    padding: 6px 10px;
+    /* Adjust padding for better appearance */
+    box-sizing: border-box;
+    /* Ensures padding is included in height */
+}
+
+/* Placeholder styling */
+textarea::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+/* Custom scrollbar styling */
+.list-item-container textarea::-webkit-scrollbar {
+    width: 8px;
+    /* Width of the scrollbar */
+}
+
+.list-item-container textarea::-webkit-scrollbar-thumb {
+    background: #ccc;
+    /* Color of the scrollbar thumb */
+    border-radius: 4px;
+    /* Round edges */
+}
+
+.list-item-container textarea::-webkit-scrollbar-thumb:hover {
+    background: #999;
+    /* Darker color on hover */
+}
+
+.list-item-container textarea::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    /* Background of the scrollbar track */
+    border-radius: 4px;
+}
+
+
+
+.custom-list-style-checkbox {
+    width: 16px !important;
+    height: 16px;
+    appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    margin-right: 8px;
+    display: inline-block;
+  }
+  
+  .custom-list-style-checkbox:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .custom-list-style-checkbox:checked::after {
+    display: block;
+    color: #fff;
+    text-align: center;
+  }
+  
+  .list-checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+
+  }
+
+  .wrapper-toggle-dots{
+    display: flex;
+    align-items: center;
+  }
+  

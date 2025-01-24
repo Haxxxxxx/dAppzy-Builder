@@ -8,7 +8,7 @@ const ListItem = ({ id }) => {
   const { content = 'Editable Item', parentId } = element || {};
   const isSelected = selectedElement?.id === id;
   const itemRef = useRef(null);
-
+  console.log(element);
   useEffect(() => {
     if (!element) {
       console.error(`Element with id ${id} not found in elements.`);
@@ -17,7 +17,8 @@ const ListItem = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'list-item' });
+    setSelectedElement({ id, type: 'list-item', parentId: element.parentId });
+    console.log(selectedElement);
   };
 
   const handleBlur = (e) => {
@@ -29,36 +30,29 @@ const ListItem = ({ id }) => {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-
-      if (!parentId) return console.error(`Parent ID for element ${id} not found.`);
-
-      const parentElement = elements.find((el) => el.id === parentId);
-      if (!parentElement) return console.error(`Parent element with ID ${parentId} not found.`);
-
-      const currentIndex = parentElement.children.findIndex((childId) => childId === id);
-      if (currentIndex === -1) return console.error(`Element ${id} not found in parent ${parentId} children.`);
-
-      const newId = addNewElement('list-item', 1, null, parentId);
-
+  
+      if (!parentId) {
+        console.error(`Parent ID for element ${id} not found.`);
+        return;
+      }
+  
+      const newId = addNewElement('list-item', 1, null, parentId); // Pass `parentId`
+  
       setElements((prevElements) =>
         prevElements.map((el) =>
           el.id === parentId
             ? {
                 ...el,
-                children: [
-                  ...el.children.slice(0, currentIndex + 1),
-                  newId,
-                  ...el.children.slice(currentIndex + 1),
-                ],
+                children: [...el.children, newId],
               }
             : el
         )
       );
-
+  
       setSelectedElement({ id: newId, type: 'list-item' });
     }
   };
-
+  
   useEffect(() => {
     if (isSelected && itemRef.current) {
       itemRef.current.focus();
@@ -84,23 +78,11 @@ const ListItem = ({ id }) => {
   );
 };
 
-const List = ({ id, type = 'ul' }) => {
-  const { elements, setSelectedElement, addNewElement, setElements } = useContext(EditableContext);
+const List = ({ id }) => {
+  const { elements, setSelectedElement } = useContext(EditableContext);
   const listElement = elements.find((el) => el.id === id);
 
-  useEffect(() => {
-    if (listElement && listElement.children.length === 0) {
-      const newItemId = addNewElement('list-item', 1, null, id);
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === id ? { ...el, children: [newItemId] } : el
-        )
-      );
-      setSelectedElement({ id: newItemId, type: 'list-item' });
-    }
-  }, [listElement, id, addNewElement, setElements, setSelectedElement]);
-
-  const { children = [] } = listElement || {};
+  const { type = 'ul', start, listStyleType, reversed } = listElement?.configuration || {};
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -113,17 +95,19 @@ const List = ({ id, type = 'ul' }) => {
       id,
       onClick: handleSelect,
       style: {
-        padding: '8px',
-        border: '1px solid #ccc',
-        margin: '8px 0',
-        listStyleType: type === 'ul' ? 'disc' : 'decimal',
+        listStyleType: type === 'ul' ? undefined : listStyleType,
       },
+      start: type === 'ol' ? start : undefined,
+      reversed: type === 'ol' ? reversed : undefined,
     },
-    children.map((childId) => {
+    listElement?.children?.map((childId) => {
       const childElement = elements.find((el) => el.id === childId);
       return childElement ? <ListItem key={childId} id={childId} /> : null;
     })
   );
 };
+
+
+
 
 export { List, ListItem };

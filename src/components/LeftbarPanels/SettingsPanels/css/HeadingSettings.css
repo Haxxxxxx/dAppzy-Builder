@@ -1,0 +1,9 @@
+.header-settings-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.header-settings-wrapper .content{
+    align-items: flex-start
+}

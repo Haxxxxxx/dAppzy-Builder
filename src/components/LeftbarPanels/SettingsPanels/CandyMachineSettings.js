@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import './CandyMachineSettings.css';
+import './css/CandyMachineSettings.css';
 
 const parseTimerToDate = (timerString) => {
   if (!timerString) return null;

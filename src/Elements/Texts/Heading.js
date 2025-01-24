@@ -2,16 +2,17 @@ import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Heading = ({ id, content: initialContent }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, updateContent, updateConfiguration, elements, findElementById } =
+    useContext(EditableContext);
   const headingRef = useRef(null);
 
-  // Fetch the latest element data, including `level`, from `elements`
+  // Find the latest element data
   const elementData = findElementById(id, elements);
-  const { content = initialContent, styles = {}, level = 1 } = elementData || {}; // Use default level 1 if undefined
+  const { content = initialContent, styles = {}, level = 1 } = elementData || {};
 
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent bubbling to parent elements
-    setSelectedElement({ id, type: 'title', level, styles }); // Include styles when selecting
+    e.stopPropagation();
+    setSelectedElement({ id, type: 'title', level, styles });
   };
 
   const handleBlur = (e) => {
@@ -22,27 +23,25 @@ const Heading = ({ id, content: initialContent }) => {
 
   useEffect(() => {
     if (selectedElement?.id === id && headingRef.current) {
-      // console.log('Focusing on heading:', id, selectedElement);
       headingRef.current.focus();
     }
-    // console.log('Rendering Heading with level:', level, 'Content:', content); // Confirm the correct level
   }, [selectedElement, id, level]);
 
-  const Tag = `h${level}`; // Render the appropriate heading tag
+  // Dynamically render the heading level
+  const Tag = `h${elementData?.level || 1}`;
 
   return (
     <Tag
       ref={headingRef}
+      id={elementData?.id || id}
       onClick={handleSelect}
-      id={id}
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
         ...styles,
         wordWrap: 'break-word',
-        wordBreak: 'break-word',
-        whiteSpace: 'normal',
+        whiteSpace: 'pre-wrap',
         overflowWrap: 'break-word',
       }}
     >
