@@ -1,55 +1,57 @@
-const TargetValueField = ({ actionType, targetValue, onChange }) => {
-    const pages = ['Home', 'About', 'Contact'];
-    const sections = ['#section1', '#section2', '#section3'];
-    const popups = ['Popup1', 'Popup2', 'Popup3'];
-  
-    const renderField = () => {
-      switch (actionType) {
-        case 'page':
-          return (
-            <select
-              name="targetValue"
-              value={targetValue}
-              onChange={onChange}
-              className="settings-input"
-            >
-              <option value="" disabled>Select a page</option>
-              {pages.map((page) => (
-                <option key={page} value={page}>{page}</option>
-              ))}
-            </select>
-          );
-        case 'pageSection':
-          return (
-            <select
-              name="targetValue"
-              value={targetValue}
-              onChange={onChange}
-              className="settings-input"
+import React, { useEffect, useState } from "react";
+import VideoSettings from "../VideoSettings/VideoSettings";
+import PlaybackSettings from "../VideoSettings/PlaybackSettings";
+import CollapsibleSection from "./CollapsibleSection";
 
-            >
-              <option value="" disabled>Select a section</option>
-              {sections.map((section) => (
-                <option key={section} value={section}>{section}</option>
-              ))}
-            </select>
-          );
-        case 'popup':
-          return (
-            <select
-              name="targetValue"
-              value={targetValue}
-              onChange={onChange}
-              className="settings-input"
-            >
-              <option value="" disabled>Select a popup</option>
-              {popups.map((popup) => (
-                <option key={popup} value={popup}>{popup}</option>
-              ))}
-            </select>
-          );
-        case 'URL':
-          return (
+const TargetValueField = ({ actionType, targetValue, onChange, updateStyles }) => {
+  const [videoPlatform, setVideoPlatform] = useState(null); // Store detected platform
+  const [isMuted, setIsMuted] = useState(false);
+  const [isAutoplay, setIsAutoplay] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+
+  const analyzeURL = (url) => {
+    if (!url) {
+      setVideoPlatform(null);
+      return;
+    }
+
+    try {
+      const parsedURL = new URL(url);
+      const hostname = parsedURL.hostname;
+
+      if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+        setVideoPlatform("YouTube");
+      } else if (hostname.includes("vimeo.com")) {
+        setVideoPlatform("Vimeo");
+      } else if (hostname.includes("dailymotion.com")) {
+        setVideoPlatform("Dailymotion");
+      } else {
+        setVideoPlatform("Unknown");
+      }
+    } catch (error) {
+      setVideoPlatform(null); // Handle invalid URLs
+    }
+  };
+
+  useEffect(() => {
+    if (actionType === "URL") {
+      analyzeURL(targetValue);
+    }
+  }, [targetValue, actionType]);
+
+  const handlePlaybackChange = (setting, value) => {
+    updateStyles({ [setting]: value });
+
+    if (setting === "muted") setIsMuted(value);
+    if (setting === "autoplay") setIsAutoplay(value);
+    if (setting === "controls") setShowControls(value);
+  };
+
+  const renderField = () => {
+    switch (actionType) {
+      case "URL":
+        return (
+          <div>
             <input
               type="text"
               name="targetValue"
@@ -57,41 +59,63 @@ const TargetValueField = ({ actionType, targetValue, onChange }) => {
               onChange={onChange}
               placeholder="Enter external URL"
               className="settings-input"
-              style={{  width: "80%"}}
+              style={{ width: "100%" }}
+            />
+            {videoPlatform && (
+              <p className="platform-info">
+                {videoPlatform === "Unknown"
+                  ? "Unrecognized platform."
+                  : `Detected platform: ${videoPlatform}`}
+              </p>
+            )}
+            {videoPlatform && videoPlatform !== "Unknown" && (
+              <div className="video-settings-container">
+                {/* Video Settings */}
+                <CollapsibleSection title="Video Settings">
 
-            />
-          );
-          case 'file':
-          return (
-            <input
-              type="text"
-              name="targetValue"
-              value={targetValue}
-              onChange={onChange}
-              placeholder="Enter file"
-              className="settings-input"
+                  <VideoSettings
+                    videoSrc={targetValue}
+                    updateStyles={updateStyles}
+                  />
+                </CollapsibleSection>
 
-            />
-          );
-        default:
-          return (
-            <input
-              type="text"
-              name="targetValue"
-              value={targetValue}
-              onChange={onChange}
-              placeholder="Enter value"
-              className="settings-input"
-            />
-          );
-      }
-    };
-  
-    return <div className="settings-group"         
->
-        <p>{actionType}</p>
-        {renderField()}</div>;
+                <CollapsibleSection title="Playback Settings">
+                  <PlaybackSettings
+                    isMuted={isMuted}
+                    isAutoplay={isAutoplay}
+                    showControls={showControls}
+                    handlePlaybackChange={handlePlaybackChange}
+                  />
+                </CollapsibleSection>
+
+              </div>
+            )}
+          </div>
+        );
+      default:
+        return (
+          <input
+            type="text"
+            name="targetValue"
+            value={targetValue}
+            onChange={onChange}
+            placeholder="Enter value"
+            className="settings-input"
+          />
+        );
+    }
   };
-  
-  export default TargetValueField;
-  
+
+  return (
+    <div className="settings-group">
+      {/* Conditionally display the action type */}
+      {!(actionType === "URL" && videoPlatform && videoPlatform !== "Unknown") && (
+        <p>{actionType}</p>
+      )}
+      {renderField()}
+    </div>
+  );
+
+};
+
+export default TargetValueField;

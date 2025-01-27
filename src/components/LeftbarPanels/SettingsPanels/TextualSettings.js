@@ -10,8 +10,9 @@ const TextualSettings = () => {
   const [localSettings, setLocalSettings] = useState({
     id: '',
     content: '',
-    type: '', // Element type (e.g., 'paragraph', 'heading', etc.)
+    type: '', // Element type (e.g., 'paragraph', 'code', etc.)
   });
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     if (selectedElement) {
@@ -25,12 +26,10 @@ const TextualSettings = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     const newSettings = {
       ...localSettings,
       [name]: value,
     };
-
     setLocalSettings(newSettings);
 
     if (name === 'content') {
@@ -40,8 +39,25 @@ const TextualSettings = () => {
     }
   };
 
+  const toggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const renderLineNumbers = (content) => {
+    const lines = content.split('\n');
+    return (
+      <div className="line-numbers">
+        {lines.map((_, index) => (
+          <div key={index} className="line-number">
+            {index + 1}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="settings-panel textual-settings-panel">
+    <div className={`settings-panel textual-settings-panel ${isExpanded ? 'expanded' : ''}`}>
       <hr />
       <div className="settings-group settings-header">
         <label htmlFor="id">ID</label>
@@ -57,26 +73,34 @@ const TextualSettings = () => {
       <hr />
       <CollapsibleSection title={`${localSettings.type} Settings`}>
         <div className="settings-wrapper">
-          {localSettings.type === 'title' && (
-            <div className="settings-group">
-              <label htmlFor="level">Size</label>
-              <select
-                name="level"
-                value={localSettings.level || 1} // Default to `h1` for headings
-                onChange={handleInputChange}
-                className="settings-input"
-              >
-                <option value={1}>H1</option>
-                <option value={2}>H2</option>
-                <option value={3}>H3</option>
-                <option value={4}>H4</option>
-                <option value={5}>H5</option>
-                <option value={6}>H6</option>
-              </select>
+          {localSettings.type === 'code' ? (
+            <div className="code-editor-wrapper">
+              <button className="expand-button" onClick={toggleExpand}>
+                {isExpanded ? (
+                  <>
+                    <span className="material-symbols-outlined">collapse_content</span>
+                    Minimize
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined">expand_content</span>
+                    Expand
+                  </>
+                )}
+              </button>
+              <div className="code-editor">
+                {renderLineNumbers(localSettings.content)}
+                <textarea
+                  name="content"
+                  value={localSettings.content}
+                  onChange={handleInputChange}
+                  placeholder="Enter your code here..."
+                  className="settings-input code-input"
+                  rows="10"
+                />
+              </div>
             </div>
-          )}
-          <div className="settings-group content">
-            <label htmlFor="content">Content</label>
+          ) : (
             <textarea
               name="content"
               value={localSettings.content}
@@ -85,7 +109,7 @@ const TextualSettings = () => {
               className="settings-input"
               rows="3"
             />
-          </div>
+          )}
         </div>
       </CollapsibleSection>
     </div>

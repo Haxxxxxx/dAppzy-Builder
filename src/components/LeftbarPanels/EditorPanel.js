@@ -15,6 +15,7 @@ import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
+import BackgroundSettings from './SettingsPanels/BackgroundSettings';
 
 const CollapsiblePanel = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,6 +67,14 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
+    if (selectedElement?.type === 'div' || selectedElement?.type === 'section') {
+      return (
+        <BackgroundSettings
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }
     if (selectedElement?.type === 'connectWalletButton') {
       return (
         <WalletSettings
@@ -92,6 +101,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
+    
     if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
         <LinkSettings

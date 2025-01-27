@@ -6,7 +6,7 @@ import ActionTypeSelector from './LinkSettings/ActionTypeSelector';
 import TargetValueField from './LinkSettings/TargetValueField';
 import OpenInNewTabCheckbox from './LinkSettings/OpenInNewTabCheckbox';
 import CollapsibleSection from './LinkSettings/CollapsibleSection';
-import SaveButton from './LinkSettings/SaveButton';
+import ButtonSettings from './LinkSettings/ButtonSettings'; // Import ButtonSettings
 
 const LinkSettings = ({ onUpdateSettings, settings }) => {
   const { selectedElement, updateConfiguration } = useContext(EditableContext);
@@ -48,6 +48,8 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
     alert('Link settings saved.');
   };
 
+  const additionalOptions = selectedElement?.type === 'button' ? ['Dropdown'] : [];
+
   return (
     <div className="settings-panel link-settings-panel">
       <hr />
@@ -68,6 +70,7 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
           <ActionTypeSelector
             actionType={localSettings.actionType}
             onChange={handleInputChange}
+            additionalOptions={additionalOptions} // Pass the additional options
           />
           <TargetValueField
             actionType={localSettings.actionType}
@@ -80,6 +83,13 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
           />
         </div>
       </CollapsibleSection>
+
+      {/* Render ButtonSettings if actionType is Dropdown */}
+      {localSettings.actionType === 'Dropdown' && (
+        <CollapsibleSection title="Dropdown Settings">
+          <ButtonSettings />
+        </CollapsibleSection>
+      )}
     </div>
   );
 };

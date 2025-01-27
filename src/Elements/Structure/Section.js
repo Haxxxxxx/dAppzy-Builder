@@ -1,15 +1,13 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
-import StructureAndElementsModal from '../../utils/SectionQuickAdd/StructureAndElementsModal';
 import useElementDrop from '../../utils/useElementDrop';
 
 const Section = ({ id }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
-  const sectionElement = elements.find((el) => el.id === id);
-  const { styles, children = [] } = sectionElement || {};
+  const sectionElement = elements.find((el) => el.id === id) || {};
+  const { styles = {}, children = [] } = sectionElement;
   const sectionRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { isOverCurrent, drop } = useElementDrop({
     id,
@@ -29,45 +27,71 @@ const Section = ({ id }) => {
   const handleSelect = (e) => {
     e.stopPropagation();
     setSelectedElement({ id, type: 'section', styles });
-    setIsModalOpen(true);
   };
 
-  return (
-    <>
-      <div
-        id={id}
-        ref={(node) => {
-          sectionRef.current = node;
-          drop(node);
-        }}
-        onClick={handleSelect}
+  // Background rendering logic for video or image
+  const backgroundContent =
+    styles.backgroundType === 'video' && styles.backgroundUrl ? (
+      <video
+        src={styles.backgroundUrl}
+        autoPlay
+        loop
+        muted
         style={{
-          ...styles,
-          padding: styles.padding || '10px',
-          margin: styles.margin || '10px 0',
-          backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: -1,
         }}
-      >
-        {children.map((childId) =>
-          renderElement(elements.find((el) => el.id === childId), elements, selectedElement)
-        )}
-      </div>
-      {isModalOpen && (
-        <StructureAndElementsModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onAddElement={(type) => {
-            const newId = addNewElement(type, 1, null, id);
-            setElements((prev) =>
-              prev.map((el) =>
-                el.id === id ? { ...el, children: [...new Set([...el.children, newId])] } : el
-              )
-            );
-            setIsModalOpen(false);
-          }}
-        />
+      />
+    ) : styles.backgroundType === 'image' && styles.backgroundUrl ? (
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: `url(${styles.backgroundUrl})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          zIndex: -1,
+        }}
+      />
+    ) : null;
+
+  return (
+    <div
+      id={id}
+      ref={(node) => {
+        sectionRef.current = node;
+        drop(node);
+      }}
+      onClick={handleSelect}
+      style={{
+        ...styles,
+        position: 'relative',
+        padding: styles.padding || '10px',
+        margin: styles.margin || '10px 0',
+        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
+      }}
+    >
+      {backgroundContent}
+      {children.map((childId) =>
+        renderElement(
+          elements.find((el) => el.id === childId),
+          elements,
+          null, // Assuming contentListWidth is not needed here
+          setSelectedElement,
+          setElements,
+          null, // handlePanelToggle is not defined
+          selectedElement
+        )
       )}
-    </>
+    </div>
   );
 };
 
