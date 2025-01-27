@@ -29,7 +29,7 @@ const BGVideo = ({ id, handleOpenMediaPanel }) => {
     // Only select if the user clicked on the BGVideo container itself
     if (e.target === e.currentTarget) {
       e.stopPropagation();
-      setSelectedElement({ id, type: 'bgVideo', styles });
+      setSelectedElement({ id, type: 'bgVideo', styles, backgroundType: 'video'});
     }
   };
 

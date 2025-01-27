@@ -1,5 +1,5 @@
 import React from 'react';
-import DraggableWeb3Elements from '../../Elements/Structure/DraggableWeb3Elements';
+import DraggableWeb3Elements from '../../Elements/DraggableElements/DraggableWeb3Elements';
 
 const MintingPanel = () => {
   return (

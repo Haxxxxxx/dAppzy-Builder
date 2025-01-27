@@ -1,6 +1,6 @@
 import elementIconPaths from '../../../Mapping/elementIconPaths';
 
-const TextElements = [
+const TypographyElements = [
   {
     type: 'paragraph',
     label: 'Paragraph',
@@ -26,11 +26,17 @@ const TextElements = [
     icon: elementIconPaths.blockquote,
   },
   {
-    type: 'code',
-    label: 'Code',
-    description: 'A code snippet.',
-    icon: elementIconPaths.code,
+    type: 'textarea',
+    label: 'Textblock',
+    description: 'A block of text.',
+    icon: elementIconPaths.textarea,
   },
+  // {
+  //   type: 'code',
+  //   label: 'Code',
+  //   description: 'A code snippet.',
+  //   icon: elementIconPaths.code,
+  // },
 ];
 
-export default TextElements;
+export default TypographyElements;

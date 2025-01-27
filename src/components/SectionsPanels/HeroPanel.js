@@ -1,5 +1,5 @@
 import React from 'react';
-import DraggableHero from '../../Elements/Structure/DraggableHero';
+import DraggableHero from '../../Elements/DraggableLayout/DraggableHero';
 import '../css/Sidebar.css'
 const HeroPanel = ({ contentListWidth, searchQuery }) => {
 

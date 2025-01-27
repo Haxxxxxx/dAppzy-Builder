@@ -1,6 +1,6 @@
 import React from 'react';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
+import Span from '../../Typography/Span.js';
+import Button from '../../Basic/Button.js';
 import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { ctaOneStyles } from './defaultCtaStyles.js';

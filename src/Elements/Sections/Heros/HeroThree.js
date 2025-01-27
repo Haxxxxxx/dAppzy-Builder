@@ -1,13 +1,13 @@
 import React, { useRef } from 'react';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
+import Span from '../../Typography/Span';
+import Button from '../../Basic/Button';
 import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { heroThreeStyles } from './defaultHeroStyles';
 import useElementDrop from '../../../utils/useElementDrop';
-import Heading from '../../Texts/Heading';
-import Paragraph from '../../Texts/Paragraph';
+import Heading from '../../Typography/Heading';
+import Paragraph from '../../Typography/Paragraph';
 
 const SelectableSpan = withSelectable(Span);
 const SelectableButton = withSelectable(Button);

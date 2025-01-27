@@ -2,9 +2,9 @@ import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
 import Image from '../../Media/Image';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
-import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
+import Span from '../../Typography/Span';
+import Button from '../../Basic/Button';
+import ConnectWalletButton from '../../Web3Block/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import withSelectable from '../../../utils/withSelectable';
 

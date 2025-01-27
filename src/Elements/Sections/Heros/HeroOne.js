@@ -1,11 +1,11 @@
 import React from 'react';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
+import Span from '../../Typography/Span';
+import Button from '../../Basic/Button';
 import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
 import { defaultHeroStyles } from './defaultHeroStyles';
-import Heading from '../../Texts/Heading';
-import Paragraph from '../../Texts/Paragraph';
+import Heading from '../../Typography/Heading';
+import Paragraph from '../../Typography/Paragraph';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 
 const SelectableSpan = withSelectable(Span);

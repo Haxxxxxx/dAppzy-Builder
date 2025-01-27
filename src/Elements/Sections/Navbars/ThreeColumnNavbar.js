@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import Image from '../../Media/Image';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
-import ConnectWalletButton from '../Web3Related/ConnectWalletButton';
+import Span from '../../Typography/Span';
+import Button from '../../Basic/Button';
+import ConnectWalletButton from '../../Web3Block/ConnectWalletButton';
 import useElementDrop from '../../../utils/useElementDrop';
 import { defaultNavbarStyles } from './DefaultNavbarStyles';
 import withSelectable from '../../../utils/withSelectable';

@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import FooterPanel from '../SectionsPanels/FooterPanel';
 import NavbarPanel from '../SectionsPanels/NavbarPanel';
-import DraggableElement from '../../Elements/Structure/DraggableElement';
+import DraggableElement from '../../Elements/DraggableElements/DraggableElement';
 import '../css/Sidebar.css';
 import HeroPanel from '../SectionsPanels/HeroPanel';
 import CTAPanel from '../SectionsPanels/CTAPanel';
 import Web3ElementPanel from '../SectionsPanels/Web3ElementPanel';
-import Web3SectionPanel from '../SectionsPanels/Web3SectionPanel';
 
-// Import element mappings
-import TextElements from './ElementsMapping/TextElements';
-import ContainerElements from './ElementsMapping/ContainerElements';
+import TypographyElements from './ElementsMapping/TypographyElements';
+import StructureElements from './ElementsMapping/StructureElements';
+import BasicElements from './ElementsMapping/BasicElements';
+import Web3Elements from './ElementsMapping/Web3Elements';
+import AdvancedElements from './ElementsMapping/AdvancedElements';
 import FormElements from './ElementsMapping/FormElements';
 import MediaElements from './ElementsMapping/MediaElements';
-import InteractiveElements from './ElementsMapping/InteractiveElements';
-// NEW: Our array of web3 section items
-import Web3Sections from './ElementsMapping/Web3Sections';
 
 const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   const [expandedSections, setExpandedSections] = useState({});
@@ -33,11 +31,14 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
 
   // Combine standard HTML elements + Web3Sections as categories
   const elements = {
-    'Text Elements': TextElements,
-    'Container Elements': ContainerElements,
-    'Form Elements': FormElements,
-    'Media Elements': MediaElements,
-    'Interactive Elements': InteractiveElements,
+    'Structure': StructureElements,
+    'Basic': BasicElements,
+    'Web 3 Blocks': Web3Elements,
+    'Typography': TypographyElements,
+    'Media': MediaElements,
+    'Advanced':AdvancedElements,
+    'Forms':FormElements,
+
   };
 
   // Layout-based panels if viewMode is 'layout'

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import DraggableNavbar from '../../Elements/Structure/DraggableNavbar';
+import DraggableNavbar from '../../Elements/DraggableLayout/DraggableNavbar';
 
 const NavbarPanel = ({ contentListWidth, searchQuery }) => {
   const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import DraggableFooter from '../../Elements/Structure/DraggableFooter';
+import DraggableFooter from '../../Elements/DraggableLayout/DraggableFooter';
 
 const FooterPanel = ({ contentListWidth, searchQuery }) => {
   const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand

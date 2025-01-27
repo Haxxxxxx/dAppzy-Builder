@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import Image from '../../Media/Image';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
-import DateComponent from '../../Interact/DateComponent';
+import Span from '../../Typography/Span';
+import Button from '../../Basic/Button';
+import DateComponent from '../../Unused(Yet)/DateComponent';
 import useElementDrop from '../../../utils/useElementDrop';
 import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';

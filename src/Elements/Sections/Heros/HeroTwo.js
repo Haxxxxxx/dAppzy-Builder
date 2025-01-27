@@ -1,12 +1,12 @@
 import React, { useRef } from 'react';
-import Button from '../../Interact/Button';
+import Button from '../../Basic/Button';
 import Image from '../../Media/Image';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import useElementDrop from '../../../utils/useElementDrop';
 import withSelectable from '../../../utils/withSelectable';
 import { heroTwoStyles } from './defaultHeroStyles';
-import Heading from '../../Texts/Heading';
-import Paragraph from '../../Texts/Paragraph';
+import Heading from '../../Typography/Heading';
+import Paragraph from '../../Typography/Paragraph';
 
 const SelectableButton = withSelectable(Button);
 const SelectableImage = withSelectable(Image);

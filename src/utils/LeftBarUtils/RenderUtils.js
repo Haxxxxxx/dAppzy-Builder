@@ -37,6 +37,7 @@ import {
   DraggableWeb3Elements,
   DateComponent,
   ConnectWalletButton,
+  BGVideo,
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
@@ -242,6 +243,14 @@ export const renderElement = (
         handlePanelToggle={handlePanelToggle}
       />
     ),
+    bgVideo: <BGVideo
+      id={id}
+      key={id}
+      type={'connectWalletButton'}
+      content={element.content}
+      styles={{ ...element.styles }}
+      handlePanelToggle={handlePanelToggle}
+    />
   };
 
   const component = componentMap[type];

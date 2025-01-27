@@ -1,6 +1,6 @@
 // CTAPanel.js
 import React, { useState } from 'react';
-import DraggableCTA from '../../Elements/Structure/DraggableCTA';
+import DraggableCTA from '../../Elements/DraggableLayout/DraggableCTA';
 
 const CTAPanel = ({ contentListWidth, searchQuery }) => {
     const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand

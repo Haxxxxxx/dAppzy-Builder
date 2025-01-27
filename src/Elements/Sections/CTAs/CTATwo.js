@@ -1,6 +1,6 @@
 import React from 'react';
-import Span from '../../Texts/Span';
-import Button from '../../Interact/Button';
+import Span from '../../Typography/Span';
+import Button from '../../Basic/Button';
 import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { ctaTwoStyles } from './defaultCtaStyles';

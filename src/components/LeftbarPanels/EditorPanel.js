@@ -67,7 +67,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if (selectedElement?.type === 'div' || selectedElement?.type === 'section') {
+    if (selectedElement?.type === 'bgVideo' || selectedElement?.type === 'section') {
       return (
         <BackgroundSettings
           settings={selectedElement.settings || {}}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Span from '../../Texts/Span';
+import Span from '../../Typography/Span.js';
 import Image from '../../Media/Image';
 import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';

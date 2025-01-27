@@ -25,12 +25,6 @@ const ContainerElements = [
     icon: elementIconPaths.list,  // use whichever “list” icon you like
   },
   {
-    type: 'fieldset',
-    label: 'Fieldset',
-    description: 'Groups related form elements.',
-    icon: elementIconPaths.fieldset,
-  },
-  {
     type: 'bgVideo',
     label: 'Background Video',
     description: 'A container that has a looping video behind its children.',

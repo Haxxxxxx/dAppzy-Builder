@@ -1,5 +1,5 @@
 import React from 'react';
-import DraggableElement from '../../Elements/Structure/DraggableElement';
+import DraggableElement from '../../Elements/DraggableElements/DraggableElement';
 import '../css/Sidebar.css';
 
 import elementIconPaths from '../../Mapping/elementIconPaths';

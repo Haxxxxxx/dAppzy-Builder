@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useEffect } from 'react';
-import { EditableContext } from '../../../context/EditableContext';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
-import { buttonStyles } from './DefaultWeb3Styles';
+import { EditableContext } from '../../context/EditableContext';
+import { structureConfigurations } from '../../configs/structureConfigurations';
+import { buttonStyles } from '../Sections/Web3Related/DefaultWeb3Styles';
 
 const ConnectWalletButton = ({
   id,
