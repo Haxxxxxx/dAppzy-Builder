@@ -3,7 +3,7 @@ import { EditableContext } from "../../../context/EditableContext";
 import "./css/ImageSettings.css";
 import CollapsibleSection from "./LinkSettings/CollapsibleSection";
 
-const ImageSettingsPanel = () => {
+const ImageSettings = () => {
     const { selectedElement, updateStyles } = useContext(EditableContext);
     const [elementId, setElementId] = useState("");
     const [imageSrc, setImageSrc] = useState("");
@@ -167,4 +167,4 @@ const ImageSettingsPanel = () => {
     );
 };
 
-export default ImageSettingsPanel;
+export default ImageSettings;

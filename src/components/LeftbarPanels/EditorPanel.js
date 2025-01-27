@@ -8,13 +8,13 @@ import DisplayEditor from '../../Editors/DisplayEditor';
 import EffectEditor from '../../Editors/EffectEditor';
 import ButtonEditor from '../../Editors/ButtonEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
-import WalletSettingsPanel from '../LeftbarPanels/SettingsPanels/WalletSettingsPanel';
-import LinkSettingsPanel from './SettingsPanels/LinkSettings';
+import WalletSettings from './SettingsPanels/WalletSettings';
+import LinkSettings from './SettingsPanels/LinkSettings';
 import BackgroundEditor from '../../Editors/BackgroundEditor'; // Import the new component
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
-import ImageSettingsPanel from './SettingsPanels/ImageSettingsPanel';
-
+import ImageSettings from './SettingsPanels/ImageSettings';
+import VideoSettings from './SettingsPanels/VideoSettings';
 
 const CollapsiblePanel = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,14 +68,19 @@ const EditorPanel = ({ onUpdateSettings }) => {
     }
     if (selectedElement?.type === 'connectWalletButton') {
       return (
-        <WalletSettingsPanel
+        <WalletSettings
           settings={selectedElement.settings || {}}
           onUpdateSettings={onUpdateSettings}
         />
       );
     }
     if (selectedElement?.type === 'image') {
-      return <ImageSettingsPanel settings={selectedElement.settings || {}}
+      return <ImageSettings settings={selectedElement.settings || {}}
+        onUpdateSettings={onUpdateSettings}
+      />;
+    }
+    if (selectedElement?.type === 'video') {
+      return <VideoSettings settings={selectedElement.settings || {}}
         onUpdateSettings={onUpdateSettings}
       />;
     }
@@ -89,7 +94,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
     }
     if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
-        <LinkSettingsPanel
+        <LinkSettings
           settings={selectedElement.settings || {}}
           onUpdateSettings={onUpdateSettings}
         />

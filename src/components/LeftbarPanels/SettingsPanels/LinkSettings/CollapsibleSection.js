@@ -8,10 +8,14 @@ const CollapsibleSection = ({ title, children }) => {
       <h3
         className="link-settings-panel-header"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: 'pointer', userSelect: 'none', display:'flex', justifyContent:'space-between'  }}
+        style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', justifyContent: 'space-between' }}
       >
         {title}
-        <span>{isCollapsed ? '▼' : '▶'}</span>
+        <span>{isCollapsed ? <span class="material-symbols-outlined">
+          keyboard_arrow_down
+        </span> : <span class="material-symbols-outlined">
+          chevron_right
+        </span>}</span>
       </h3>
       {!isCollapsed && <div>{children}</div>}
     </div>

@@ -8,7 +8,7 @@ import OpenInNewTabCheckbox from './LinkSettings/OpenInNewTabCheckbox';
 import CollapsibleSection from './LinkSettings/CollapsibleSection';
 import SaveButton from './LinkSettings/SaveButton';
 
-const LinkSettingsPanel = ({ onUpdateSettings, settings }) => {
+const LinkSettings = ({ onUpdateSettings, settings }) => {
   const { selectedElement, updateConfiguration } = useContext(EditableContext);
   const [localSettings, setLocalSettings] = useState({
     actionType: 'page',
@@ -84,4 +84,4 @@ const LinkSettingsPanel = ({ onUpdateSettings, settings }) => {
   );
 };
 
-export default LinkSettingsPanel;
+export default LinkSettings;
