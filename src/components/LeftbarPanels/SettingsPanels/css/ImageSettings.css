@@ -1,0 +1,139 @@
+.image-settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+
+
+    color: var(----editor-text, #D9D9D9);
+    font-family: Montserrat;
+    font-style: normal;
+    line-height: normal;
+}
+
+.image-settings-panel hr {
+    width: 100%;
+}
+
+.image-settings-panel input {
+    width: 70%;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+
+    color: var(----dark-gray, #57575B);
+    /* Default text color */
+    background: rgba(0, 0, 0, 0.45);
+    /* Default background */
+
+    border-radius: 7px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.image-settings-panel input::placeholder {
+    color: var(----editor-text, #D9D9D9);
+    /* Placeholder color */
+    font-style: italic;
+    /* Optional: visually distinguish the placeholder */
+}
+
+.image-settings-panel input:placeholder-shown {
+    background: rgba(0, 0, 0, 0.45);
+    /* Background for placeholder */
+    color: var(----editor-text, #D9D9D9);
+    /* Placeholder text color */
+}
+
+.image-settings-panel input:not(:placeholder-shown) {
+    background: rgba(0, 0, 0, 0.75);
+    /* Background for user-filled input */
+    color: var(----light-gray, #FFFFFF);
+}
+
+
+.image-settings-panel label {
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.image-preview-section {
+    display: flex;
+    padding: 5px;
+    align-items: center;
+    gap: 10px;
+    align-self: stretch;
+    justify-content: space-around;
+    border: 1px solid var(----dark-gray, #57575B);
+}
+
+.image-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.image-preview-wrapper {
+    flex-shrink: 0;
+}
+
+.image-info p {
+    margin: 5px;
+    color: var(----editor-text, #D9D9D9);
+    font-family: Montserrat;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: normal;
+}
+
+.image-info button {
+    display: flex;
+    padding: 3px 2px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    align-self: stretch;
+    width: 100%;
+
+    border-radius: 3px;
+    background: var(----dark-gray, #57575B);
+
+    color: var(----editor-text, #D9D9D9);
+    font-family: Montserrat;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.image-info .image-name {
+    color: var(----editor-text, #D9D9D9);
+    font-family: Montserrat;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.image-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.replace-image-button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.replace-image-button:hover {
+    background-color: #0056b3;
+}

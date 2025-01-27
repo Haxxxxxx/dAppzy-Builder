@@ -75,7 +75,7 @@ const MediaItem = ({
             >
               <span class="material-symbols-outlined">
                 preview
-              </span>            
+              </span>
             </button>
           </div>
         </div>
@@ -214,9 +214,18 @@ const MediaPanel = () => {
 
     return typeMatch && nameMatch;
   });
+  
   useEffect(() => {
-    console.log("MediaPanel mounted");
+    window.addToMediaPanel = (newItem) => {
+      setMediaItems((prevItems) => [newItem, ...prevItems]);
+    };
+  
+    return () => {
+      window.addToMediaPanel = null; // Clean up
+    };
   }, []);
+  
+
   return (
     <div className="media-panel scrollable-panel">
       <h3>Media Library</h3>

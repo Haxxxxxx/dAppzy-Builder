@@ -1,56 +1,92 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import './css/CandyMachineSettings.css';
+import './css/ConnectWalletSettings.css';
+import CollapsibleSection from './LinkSettings/CollapsibleSection';
 
-const WalletSettingsPanel = ({ onUpdateSettings = () => {} }) => {
-    const { selectedElement, updateConfiguration } = useContext(EditableContext);
-    const [wallets, setWallets] = useState([
-      { name: 'Phantom', enabled: true },
-      { name: 'MetaMask', enabled: false },
-      { name: 'Freighter', enabled: false },
-    ]);
-  
-    useEffect(() => {
-      if (selectedElement?.settings?.wallets) {
-        setWallets(selectedElement.settings.wallets);
-      }
-    }, [selectedElement]);
-  
-    const toggleWallet = (index) => {
-      const updatedWallets = wallets.map((wallet, i) =>
-        i === index ? { ...wallet, enabled: !wallet.enabled } : wallet
-      );
-      setWallets(updatedWallets);
-  
-      // Save settings to EditableContext
+const WalletSettingsPanel = () => {
+  const { selectedElement, updateConfiguration } = useContext(EditableContext);
+  const [wallets, setWallets] = useState([]);
+  const [elementId, setElementId] = useState('');
+
+  useEffect(() => {
+    // Load the selected element's data
+    if (selectedElement) {
+      setElementId(selectedElement.id || '');
+      setWallets(selectedElement.settings?.wallets || [
+        { name: 'Phantom', enabled: true },
+        { name: 'MetaMask', enabled: false },
+        { name: 'Freighter', enabled: false },
+      ]);
+    }
+  }, [selectedElement]);
+
+  const toggleWallet = (index) => {
+    const updatedWallets = wallets.map((wallet, i) =>
+      i === index ? { ...wallet, enabled: !wallet.enabled } : wallet
+    );
+    setWallets(updatedWallets);
+
+    // Persist changes to the context
+    if (selectedElement) {
       updateConfiguration(selectedElement.id, 'wallets', updatedWallets);
-    };
-  
-    const handleSave = () => {
-      onUpdateSettings({ wallets });
-      alert('Wallet settings saved.');
-    };
-  
-    return (
-      <div className="wallet-settings-panel">
-        <h3>Wallet Login Methods</h3>
+    }
+  };
+
+  const handleIdChange = (e) => {
+    const newId = e.target.value;
+    setElementId(newId);
+
+    // Persist changes to the context
+    if (selectedElement) {
+      updateConfiguration(selectedElement.id, 'id', newId);
+    }
+  };
+
+  return (
+    <div className="wallet-settings-panel">
+      <hr />
+      <div className="settings-group">
+        <label htmlFor="elementId">ID</label>
+        <input
+          type="text"
+          id="elementId"
+          value={elementId}
+          onChange={handleIdChange}
+          placeholder="Enter element ID"
+          className="settings-input"
+        />
+      </div>
+      <hr />
+      <CollapsibleSection title={"Connect Wallet Settings"}>
         {wallets.map((wallet, index) => (
           <div key={index} className="wallet-setting">
-            <label>
-              <input
-                type="checkbox"
-                checked={wallet.enabled}
-                onChange={() => toggleWallet(index)}
-              />
-              {wallet.name}
+            <label className="switch-label">
+              <div className="switch">
+                <input
+                  type="checkbox"
+                  checked={wallet.enabled}
+                  onChange={() => toggleWallet(index)}
+                />
+                <span className="slider"></span>
+              </div>
             </label>
+            <span>{wallet.name}</span>
           </div>
         ))}
-        <button onClick={handleSave} className="save-button">
-          Save Wallet Settings
-        </button>
-      </div>
-    );
-  };
-  
+        <p className="upvote-message">
+          Can’t find your wallet?{' '}
+          <a
+            href="https://your-feature-request-page.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="upvote-link"
+          >
+            Check our feature upvote page
+          </a>
+        </p>
+      </CollapsibleSection>
+    </div>
+  );
+};
+
 export default WalletSettingsPanel;

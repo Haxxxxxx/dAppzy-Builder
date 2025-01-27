@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState, useEffect } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { buttonStyles } from './DefaultWeb3Styles';
@@ -8,149 +8,67 @@ const ConnectWalletButton = ({
   preventHeroModal,
   handlePanelToggle = () => {},
 }) => {
-  const { selectedElement, setSelectedElement, updateStyles, findElementById, elements } =
+  const { selectedElement, setSelectedElement, updateContent, updateStyles, elements, findElementById } =
     useContext(EditableContext);
-
   const buttonRef = useRef(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [enabledWallets, setEnabledWallets] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
 
-  // Load configuration for ConnectWalletButton
-  const { connectWalletButton } = structureConfigurations.connectWalletButton;
-
-  // Find the element by ID or use defaults
+  // Get element data dynamically
   const elementData = findElementById(id, elements) || {};
   const {
-    content = connectWalletButton.content,
-    styles = connectWalletButton.styles,
-    settings = connectWalletButton.settings,
+    content = "Connect Wallet", // Default content
+    styles = structureConfigurations.connectWalletButton?.styles || {
+      padding: '10px 20px',
+      backgroundColor: '#007bff',
+      color: '#fff',
+      borderRadius: '4px',
+      border: 'none',
+      cursor: 'pointer',
+    },
+    settings = structureConfigurations.connectWalletButton?.settings || {
+      wallets: [
+        { name: 'Phantom', enabled: true },
+        { name: 'MetaMask', enabled: false },
+        { name: 'Freighter', enabled: false },
+      ],
+    },
   } = elementData;
 
+  // Handle selection
+  const handleSelect = (e) => {
+    e.stopPropagation();
+    setSelectedElement({ id, type: 'connectWalletButton', styles, settings });
+  };
+
+  // Update content on blur
+  const handleBlur = (e) => {
+    if (selectedElement?.id === id) {
+      updateContent(id, e.target.innerText.trim() || "Connect Wallet"); // Default text if empty
+    }
+  };
+
+  // Autofocus when selected
   useEffect(() => {
-    if (settings?.wallets) {
-      const activeWallets = settings.wallets.filter((wallet) => wallet.enabled);
-      setEnabledWallets(activeWallets);
+    if (selectedElement?.id === id && buttonRef.current) {
+      buttonRef.current.focus();
     }
-  }, [settings]);
-
-  // Request Signature
-  const requestSignature = async (message) => {
-    try {
-      const encodedMessage = new TextEncoder().encode(message);
-      const signedMessage = await window.solana.signMessage(encodedMessage, 'utf8');
-      alert('Signature approved. Proceeding to connect...');
-      return true;
-    } catch (err) {
-      alert('Signature approval required to proceed.');
-      return false;
-    }
-  };
-
-  // Wallet Connection Handlers
-  const connectPhantom = async () => {
-    if (window.solana && window.solana.isPhantom) {
-      const isSigned = await requestSignature("Please sign this message to confirm your identity.");
-      if (isSigned) {
-        const wallet = await window.solana.connect();
-        alert(`Phantom wallet connected: ${wallet.publicKey.toString()}`);
-      }
-    } else {
-      alert('Please install the Phantom wallet extension.');
-    }
-  };
-
-  const connectMetaMask = async () => {
-    if (window.ethereum) {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      alert(`MetaMask connected: ${accounts[0]}`);
-    } else {
-      alert('Please install the MetaMask extension.');
-    }
-  };
-
-  const connectFreighter = async () => {
-    if (window.freighterApi) {
-      const isSigned = await requestSignature("Please sign this message to confirm your identity.");
-      if (isSigned) {
-        const publicKey = await window.freighterApi.getPublicKey();
-        alert(`Freighter connected: ${publicKey}`);
-      }
-    } else {
-      alert('Please install the Freighter wallet extension.');
-    }
-  };
-
-  // Handle wallet selection
-  const handleWalletSelection = (walletName) => {
-    switch (walletName) {
-      case 'Phantom':
-        connectPhantom();
-        break;
-      case 'MetaMask':
-        connectMetaMask();
-        break;
-      case 'Freighter':
-        connectFreighter();
-        break;
-      default:
-        alert(`Wallet ${walletName} is not supported.`);
-    }
-    setShowPopup(false);
-  };
-
-  // Handle button click
-  const handleButtonClick = (e) => {
-    if (preventHeroModal) e.stopPropagation();
-    setSelectedElement({ id, type: 'connectWalletButton', styles });
-    console.log(selectedElement);
-    setShowPopup(!showPopup);
-  };
-
-  // Update styles
-  const handleStyleChange = (newStyles) => {
-    updateStyles(id, newStyles);
-  };
+  }, [selectedElement, id]);
 
   return (
-    <>
-      <button
-        id={id}
-        ref={buttonRef}
-        onClick={handleButtonClick}
-        style={{ ...styles, ...buttonStyles.button }}
-      >
-        {content}
-      </button>
-
-      {/* Wallet Selection Popup */}
-      {showPopup && (
-        <div style={buttonStyles.popup}>
-          <div style={buttonStyles.popupContent}>
-            <h3>Select Wallet</h3>
-            {enabledWallets.length > 0 ? (
-              enabledWallets.map((wallet) => (
-                <button
-                  key={wallet.name}
-                  onClick={() => handleWalletSelection(wallet.name)}
-                  style={buttonStyles.walletOption}
-                >
-                  Connect with {wallet.name}
-                </button>
-              ))
-            ) : (
-              <p style={buttonStyles.noWallets}>No wallets available for connection.</p>
-            )}
-            <button onClick={() => setShowPopup(false)} style={buttonStyles.closeButton}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-    </>
+    <button
+      id={id}
+      ref={buttonRef}
+      onClick={handleSelect}
+      contentEditable={selectedElement?.id === id}
+      onBlur={handleBlur}
+      suppressContentEditableWarning={true}
+      style={{
+        ...styles, // Use styles from configuration or element data
+        cursor: selectedElement?.id === id ? 'text' : 'pointer',
+      }}
+    >
+      {content || "Connect Wallet"} {/* Use content from configuration or default */}
+    </button>
   );
 };
 
 export default ConnectWalletButton;
-

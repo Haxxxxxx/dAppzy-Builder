@@ -69,17 +69,17 @@ function App() {
       setSelectedElement(null); // Set to null to clear selection
     }
   };
-  // Manage panel display based on selected element type
-  useEffect(() => {
-    if (selectedElement?.type === 'image') {
-      setOpenPanel('media'); // Show Media Panel for images
-    } else if (selectedElement && selectedElement.type !== 'image') {
-      setOpenPanel('sidebar'); // Show Sidebar for non-image elements
-    }
-    else{
-      return;
-    }
-  }, [selectedElement]);
+  // // Manage panel display based on selected element type
+  // useEffect(() => {
+  //   if (selectedElement?.type === 'image') {
+  //     setOpenPanel('media'); // Show Media Panel for images
+  //   } else if (selectedElement && selectedElement.type !== 'image') {
+  //     setOpenPanel('sidebar'); // Show Sidebar for non-image elements
+  //   }
+  //   else{
+  //     return;
+  //   }
+  // }, [selectedElement]);
 
   useEffect(() => {
     console.log('Current openPanel:', openPanel);

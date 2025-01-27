@@ -1,32 +1,46 @@
-import React, { useContext, useState } from 'react';
-import { EditableContext } from '../../context/EditableContext';
-import { useDrop } from 'react-dnd';
+import React, { useContext, useState, useEffect } from "react";
+import { EditableContext } from "../../context/EditableContext";
+import { useDrop } from "react-dnd";
 
-const Image = ({ id, styles: customStyles, src, handleOpenMediaPanel = () => {}, handleDrop }) => {
-  const { elements, setSelectedElement } = useContext(EditableContext);
+const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }, handleDrop }) => {
+  const { elements, updateStyles, setSelectedElement } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id) || {};
-  const { content = '' } = imageElement;
-  const [newSrc, setNewSrc] = useState(content || src || '');
-  const defaultSrc = 'https://via.placeholder.com/150';
+  const { styles = {} } = imageElement;
+  const defaultSrc = "https://picsum.photos/150"; // Fallback placeholder
+  const [currentSrc, setCurrentSrc] = useState(styles.src || defaultSrc);
 
-  // Drag-and-Drop Logic
+  useEffect(() => {
+    setCurrentSrc(styles.src || defaultSrc);
+  }, [styles.src]);
+
   const [{ isOver }, drop] = useDrop(() => ({
-    accept: 'mediaItem',
+    accept: "mediaItem",
     drop: (item) => {
-      handleDrop(item, id);
-      setNewSrc(item.src);
+      if (item.src) {
+        // Update the context with the new src
+        updateStyles(id, { src: item.src });
+
+        // Re-select this image with the newly updated styles
+        setSelectedElement({
+          id,
+          type: "image",
+          // If needed, you could also pass in the updated styles directly:
+          // styles: { src: item.src, ...styles }
+        });
+      }
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
     }),
   }));
 
+
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'image' });
+    setSelectedElement({ id, type: "image" });
     handleOpenMediaPanel();
   };
-  console.log(customStyles);
+
   return (
     <div
       id={id}
@@ -34,21 +48,21 @@ const Image = ({ id, styles: customStyles, src, handleOpenMediaPanel = () => {},
       onClick={handleSelect}
       style={{
         ...customStyles,
-        border: isOver ? '2px dashed green' : 'none',
-        position: 'relative',
-        cursor: 'pointer',
-        display: 'inline-block',
+        border: isOver ? "2px dashed green" : "none",
+        position: "relative",
+        cursor: "pointer",
+        display: "inline-block",
       }}
       aria-label="Editable image"
     >
       <img
-        src={newSrc || defaultSrc}
-        alt="Editable element"
+        src={currentSrc}
+        alt={styles.alt || "Editable element"}
         style={{
-          width: customStyles.width || 'auto',
-          height: customStyles.height || 'auto',
-          objectFit: customStyles.objectFit || 'cover',
-          borderRadius: customStyles.borderRadius || '0',
+          width: styles.width || "auto",
+          height: styles.height || "auto",
+          objectFit: styles.objectFit || "cover",
+          borderRadius: styles.borderRadius || "0",
         }}
       />
     </div>

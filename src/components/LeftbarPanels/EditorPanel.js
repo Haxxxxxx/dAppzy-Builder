@@ -13,6 +13,7 @@ import LinkSettingsPanel from './SettingsPanels/LinkSettings';
 import BackgroundEditor from '../../Editors/BackgroundEditor'; // Import the new component
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
+import ImageSettingsPanel from './SettingsPanels/ImageSettingsPanel';
 
 
 const CollapsiblePanel = ({ title, children }) => {
@@ -73,6 +74,11 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
+    if (selectedElement?.type === 'image') {
+      return <ImageSettingsPanel settings={selectedElement.settings || {}}
+        onUpdateSettings={onUpdateSettings}
+      />;
+    }
     if (selectedElement?.type === 'candyMachine') {
       return (
         <CandyMachineSettings
@@ -81,7 +87,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if ((selectedElement?.type === 'anchor' ||selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
+    if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
         <LinkSettingsPanel
           settings={selectedElement.settings || {}}
@@ -89,7 +95,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if ((selectedElement?.type === 'ul' ||selectedElement?.type === 'ol' ||selectedElement?.type === 'list-item')) {
+    if ((selectedElement?.type === 'ul' || selectedElement?.type === 'ol' || selectedElement?.type === 'list-item')) {
       return (
         <ListSettings
           settings={selectedElement.settings || {}}
@@ -97,7 +103,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    
+
     return <p>No settings available for this element yet.</p>;
   };
 
