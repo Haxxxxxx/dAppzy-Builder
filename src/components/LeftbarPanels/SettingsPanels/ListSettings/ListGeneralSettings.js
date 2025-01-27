@@ -1,17 +1,29 @@
 import React from 'react';
 
-const ListGeneralSettings = ({ localSettings, setLocalSettings }) => {
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setLocalSettings((prev) => ({ ...prev, [name]: value }));
-  };
-
+const ListGeneralSettings = ({ localSettings, handleInputChange }) => {
+  // For toggling "Show Dots/Numbers":
   const handleCheckboxChange = (e) => {
-    const { checked } = e.target;
-    setLocalSettings((prev) => ({
-      ...prev,
-      listStyleType: checked ? (localSettings.type === 'ol' ? 'decimal' : 'disc') : 'none',
-    }));
+    const checked = e.target.checked;
+
+    // If checked, pick either 'decimal' (for OL) or 'disc' (for UL).
+    // If unchecked, set list style to 'none'.
+    const nextStyleType = checked
+      ? localSettings.listType === 'ol'
+        ? 'decimal'
+        : 'disc'
+      : 'none';
+
+    // Because our parent is expecting standard input events,
+    // create a synthetic event for `handleInputChange`
+    const syntheticEvent = {
+      target: {
+        name: 'listStyleType',
+        value: nextStyleType,
+        // We can mimic a <select> or <input type="text" />
+        type: 'text',
+      },
+    };
+    handleInputChange(syntheticEvent);
   };
 
   return (
@@ -27,11 +39,12 @@ const ListGeneralSettings = ({ localSettings, setLocalSettings }) => {
           className="settings-input"
         />
       </div>
+
       <div className="settings-group">
-        <label htmlFor="type">Type</label>
+        <label htmlFor="listType">List Type</label>
         <select
-          name="type"
-          value={localSettings.type}
+          name="listType"
+          value={localSettings.listType}
           onChange={handleInputChange}
           className="settings-input"
         >
@@ -39,8 +52,9 @@ const ListGeneralSettings = ({ localSettings, setLocalSettings }) => {
           <option value="ol">Ordered List</option>
         </select>
       </div>
+
       <div className="settings-group list-checkbox-group">
-        <label htmlFor="listStyleToggle" className='wrapper-toggle-dots'>
+        <label htmlFor="listStyleToggle" className="wrapper-toggle-dots">
           <input
             type="checkbox"
             id="listStyleToggle"

@@ -143,20 +143,11 @@ export const renderElement = (
     image: <Image id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
     input: <Input id={id} key={id} styles={{ ...element.styles }} />,
     form: <Form id={id} key={id} styles={{ ...element.styles }} />,
-    ul: (
+    list: (
       <List
         id={id}
         key={id}
         type="ul"
-        styles={{ ...element.styles }}
-        configuration={configuration}
-      />
-    ),
-    ol: (
-      <List
-        id={id}
-        key={id}
-        type="ol"
         styles={{ ...element.styles }}
         configuration={configuration}
       />

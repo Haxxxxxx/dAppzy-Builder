@@ -29,36 +29,40 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
     };
   }, [isDragging]);
 
+  // Build the icon path based on the element type
+  // e.g., type = 'paragraph' => "/icons/icon-paragraph.svg"
+  const iconPath = `./img/icon-${type}.svg`;
+  console.log(iconPath);
   return (
     <div className='bento-extract-display'>
-
       <div
         ref={drag}
         className={`draggable-element ${isDragging ? 'dragging' : ''}`}
         style={{
-          cursor: isDragging ? 'grab' : 'grab', // Consistent cursor during drag
+          cursor: isDragging ? 'grab' : 'grab', // Consistent cursor
           opacity: isDragging ? 0.5 : 1,
           padding: '8px',
           margin: '8px 0',
-          border: '1px solid #ccc',
           borderRadius: '4px',
-          cursor: 'move',
-          backgroundColor: "#FBFBFB",
           color: '#686868'
         }}
       >
-        <div>
+        {/* Icon display */}
+        <div style={{ marginBottom: '4px'}}>
+          <img
+            src={iconPath}
+            alt={type}
+            onError={(e) => {
+              // Optional: fallback if the icon is missing
+              e.target.src = '/icons/icon-default.svg';
+            }}
+          />
         </div>
-        {description && (
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>
-            {description}
-          </div>
-        )}
+       
       </div>
+      {/* Label under the draggable container */}
       <strong className='element-name'>{label}</strong>
-
     </div>
-
   );
 };
 

@@ -34,7 +34,7 @@ import DraggableWeb3Elements from './Structure/DraggableWeb3Elements';
 import DateComponent from './Interact/DateComponent';
 import ConnectWalletButton from './Sections/Web3Related/ConnectWalletButton';
 import withSelectable from '../utils/withSelectable';
-
+import BGVideo from './Structure/BGVideo';
 const SelectableParagraph = withSelectable(Paragraph);
 const SelectableHeading = withSelectable(Heading);
 const SelectableSection = withSelectable(Section);
@@ -72,7 +72,7 @@ const SelectableCaption = withSelectable(Caption);
 const SelectableDraggableWeb3Elements = withSelectable(DraggableWeb3Elements);
 const SelectableDateComponent = withSelectable(DateComponent);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
-
+const SelectableBGVideo = withSelectable(BGVideo);
 export {
   SelectableParagraph as Paragraph,
   SelectableHeading as Heading,
@@ -111,4 +111,5 @@ export {
   SelectableDraggableWeb3Elements as DraggableWeb3Elements,
   SelectableDateComponent as DateComponent,
   SelectableConnectWalletButton as ConnectWalletButton,
+  SelectableBGVideo as BGVideo,
 };

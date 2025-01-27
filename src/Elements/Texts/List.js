@@ -82,23 +82,37 @@ const List = ({ id }) => {
   const { elements, setSelectedElement } = useContext(EditableContext);
   const listElement = elements.find((el) => el.id === id);
 
-  const { type = 'ul', start, listStyleType, reversed } = listElement?.configuration || {};
+  // Default to 'ul' if not set
+  const {
+    listType = 'ul',    // 'ul' or 'ol'
+    listStyleType,
+    start,
+    reversed,
+  } = listElement?.configuration || {};
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type });
+    // always: type: 'list'
+    setSelectedElement({ id, type: 'list' });
   };
 
+  // Decide the actual HTML tag
+  const tagName = listType === 'ol' ? 'ol' : 'ul';
+
+  // Create the element (<ul> or <ol>)
   return React.createElement(
-    type,
+    tagName,
     {
       id,
       onClick: handleSelect,
       style: {
-        listStyleType: type === 'ul' ? undefined : listStyleType,
+        // If it's <ul>, you might do "disc" as default
+        // If it's <ol>, "decimal" as default
+        listStyleType: listType === 'ol' ? (listStyleType || 'decimal') : (listStyleType || 'disc'),
       },
-      start: type === 'ol' ? start : undefined,
-      reversed: type === 'ol' ? reversed : undefined,
+      // <ol>-only props:
+      start: listType === 'ol' ? start : undefined,
+      reversed: listType === 'ol' ? reversed : undefined,
     },
     listElement?.children?.map((childId) => {
       const childElement = elements.find((el) => el.id === childId);
@@ -106,8 +120,5 @@ const List = ({ id }) => {
     })
   );
 };
-
-
-
 
 export { List, ListItem };

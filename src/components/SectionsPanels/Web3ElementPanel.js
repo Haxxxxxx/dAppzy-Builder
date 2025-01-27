@@ -2,6 +2,8 @@ import React from 'react';
 import DraggableElement from '../../Elements/Structure/DraggableElement';
 import '../css/Sidebar.css';
 
+import elementIconPaths from '../../Mapping/elementIconPaths';
+
 const Web3ElementPanel = ({ searchQuery }) => {
   const web3Elements = [
     {
@@ -11,11 +13,14 @@ const Web3ElementPanel = ({ searchQuery }) => {
           type: 'connectWalletButton',
           label: 'Wallet Connect',
           description: 'Integrate wallet connection functionality.',
+          icon: elementIconPaths.connectWalletButton,
         },
         {
           type: 'transactionButton',
           label: 'Transaction Button',
           description: 'Trigger on-chain transactions.',
+          icon: elementIconPaths.transactionButton,
+
         },
       ],
     },

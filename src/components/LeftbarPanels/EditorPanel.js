@@ -110,7 +110,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if ((selectedElement?.type === 'ul' || selectedElement?.type === 'ol' || selectedElement?.type === 'list-item')) {
+    if ((selectedElement?.type === 'list' || selectedElement?.type === 'list-item')) {
       return (
         <ListSettings
           settings={selectedElement.settings || {}}

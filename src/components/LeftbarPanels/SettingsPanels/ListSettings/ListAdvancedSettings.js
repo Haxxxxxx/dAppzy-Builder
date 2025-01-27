@@ -1,12 +1,6 @@
 import React from 'react';
 
-const ListAdvancedSettings = ({ localSettings, setLocalSettings }) => {
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-    setLocalSettings((prev) => ({ ...prev, [name]: newValue }));
-  };
-
+const ListAdvancedSettings = ({ localSettings, handleInputChange }) => {
   return (
     <>
       <div className="settings-group">
@@ -36,14 +30,14 @@ const ListAdvancedSettings = ({ localSettings, setLocalSettings }) => {
         </select>
       </div>
       <div className="settings-group">
-        <label htmlFor="reversed">Reversed Order</label>
         <input
           type="checkbox"
           name="reversed"
           checked={localSettings.reversed}
           onChange={handleInputChange}
-          className="settings-input"
+          className="custom-list-style-checkbox"
         />
+        <label htmlFor="reversed">Reversed Order</label>
       </div>
       <hr />
     </>
