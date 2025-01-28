@@ -9,8 +9,9 @@ const DraggableCTA = ({
   configuration,
   isEditing,
   showDescription = false,
-  handleOpenMediaPanel,
   contentListWidth,
+  handlePanelToggle,
+  handleOpenMediaPanel,
   imgSrc, // Image source for the navbar preview
   label, // Label for the navbar
 }) => {
@@ -19,6 +20,7 @@ const DraggableCTA = ({
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
+  // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { type: 'cta', configuration },
@@ -27,10 +29,7 @@ const DraggableCTA = ({
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        // Just add the hero element with configuration as structure
         const newId = addNewElement('cta', 1, null, null, configuration);
-
-        // Now update the element with the given configuration
         setElements((prevElements) =>
           prevElements.map((el) =>
             el.id === newId ? { ...el, configuration } : el
@@ -40,6 +39,7 @@ const DraggableCTA = ({
     },
   }), [configuration, isEditing, addNewElement, setElements]);
 
+  // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
 
@@ -53,7 +53,7 @@ const DraggableCTA = ({
           el.id === parentId
             ? {
               ...el,
-              children: [...new Set([...el.children, newId])],
+              children: [...new Set([...el.children, newId])], // Ensure unique children
             }
             : el
         )
@@ -62,7 +62,8 @@ const DraggableCTA = ({
   };
 
   const ctaElement = findElementById(id, elements);
-  const children = ctaElement?.children?.map((childId) => findElementById(childId, elements));
+  const children = ctaElement?.children?.map((childId) => findElementById(childId, elements)) || [];
+
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
 
@@ -97,9 +98,7 @@ const DraggableCTA = ({
   // Render description if requested
   if (showDescription) {
     return (
-      <div className='bento-extract-display' onClick={toggleModal}
-      >
-
+      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
         <img
           src={imgSrc}
           alt={label}
@@ -111,9 +110,11 @@ const DraggableCTA = ({
           }}
         />
         <strong className='element-name'>{titles[configuration]}</strong>
+        {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );
   }
+
   let CTAComponent;
   if (configuration === 'CTAOne') {
     CTAComponent = (
@@ -122,6 +123,7 @@ const DraggableCTA = ({
         contentListWidth={contentListWidth}
         children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
       />
@@ -133,6 +135,8 @@ const DraggableCTA = ({
         contentListWidth={contentListWidth}
         children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
       />
     );

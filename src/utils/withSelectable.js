@@ -1,4 +1,3 @@
-// src/utils/withSelectable.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
@@ -35,9 +34,7 @@ const withSelectable = (WrappedComponent) => {
             style={{
               position: 'absolute',
               top: '0',
-              // left or other positioning if desired
               zIndex: 1000,
-              // This is the critical line: let clicks pass through!
               pointerEvents: 'none',
               backgroundColor: '#4D70FF',
               color: '#fff',
@@ -67,7 +64,6 @@ const withSelectable = (WrappedComponent) => {
               className="material-symbols-outlined"
               onClick={handleRemove}
               style={{
-                // Re-enable clicks on the icon
                 pointerEvents: 'auto',
                 cursor: 'pointer',
                 color: '#fff',
@@ -85,18 +81,16 @@ const withSelectable = (WrappedComponent) => {
           onClick={handleSelect}
           id={id}
           style={{
+            // Apply position: relative only if selected, otherwise reset it
+            ...(props.style || {}),
+            position: isSelected ? 'relative' : 'static', // Default to static if not selected
             ...(isSelected ? selectedStyle : {}),
             cursor: 'text',
-            // Only apply relative positioning if isSelected is true
-            ...(isSelected ? { position: 'relative' } : {}),
             boxSizing: 'border-box',
-            ...props.style,
           }}
         />
-
       </>
     );
-
   };
 };
 

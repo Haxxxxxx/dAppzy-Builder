@@ -47,7 +47,7 @@
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
-  justify-content: space-around;
+  justify-content: space-between;
 }
 
 .filter-buttons button {
@@ -243,6 +243,7 @@
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  
 }
 
 .search-bar input:focus {

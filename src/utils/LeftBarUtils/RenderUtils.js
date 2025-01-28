@@ -121,7 +121,7 @@ export const renderElement = (
         );
       });
   };
-
+  
 
 
 
@@ -270,9 +270,9 @@ export const renderElement = (
     vflex: <VFlexLayout id={id} key={id} styles={{ ...element.styles }}>
       {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
     </VFlexLayout>,
-    line:<Line  id={id} key={id} styles={{ ...element.styles }}></Line>,
-    linkblock : <LinkBlock  id={id} key={id} styles={{ ...element.styles }}></LinkBlock>,
-    youtube : <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} ></YouTubeVideo>,
+    line: <Line id={id} key={id} styles={{ ...element.styles }}></Line>,
+    linkblock: <LinkBlock id={id} key={id} styles={{ ...element.styles }}></LinkBlock>,
+    youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} ></YouTubeVideo>,
   };
 
   const component = componentMap[type];

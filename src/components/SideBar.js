@@ -5,7 +5,7 @@ import { EditableContext } from '../context/EditableContext';
 import './css/Sidebar.css';
 
 const SideBar = ({ contentListWidth }) => {
-  const [viewMode, setViewMode] = useState('elements'); // Default to 'elements'
+  const [viewMode, setViewMode] = useState('layout'); // Default to 'elements'
   const [searchQuery, setSearchQuery] = useState('');
   const { selectedElement } = useContext(EditableContext);
 

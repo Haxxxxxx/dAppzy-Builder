@@ -1,36 +1,44 @@
-import React from 'react';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import Image from '../../Media/Image';
-import withSelectable from '../../../utils/withSelectable';
+import React, { useContext, useEffect, useRef, useMemo } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
+import { Image, Button, Heading, Paragraph } from '../../SelectableElements';
+import useElementDrop from '../../../utils/useElementDrop';
 import { defaultHeroStyles } from './defaultHeroStyles';
-import Heading from '../../Typography/Heading';
-import Paragraph from '../../Typography/Paragraph';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
 
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
-const SelectableHeading = withSelectable(Heading);
-const SelectableParagraph = withSelectable(Paragraph);
+const HeroOne = ({   
+  handleSelect,
+  uniqueId,
+  contentListWidth,
+  children,
+  onDropItem,
+  handleOpenMediaPanel,
+}) => {
+  const heroRef = useRef(null);
 
-const HeroOne = ({ children = [], onDropItem, handleOpenMediaPanel,handleSelect }) => {
-  const { heroOne } = structureConfigurations;
+  // Access global context
+  const { elements, updateStyles } = useContext(EditableContext);
 
-  // Helper function to find a child or fallback to default content
-  const findChild = (type, defaultIndex) => {
-    return (
-      children.find((child) => child.type === type) ||
-      heroOne.children[defaultIndex] || // Fallback to default configuration
-      {}
-    );
-  };
+  // Memoize hero element to avoid recalculations
+  const heroElement = useMemo(() => elements.find((el) => el.id === uniqueId), [elements, uniqueId]);
 
-  // Retrieve content or fallbacks
-  const heroImage = findChild('image', 0);
-  const heroTitle = findChild('title', 1);
-  const heroDescription = findChild('paragraph', 2);
-  const primaryButton = findChild('button', 3);
+  const { isOverCurrent, drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: heroRef,
+    onDropItem,
+  });
+
+  // Apply default styles only once
+  useEffect(() => {
+    if (!heroElement || heroElement.styles?.applied) return;
+
+    const noCustomStyles = !heroElement.styles || Object.keys(heroElement.styles).length === 0;
+
+    if (noCustomStyles) {
+      updateStyles(heroElement.id, {
+        ...defaultHeroStyles.hero,
+        applied: true, // Add flag to mark as styled
+      });
+    }
+  }, [heroElement, updateStyles]);
 
   const handleImageDrop = (droppedItem, imageId) => {
     if (droppedItem.mediaType === 'image') {
@@ -39,50 +47,67 @@ const HeroOne = ({ children = [], onDropItem, handleOpenMediaPanel,handleSelect 
   };
 
   return (
-    <section style={defaultHeroStyles.hero}       onClick={(e) => handleSelect(e)}  // if you need the event explicitly
->
+    <section
+      ref={(node) => {
+        heroRef.current = node;
+        drop(node);
+      }}
+      style={{
+        ...defaultHeroStyles.hero,
+        ...(heroElement?.styles || {}),
+      }}
+      onClick={(e) => handleSelect(e)}
+    >
       <div style={defaultHeroStyles.heroContent}>
-        {/* Title */}
-        {heroTitle.content && (
-          <SelectableHeading
-            id={heroTitle.id || 'default-title'}
-            content={heroTitle.content}
-            styles={defaultHeroStyles.heroTitle}
-          />
-        )}
-
-        {/* Description */}
-        {heroDescription.content && (
-          <SelectableParagraph
-            id={heroDescription.id || 'default-description'}
-            content={heroDescription.content}
-            styles={defaultHeroStyles.heroDescription}
-          />
-        )}
-
-        {/* Buttons */}
-        <div style={defaultHeroStyles.buttonContainer}>
-          {primaryButton.content && (
-            <SelectableButton
-              id={primaryButton.id || 'default-primary-button'}
-              content={primaryButton.content}
-              styles={defaultHeroStyles.primaryButton}
+        {children
+          .filter((child) => child?.type === 'heading')
+          .map((child) => (
+            <Heading
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={child.styles || defaultHeroStyles.heroTitle}
             />
-          )}
+          ))}
+
+        {children
+          .filter((child) => child?.type === 'paragraph')
+          .map((child) => (
+            <Paragraph
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={child.styles || defaultHeroStyles.heroDescription}
+            />
+          ))}
+
+        <div style={defaultHeroStyles.buttonContainer}>
+          {children
+            .filter((child) => child?.type === 'button')
+            .map((child) => (
+              <Button
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={child.styles || defaultHeroStyles.primaryButton}
+              />
+            ))}
         </div>
       </div>
 
-      {/* Hero Image */}
       <div style={defaultHeroStyles.heroImageContainer}>
-        {heroImage.content && (
-          <SelectableImage
-            id={heroImage.id || 'default-hero-image'}
-            src={heroImage.content}
-            styles={defaultHeroStyles.heroImage}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-          />
-        )}
+        {children
+          .filter((child) => child?.type === 'image')
+          .map((child) => (
+            <Image
+              key={child.id}
+              id={child.id}
+              src={child.content}
+              styles={child.styles || defaultHeroStyles.heroImage}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={(item) => onDropItem(item, child.id)}
+            />
+          ))}
       </div>
     </section>
   );

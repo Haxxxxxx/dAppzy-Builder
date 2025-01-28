@@ -93,7 +93,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         onUpdateSettings={onUpdateSettings}
       />;
     }
-    if (selectedElement?.type === 'candyMachine') {
+    if (selectedElement?.type === 'mintingSection') {
       return (
         <CandyMachineSettings
           settings={selectedElement.settings || {}}

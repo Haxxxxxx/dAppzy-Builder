@@ -151,12 +151,18 @@ p {
   max-height: 100vh;
   /* Restrict the height to the viewport */
   padding: 16px;
-  background-color: #f8f8f8;
-  border-left: 1px solid #ddd;
+  background-color: #313031;
   overflow-y: auto;
   /* Enable vertical scrolling */
   box-sizing: border-box;
   /* Ensure padding and border are included in height */
+
+  color: var(----editor-text, #D9D9D9);
+  text-align: left;
+  font-family: Montserrat;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .structure-panel h3 {
@@ -184,12 +190,18 @@ p {
 
 /* Media Panel */
 .media-panel {
-  
+
   width: 300px;
   max-width: 350px;
   min-width: 300px;
-  background-color: #f0f0f0;
-  border-left: 1px solid #ddd;
+  background-color: #313031;
+
+  color: var(----editor-text, #D9D9D9);
+  text-align: left;
+  font-family: Montserrat;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 /* Specific styles for media items */
@@ -202,7 +214,7 @@ p {
 .media-item {
   border: 1px solid #ccc;
   padding: 8px;
-  background-color: #fff;
+  background-color: #313031;
 }
 
 .media-item img,

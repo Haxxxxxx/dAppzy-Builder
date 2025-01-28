@@ -10,7 +10,7 @@ import Topbar from './components/TopBar';
 import LeftBar from './components/LeftBar';
 import StructurePanel from './components/LeftbarPanels/StructurePanel';
 import MediaPanel from './components/LeftbarPanels/MediaPanel';
-import SettingsPanel from './components/LeftbarPanels/SettingsPanel';
+import WebsiteSettingsPanel from './components/LeftbarPanels/WebsiteSettingsPanel';
 
 function App() {
   const [openPanel, setOpenPanel] = useState('sidebar'); // Track which panel is open
@@ -125,7 +125,7 @@ function App() {
 
             {openPanel === 'settings' && (
               <div id="settings-panel">
-                <SettingsPanel onUpdateSettings={handleUpdateSettings} />
+                <WebsiteSettingsPanel onUpdateSettings={handleUpdateSettings} />
               </div>
             )}
             <div

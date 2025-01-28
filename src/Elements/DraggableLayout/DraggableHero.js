@@ -29,10 +29,7 @@ const DraggableHero = ({
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        // Just add the hero element with configuration as structure
         const newId = addNewElement('hero', 1, null, null, configuration);
-
-        // Now update the element with the given configuration
         setElements((prevElements) =>
           prevElements.map((el) =>
             el.id === newId ? { ...el, configuration } : el
@@ -43,6 +40,7 @@ const DraggableHero = ({
   }), [configuration, isEditing, addNewElement, setElements]);
 
 
+  // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
 
@@ -56,7 +54,7 @@ const DraggableHero = ({
           el.id === parentId
             ? {
               ...el,
-              children: [...new Set([...el.children, newId])],
+              children: [...new Set([...el.children, newId])], // Ensure unique children
             }
             : el
         )
@@ -66,8 +64,7 @@ const DraggableHero = ({
 
 
   const hero = findElementById(id, elements);
-  const resolvedChildren = hero?.children?.map((childId) => findElementById(childId, elements)) || [];
-
+  const children = hero?.children?.map((childId) => findElementById(childId, elements)) || [];
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
 
@@ -90,31 +87,35 @@ const DraggableHero = ({
     };
   }, [isModalOpen]);
 
+  const titles = {
+    heroOne: 'Hero one',
+    heroTwo: 'Hero two',
+    heroThree: 'Hero three',
+  };
+
   // Inside DraggableNavbar.js
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
     setSelectedElement({ id, type: 'hero', styles: hero?.styles });
   };
+
+  // Handle preview display with description
   if (showDescription) {
     return (
-
-      <div className='bento-extract-display' onClick={toggleModal} style={{ opacity: isDragging ? 0.5 : 1 }}
-      >
-
-          <img
-            src={imgSrc}
-            alt={label}
-            style={{
-              width: '100%',
-              height: 'auto',
-              marginBottom: '8px',
-              borderRadius: '4px',
-            }}
-          />
+      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+        <img
+          src={imgSrc}
+          alt={label}
+          style={{
+            width: '100%',
+            height: 'auto',
+            marginBottom: '8px',
+            borderRadius: '4px',
+          }}
+        />
+        <strong className='element-name'>{titles[configuration]}</strong>
         {/* <p>{descriptions[configuration]}</p> */}
-        <strong className='element-name'>{label}</strong>
       </div>
-
     );
   }
 
@@ -124,8 +125,9 @@ const DraggableHero = ({
       <HeroOne
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
 
@@ -136,8 +138,10 @@ const DraggableHero = ({
       <HeroTwo
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
       />
     );
@@ -146,8 +150,9 @@ const DraggableHero = ({
       <HeroThree
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={children}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
       />

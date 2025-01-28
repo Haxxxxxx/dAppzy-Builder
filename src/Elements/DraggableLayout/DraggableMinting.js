@@ -12,32 +12,52 @@ const DraggableMinting = ({
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
-  imgSrc, // Image source for the minting preview
-  label, // Label for the minting section
+  imgSrc, // Image source for the navbar preview
+  label, // Label for the navbar
 }) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } =
-    useContext(EditableContext);
-
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
-  // Drag-and-drop logic
+  // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type: 'web3Element', configuration },
+    item: { type: 'mintingSection', configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        const newId = addNewElement('web3Element', 1, null, null, configuration);
+        const newId = addNewElement('mintingSection', 1, null, null, configuration);
         setElements((prevElements) =>
-          prevElements.map((el) => (el.id === newId ? { ...el, configuration } : el))
+          prevElements.map((el) =>
+            el.id === newId ? { ...el, configuration } : el
+          )
         );
       }
     },
-  }));
+  }), [configuration, isEditing, addNewElement, setElements]);
+  // Handle dropping items inside this navbar
+  const onDropItem = (item, parentId) => {
+    if (!item || !parentId) return;
 
+    const parentElement = findElementById(parentId, elements);
+
+    if (parentElement) {
+      const newId = addNewElement(item.type, 1, null, parentId);
+
+      setElements((prevElements) =>
+        prevElements.map((el) =>
+          el.id === parentId
+            ? {
+              ...el,
+              children: [...new Set([...el.children, newId])], // Ensure unique children
+            }
+            : el
+        )
+      );
+    }
+  };
   // Find the current minting section and its children
   const minting = findElementById(id, elements);
   const children = minting?.children?.map((childId) => findElementById(childId, elements)) || [];
@@ -66,10 +86,9 @@ const DraggableMinting = ({
 
   // Handle selection
   const handleSelect = () => {
-    setSelectedElement({ id, type: 'web3Element', styles: minting?.styles });
+    setSelectedElement({ id, type: 'mintingSection', styles: minting?.styles });
   };
 
-  // Render description preview
   if (showDescription) {
     return (
       <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
@@ -83,7 +102,8 @@ const DraggableMinting = ({
             borderRadius: '4px',
           }}
         />
-        <strong className="element-name">{label}</strong>
+        <strong className='element-name'>{label}</strong>
+        {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );
   }
@@ -120,10 +140,10 @@ const DraggableMinting = ({
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}
-        onDropItem={() => {}}
+        onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
-        setSelectedElement={handleSelect}
+        handleSelect={handleSelect}
       />
     </div>
   );

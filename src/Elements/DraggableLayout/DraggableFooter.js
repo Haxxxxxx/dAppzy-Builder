@@ -83,12 +83,6 @@ const DraggableFooter = ({
     };
   }, [isModalOpen]);
 
-  const descriptions = {
-    simple: 'A simple footer with basic company info and a subscription button.',
-    detailed: 'A detailed footer with company info, links, and social media.',
-    template: 'A template footer with sections and social media icons.',
-  };
-
   const titles = {
     simple: 'Simple Footer',
     detailed: 'Detailed Footer',

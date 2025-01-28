@@ -166,7 +166,6 @@ const DraggableNavbar = ({
     <div
       ref={drag}
       style={{
-        position: 'relative',
         cursor: 'pointer',
         border: isDragging ? '1px dashed #000' : 'none',
         backgroundColor: '#f9f9f9',

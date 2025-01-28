@@ -1,17 +1,9 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
-import Image from '../../Media/Image';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import ConnectWalletButton from '../../Web3Block/ConnectWalletButton';
+import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
-import withSelectable from '../../../utils/withSelectable';
 
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
-const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
 const CustomTemplateNavbar = ({
   handleSelect,
@@ -83,7 +75,7 @@ const CustomTemplateNavbar = ({
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage
+            <Image
               key={child.id}
               id={child.id}
               src={child.content || 'Default Logo'}
@@ -100,7 +92,7 @@ const CustomTemplateNavbar = ({
         {children
           .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
           .map((child) => (
-            <SelectableSpan
+            <Span
               key={child.id}
               id={child.id}
               content={child.content}
@@ -132,7 +124,7 @@ const CustomTemplateNavbar = ({
               {children
                 .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
                 .map((child) => (
-                  <SelectableSpan
+                  <Span
                     key={child.id}
                     id={child.id}
                     content={child.content}
@@ -150,7 +142,7 @@ const CustomTemplateNavbar = ({
                 .map((child) => (
                   <React.Fragment key={child.id}>
                     {child.type === 'connectWalletButton' ? (
-                      <SelectableConnectWalletButton
+                      <ConnectWalletButton
                         id={child.id}
                         content={child.content}
                         styles={{
@@ -159,7 +151,7 @@ const CustomTemplateNavbar = ({
                         }}
                       />
                     ) : (
-                      <SelectableButton
+                      <Button
                         id={child.id}
                         content={child.content}
                         styles={{
@@ -182,7 +174,7 @@ const CustomTemplateNavbar = ({
             {children
               .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
               .map((child) => (
-                <SelectableSpan
+                <Span
                   key={child.id}
                   id={child.id}
                   content={child.content}
@@ -202,13 +194,13 @@ const CustomTemplateNavbar = ({
               .map((child) => (
                 <React.Fragment key={child.id}>
                   {child.type === 'connectWalletButton' ? (
-                    <SelectableConnectWalletButton
+                    <ConnectWalletButton
                       id={child.id}
                       content={child.content}
                       styles={child.styles}
                     />
                   ) : (
-                    <SelectableButton
+                    <Button
                       id={child.id}
                       content={child.content}
                       styles={{

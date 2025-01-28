@@ -38,8 +38,8 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   // Layout-based panels if viewMode is 'layout'
   const layoutSections = [
     { name: 'Navbar', component: <NavbarPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'Hero', component: <HeroPanel searchQuery={searchQuery} /> },
-    { name: 'CTA', component: <CTAPanel searchQuery={searchQuery} /> },
+    { name: 'Hero', component: <HeroPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
+    { name: 'CTA', component: <CTAPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'Footer', component: <FooterPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
   ];

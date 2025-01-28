@@ -15,12 +15,7 @@ const SelectableButton = withSelectable(Button);
 const SelectableDateComponent = withSelectable(DateComponent);
 
 const MintingSection = ({
-  uniqueId,
-  children = [],
-  setSelectedElement,
-  onDropItem,
-  handleOpenMediaPanel,
-}) => {
+  handleSelect, uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
   const sectionRef = useRef(null);
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
@@ -56,10 +51,7 @@ const MintingSection = ({
   const rareItems = getChildrenByType('rare-item');
   const documentItems = getChildrenByType('document-item');
 
-  // Handle section click
-  const handleClick = () => {
-    setSelectedElement({ id: uniqueId, type: 'candyMachine' });
-  };
+
 
   const handleImageDrop = (droppedItem, imageId) => {
     if (droppedItem.mediaType === 'image') {
@@ -81,7 +73,7 @@ const MintingSection = ({
         ...mintingSectionStyles.section,
         border: isOverCurrent ? '2px dashed blue' : 'none',
       }}
-      onClick={handleClick}
+      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
     >
       {/* Left Section */}
       <div style={mintingSectionStyles.leftSection}>
