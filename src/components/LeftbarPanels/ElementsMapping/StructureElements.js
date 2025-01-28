@@ -7,8 +7,8 @@ const StructureElements = [
     icon: elementIconPaths.section,
   },
   {
-    type: 'div',
-    label: 'Div',
+    type: 'container',
+    label: 'Container',
     description: 'A generic container element.',
     icon: elementIconPaths.container,
   },
@@ -19,7 +19,7 @@ const StructureElements = [
     icon: elementIconPaths.grid,
   },
   {
-    type: 'VFlex',
+    type: 'vflex',
     label: 'VFlex',
     description: 'Create a columns structured vflex',
     icon: elementIconPaths.vflex,  // use whichever “list” icon you like

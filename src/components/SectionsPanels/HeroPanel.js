@@ -15,22 +15,20 @@ const HeroPanel = ({ contentListWidth, searchQuery }) => {
   );
 
   return (
-    <div>
-     
-        <div className="bento-display-elements" style={{ marginTop: '16px' }}>
-          {filteredHeroes.map(({ configuration, label, imgSrc }) => (
-            <DraggableHero
-              key={configuration}
-              configuration={configuration}
-              label={label}
-              isEditing={false}
-              showDescription={true}
-              contentListWidth={contentListWidth}
-              imgSrc={imgSrc} // Pass the image source correctly
-            />
-          ))}
-          {filteredHeroes.length === 0 && <p>No heroes found.</p>}
-        </div>
+
+    <div className="bento-display-elements" style={{ marginTop: '16px' }}>
+      {filteredHeroes.map(({ configuration, label, imgSrc }) => (
+        <DraggableHero
+          key={configuration}
+          configuration={configuration}
+          label={label}
+          isEditing={false}
+          showDescription={true}
+          contentListWidth={contentListWidth}
+          imgSrc={imgSrc} // Pass the image source correctly
+        />
+      ))}
+      {filteredHeroes.length === 0 && <p>No heroes found.</p>}
     </div>
   );
 };

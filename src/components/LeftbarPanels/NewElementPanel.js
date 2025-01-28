@@ -5,8 +5,7 @@ import DraggableElement from '../../Elements/DraggableElements/DraggableElement'
 import '../css/Sidebar.css';
 import HeroPanel from '../SectionsPanels/HeroPanel';
 import CTAPanel from '../SectionsPanels/CTAPanel';
-import Web3ElementPanel from '../SectionsPanels/Web3ElementPanel';
-
+import Web3SectionPanel from '../SectionsPanels/Web3SectionPanel';
 import TypographyElements from './ElementsMapping/TypographyElements';
 import StructureElements from './ElementsMapping/StructureElements';
 import BasicElements from './ElementsMapping/BasicElements';
@@ -18,10 +17,6 @@ import MediaElements from './ElementsMapping/MediaElements';
 const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   const [expandedSections, setExpandedSections] = useState({});
 
-  useEffect(() => {
-    console.log(contentListWidth);
-  }, [contentListWidth]);
-
   const toggleSection = (sectionName) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -29,16 +24,15 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
     }));
   };
 
-  // Combine standard HTML elements + Web3Sections as categories
+  // Elements categories
   const elements = {
-    'Structure': StructureElements,
-    'Basic': BasicElements,
+    Structure: StructureElements,
+    Basic: BasicElements,
     'Web 3 Blocks': Web3Elements,
-    'Typography': TypographyElements,
-    'Media': MediaElements,
-    'Advanced':AdvancedElements,
-    'Forms':FormElements,
-
+    Typography: TypographyElements,
+    Media: MediaElements,
+    Advanced: AdvancedElements,
+    Forms: FormElements,
   };
 
   // Layout-based panels if viewMode is 'layout'
@@ -47,10 +41,9 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
     { name: 'Hero', component: <HeroPanel searchQuery={searchQuery} /> },
     { name: 'CTA', component: <CTAPanel searchQuery={searchQuery} /> },
     { name: 'Footer', component: <FooterPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'web3 sections', component: <Web3ElementPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
+    { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
   ];
 
-  // Filter the "elements" object
   const filteredElements = Object.entries(elements)
     .map(([category, items]) => ({
       category,
@@ -63,22 +56,16 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
     .filter((section) => section.items.length > 0);
 
   if (viewMode === 'layout') {
-    // If in "layout" mode, show layoutSections
-    const filteredLayoutSections = layoutSections.filter(({ name }) =>
-      name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
+    // Display layout menu
     return (
       <div>
-        {filteredLayoutSections.map(({ name, component }) => (
+        {layoutSections.map(({ name, component }) => (
           <div key={name} className="content-section">
             <h4 onClick={() => toggleSection(name)} style={{ cursor: 'pointer' }}>
               {name}
               <span>{expandedSections[name] ? '▼' : '▶'}</span>
             </h4>
-            {expandedSections[name] && (
-              <div className="bento-display-elements">{component}</div>
-            )}
+            {expandedSections[name] && <div className="bento-display-layout">{component}</div>}
             <hr />
           </div>
         ))}
@@ -86,7 +73,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
     );
   }
 
-  // Otherwise, show all "elements" categories (including Web3)
+  // Default: Display elements menu
   return (
     <div>
       {filteredElements.map(({ category, items }) => (
@@ -96,7 +83,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
             <span>{expandedSections[category] ? '▼' : '▶'}</span>
           </h4>
           {expandedSections[category] && (
-            <div className="bento-display-elements">
+            <div className={`bento-display-elements`}>
               {items.map((item) => (
                 <DraggableElement
                   key={item.type}
@@ -111,23 +98,6 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
           <hr />
         </div>
       ))}
-
-      {/* If you still want a separate Web3 Elements panel (like your Web3ElementPanel),
-          you could leave that here OR remove it if everything is now in Draggable form */}
-      <div className="content-section">
-        <h4 onClick={() => toggleSection('Web3 Elements')} className="toggle-header">
-          Web3 Elements
-          <span>{expandedSections['Web3 Elements'] ? '▼' : '▶'}</span>
-        </h4>
-        {expandedSections['Web3 Elements'] && (
-          <div className="bento-display-elements">
-            <Web3ElementPanel
-              searchQuery={searchQuery}
-              contentListWidth={contentListWidth}
-            />
-          </div>
-        )}
-      </div>
     </div>
   );
 };

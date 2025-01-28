@@ -38,6 +38,13 @@ import {
   DateComponent,
   ConnectWalletButton,
   BGVideo,
+  Container,
+  GridLayout,
+  HFlexLayout,
+  VFlexLayout,
+  Line,
+  LinkBlock,
+  YouTubeVideo,
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
@@ -250,7 +257,22 @@ export const renderElement = (
       content={element.content}
       styles={{ ...element.styles }}
       handlePanelToggle={handlePanelToggle}
-    />
+    />,
+    container: <Container id={id} key={id} styles={{ ...element.styles }}>
+      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+    </Container>,
+    grid: <GridLayout id={id} key={id} styles={{ ...element.styles }}>
+      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+    </GridLayout>,
+    hflex: <HFlexLayout id={id} key={id} styles={{ ...element.styles }}>
+      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+    </HFlexLayout>,
+    vflex: <VFlexLayout id={id} key={id} styles={{ ...element.styles }}>
+      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+    </VFlexLayout>,
+    line:<Line  id={id} key={id} styles={{ ...element.styles }}></Line>,
+    linkblock : <LinkBlock  id={id} key={id} styles={{ ...element.styles }}></LinkBlock>,
+    youtube : <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} ></YouTubeVideo>,
   };
 
   const component = componentMap[type];

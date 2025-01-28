@@ -89,38 +89,28 @@ const DraggableCTA = ({
     e.stopPropagation(); // Prevent parent selections
     setSelectedElement({ id, type: 'CTA', styles: ctaElement?.styles });
   };
+  const titles = {
+    CTAOne: 'CTA one',
+    CTATwo: 'CTA two',
+  };
 
   // Render description if requested
   if (showDescription) {
     return (
       <div className='bento-extract-display' onClick={toggleModal}
       >
-        <div
-          ref={drag}
+
+        <img
+          src={imgSrc}
+          alt={label}
           style={{
-            opacity: isDragging ? 0.5 : 1,
-            padding: '8px',
-            margin: '8px 0',
-            border: '1px solid #ccc',
+            width: '100%',
+            height: 'auto',
+            marginBottom: '8px',
             borderRadius: '4px',
-            cursor: 'move',
-            backgroundColor: "#FBFBFB",
-            color: '#686868'
           }}
-        >
-          <img
-            src={imgSrc}
-            alt={label}
-            style={{
-              width: '100%',
-              height: 'auto',
-              marginBottom: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-            }}
-          />
-        </div>
-        <strong className='element-name'>{label}</strong>
+        />
+        <strong className='element-name'>{titles[configuration]}</strong>
       </div>
     );
   }
@@ -152,14 +142,29 @@ const DraggableCTA = ({
     <div
       ref={drag}
       style={{
-        opacity: isDragging ? 0.5 : 1,
-        padding: '8px',
+        position: 'relative',
+        cursor: 'pointer',
+        border: isDragging ? '1px dashed #000' : 'none',
         backgroundColor: '#f9f9f9',
-        borderRadius: '4px',
-        border: '1px solid #ccc',
-        cursor: 'move',
+        borderRadius: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onClick={(e) => {
+        toggleModal();    // show/hide your modal
       }}
     >
+      <img
+        src={imgSrc}
+        alt={label}
+        style={{
+          width: '100%',
+          height: 'auto',
+          marginBottom: '8px',
+          borderRadius: '4px',
+        }}
+      />
+      <strong>{label}</strong>
       {CTAComponent}
     </div>
   );

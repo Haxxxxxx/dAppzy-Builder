@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import DraggableNavbar from '../../Elements/DraggableLayout/DraggableNavbar';
 
 const NavbarPanel = ({ contentListWidth, searchQuery }) => {
-  const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand
 
   const navbarConfigurations = [
     { imgSrc: './previewcomponent.png', configuration: 'customTemplate', label: 'Custom Navbar' },
@@ -16,22 +15,20 @@ const NavbarPanel = ({ contentListWidth, searchQuery }) => {
   );
 
   return (
-    <div>
-     
-        <div className="bento-display-elements" style={{ marginTop: '16px' }}>
-          {filteredNavbars.map(({ configuration, label, imgSrc }) => (
-            <DraggableNavbar
-              key={configuration}
-              configuration={configuration}
-              label={label}
-              isEditing={false}
-              showDescription={true}
-              contentListWidth={contentListWidth}
-              imgSrc={imgSrc} // Pass the image source correctly
-            />
-          ))}
-          {filteredNavbars.length === 0 && <p>No navbars found.</p>}
-        </div>
+
+    <div className="bento-display-elements" style={{ marginTop: '16px' }}>
+      {filteredNavbars.map(({ configuration, label, imgSrc }) => (
+        <DraggableNavbar
+          key={configuration}
+          configuration={configuration}
+          label={label}
+          isEditing={false}
+          showDescription={true}
+          contentListWidth={contentListWidth}
+          imgSrc={imgSrc} // Pass the image source correctly
+        />
+      ))}
+      {filteredNavbars.length === 0 && <p>No navbars found.</p>}
     </div>
   );
 };

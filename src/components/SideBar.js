@@ -5,18 +5,15 @@ import { EditableContext } from '../context/EditableContext';
 import './css/Sidebar.css';
 
 const SideBar = ({ contentListWidth }) => {
-  const [viewMode, setViewMode] = useState('layout'); // 'elements' or 'layout'
-  const [searchQuery, setSearchQuery] = useState(''); // State for search input
-  const { selectedElement } = useContext(EditableContext); // Access selectedElement from context
+  const [viewMode, setViewMode] = useState('elements'); // Default to 'elements'
+  const [searchQuery, setSearchQuery] = useState('');
+  const { selectedElement } = useContext(EditableContext);
 
   return (
     <div className="sidebar-container">
-
-
-      {/* Display buttons only when no element is selected */}
       {!selectedElement && (
         <div className="sidebar-toggle-buttons">
-           <button
+          <button
             onClick={() => setViewMode('layout')}
             className={viewMode === 'layout' ? 'active' : ''}
           >
@@ -28,13 +25,10 @@ const SideBar = ({ contentListWidth }) => {
           >
             Elements
           </button>
-         
         </div>
       )}
       <div className="sidebar-search-bar">
-        <span class="material-symbols-outlined">
-          search
-        </span>
+        <span className="material-symbols-outlined">search</span>
         <input
           type="text"
           placeholder="Search components or styles..."
@@ -42,17 +36,16 @@ const SideBar = ({ contentListWidth }) => {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      {/* Display EditorPanel if an element is selected; otherwise, show default panel */}
       {selectedElement ? (
         <div className="editor-panel-container">
-          <EditorPanel searchQuery={searchQuery} /> {/* Pass searchQuery */}
+          <EditorPanel searchQuery={searchQuery} />
         </div>
       ) : (
         <div className="default-sidebar-container">
           <NewElementPanel
             viewMode={viewMode}
             contentListWidth={contentListWidth}
-            searchQuery={searchQuery} // Pass searchQuery
+            searchQuery={searchQuery}
           />
         </div>
       )}

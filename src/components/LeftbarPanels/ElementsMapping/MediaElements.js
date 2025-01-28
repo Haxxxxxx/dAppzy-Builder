@@ -13,6 +13,13 @@ const MediaElements = [
     description: 'A video player element.',
     icon: elementIconPaths.video,
   },
+  {
+    type: 'youtube',
+    label: 'Youtube Video',
+    description: 'A Youtube Video player element.',
+    icon: elementIconPaths.youtubevideo,
+  },
+
 ];
 
 export default MediaElements;

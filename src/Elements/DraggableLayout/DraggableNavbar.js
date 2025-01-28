@@ -1,7 +1,6 @@
 import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
-import DropZone from '../../utils/DropZone';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
@@ -39,9 +38,6 @@ const DraggableNavbar = ({
       }
     },
   }), [configuration, isEditing, addNewElement, setElements]);
-
-  // Generate a unique ID for the navbar
-  const uniqueId = useMemo(() => `navbar-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`, []);
 
   // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
@@ -91,12 +87,6 @@ const DraggableNavbar = ({
     };
   }, [isModalOpen]);
 
-  // Descriptions for different configurations
-  const descriptions = {
-    twoColumn: 'A two-column navbar with logo and links.',
-    threeColumn: 'A three-column navbar with logo, links, and a button.',
-    customTemplate: 'A custom template navbar with logo, links, and buttons.',
-  };
 
   const titles = {
     twoColumn: 'Two Columns',
@@ -196,7 +186,6 @@ const DraggableNavbar = ({
           height: 'auto',
           marginBottom: '8px',
           borderRadius: '4px',
-          border: '1px solid #ddd',
         }}
       />
       <strong>{label}</strong>

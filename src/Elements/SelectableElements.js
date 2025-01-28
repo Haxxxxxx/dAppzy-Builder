@@ -30,11 +30,20 @@ import Code from './Advanced/Code';
 import Pre from './Unused(Yet)/Pre';
 import Hr from './Basic/HorizotalRule';
 import Caption from './Unused(Yet)/Caption';
-import DraggableWeb3Elements from './DraggableElements/DraggableWeb3Elements';
+import DraggableWeb3Elements from './DraggableLayout/DraggableMinting';
 import DateComponent from './Unused(Yet)/DateComponent';
 import ConnectWalletButton from './Web3Block/ConnectWalletButton';
 import withSelectable from '../utils/withSelectable';
 import BGVideo from './Advanced/BGVideo';
+import Container from './Structure/Container';
+import GridLayout from './Structure/Grid';
+import HFlexLayout from './Structure/HFlex';
+import VFlexLayout from './Structure/VFlex';
+import LinkBlock from './Basic/LinkBlock';
+import Line from './Basic/Line';
+import YouTubeVideo from './Media/YoutubeVideo';
+
+
 const SelectableParagraph = withSelectable(Paragraph);
 const SelectableHeading = withSelectable(Heading);
 const SelectableSection = withSelectable(Section);
@@ -73,7 +82,18 @@ const SelectableDraggableWeb3Elements = withSelectable(DraggableWeb3Elements);
 const SelectableDateComponent = withSelectable(DateComponent);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 const SelectableBGVideo = withSelectable(BGVideo);
+const SelectableContainer = withSelectable(Container);
+const SelectableGridLayout = withSelectable(GridLayout);
+const SelectableHFlexLayout = withSelectable(HFlexLayout);
+const SelectableVFlexLayout = withSelectable(VFlexLayout);
+const SelectableLine = withSelectable(Line);
+const SelectbleLinkBlock = withSelectable(LinkBlock);
+const SelectableYoutubeVideo = withSelectable(YouTubeVideo)
+
 export {
+
+
+
   SelectableParagraph as Paragraph,
   SelectableHeading as Heading,
   SelectableSection as Section,
@@ -112,4 +132,15 @@ export {
   SelectableDateComponent as DateComponent,
   SelectableConnectWalletButton as ConnectWalletButton,
   SelectableBGVideo as BGVideo,
+
+  SelectableContainer as Container,
+  SelectableGridLayout as GridLayout,
+  SelectableHFlexLayout as HFlexLayout,
+  SelectableVFlexLayout as VFlexLayout,
+
+  SelectableLine as Line,
+  SelectbleLinkBlock as LinkBlock,
+
+  SelectableYoutubeVideo as YouTubeVideo,
+
 };
