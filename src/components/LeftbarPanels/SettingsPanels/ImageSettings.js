@@ -106,6 +106,7 @@ const ImageSettings = () => {
             </div>
             <hr />
             <CollapsibleSection title={"Image Settings"}>
+            <div className="image-settings-group">
                 <div className="image-preview-section">
                     <div className="image-preview-wrapper">
                         <img
@@ -162,6 +163,7 @@ const ImageSettings = () => {
                         className="settings-input"
                     />
                 </div>
+            </div>
             </CollapsibleSection>
         </div>
     );

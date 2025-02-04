@@ -1,29 +1,33 @@
+// src/components/TopbarComponents/ExportSection.js
+
 import React, { useState } from 'react';
-import JSZip from 'jszip';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../firebase'; // <-- import your firebase config
 import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
 
-const ExportSection = ({ elements, buildHierarchy }) => {
+const ExportSection = ({ elements, buildHierarchy, userChosenUrl = '' }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
 
   const handleExportHtml = async () => {
-    const zip = new JSZip();
-    const collectedStyles = [];
+    setAutoSaveStatus('Publishing...');
 
-    // Build the full HTML content
-    const nestedElements = buildHierarchy(elements);
-    const bodyHtml = nestedElements
-      .map((element) => renderElementToHtml(element, collectedStyles))
-      .join('');
+    try {
+      // 1. Build the full HTML content (same approach as before)
+      const collectedStyles = [];
+      const nestedElements = buildHierarchy(elements);
+      const bodyHtml = nestedElements
+        .map((element) => renderElementToHtml(element, collectedStyles))
+        .join('');
 
-    const globalStyles = collectedStyles
-      .map(
-        ({ className, styles }) =>
-          `.${className} {\n${flattenStyles(styles)}\n}`
-      )
-      .join('\n');
+      const globalStyles = collectedStyles
+        .map(
+          ({ className, styles }) =>
+            `.${className} {\n${flattenStyles(styles)}\n}`
+        )
+        .join('\n');
 
-    const fullHtml = `
+      const fullHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,26 +46,44 @@ const ExportSection = ({ elements, buildHierarchy }) => {
   ${bodyHtml}
 </body>
 </html>
-    `.trim();
+      `.trim();
 
-    zip.file('index.html', fullHtml);
+      // 2. Get the current user from Firebase Auth
+      const user = auth.currentUser;
+      if (!user) {
+        setAutoSaveStatus('Error: User not logged in!');
+        return;
+      }
 
-    const content = await zip.generateAsync({ type: 'blob' });
-    downloadBlob('website.zip', content);
-  };
+      // 3. Save to Firestore (for example, under 'projects' collection)
+      // You might want to generate a separate doc ID if you handle multiple projects per user.
+      const projectRef = doc(db, 'projects', user.uid);
 
-  const downloadBlob = (filename, blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+      await setDoc(projectRef, {
+        html: fullHtml,
+        elements: elements,
+        userId: user.uid,
+        lastUpdated: serverTimestamp(),
+        customUrl: userChosenUrl || '',
+        testUrl: `https://your-app.com/preview/${user.uid}`,
+      });
+
+      setAutoSaveStatus(
+        `Project published! Preview at https://your-app.com/preview/${user.uid}`
+      );
+
+    } catch (error) {
+      console.error('Error publishing project:', error);
+      setAutoSaveStatus('Error publishing project: ' + error.message);
+    }
   };
 
   return (
     <div className="export-section">
-      <span class="material-symbols-outlined export-cloud" style={{color:'white'}}>
+      <span
+        className="material-symbols-outlined export-cloud"
+        style={{ color: 'white' }}
+      >
         cloud_done
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>

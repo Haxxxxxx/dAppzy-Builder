@@ -1,5 +1,7 @@
 // src/App.js
 import React, { useState, useRef, useContext, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db, auth } from './firebase';
 import { EditableContext } from './context/EditableContext'; // Import EditableContext
 import ContentList from './components/Canva';
 import SideBar from './components/SideBar';
@@ -15,7 +17,7 @@ import WebsiteSettingsPanel from './components/LeftbarPanels/WebsiteSettingsPane
 function App() {
   const [openPanel, setOpenPanel] = useState('sidebar'); // Track which panel is open
   const [contentListWidth, setContentListWidth] = useState(1200); // Default width for PC
-  const { setSelectedElement, selectedElement } = useContext(EditableContext); // Access setSelectedElement from context
+  const { setSelectedElement, elements, setElements } = useContext(EditableContext); // Access setSelectedElement from context
   const [scale, setScale] = useState(1); // Add scale state
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
@@ -84,6 +86,31 @@ function App() {
   useEffect(() => {
     console.log('Current openPanel:', openPanel);
   }, [openPanel]);
+
+
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      const user = auth.currentUser;
+      if (!user) return; // no user => no load
+      
+      const projectRef = doc(db, 'projects', user.uid);
+      const projectSnap = await getDoc(projectRef);
+      if (projectSnap.exists()) {
+        const projectData = projectSnap.data();
+        // Set the elements in your context so the builder sees them
+        if (projectData?.elements) {
+          setElements(projectData.elements);
+        }
+        // If needed, you can also parse the `html` or other fields
+      }
+    };
+
+    fetchProject();
+  }, []);
+
+
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="layout">

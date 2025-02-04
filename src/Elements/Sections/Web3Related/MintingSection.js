@@ -1,18 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import Image from '../../Media/Image';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import DateComponent from '../../Unused(Yet)/DateComponent';
+import { Image, Span, Button, DateComponent  } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
-import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { mintingSectionStyles } from './DefaultWeb3Styles';
 
-// Make elements selectable
-const SelectableSpan = withSelectable(Span);
-const SelectableImage = withSelectable(Image);
-const SelectableButton = withSelectable(Button);
-const SelectableDateComponent = withSelectable(DateComponent);
 
 const MintingSection = ({
   handleSelect, uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
@@ -78,7 +69,7 @@ const MintingSection = ({
       {/* Left Section */}
       <div style={mintingSectionStyles.leftSection}>
         {logo && (
-          <SelectableImage
+          <Image
             id={logo.id}
             src={logo.content}
             styles={mintingSectionStyles.logo}
@@ -88,7 +79,7 @@ const MintingSection = ({
           />
         )}
         {timer && (
-          <SelectableDateComponent
+          <DateComponent
             id={timer.id}
             content={timer.content}
             label={timer.label}
@@ -97,7 +88,7 @@ const MintingSection = ({
         )}
         <div style={mintingSectionStyles.details}>
           {remaining && (
-            <SelectableSpan
+            <Span
               id={remaining.id}
               label={remaining.label}
               content={remaining.content}
@@ -105,7 +96,7 @@ const MintingSection = ({
             />
           )}
           {value && currency && (
-            <SelectableSpan
+            <Span
               id={`${value.id}-${currency.id}`}
               content={`${value.content} ${currency.content}`}
               label={value.label}
@@ -113,7 +104,7 @@ const MintingSection = ({
             />
           )}
           {quantity && totalPrice && (
-            <SelectableSpan
+            <Span
               id={quantity.id}
               content={`${quantity.content} (${totalPrice.label}: ${totalPrice.content})`}
               label={quantity.label}
@@ -122,7 +113,7 @@ const MintingSection = ({
           )}
         </div>
         {mintButton && (
-          <SelectableButton
+          <Button
             id={mintButton.id}
             content={mintButton.content}
             styles={mintingSectionStyles.mintButton}
@@ -133,21 +124,21 @@ const MintingSection = ({
       {/* Right Section */}
       <div style={mintingSectionStyles.rightSection}>
         {title && (
-          <SelectableSpan
+          <Span
             id={title.id}
             content={title.content}
             styles={mintingSectionStyles.title}
           />
         )}
         {description && (
-          <SelectableSpan
+          <Span
             id={description.id}
             content={description.content}
             styles={mintingSectionStyles.description}
           />
         )}
         {rareItemsTitle && (
-          <SelectableSpan
+          <Span
             id={rareItemsTitle.id}
             content={rareItemsTitle.content}
             styles={mintingSectionStyles.sectionTitle}
@@ -155,7 +146,7 @@ const MintingSection = ({
         )}
         <div style={mintingSectionStyles.itemsContainer}>
           {rareItems.map((item) => (
-            <SelectableImage
+            <Image
               key={item.id}
               id={item.id}
               src={item.content}
@@ -165,7 +156,7 @@ const MintingSection = ({
           ))}
         </div>
         {docItemsTitle && (
-          <SelectableSpan
+          <Span
             id={docItemsTitle.id}
             content={docItemsTitle.content}
             styles={mintingSectionStyles.sectionTitle}
@@ -173,7 +164,7 @@ const MintingSection = ({
         )}
         <div style={mintingSectionStyles.itemsContainer}>
           {documentItems.map((item) => (
-            <SelectableImage
+            <Image
               key={item.id}
               id={item.id}
               src={item.content}

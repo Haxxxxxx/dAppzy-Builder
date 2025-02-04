@@ -1,19 +1,18 @@
-import React, { useRef, useState, useEffect } from 'react';
+// src/components/Elements/Sections/Navbars/ThreeColumnNavbar.js
+import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import Image from '../../Media/Image';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import ConnectWalletButton from '../../Web3Block/ConnectWalletButton';
+import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import { defaultNavbarStyles } from './DefaultNavbarStyles';
-import withSelectable from '../../../utils/withSelectable';
 
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
-const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
-
-const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
+const ThreeColumnNavbar = ({
+  handleSelect,
+  uniqueId,
+  children,
+  onDropItem,
+  contentListWidth,
+  handleOpenMediaPanel,
+}) => {
   const navRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,14 +24,14 @@ const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, conten
   });
 
   useEffect(() => {
-    setIsCompact(contentListWidth < 768); // Adjust breakpoint
+    setIsCompact(contentListWidth < 768);
   }, [contentListWidth]);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   const handleImageDrop = (droppedItem, imageId) => {
     if (droppedItem.mediaType === 'image') {
-      onDropItem(imageId, droppedItem.src); // Update the image's content dynamically
+      onDropItem(imageId, droppedItem.src);
     }
   };
 
@@ -46,18 +45,23 @@ const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, conten
         ...defaultNavbarStyles.nav,
         borderBottom: isOverCurrent ? '2px solid blue' : defaultNavbarStyles.nav.borderBottom,
       }}
-      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
-      >
+      onClick={(e) => handleSelect(e)}
+    >
       {/* Logo Section */}
       <div style={defaultNavbarStyles.logoContainer}>
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage
+            <Image
               key={child.id}
               id={child.id}
               src={child.content || 'Default Logo'}
-              styles={{ ...child.styles, width: '40px', height: '40px' }}
+              styles={{
+                ...child.styles,
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+              }}
               handleOpenMediaPanel={handleOpenMediaPanel}
               handleDrop={handleImageDrop}
             />
@@ -67,17 +71,20 @@ const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, conten
       {/* Compact Menu */}
       {isCompact && (
         <>
-          <div style={defaultNavbarStyles.compactMenuIcon} onClick={toggleMenu}>
+          <div
+            style={defaultNavbarStyles.compactMenuIcon}
+            onClick={toggleMenu}
+          >
             ☰
           </div>
           {isMenuOpen && (
             <div style={defaultNavbarStyles.compactMenu}>
               {children.map((child) => (
                 <>
-                  {child.type === 'span' && <SelectableSpan id={child.id} content={child.content} />}
-                  {child.type === 'button' && <SelectableButton id={child.id} content={child.content} />}
+                  {child.type === 'span' && <Span id={child.id} content={child.content} />}
+                  {child.type === 'button' && <Button id={child.id} content={child.content} />}
                   {child.type === 'connectWalletButton' && (
-                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   )}
                 </>
               ))}
@@ -89,11 +96,11 @@ const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, conten
       {/* Standard Menu */}
       {!isCompact && (
         <div style={defaultNavbarStyles.standardMenuContainer}>
-          <ul style={defaultNavbarStyles.navList}>
+          <ul style={defaultNavbarStyles.navList} className="threeColumnCenter">
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <SelectableSpan key={child.id} id={child.id} content={child.content} />
+                <Span key={child.id} id={child.id} content={child.content} />
               ))}
           </ul>
 
@@ -103,9 +110,9 @@ const ThreeColumnNavbar = ({handleSelect, uniqueId, children, onDropItem, conten
               .map((child) => (
                 <>
                   {child.type === 'connectWalletButton' ? (
-                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   ) : (
-                    <SelectableButton id={child.id} content={child.content} />
+                    <Button id={child.id} content={child.content} />
                   )}
                 </>
               ))}

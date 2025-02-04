@@ -20,24 +20,15 @@ const DraggableNavbar = ({
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
-  // Set up drag-and-drop functionality
+  // DraggableNavbar.js
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type: 'navbar', configuration },
+    // rename config -> structure so handleDrop sees item.structure
+    item: { type: 'navbar', structure: configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-    end: (item, monitor) => {
-      if (monitor.didDrop() && !isEditing) {
-        const newId = addNewElement('navbar', 1, null, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === newId ? { ...el, configuration } : el
-          )
-        );
-      }
-    },
-  }), [configuration, isEditing, addNewElement, setElements]);
+  }));
 
   // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {

@@ -25,7 +25,7 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
           id,
           type: "image",
           // If needed, you could also pass in the updated styles directly:
-          // styles: { src: item.src, ...styles }
+          styles: { src: item.src, ...styles }
         });
       }
     },
@@ -38,7 +38,6 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
   const handleSelect = (e) => {
     e.stopPropagation();
     setSelectedElement({ id, type: "image" });
-    handleOpenMediaPanel();
   };
 
   return (

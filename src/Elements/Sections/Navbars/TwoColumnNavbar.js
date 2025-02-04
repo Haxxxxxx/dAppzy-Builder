@@ -1,17 +1,9 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import Image from '../../Media/Image';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import ConnectWalletButton from '../../Web3Block/ConnectWalletButton';
+import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import { defaultNavbarStyles } from './DefaultNavbarStyles';
-import withSelectable from '../../../utils/withSelectable';
 
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
-const SelectableConnectWalletButton = withSelectable(ConnectWalletButton);
 
 const TwoColumnNavbar = ({
   id,
@@ -65,7 +57,7 @@ const TwoColumnNavbar = ({
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <SelectableImage
+            <Image
               key={child.id}
               id={child.id}
               src={child.content || 'Default Logo'}
@@ -86,10 +78,10 @@ const TwoColumnNavbar = ({
             <div style={defaultNavbarStyles.compactMenu} className="navbar-compact-menu">
               {children.map((child) => (
                 <>
-                  {child.type === 'span' && <SelectableSpan id={child.id} content={child.content} />}
-                  {child.type === 'button' && <SelectableButton id={child.id} content={child.content} />}
+                  {child.type === 'span' && <Span id={child.id} content={child.content} />}
+                  {child.type === 'button' && <Button id={child.id} content={child.content} />}
                   {child.type === 'connectWalletButton' && (
-                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   )}
                 </>
               ))}
@@ -105,7 +97,7 @@ const TwoColumnNavbar = ({
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <SelectableSpan key={child.id} id={child.id} content={child.content} />
+                <Span key={child.id} id={child.id} content={child.content} />
               ))}
           </ul>
 
@@ -115,9 +107,9 @@ const TwoColumnNavbar = ({
               .map((child) => (
                 <>
                   {child.type === 'connectWalletButton' ? (
-                    <SelectableConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   ) : (
-                    <SelectableButton id={child.id} content={child.content} />
+                    <Button id={child.id} content={child.content} />
                   )}
                 </>
               ))}

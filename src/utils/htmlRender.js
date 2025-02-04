@@ -1,6 +1,8 @@
 import { flattenStyles } from './htmlRenderUtils/cssUtils';
 import { getFileExtension } from './htmlRenderUtils/fileUtils';
 import {typeToTagMap} from './htmlRenderUtils/typeMapping'
+import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
+
 
 export function buildAttributesString(type, attributes, src) {
   let attributesString = '';
@@ -36,10 +38,14 @@ export function buildAttributesString(type, attributes, src) {
   return attributesString;
 }
 
-export function renderElementToHtml(element, collectedStyles) {
-  const { id, type, styles, content, src, attributes = {}, children = [] } = element;
-  const tag = typeToTagMap[type];
 
+export function renderElementToHtml(element, collectedStyles) {
+  const { id, type, styles, content, src, attributes = {}, children = [], configuration } = element;
+  const tag = typeToTagMap[type];
+ // 1) If this is a "navbar" with "customTemplate" config, do special logic
+ if (type === 'navbar') {
+  return renderNavbar(element, collectedStyles);
+}
   if (!tag) {
     console.warn(`No HTML tag mapping found for type: ${type}`);
     return '';

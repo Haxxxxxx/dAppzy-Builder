@@ -19,7 +19,7 @@
     width: 70%;
     padding: 8px;
     font-size: 14px;
-    border: 1px solid #ccc;
+    border: 1px none;
     border-radius: 4px;
 
     color: var(----dark-gray, #57575B);
@@ -136,4 +136,14 @@
 
 .replace-image-button:hover {
     background-color: #0056b3;
+}
+
+.image-settings-group{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.image-settings-group input{
+    width: 70%;
 }
