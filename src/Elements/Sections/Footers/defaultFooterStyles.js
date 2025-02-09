@@ -134,50 +134,32 @@ export const DetailedFooterStyles = {
 
 export const TemplateFooterStyles = {
   footer: {
-    backgroundColor: '#4B5563',
+    backgroundColor: '#1F2937',
     color: '#D1D5DB',
     padding: '24px',
     display: 'flex',
-    gap: '16px',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: '20px',
+    borderTop: '2px solid #374151',
   },
-  templateSections: {
+  navigationLinks: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '16px',
     justifyContent: 'flex-start',
     alignItems: 'center',
   },
-  middleSpans: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
+  branding: {
+    flex: 1,
     textAlign: 'center',
-    flex: '1', // Center the spans within the available space
   },
-  middleSpan: {
-    fontSize: '1rem',
-    color: '#D1D5DB',
-  },
-  templateSocialIcons: {
+  socialIcons: {
     display: 'flex',
-    gap: '8px',
+    gap: '12px',
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  span: {
-    fontSize: '1rem',
-    color: '#D1D5DB',
-  },
-  socialIcon: {
-    width: '24px',
-    height: '24px',
-    cursor: 'pointer',
-    transition: 'opacity 0.3s',
-  },
-  socialIconHover: {
-    opacity: '0.7',
-  },
 };
+

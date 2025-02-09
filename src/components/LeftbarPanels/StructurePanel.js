@@ -81,7 +81,7 @@ const StructurePanel = () => {
                 display: 'flex',
                 alignItems: 'center',
                 cursor: 'pointer',
-                backgroundColor: selectedElement?.id === element.id ? '#e0e0e0' : 'transparent',
+                backgroundColor: selectedElement?.id === element.id ? '#313031' : 'transparent',
                 padding: '4px 8px',
                 borderRadius: '4px',
               }}

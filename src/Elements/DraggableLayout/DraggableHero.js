@@ -21,24 +21,15 @@ const DraggableHero = ({
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
+  // DraggableNavbar.js
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type: 'hero', configuration },
+    // rename config -> structure so handleDrop sees item.structure
+    item: { type: 'hero', structure: configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-    end: (item, monitor) => {
-      if (monitor.didDrop() && !isEditing) {
-        const newId = addNewElement('hero', 1, null, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === newId ? { ...el, configuration } : el
-          )
-        );
-      }
-    },
-  }), [configuration, isEditing, addNewElement, setElements]);
-
+  }));
 
   // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
@@ -61,7 +52,6 @@ const DraggableHero = ({
       );
     }
   };
-
 
   const hero = findElementById(id, elements);
   const children = hero?.children?.map((childId) => findElementById(childId, elements)) || [];

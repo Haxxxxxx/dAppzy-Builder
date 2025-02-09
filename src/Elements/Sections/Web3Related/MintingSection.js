@@ -123,6 +123,7 @@ const MintingSection = ({
 
       {/* Right Section */}
       <div style={mintingSectionStyles.rightSection}>
+        <div style={mintingSectionStyles.rightSectionHeader}>
         {title && (
           <Span
             id={title.id}
@@ -144,6 +145,7 @@ const MintingSection = ({
             styles={mintingSectionStyles.sectionTitle}
           />
         )}
+        </div>
         <div style={mintingSectionStyles.itemsContainer}>
           {rareItems.map((item) => (
             <Image

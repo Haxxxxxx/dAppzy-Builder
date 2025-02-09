@@ -123,21 +123,24 @@ export const structureConfigurations = {
   heroThree: {
     type: 'hero',
     children: [
-      { type: 'span', content: 'CAPTION' },
-      { type: 'title', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
-      { type: 'paragraph', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.' },
-      { type: 'button', content: 'Primary Action' },
-      { type: 'button', content: 'Secondary Action' },
-      { type: 'image', content: 'https://via.placeholder.com/150?text=Image' },
+      { type: 'span', content: 'CAPTION', styles: { fontWeight: 'bold', textTransform: 'uppercase', color: '#64748b' } },
+      { type: 'heading', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', styles: { fontSize: '3rem', fontWeight: 'bold', color: '#1e293b' } },
+      { type: 'paragraph', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.', styles: { fontSize: '1.2rem', lineHeight: '1.6', color: '#475569' } },
+      { type: 'button', content: 'Primary Action', styles: { backgroundColor: '#1e40af', color: '#ffffff', padding: '14px 28px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' } },
+      { type: 'button', content: 'Secondary Action', styles: { backgroundColor: 'transparent', color: '#1e40af', padding: '12px 24px', border: '2px solid #1e40af', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' } },
+      { type: 'image', content: 'https://via.placeholder.com/600x400?text=Hero+Image', styles: { width: '100%', maxWidth: '500px', height: 'auto', borderRadius: '8px' } },
     ],
   },
   ctaOne: {
     children: [
-      { type: 'title', content: 'Get Started Today!' },
-      { type: 'paragraph', content: 'Sign up now and take the first step towards a better future.' },
-      { type: 'button', content: 'Join Now' },
+      { type: "title", content: "Get Started Today!", styles: { fontSize: "2.5rem", fontWeight: "bold", color: "#1F2937" } },
+      { type: "paragraph", content: "Sign up now and take the first step towards a better future.", styles: { fontSize: "1.2rem", color: "#4B5563" } },
+      { type: "button", content: "Join Now", styles: { backgroundColor: "#1a1aff", color: "#ffffff", fontSize: "1rem", borderRadius: "8px" } },
+      { type: "button", content: "Learn More", styles: { backgroundColor: "transparent", color: "#1a1aff", border: "2px solid #1a1aff", fontSize: "1rem", borderRadius: "8px" } },
+      { type: "image", content: "https://via.placeholder.com/300x200?text=CTA+Image", styles: { maxWidth: "300px", borderRadius: "8px" } },
     ],
   },
+  
   ctaTwo: {
     children: [
       { type: 'title', content: 'Take Action Now!' },
@@ -162,24 +165,26 @@ export const structureConfigurations = {
     ],
   },
   template: {
+    type: 'footer',
     children: [
-      { type: 'span', content: 'Eleven' },
-      { type: 'span', content: 'Twelve' },
-      { type: 'span', content: 'Thirteen' },
-      { type: 'image', content: 'https://via.placeholder.com/40' },
-      { type: 'span', content: '3S Template' },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=YouTube' },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=Facebook'},
-      { type: 'image', content: 'https://via.placeholder.com/24?text=Twitter'},
-      { type: 'image', content: 'https://via.placeholder.com/24?text=Instagram'  },
-      { type: 'image', content: 'https://via.placeholder.com/24?text=LinkedIn'},
-      { type: 'span', content: 'CompanyName @ 202X. All rights reserved.'},
+      { type: 'span', content: 'Eleven', styles: { fontSize: '1rem', color: '#E5E7EB' } },
+      { type: 'span', content: 'Twelve', styles: { fontSize: '1rem', color: '#E5E7EB' } },
+      { type: 'span', content: 'Thirteen', styles: { fontSize: '1rem', color: '#E5E7EB' } },
+      { type: 'span', content: '3S Template', styles: { fontSize: '1.1rem', fontWeight: 'bold', color: '#ffffff' } },
+      { type: 'span', content: 'CompanyName © 202X. All rights reserved.', styles: { fontSize: '0.9rem', color: '#9CA3AF' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=YouTube', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Facebook', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Twitter', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Instagram', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=LinkedIn', styles: { width: '40px', height: '40px' } },
     ],
   },
+  
+
   mintingSection: {
     children: [
       { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' }, // Logo
-      { type: 'title', content: 'Mint {Collection Name}', label:'title' }, // Title
+      { type: 'title', content: 'Mint {Collection Name}', label: 'title' }, // Title
       { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
       { type: 'timer', label: 'Time before minting', content: '17d 5h 38m 34s' }, // Timer
       { type: 'remaining', label: 'Remaining', content: '1000/1000' }, // Remaining
@@ -199,15 +204,15 @@ export const structureConfigurations = {
       { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' },
     ],
   },
-    connectWalletButton: {
-      content: 'Connect Wallet', // Default button text
-      settings: {
-        wallets: [
-          { name: 'Phantom', enabled: true },
-          { name: 'MetaMask', enabled: true },
-          { name: 'Freighter', enabled: true },
-        ],
-      },
+  connectWalletButton: {
+    content: 'Connect Wallet', // Default button text
+    settings: {
+      wallets: [
+        { name: 'Phantom', enabled: true },
+        { name: 'MetaMask', enabled: true },
+        { name: 'Freighter', enabled: true },
+      ],
     },
-  };
-  
+  },
+};
+

@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Span from '../../Typography/Span.js';
-import Image from '../../Media/Image';
-import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { TemplateFooterStyles } from './defaultFooterStyles.js';
-
-const SelectableSpan = withSelectable(Span);
-const SelectableImage = withSelectable(Image);
+import { Image, Span } from '../../SelectableElements';
 
 const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelect }) => {
   const [isCompact, setIsCompact] = useState(false);
@@ -20,12 +15,14 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelec
     return overrideChild || { ...defaultChild, id: `${uniqueId}-footer-child-${index}` };
   });
 
-  // Split spans into two groups
+  // Extract spans and images
   const spans = mergedChildren.filter((child) => child.type === 'span');
   const images = mergedChildren.filter((child) => child.type === 'image');
 
-  const firstSpans = spans.slice(0, -2);
-  const lastSpans = spans.slice(-2);
+  // Organizing sections
+  const navigationLinks = spans.slice(0, 3);
+  const branding = spans[3];
+  const copyright = spans[4];
 
   // Update `isCompact` state based on `contentListWidth`
   useEffect(() => {
@@ -41,39 +38,50 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelec
         flexDirection: isCompact ? 'column' : 'row',
         textAlign: isCompact ? 'center' : 'left',
       }}
-      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
-
+      onClick={(e) => handleSelect(e)}
     >
-      <div style={TemplateFooterStyles.templateSections}>
-        {firstSpans.map((child) => (
-          <SelectableSpan
+      {/* Left: Navigation Links */}
+      <div style={TemplateFooterStyles.navigationLinks}>
+        {navigationLinks.map((child) => (
+          <Span
             key={child.id}
             id={child.id}
             content={child.content}
-            styles={child.styles || TemplateFooterStyles.span}
+            styles={child.styles || TemplateFooterStyles.link}
           />
         ))}
       </div>
-      <div style={TemplateFooterStyles.middleSpans}>
-        {lastSpans.map((child) => (
-          <SelectableSpan
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={child.styles || TemplateFooterStyles.middleSpan}
+
+      {/* Center: Branding */}
+      <div style={TemplateFooterStyles.branding}>
+        {branding && (
+          <Span
+            key={branding.id}
+            id={branding.id}
+            content={branding.content}
+            styles={branding.styles || TemplateFooterStyles.brandingText}
           />
-        ))}
+        )}
       </div>
-      <div style={TemplateFooterStyles.templateSocialIcons}>
+
+      {/* Right: Social Icons */}
+      <div style={TemplateFooterStyles.socialIcons}>
         {images.map((child) => (
-          <SelectableImage
-            key={child.id}
-            id={child.id}
-            src={child.content}
-            styles={child.styles || TemplateFooterStyles.socialIcon}
-          />
+          <Image key={child.id} id={child.id} src={child.content} styles={child.styles} />
         ))}
       </div>
+
+      {/* Bottom: Copyright */}
+      {isCompact && copyright && (
+        <div style={TemplateFooterStyles.copyright}>
+          <Span
+            key={copyright.id}
+            id={copyright.id}
+            content={copyright.content}
+            styles={copyright.styles || TemplateFooterStyles.copyrightText}
+          />
+        </div>
+      )}
     </footer>
   );
 };

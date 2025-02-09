@@ -1,19 +1,18 @@
 // src/components/TopbarComponents/ExportSection.js
-
 import React, { useState } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../../firebase'; // <-- import your firebase config
+import { auth, db } from '../../firebase';
 import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
 
-const ExportSection = ({ elements, buildHierarchy, userChosenUrl = '' }) => {
+const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
 
   const handleExportHtml = async () => {
     setAutoSaveStatus('Publishing...');
 
     try {
-      // 1. Build the full HTML content (same approach as before)
+      // 1. Build the full HTML
       const collectedStyles = [];
       const nestedElements = buildHierarchy(elements);
       const bodyHtml = nestedElements
@@ -48,29 +47,41 @@ const ExportSection = ({ elements, buildHierarchy, userChosenUrl = '' }) => {
 </html>
       `.trim();
 
-      // 2. Get the current user from Firebase Auth
-      const user = auth.currentUser;
-      if (!user) {
-        setAutoSaveStatus('Error: User not logged in!');
+      // 2. Check if we have a user
+      //    If we use the wallet-based user ID, userId might be the doc ID.
+      //    Otherwise, we can fallback to auth.currentUser?.uid
+      let finalUserId = userId;
+      const currentUser = auth.currentUser;
+
+      if (!finalUserId && currentUser) {
+        finalUserId = currentUser.uid;
+      }
+
+      if (!finalUserId) {
+        setAutoSaveStatus('Error: No valid user ID found!');
         return;
       }
 
-      // 3. Save to Firestore (for example, under 'projects' collection)
-      // You might want to generate a separate doc ID if you handle multiple projects per user.
-      const projectRef = doc(db, 'projects', user.uid);
+      // 3. Store the project under the doc ID = finalUserId
+      const projectRef = doc(db, 'projects', finalUserId);
 
       await setDoc(projectRef, {
         html: fullHtml,
         elements: elements,
-        userId: user.uid,
+        userId: finalUserId,
         lastUpdated: serverTimestamp(),
         customUrl: userChosenUrl || '',
-        testUrl: `https://your-app.com/preview/${user.uid}`,
+        testUrl: `https://your-app.com/preview/${finalUserId}`,
       });
 
-      setAutoSaveStatus(
-        `Project published! Preview at https://your-app.com/preview/${user.uid}`
-      );
+      const testUrl = `https://your-app.com/preview/${finalUserId}`;
+      setAutoSaveStatus(`Project published!`);
+
+      // Optionally copy the URL to the clipboard
+      await navigator.clipboard.writeText(testUrl);
+
+      // Or open in a new window (optional)
+      // window.open(testUrl, '_blank');
 
     } catch (error) {
       console.error('Error publishing project:', error);

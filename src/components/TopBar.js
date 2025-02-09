@@ -7,13 +7,13 @@ import WebsiteInfo from './TopbarComponents/WebsiteInfo';
 import Visibility from './TopbarComponents/Visibility';
 import './css/Topbar.css'
 
-
 const Topbar = ({
   onResize,
   scale,
   onPreviewToggle,
   isPreviewMode,
   pageSettings,
+  userId // <--- added
 }) => {
   const { elements, buildHierarchy } = useContext(EditableContext);
 
@@ -21,6 +21,7 @@ const Topbar = ({
   const description = pageSettings.description || 'My Website';
   const faviconUrl = pageSettings.faviconUrl || '';
   const hostingUrl = 'https://jesuisuneurl/';
+  
   return (
     <div className="topbar">
       <WebsiteInfo
@@ -29,12 +30,16 @@ const Topbar = ({
         url={hostingUrl}
         faviconUrl={faviconUrl}
       />
-      <Visibility
-        onPreviewToggle={onPreviewToggle}
-        isPreviewMode={isPreviewMode}
-      />
+      <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} />
       <ResizeControls scale={scale} onResize={onResize} />
-      <ExportSection elements={elements} buildHierarchy={buildHierarchy} />
+
+
+      <ExportSection
+        elements={elements}
+        buildHierarchy={buildHierarchy}
+        // Pass userId to ExportSection to store under that doc
+        userId={userId}
+      />
     </div>
   );
 };

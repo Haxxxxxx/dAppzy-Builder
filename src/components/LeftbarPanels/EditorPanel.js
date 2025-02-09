@@ -16,7 +16,7 @@ import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
 import BackgroundSettings from './SettingsPanels/BackgroundSettings';
-
+import '../css/EditorPanel.css'
 const CollapsiblePanel = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -25,26 +25,14 @@ const CollapsiblePanel = ({ title, children }) => {
       <div
         className="panel-header"
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          cursor: 'pointer',
-          background: '#f0f0f0',
-          padding: '8px 16px',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          marginBottom: '8px',
-        }}
+
       >
         <h4 style={{ margin: 0 }}>{title}</h4>
       </div>
       {isOpen && (
         <div
           className="panel-content"
-          style={{
-            padding: '16px',
-            border: '1px solid #ddd',
-            borderTop: 'none',
-            borderRadius: '0 0 4px 4px',
-          }}
+
         >
           {children}
         </div>
@@ -101,7 +89,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    
+
     if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
         <LinkSettings

@@ -19,6 +19,10 @@ export const mintingSectionStyles = {
     rightSection: {
       padding: '1rem',
     },
+    rightSectionHeader:{
+      display:"flex",
+      flexDirection:"column",
+    },
     logo: {
       width: '160px',
       height: '160px',

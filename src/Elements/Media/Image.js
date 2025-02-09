@@ -1,31 +1,31 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { EditableContext } from "../../context/EditableContext";
 import { useDrop } from "react-dnd";
 
-const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }, handleDrop }) => {
+const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {}, handleDrop }) => {
   const { elements, updateStyles, setSelectedElement } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id) || {};
   const { styles = {} } = imageElement;
+
   const defaultSrc = "https://picsum.photos/150"; // Fallback placeholder
   const [currentSrc, setCurrentSrc] = useState(styles.src || defaultSrc);
 
   useEffect(() => {
-    setCurrentSrc(styles.src || defaultSrc);
+    if (styles.src && styles.src !== currentSrc) {
+      setCurrentSrc(styles.src);
+    }
   }, [styles.src]);
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "mediaItem",
     drop: (item) => {
       if (item.src) {
-        // Update the context with the new src
         updateStyles(id, { src: item.src });
-
-        // Re-select this image with the newly updated styles
+        setCurrentSrc(item.src);
         setSelectedElement({
           id,
           type: "image",
-          // If needed, you could also pass in the updated styles directly:
-          styles: { src: item.src, ...styles }
+          styles: { src: item.src, ...styles },
         });
       }
     },
@@ -33,7 +33,6 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
       isOver: monitor.isOver(),
     }),
   }));
-
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -46,11 +45,10 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
       ref={drop}
       onClick={handleSelect}
       style={{
-        ...customStyles,
         border: isOver ? "2px dashed green" : "none",
         position: "relative",
         cursor: "pointer",
-        display: "inline-block",
+        display: "inline-flex",
       }}
       aria-label="Editable image"
     >
@@ -58,10 +56,12 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
         src={currentSrc}
         alt={styles.alt || "Editable element"}
         style={{
-          width: styles.width || "auto",
-          height: styles.height || "auto",
-          objectFit: styles.objectFit || "cover",
-          borderRadius: styles.borderRadius || "0",
+          width: styles.width || customStyles.width || "auto", // ✅ Ensures proper width
+          height: styles.height || customStyles.height || "auto", // ✅ Ensures proper height
+          objectFit: styles.objectFit || "cover", // ✅ Applies object-fit correctly
+          borderRadius: styles.borderRadius || customStyles.borderRadius || "50%", // ✅ Ensures borderRadius applies
+          maxWidth: "100%",
+          maxHeight: "100%",
         }}
       />
     </div>
