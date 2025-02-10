@@ -158,16 +158,7 @@ const DraggableCTA = ({
         toggleModal();    // show/hide your modal
       }}
     >
-      <img
-        src={imgSrc}
-        alt={label}
-        style={{
-          width: '100%',
-          height: 'auto',
-          marginBottom: '8px',
-          borderRadius: '4px',
-        }}
-      />
+
       <strong>{label}</strong>
       {CTAComponent}
     </div>

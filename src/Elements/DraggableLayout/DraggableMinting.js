@@ -125,16 +125,7 @@ const DraggableMinting = ({
         toggleModal(); // Show/hide modal
       }}
     >
-      <img
-        src={imgSrc}
-        alt={label}
-        style={{
-          width: '100%',
-          height: 'auto',
-          marginBottom: '8px',
-          borderRadius: '4px',
-        }}
-      />
+
       <strong>{label}</strong>
       <MintingSection
         uniqueId={id}

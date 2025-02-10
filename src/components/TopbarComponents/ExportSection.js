@@ -1,4 +1,3 @@
-// src/components/TopbarComponents/ExportSection.js
 import React, { useState } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
@@ -47,9 +46,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
 </html>
       `.trim();
 
-      // 2. Check if we have a user
-      //    If we use the wallet-based user ID, userId might be the doc ID.
-      //    Otherwise, we can fallback to auth.currentUser?.uid
+      // 2. Determine the user ID
       let finalUserId = userId;
       const currentUser = auth.currentUser;
 
@@ -62,7 +59,15 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
         return;
       }
 
-      // 3. Store the project under the doc ID = finalUserId
+      // 3. Construct the preview URL based on the environment
+      const isLocal = window.location.hostname === 'localhost';
+      const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.3rd-space.io';
+
+      const testUrl = userChosenUrl
+        ? `${baseUrl}/${userChosenUrl}`
+        : `${baseUrl}/preview/${finalUserId}`;
+
+      // 4. Store the project under the user's document
       const projectRef = doc(db, 'projects', finalUserId);
 
       await setDoc(projectRef, {
@@ -71,17 +76,16 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
         userId: finalUserId,
         lastUpdated: serverTimestamp(),
         customUrl: userChosenUrl || '',
-        testUrl: `https://your-app.com/preview/${finalUserId}`,
+        testUrl,
       });
 
-      const testUrl = `https://your-app.com/preview/${finalUserId}`;
       setAutoSaveStatus(`Project published!`);
 
-      // Optionally copy the URL to the clipboard
+      // Copy the preview URL to clipboard
       await navigator.clipboard.writeText(testUrl);
 
-      // Or open in a new window (optional)
-      // window.open(testUrl, '_blank');
+      // Open the preview in a new tab
+      window.open(testUrl, '_blank');
 
     } catch (error) {
       console.error('Error publishing project:', error);

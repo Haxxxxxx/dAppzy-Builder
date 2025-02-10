@@ -153,7 +153,6 @@ const DraggableHero = ({
     <div
       ref={drag}
       style={{
-        position: 'relative',
         cursor: 'pointer',
         border: isDragging ? '1px dashed #000' : 'none',
         backgroundColor: '#f9f9f9',
@@ -165,16 +164,7 @@ const DraggableHero = ({
         toggleModal();    // show/hide your modal
       }}
     >
-      <img
-        src={imgSrc}
-        alt={label}
-        style={{
-          width: '100%',
-          height: 'auto',
-          marginBottom: '8px',
-          borderRadius: '4px',
-        }}
-      />
+    
       <strong>{label}</strong>
       {HeroComponent}
     </div>
