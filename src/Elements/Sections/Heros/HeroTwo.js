@@ -1,17 +1,8 @@
 import React, { useRef } from 'react';
-import Button from '../../Basic/Button';
-import Image from '../../Media/Image';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import useElementDrop from '../../../utils/useElementDrop';
-import withSelectable from '../../../utils/withSelectable';
 import { heroTwoStyles } from './defaultHeroStyles';
-import Heading from '../../Typography/Heading';
-import Paragraph from '../../Typography/Paragraph';
-
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
-const SelectableHeading = withSelectable(Heading);
-const SelectableParagraph = withSelectable(Paragraph);
+import { Heading, Paragraph, Button, Image } from '../../SelectableElements';
 
 const HeroTwo = ({ uniqueId, children, onDropItem, handleSelect }) => {
   const sectionRef = useRef(null);
@@ -22,7 +13,7 @@ const HeroTwo = ({ uniqueId, children, onDropItem, handleSelect }) => {
     onDropItem,
   });
 
-  const title = children?.find((child) => child.type === 'title' && child.content === heroTwo.children[0].content) || heroTwo.children[0];
+  const heading = children?.find((child) => child.type === 'heading' && child.content === heroTwo.children[0].content) || heroTwo.children[0];
   const subtitle = children?.find((child) => child.type === 'paragraph' && child.content === heroTwo.children[1].content) || heroTwo.children[1];
   const button = children?.find((child) => child.type === 'button' && child.content === heroTwo.children[2].content) || heroTwo.children[2];
   const image = children?.find((child) => child.type === 'image');
@@ -47,10 +38,10 @@ const HeroTwo = ({ uniqueId, children, onDropItem, handleSelect }) => {
       onClick={(e) => handleSelect(e)}  // if you need the event explicitly
 
     >
-      <SelectableHeading id={title.id || `title-${uniqueId}`} content={title.content} styles={title.styles || heroTwoStyles.title} />
-      <SelectableParagraph id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={subtitle.styles || heroTwoStyles.subtitle} />
+      <Heading id={heading.id || `heading-${uniqueId}`} content={heading.content} styles={{...heroTwoStyles.heading}} />
+      <Paragraph id={subtitle.id || `subtitle-${uniqueId}`} content={subtitle.content} styles={{...heroTwoStyles.description}} />
       {image && (
-        <SelectableImage
+        <Image
           id={image.id}
           src={image.content}
           styles={heroTwoStyles.heroImage}
@@ -58,7 +49,7 @@ const HeroTwo = ({ uniqueId, children, onDropItem, handleSelect }) => {
           handleDrop={handleImageDrop}
         />
       )}
-      <SelectableButton id={button.id || `button-${uniqueId}`} content={button.content} styles={button.styles || heroTwoStyles.button} />
+      <Button id={button.id || `button-${uniqueId}`} content={button.content} styles={{...heroTwoStyles.buttonContainer}} />
     </section>
   );
 };

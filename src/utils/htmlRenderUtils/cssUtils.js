@@ -1,4 +1,3 @@
-import { stylesMap } from "./typeMapping";
 
 // Utility function to flatten styles into valid CSS strings
 export function flattenStyles(styles) {
@@ -21,26 +20,5 @@ export function flattenStyles(styles) {
     });
   
     return cssString.trim();
-  }
-  
-  // Generate consolidated CSS for all collected styles
-  export function generateCss(collectedStyles) {
-    const defaultStylesCss = Object.entries(stylesMap)
-      .map(([config, styles]) => {
-        return Object.entries(styles).map(([className, style]) => {
-          const styleString = flattenStyles(style || {});
-          return `.${config}-${className} {\n  ${styleString}\n}`;
-        }).join('\n\n');
-      })
-      .join('\n\n');
-  
-    const elementStylesCss = collectedStyles
-      .map(({ className, styles }) => {
-        const styleString = flattenStyles(styles || {});
-        return `.${className} {\n  ${styleString}\n}`;
-      })
-      .join('\n\n');
-  
-    return `${defaultStylesCss}\n\n${elementStylesCss}`;
   }
   

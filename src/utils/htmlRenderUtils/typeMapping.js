@@ -1,7 +1,3 @@
-import { defaultNavbarStyles } from "../../Elements/Sections/Navbars/DefaultNavbarStyles";
-import { CustomTemplateNavbarStyles } from "../../Elements/Sections/Navbars/DefaultNavbarStyles";
-import { defaultHeroStyles } from "../../Elements/Sections/Heros/defaultHeroStyles";
-import { defaultCtaStyles } from "../../Elements/Sections/CTAs/defaultCtaStyles";
 
 export const typeToTagMap = {
   div: 'div',
@@ -55,11 +51,3 @@ export const typeToTagMap = {
   youtube: 'iframe',
 };
 
-  
-  export const stylesMap = {
-    default: defaultNavbarStyles,
-    customTemplate: CustomTemplateNavbarStyles,
-    heroStyles: defaultHeroStyles,
-    ctaStyles: defaultCtaStyles,
-  };
-  

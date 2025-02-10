@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Heading = ({ id, content: initialContent }) => {
+const Heading = ({ id, content: initialContent, styles: customStyles }) => {
   const { selectedElement, setSelectedElement, updateContent, updateConfiguration, elements, findElementById } =
     useContext(EditableContext);
   const headingRef = useRef(null);
@@ -39,7 +39,7 @@ const Heading = ({ id, content: initialContent }) => {
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
-        ...styles,
+        ...customStyles, // Override with custom styles
         wordWrap: 'break-word',
         whiteSpace: 'pre-wrap',
         overflowWrap: 'break-word',

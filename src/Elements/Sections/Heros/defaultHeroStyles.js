@@ -72,16 +72,15 @@ export const defaultHeroStyles = {
   },
 };
 
-
 export const heroThreeStyles = {
   heroSection: {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     padding: '40px',
     backgroundColor: '#ffffff',
-
+    gap:"10vw"
   },
   heroContent: {
     flex: 1,
@@ -153,25 +152,19 @@ export const heroTwoStyles = {
     alignItems: 'center',
     textAlign: 'center',
     borderRadius: '8px',
-    gap:'1rem',
   },
-  heroSectionWithDrop: {
-    border: '2px dashed blue',
-  },
-  title: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: '1.25rem',
-    margin: '16px 0',
-  },
-  button: {
-    padding: '10px 20px',
-    backgroundColor: '#2563EB',
-    color: '#fff',
+  buttonContainer:{
     border: 'none',
-    borderRadius: '4px',
+    backgroundColor: 'rgb(51, 65, 85)',
+    color: 'rgb(255, 255, 255)',
     cursor: 'pointer',
+    padding: '10px 20px',
   },
-};
+  heading:{
+    fontSize:"36px",
+  },
+  description:{
+    fontSize:'18px'
+  },
+
+}

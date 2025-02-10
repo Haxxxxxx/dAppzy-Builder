@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Paragraph = ({ id, content: initialContent }) => {
+const Paragraph = ({ id, content: initialContent, styles:customStyles }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id) || {};
   const { content = initialContent, styles } = element;
@@ -41,7 +41,7 @@ const Paragraph = ({ id, content: initialContent }) => {
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
-        ...styles,
+        ...customStyles,
         wordWrap: 'break-word',
         wordBreak: 'break-word',
         whiteSpace: 'normal',

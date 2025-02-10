@@ -1,19 +1,9 @@
 import React, { useRef } from 'react';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import Image from '../../Media/Image';
-import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { heroThreeStyles } from './defaultHeroStyles';
 import useElementDrop from '../../../utils/useElementDrop';
-import Heading from '../../Typography/Heading';
-import Paragraph from '../../Typography/Paragraph';
 
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
-const SelectableHeading = withSelectable(Heading);
-const SelectableParagraph = withSelectable(Paragraph);
+import { Heading, Paragraph, Button, Image, Span} from '../../SelectableElements';
 
 const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel, handleSelect }) => {
   const heroRef = useRef(null);
@@ -50,42 +40,42 @@ const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel, handl
     >
       <div style={heroThreeStyles.heroContent}>
         {caption && (
-          <SelectableSpan
+          <Span
             id={caption.id || `caption-${uniqueId}`}
             content={caption.content}
-            styles={mergeStyles(heroThreeStyles.caption, caption.styles)}
+            styles={mergeStyles(heroThreeStyles.caption)}
           />
         )}
 
         {title && (
-          <SelectableHeading
+          <Heading
             id={title.id || `title-${uniqueId}`}
             content={title.content}
-            styles={mergeStyles(heroThreeStyles.heroTitle, title.styles)}
+            styles={mergeStyles(heroThreeStyles.heroTitle)}
           />
         )}
 
         {description && (
-          <SelectableParagraph
+          <Paragraph
             id={description.id || `description-${uniqueId}`}
             content={description.content}
-            styles={mergeStyles(heroThreeStyles.heroDescription, description.styles)}
+            styles={mergeStyles(heroThreeStyles.heroDescription)}
           />
         )}
 
         <div style={heroThreeStyles.buttonContainer}>
           {primaryButton && (
-            <SelectableButton
+            <Button
               id={primaryButton.id || `primary-button-${uniqueId}`}
               content={primaryButton.content}
-              styles={mergeStyles(heroThreeStyles.primaryButton, primaryButton.styles)}
+              styles={mergeStyles(heroThreeStyles.primaryButton)}
             />
           )}
           {secondaryButton && (
-            <SelectableButton
+            <Button
               id={secondaryButton.id || `secondary-button-${uniqueId}`}
               content={secondaryButton.content}
-              styles={mergeStyles(heroThreeStyles.secondaryButton, secondaryButton.styles)}
+              styles={mergeStyles(heroThreeStyles.secondaryButton)}
             />
           )}
         </div>
@@ -93,10 +83,10 @@ const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel, handl
 
       {image && (
         <div style={heroThreeStyles.heroImageContainer}>
-          <SelectableImage
+          <Image
             id={image.id || `image-${uniqueId}`}
             src={image.content}
-            styles={mergeStyles(heroThreeStyles.heroImage, image.styles)}
+            styles={mergeStyles(heroThreeStyles.heroImage)}
             handleOpenMediaPanel={handleOpenMediaPanel}
           />
         </div>

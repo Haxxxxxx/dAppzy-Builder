@@ -1,0 +1,35 @@
+export const FooterConfigurations = {
+    
+  simple: {
+    children: [
+      { type: 'span', content: 'Simple Footer - © 2024 My Company' },
+      { type: 'button', content: 'Subscribe' },
+    ],
+  },
+  detailed: {
+    children: [
+      { type: 'span', content: 'Company Name, Address Line 1, Address Line 2' },
+      { type: 'button', content: 'Contact Us' },
+      { type: 'span', content: 'Privacy Policy' },
+      { type: 'span', content: 'Terms of Service' },
+      { type: 'span', content: 'Support' },
+      { type: 'span', content: 'Follow us: [Social Links]' },
+    ],
+  },
+  template: {
+    type: 'footer',
+    children: [
+      { type: 'span', content: 'Eleven', styles: { fontSize: '1rem', color: '#E5E7EB' } },
+      { type: 'span', content: 'Twelve', styles: { fontSize: '1rem', color: '#E5E7EB' } },
+      { type: 'span', content: 'Thirteen', styles: { fontSize: '1rem', color: '#E5E7EB' } },
+      { type: 'span', content: '3S Template', styles: { fontSize: '1.1rem', fontWeight: 'bold', color: '#ffffff' } },
+      { type: 'span', content: 'CompanyName © 202X. All rights reserved.', styles: { fontSize: '0.9rem', color: '#9CA3AF' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=YouTube', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Facebook', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Twitter', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=Instagram', styles: { width: '40px', height: '40px' } },
+      { type: 'image', content: 'https://via.placeholder.com/24?text=LinkedIn', styles: { width: '40px', height: '40px' } },
+    ],
+  },
+  
+}

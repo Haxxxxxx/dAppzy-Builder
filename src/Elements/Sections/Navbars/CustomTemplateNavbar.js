@@ -205,11 +205,6 @@ const CustomTemplateNavbar = ({
                       content={child.content}
                       styles={{
                         ...child.styles,
-                        border: 'none',
-                        padding: '10px 20px',
-                        backgroundColor:
-                          child.styles?.backgroundColor || '#334155',
-                        color: child.styles?.color || '#fff',
                       }}
                     />
                   )}
