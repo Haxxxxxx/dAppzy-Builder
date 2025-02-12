@@ -15,15 +15,9 @@ export const defaultHeroStyles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap:'2rem',
+    gap:'1rem',
+  },
 
-  },
-  caption: {
-    fontWeight: 'bold',
-    color: '#334155',
-    marginBottom: '8px',
-    display: 'block',
-  },
   heroTitle: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
@@ -34,10 +28,7 @@ export const defaultHeroStyles = {
     lineHeight: '1.5',
     marginBottom: '24px',
   },
-  buttonContainer: {
-    display: 'flex',
-    gap: '12px',
-  },
+
   primaryButton: {
     backgroundColor: '#334155',
     color: '#ffffff',
@@ -47,15 +38,7 @@ export const defaultHeroStyles = {
     cursor: 'pointer',
     borderRadius: '4px',
   },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    color: '#334155',
-    padding: '12px 24px',
-    border: '2px solid #334155',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    borderRadius: '4px',
-  },
+
   heroImageContainer: {
     flex: '1',
     minWidth: '300px',
@@ -153,18 +136,22 @@ export const heroTwoStyles = {
     textAlign: 'center',
     borderRadius: '8px',
   },
-  buttonContainer:{
+
+  heroTitle: {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    marginBottom: '16px',
+  },
+  heroDescription: {
+    fontSize: '1rem',
+    lineHeight: '1.5',
+    marginBottom: '24px',
+  },
+  primaryButton:{
     border: 'none',
     backgroundColor: 'rgb(51, 65, 85)',
     color: 'rgb(255, 255, 255)',
     cursor: 'pointer',
     padding: '10px 20px',
   },
-  heading:{
-    fontSize:"36px",
-  },
-  description:{
-    fontSize:'18px'
-  },
-
 }

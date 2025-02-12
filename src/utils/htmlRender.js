@@ -3,6 +3,7 @@ import { getFileExtension } from './htmlRenderUtils/fileUtils';
 import { typeToTagMap } from './htmlRenderUtils/typeMapping';
 import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
 import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
+import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
 
 export function buildAttributesString(type, attributes, src) {
   let attributesString = '';
@@ -41,13 +42,17 @@ export function buildAttributesString(type, attributes, src) {
 export function renderElementToHtml(element, collectedStyles) {
   const { id, type, styles, content, src, attributes = {}, children = [] } = element;
   const tag = typeToTagMap[type];
-  
+
   if (type === 'navbar') {
     return renderNavbar(element, collectedStyles);
   }
-  
+
   if (type === 'hero') {
     return renderHero(element, collectedStyles);
+  }
+  // Add this block:
+  if (type === 'footer') {
+    return renderFooter(element, collectedStyles);
   }
 
   if (!tag) {

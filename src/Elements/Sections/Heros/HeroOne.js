@@ -54,7 +54,6 @@ const HeroOne = ({
       }}
       style={{
         ...defaultHeroStyles.hero,
-        ...(heroElement?.styles || {}),
       }}
       onClick={(e) => handleSelect(e)}
     >
@@ -66,7 +65,7 @@ const HeroOne = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={child.styles || defaultHeroStyles.heroTitle}
+              styles={defaultHeroStyles.heroTitle}
             />
           ))}
 
@@ -77,7 +76,7 @@ const HeroOne = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={child.styles || defaultHeroStyles.heroDescription}
+              styles={defaultHeroStyles.heroDescription}
             />
           ))}
 
@@ -89,7 +88,7 @@ const HeroOne = ({
                 key={child.id}
                 id={child.id}
                 content={child.content}
-                styles={child.styles || defaultHeroStyles.primaryButton}
+                styles={defaultHeroStyles.primaryButton}
               />
             ))}
         </div>
@@ -103,7 +102,7 @@ const HeroOne = ({
               key={child.id}
               id={child.id}
               src={child.content}
-              styles={child.styles || defaultHeroStyles.heroImage}
+              styles={defaultHeroStyles.heroImage}
               handleOpenMediaPanel={handleOpenMediaPanel}
               handleDrop={(item) => onDropItem(item, child.id)}
             />

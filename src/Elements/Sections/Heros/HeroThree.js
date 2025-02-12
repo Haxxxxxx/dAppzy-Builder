@@ -1,33 +1,61 @@
-import React, { useRef } from 'react';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
-import { heroThreeStyles } from './defaultHeroStyles';
+import React, { useContext, useRef, useEffect } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
+import { heroThreeStyles } from './defaultHeroStyles';
+import { Heading, Paragraph, Button, Image, Span } from '../../SelectableElements';
 
-import { Heading, Paragraph, Button, Image, Span} from '../../SelectableElements';
-
-const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel, handleSelect }) => {
+/**
+ * A "HeroThree" component that merges heroThreeStyles for layout and child styling.
+ */
+const HeroThree = ({
+  uniqueId,
+  children = [],
+  onDropItem,
+  handleOpenMediaPanel,
+  handleSelect,
+}) => {
   const heroRef = useRef(null);
-  const { heroThree } = structureConfigurations;
 
+  // 1) Access context
+  const { elements, updateStyles } = useContext(EditableContext);
+
+  // 2) Make the hero droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: heroRef,
     onDropItem,
   });
 
-  // Helper function to merge styles
-  const mergeStyles = (defaultStyles, childStyles) => ({
-    ...defaultStyles,
-    ...childStyles,
-  });
+  // 3) Find the hero element in state
+  const heroElement = elements.find((el) => el.id === uniqueId);
 
-  // Extract elements or fallback to default structure
-  const caption = children?.find((child) => child.type === 'span') || heroThree.children[0];
-  const title = children?.find((child) => child.type === 'heading') || heroThree.children[1];
-  const description = children?.find((child) => child.type === 'paragraph') || heroThree.children[2];
-  const primaryButton = children?.find((child) => child.type === 'button' && child.content === 'Primary Action') || heroThree.children[3];
-  const secondaryButton = children?.find((child) => child.type === 'button' && child.content === 'Secondary Action') || heroThree.children[4];
-  const image = children?.find((child) => child.type === 'image') || heroThree.children[5];
+  // 4) If no custom styles exist, apply heroThreeStyles.heroSection
+  useEffect(() => {
+    if (!heroElement) return;
+
+    const noCustomStyles =
+      !heroElement.styles || Object.keys(heroElement.styles).length === 0;
+
+    if (noCustomStyles) {
+      updateStyles(heroElement.id, {
+        ...heroThreeStyles.heroSection,
+      });
+    }
+  }, [heroElement, updateStyles]);
+
+  // 5) Identify children for layout
+  const captionChild = children.find((c) => c.type === 'span');
+  const headingChild = children.find((c) => c.type === 'heading');
+  const paragraphChild = children.find((c) => c.type === 'paragraph');
+  const buttonChildren = children.filter((c) => c.type === 'button');
+  const imageChild = children.find((c) => c.type === 'image');
+
+  // 6) Merge hero-level + highlight if drag is over
+  const sectionStyles = {
+    ...heroThreeStyles.heroSection,
+    ...(heroElement?.styles || {}),
+    ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+  };
 
   return (
     <section
@@ -35,58 +63,66 @@ const HeroThree = ({ uniqueId, children, onDropItem, handleOpenMediaPanel, handl
         heroRef.current = node;
         drop(node);
       }}
-      style={isOverCurrent ? { ...heroThreeStyles.heroSection, outline: '2px dashed #4D70FF' } : heroThreeStyles.heroSection}
-      onClick={(e) => handleSelect(e)}
+      style={sectionStyles}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e);
+      }}
     >
+      {/* Left hero content */}
       <div style={heroThreeStyles.heroContent}>
-        {caption && (
+        {captionChild && (
           <Span
-            id={caption.id || `caption-${uniqueId}`}
-            content={caption.content}
-            styles={mergeStyles(heroThreeStyles.caption)}
+            key={captionChild.id}
+            id={captionChild.id}
+            content={captionChild.content}
+            styles={captionChild.styles || heroThreeStyles.caption}
           />
         )}
 
-        {title && (
+        {headingChild && (
           <Heading
-            id={title.id || `title-${uniqueId}`}
-            content={title.content}
-            styles={mergeStyles(heroThreeStyles.heroTitle)}
+            key={headingChild.id}
+            id={headingChild.id}
+            content={headingChild.content}
+            styles={headingChild.styles || heroThreeStyles.heroTitle}
           />
         )}
 
-        {description && (
+        {paragraphChild && (
           <Paragraph
-            id={description.id || `description-${uniqueId}`}
-            content={description.content}
-            styles={mergeStyles(heroThreeStyles.heroDescription)}
+            key={paragraphChild.id}
+            id={paragraphChild.id}
+            content={paragraphChild.content}
+            styles={paragraphChild.styles || heroThreeStyles.heroDescription}
           />
         )}
 
+        {/* Button container */}
         <div style={heroThreeStyles.buttonContainer}>
-          {primaryButton && (
+          {buttonChildren.map((btn, index) => (
             <Button
-              id={primaryButton.id || `primary-button-${uniqueId}`}
-              content={primaryButton.content}
-              styles={mergeStyles(heroThreeStyles.primaryButton)}
+              key={btn.id}
+              id={btn.id}
+              content={btn.content}
+              styles={
+                index === 0
+                  ? (heroThreeStyles.primaryButton)
+                  : (heroThreeStyles.secondaryButton)
+              }
             />
-          )}
-          {secondaryButton && (
-            <Button
-              id={secondaryButton.id || `secondary-button-${uniqueId}`}
-              content={secondaryButton.content}
-              styles={mergeStyles(heroThreeStyles.secondaryButton)}
-            />
-          )}
+          ))}
         </div>
       </div>
 
-      {image && (
+      {/* Right hero image */}
+      {imageChild && (
         <div style={heroThreeStyles.heroImageContainer}>
           <Image
-            id={image.id || `image-${uniqueId}`}
-            src={image.content}
-            styles={mergeStyles(heroThreeStyles.heroImage)}
+            key={imageChild.id}
+            id={imageChild.id}
+            src={imageChild.content}
+            styles={heroThreeStyles.heroImage}
             handleOpenMediaPanel={handleOpenMediaPanel}
           />
         </div>

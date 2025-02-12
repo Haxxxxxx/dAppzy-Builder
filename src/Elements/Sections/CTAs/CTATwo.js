@@ -1,12 +1,7 @@
 import React from 'react';
-import Span from '../../Typography/Span';
-import Button from '../../Basic/Button';
-import withSelectable from '../../../utils/withSelectable';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { ctaTwoStyles } from './defaultCtaStyles';
-
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
+import { Button, Span } from '../../SelectableElements';
 
 const CTATwo = ({ children = [], uniqueId, onDropItem, handleOpenMediaPanel, handleSelect }) => {
   const { ctaTwo } = structureConfigurations;
@@ -28,7 +23,7 @@ const CTATwo = ({ children = [], uniqueId, onDropItem, handleOpenMediaPanel, han
     <section style={ctaTwoStyles.cta} onClick={(e) => handleSelect(e)}  // if you need the event explicitly
     >
       {titleChild && (
-        <SelectableSpan
+        <Span
           id={titleChild.id}
           content={titleChild.content}
           styles={ctaTwoStyles.ctaTitle}
@@ -36,14 +31,14 @@ const CTATwo = ({ children = [], uniqueId, onDropItem, handleOpenMediaPanel, han
       )}
       <div style={ctaTwoStyles.buttonContainer}>
         {primaryButton && (
-          <SelectableButton
+          <Button
             id={primaryButton.id}
             content={primaryButton.content}
             styles={ctaTwoStyles.primaryButton}
           />
         )}
         {secondaryButton && (
-          <SelectableButton
+          <Button
             id={secondaryButton.id}
             content={secondaryButton.content}
             styles={ctaTwoStyles.secondaryButton}

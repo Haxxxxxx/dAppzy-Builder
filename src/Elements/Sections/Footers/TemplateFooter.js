@@ -1,44 +1,90 @@
-import React, { useEffect, useState } from 'react';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
+import useElementDrop from '../../../utils/useElementDrop';
 import { TemplateFooterStyles } from './defaultFooterStyles.js';
 import { Image, Span } from '../../SelectableElements';
 
-const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelect }) => {
+/**
+ * A "TemplateFooter" component that:
+ *  - Finds the footer element in global state by id.
+ *  - Merges default styles from TemplateFooterStyles (if none are set).
+ *  - Groups children into navigationLinks, branding, socialIcons, etc.
+ *  - Supports a compact layout on small screens, just like the navbars.
+ */
+const TemplateFooter = ({
+  uniqueId,
+  contentListWidth,
+  children = [],
+  onDropItem,
+  handleOpenMediaPanel,
+  handleSelect,
+}) => {
+  const footerRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
 
-  // Load the `template` configuration
-  const { template } = structureConfigurations;
+  // 1) Access "elements" and "updateStyles" from context
+  const { elements, updateStyles } = useContext(EditableContext);
 
-  // Merge default children with overrides
-  const mergedChildren = template.children.map((defaultChild, index) => {
-    const overrideChild = children.find((child) => child.id === `${uniqueId}-footer-child-${index}`);
-    return overrideChild || { ...defaultChild, id: `${uniqueId}-footer-child-${index}` };
+  // 2) DnD drop logic for placing new items into the footer
+  const { isOverCurrent, drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: footerRef,
+    onDropItem,
   });
 
-  // Extract spans and images
-  const spans = mergedChildren.filter((child) => child.type === 'span');
-  const images = mergedChildren.filter((child) => child.type === 'image');
+  // 3) Find the footer element in global state by its ID
+  const footerElement = elements.find((el) => el.id === uniqueId);
 
-  // Organizing sections
-  const navigationLinks = spans.slice(0, 3);
-  const branding = spans[3];
-  const copyright = spans[4];
-
-  // Update `isCompact` state based on `contentListWidth`
+  // 4) If the footer has no custom styles yet, apply the default style from TemplateFooterStyles
   useEffect(() => {
-    if (typeof contentListWidth === 'number' && !isNaN(contentListWidth)) {
-      setIsCompact(contentListWidth < 768); // Adjust breakpoint as needed
+    if (!footerElement) return;
+
+    const noCustomStyles =
+      !footerElement.styles || Object.keys(footerElement.styles).length === 0;
+
+    if (noCustomStyles) {
+      updateStyles(footerElement.id, {
+        ...TemplateFooterStyles.footer,
+      });
     }
+  }, [footerElement, updateStyles]);
+
+  // 5) Handle responsive layout
+  useEffect(() => {
+    setIsCompact(contentListWidth < 768); // Adjust this breakpoint as needed
   }, [contentListWidth]);
 
+  // 6) Group the children for a "template" layout (navigation, branding, social icons, etc.)
+  const spanChildren = children.filter((child) => child.type === 'span');
+  const imageChildren = children.filter((child) => child.type === 'image');
+
+  // For example, let's say the first 3 spans are "navigationLinks,"
+  // the 4th is "branding," the 5th is "copyright."
+  const navigationLinks = spanChildren.slice(0, 3);
+  const branding = spanChildren[3];
+  const copyright = spanChildren[4];
+  const socialIcons = imageChildren; // all images
+
+  // 7) Render
   return (
     <footer
+      ref={(node) => {
+        footerRef.current = node;
+        drop(node);
+      }}
+      // Merge the default style object with the user's custom styles
       style={{
         ...TemplateFooterStyles.footer,
+        ...(footerElement?.styles || {}),
+        // highlight the drop area if something is hovering
+        border: isOverCurrent ? '2px solid blue' : TemplateFooterStyles.footer.border,
         flexDirection: isCompact ? 'column' : 'row',
         textAlign: isCompact ? 'center' : 'left',
       }}
-      onClick={(e) => handleSelect(e)}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e);
+      }}
     >
       {/* Left: Navigation Links */}
       <div style={TemplateFooterStyles.navigationLinks}>
@@ -47,6 +93,7 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelec
             key={child.id}
             id={child.id}
             content={child.content}
+            // If child.styles is defined, merge it; otherwise use some default link style
             styles={child.styles || TemplateFooterStyles.link}
           />
         ))}
@@ -66,12 +113,24 @@ const TemplateFooter = ({ uniqueId, contentListWidth, children = [], handleSelec
 
       {/* Right: Social Icons */}
       <div style={TemplateFooterStyles.socialIcons}>
-        {images.map((child) => (
-          <Image key={child.id} id={child.id} src={child.content} styles={child.styles} />
+        {socialIcons.map((child) => (
+          <Image
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={child.styles}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            // If you want a drop handler for images, pass it in:
+            handleDrop={(droppedItem) => {
+              if (droppedItem.mediaType === 'image') {
+                onDropItem(child.id, droppedItem.src);
+              }
+            }}
+          />
         ))}
       </div>
 
-      {/* Bottom: Copyright */}
+      {/* Bottom: Copyright (only visible if isCompact) */}
       {isCompact && copyright && (
         <div style={TemplateFooterStyles.copyright}>
           <Span

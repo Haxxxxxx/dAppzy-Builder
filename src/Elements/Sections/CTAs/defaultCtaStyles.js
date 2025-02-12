@@ -100,3 +100,7 @@ export const ctaTwoStyles = {
     borderRadius: '4px',
   },
 };
+ 
+export const defaultCtaStyles = {
+  
+}

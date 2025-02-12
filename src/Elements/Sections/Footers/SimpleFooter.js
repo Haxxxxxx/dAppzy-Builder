@@ -1,32 +1,76 @@
-import React from 'react';
-import Span from '../../Typography/Span.js';
-import Button from '../../Basic/Button.js';
-import Image from '../../Media/Image';
-import withSelectable from '../../../utils/withSelectable';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
-import { SimplefooterStyles } from './defaultFooterStyles.js';
+import React, { useContext, useRef, useEffect } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
+import useElementDrop from '../../../utils/useElementDrop';
 
-const SelectableSpan = withSelectable(Span);
-const SelectableButton = withSelectable(Button);
-const SelectableImage = withSelectable(Image);
+// Import your default styles
+import { SimplefooterStyles } from './defaultFooterStyles';
 
-const SimpleFooter = ({ uniqueId, children = [], handleSelect }) => {
-  const { simple } = structureConfigurations;
+// Import your selectable elements
+import { Span, Button, Image } from '../../SelectableElements';
 
-  // Merge default children with overrides
-  const mergedChildren = simple.children.map((defaultChild, index) => {
-    const overrideChild = children.find((child) => child.type === defaultChild.type);
-    return overrideChild || { ...defaultChild, id: `${uniqueId}-footer-child-${index}` };
+const SimpleFooter = ({
+  uniqueId,
+  children = [],
+  handleSelect,
+  onDropItem,
+}) => {
+  const footerRef = useRef(null);
+
+  // 1) Access global context for elements & style updates
+  const { elements, updateStyles } = useContext(EditableContext);
+
+  // 2) Make the footer droppable, if you want to drag new elements onto it
+  const { isOverCurrent, drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: footerRef,
+    onDropItem,
   });
 
+  // 3) Find the footer element in global state
+  const footerElement = elements.find((el) => el.id === uniqueId);
+
+  // 4) Apply default styles if no custom styles exist yet
+  useEffect(() => {
+    if (!footerElement) return;
+
+    const noCustomStyles =
+      !footerElement.styles || Object.keys(footerElement.styles).length === 0;
+
+    if (noCustomStyles) {
+      updateStyles(footerElement.id, {
+        ...SimplefooterStyles.simpleFooter,
+      });
+    }
+  }, [footerElement, updateStyles]);
+
+  // 5) Render the footer
   return (
-    <footer style={SimplefooterStyles.simpleFooter}      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
->
-      {mergedChildren.map((child) => {
+    <footer
+      ref={(node) => {
+        footerRef.current = node;
+        drop(node);
+      }}
+      style={{
+        // Merge your default style plus the element’s own styles
+        ...SimplefooterStyles.simpleFooter,
+        ...(footerElement?.styles || {}),
+        border: isOverCurrent
+          ? '2px solid blue'
+          : SimplefooterStyles.simpleFooter.border,
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e);
+      }}
+    >
+      {/* Map over the children. 
+          Because you already created them in addNewElement(...) with
+          type: 'span', 'button', or 'image', just render them here. */}
+      {children.map((child) => {
         switch (child.type) {
           case 'span':
             return (
-              <SelectableSpan
+              <Span
                 key={child.id}
                 id={child.id}
                 content={child.content}
@@ -35,7 +79,7 @@ const SimpleFooter = ({ uniqueId, children = [], handleSelect }) => {
             );
           case 'button':
             return (
-              <SelectableButton
+              <Button
                 key={child.id}
                 id={child.id}
                 content={child.content}
@@ -44,7 +88,7 @@ const SimpleFooter = ({ uniqueId, children = [], handleSelect }) => {
             );
           case 'image':
             return (
-              <SelectableImage
+              <Image
                 key={child.id}
                 id={child.id}
                 src={child.content}
