@@ -48,6 +48,7 @@ const ContentList = forwardRef(
       } else if (
         item.type === 'hero' ||
         item.type === 'navbar' ||
+        item.type === 'cta' ||
         item.type === 'mintingSection'
       ) {
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);

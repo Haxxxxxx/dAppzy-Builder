@@ -69,14 +69,13 @@ export const renderElement = (
   }
   const { id, type, children, configuration } = element;
 
-
-
+  console.log(element);
 
   const renderChildren = (resolvedChildren) => {
     if (!resolvedChildren || resolvedChildren.length === 0) {
       return null;
     }
-    return resolvedChildren
+    return resolvedChildren   
       .filter((child) => child) // Filter out undefined children
       .map((child) =>
         renderElement(

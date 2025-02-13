@@ -5,10 +5,10 @@ export const ctaOneStyles = {
     display: "flex",
     flexDirection: "row", // ✅ Two-column layout
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     padding: "40px",
     backgroundColor: "#f8f8f8",
-    textAlign: "left",
+    textAlign: "center",
     gap: "3rem",
     flexWrap: "wrap",
   },
@@ -16,6 +16,7 @@ export const ctaOneStyles = {
     display: "flex",
     flexDirection: "column",
     maxWidth: "500px",
+    alignItems:'center',
   },
   ctaTitle: {
     fontSize: "2.5rem",
@@ -55,6 +56,7 @@ export const ctaOneStyles = {
   },
   ctaImage: {
     maxWidth: "300px",
+    minWidth:"200px",
     height: "auto",
     objectFit: "cover",
     borderRadius: "8px",
@@ -70,6 +72,12 @@ export const ctaTwoStyles = {
     padding: '40px',
     backgroundColor: '#ffffff',
     textAlign: 'center',
+  },
+  ctaContent:{
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: '500px',
+    alignItems:"center",
   },
   ctaTitle: {
     fontSize: '2rem',
@@ -100,7 +108,3 @@ export const ctaTwoStyles = {
     borderRadius: '4px',
   },
 };
- 
-export const defaultCtaStyles = {
-  
-}

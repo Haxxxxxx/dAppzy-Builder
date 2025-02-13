@@ -1,71 +1,96 @@
-import { defaultCtaStyles, ctaOneStyles, ctaTwoStyles } from '../../../Elements/Sections/CTAs/defaultCtaStyles';
+import { ctaOneStyles, ctaTwoStyles } from '../../../Elements/Sections/CTAs/defaultCtaStyles';
 import { renderElementToHtml } from '../../htmlRender';
 
 export function renderCta(ctaElement, collectedStyles) {
   const { id, configuration, children = [], styles = {} } = ctaElement;
 
   // Select the correct CTA style configuration
-  let ctaStyles = { ...defaultCtaStyles.cta }; // Default global CTA styles
-  if (configuration === 'ctaOne') {
-    ctaStyles = { ...ctaStyles, ...ctaOneStyles.ctaSection }; // Merge CTAOne styles properly
-  } else if (configuration === 'ctaTwo') {
-    ctaStyles = { ...ctaStyles, ...ctaTwoStyles.ctaSection }; // Merge CTA Two styles
-  }
+  let ctaStyles = configuration === 'ctaTwo' ? ctaTwoStyles : ctaOneStyles;
 
-  // Categorizing children elements
   let titleHtml = '';
   let descriptionHtml = '';
   let buttonHtmls = [];
   let imageHtml = '';
 
-  children.forEach((child) => {
-    const childHtml = renderElementToHtml(child, collectedStyles);
+  // Categorize elements properly
+  const titleElement = children.find((child) => child.type === 'title');
+  const paragraphElement = children.find((child) => child.type === 'paragraph');
+  const buttons = children.filter((child) => child.type === 'button');
+  const imageElement = children.find((child) => child.type === 'image');
 
-    if (child.type === 'title' && !titleHtml) {
-      titleHtml = `<h2 class="ctaHeading">${child.content}</h2>`;
-    } else if (child.type === 'paragraph' && !descriptionHtml) {
-      descriptionHtml = `<p class="ctaDescription">${child.content}</p>`;
-    } else if (child.type === 'button') {
-      // Determine button styles for ctaOne vs ctaTwo
-      const buttonClass = `cta-${id}-button`;
-      let buttonStyles = configuration === 'ctaOne' ? ctaOneStyles.buttonContainer : ctaTwoStyles.primaryButton;
+  // Handle Title
+  if (titleElement) {
+    const titleClass = `cta-${id}-title`;
+    collectedStyles.push({
+      className: titleClass,
+      styles: { ...ctaStyles.ctaTitle, ...titleElement.styles },
+    });
+    titleHtml = `<h2 class="${titleClass}">${titleElement.content}</h2>`;
+  }
 
+  // Handle Paragraph
+  if (paragraphElement) {
+    const descriptionClass = `cta-${id}-description`;
+    collectedStyles.push({
+      className: descriptionClass,
+      styles: { ...ctaStyles.ctaDescription, ...paragraphElement.styles },
+    });
+    descriptionHtml = `<p class="${descriptionClass}">${paragraphElement.content}</p>`;
+  }
+
+  // Handle Primary and Secondary Buttons
+  if (buttons.length > 0) {
+    const primaryButton = buttons[0];
+    const secondaryButton = buttons[1];
+
+    if (primaryButton) {
+      const primaryButtonClass = `cta-${id}-primary-button`;
       collectedStyles.push({
-        className: buttonClass,
-        styles: {
-          ...buttonStyles, // Apply CTA-specific button styles
-          ...child.styles, // Merge user-defined styles
-        },
+        className: primaryButtonClass,
+        styles: { ...ctaStyles.primaryButton, ...primaryButton.styles },
       });
-
-      buttonHtmls.push(`<button class="${buttonClass}">${child.content}</button>`);
-    } else if (child.type === 'image') {
-      imageHtml = `<div class="ctaImageContainer">
-        <img class="ctaImage" src="${child.content}" />
-      </div>`;
+      buttonHtmls.push(`<button class="${primaryButtonClass}">${primaryButton.content}</button>`);
     }
-  });
 
-  // Ensure styles merge correctly without overriding defaults
+    if (secondaryButton) {
+      const secondaryButtonClass = `cta-${id}-secondary-button`;
+      collectedStyles.push({
+        className: secondaryButtonClass,
+        styles: { ...ctaStyles.secondaryButton, ...secondaryButton.styles },
+      });
+      buttonHtmls.push(`<button class="${secondaryButtonClass}">${secondaryButton.content}</button>`);
+    }
+  }
+
+  // Handle Image
+  if (imageElement) {
+    const imageClass = `cta-${id}-image`;
+    collectedStyles.push({
+      className: imageClass,
+      styles: { ...ctaStyles.ctaImage, ...imageElement.styles },
+    });
+    imageHtml = `
+      <div class="ctaImageContainer">
+        <img class="${imageClass}" src="${imageElement.content}" />
+      </div>
+    `;
+  }
+
+  // Merge styles properly to avoid overrides
   const mergedStyles = {
-    ...defaultCtaStyles.cta, // Apply global styles
-    ...ctaStyles, // Apply CTA-specific styles
-    ...styles, // Apply user-defined styles
-    '.ctaSection': configuration === 'ctaTwo' ? ctaTwoStyles.ctaSection : ctaOneStyles.ctaSection,
-    '.ctaHeading': configuration === 'ctaTwo' ? ctaTwoStyles.ctaTitle : ctaOneStyles.heading,
-    '.ctaDescription': configuration === 'ctaTwo' ? ctaTwoStyles.ctaDescription : ctaOneStyles.description,
-    '.buttonContainer': ctaTwoStyles.buttonContainer,
-    '.ctaImageContainer': ctaTwoStyles.ctaImageContainer,
-    '.ctaImage': ctaTwoStyles.ctaImage,
-    '.ctaContent' : ctaTwoStyles.ctaContent,
+    ...ctaStyles.cta,
+    ...styles,
+    '.ctaSection': ctaStyles.ctaSection,
+    '.ctaContent': ctaStyles.ctaContent,
+    '.buttonContainer': ctaStyles.buttonContainer,
   };
 
   collectedStyles.push({ className: `cta-${id}`, styles: mergedStyles });
 
-  // **🔹 Conditionally render `ctaContent` only if needed**
-  const ctaContentHtml =
-    titleHtml || descriptionHtml || buttonHtmls.length > 0
-      ? `
+  // Final HTML structure for the CTA section
+  return `
+    <section class="cta-${id}">
+      <div class="ctaSection">
         <div class="ctaContent">
           ${titleHtml}
           ${descriptionHtml}
@@ -73,14 +98,6 @@ export function renderCta(ctaElement, collectedStyles) {
             ${buttonHtmls.join('\n')}
           </div>
         </div>
-      `
-      : titleHtml + descriptionHtml + `<div class="buttonContainer">${buttonHtmls.join('\n')}</div>`;
-
-  // Final HTML structure for the CTA section
-  return `
-    <section class="cta-${id}">
-      <div class="ctaSection">
-        ${ctaContentHtml}
         ${imageHtml}
       </div>
     </section>

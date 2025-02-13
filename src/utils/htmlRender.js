@@ -4,6 +4,7 @@ import { typeToTagMap } from './htmlRenderUtils/typeMapping';
 import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
 import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
 import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
+import { renderCta } from './htmlRenderUtils/RenderCtas/renderCta';
 
 export function buildAttributesString(type, attributes, src) {
   let attributesString = '';
@@ -53,6 +54,10 @@ export function renderElementToHtml(element, collectedStyles) {
   // Add this block:
   if (type === 'footer') {
     return renderFooter(element, collectedStyles);
+  }
+  // Add this block:
+  if (type === 'cta') {
+    return renderCta(element, collectedStyles);
   }
 
   if (!tag) {

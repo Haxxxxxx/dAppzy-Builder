@@ -39,7 +39,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   const layoutSections = [
     { name: 'Navbar', component: <NavbarPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'Hero', component: <HeroPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'CTA', component: <CTAPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
+    { name: 'cta', component: <CTAPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'Footer', component: <FooterPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
   ];

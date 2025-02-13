@@ -15,36 +15,24 @@ const DraggableCTA = ({
   imgSrc, // Image source for the navbar preview
   label, // Label for the navbar
 }) => {
-
   const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
-
   // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type: 'cta', configuration },
+    // rename config -> structure so handleDrop sees item.structure
+    item: { type: 'cta', structure: configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-    end: (item, monitor) => {
-      if (monitor.didDrop() && !isEditing) {
-        const newId = addNewElement('cta', 1, null, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === newId ? { ...el, configuration } : el
-          )
-        );
-      }
-    },
-  }), [configuration, isEditing, addNewElement, setElements]);
+  }));
 
   // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
 
     const parentElement = findElementById(parentId, elements);
-
     if (parentElement) {
       const newId = addNewElement(item.type, 1, null, parentId);
 
@@ -63,7 +51,7 @@ const DraggableCTA = ({
 
   const ctaElement = findElementById(id, elements);
   const children = ctaElement?.children?.map((childId) => findElementById(childId, elements)) || [];
-
+  
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
 
@@ -88,11 +76,11 @@ const DraggableCTA = ({
 
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
-    setSelectedElement({ id, type: 'CTA', styles: ctaElement?.styles });
+    setSelectedElement({ id, type: 'cta', styles: ctaElement?.styles });
   };
   const titles = {
-    CTAOne: 'CTA one',
-    CTATwo: 'CTA two',
+    ctaOne: 'CTA one',
+    ctaTwo: 'CTA two',
   };
 
   // Render description if requested
@@ -116,7 +104,8 @@ const DraggableCTA = ({
   }
 
   let CTAComponent;
-  if (configuration === 'CTAOne') {
+
+  if (configuration === 'ctaOne') {
     CTAComponent = (
       <CTAOne
         uniqueId={id}
@@ -128,7 +117,7 @@ const DraggableCTA = ({
         handleSelect={handleSelect}
       />
     );
-  } else if (configuration === 'CTATwo') {
+  } else if (configuration === 'ctaTwo') {
     CTAComponent = (
       <CTATwo
         uniqueId={id}

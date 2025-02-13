@@ -1,79 +1,86 @@
-import React from "react";
-import { structureConfigurations } from "../../../configs/structureConfigurations";
-import { ctaOneStyles } from "./defaultCtaStyles.js";
-import { Span, Button, Image } from "../../SelectableElements.js";
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
+import { Span, Button, Image } from '../../SelectableElements';
+import useElementDrop from '../../../utils/useElementDrop';
+import { ctaOneStyles } from './defaultCtaStyles';
 
-const CTAOne = ({ children = [], uniqueId, onDropItem, handleOpenMediaPanel, handleSelect }) => {
-  const { ctaOne } = structureConfigurations;
+const CTAOne = ({
+  handleSelect,
+  uniqueId,
+  contentListWidth,
+  children,
+  onDropItem,
+  handleOpenMediaPanel,
+}) => {
+  const ctaRef = useRef(null);
+  const [isCompact, setIsCompact] = useState(false);
 
-  // Helper function to find a child or fallback to default
-  const findChild = (type, defaultIndex) => {
-    return (
-      children.find((child) => child.type === type) ||
-      ctaOne.children[defaultIndex] || // Fallback to default configuration
-      {}
-    );
-  };
+  // 1) Access elements & updateStyles from context
+  const { elements, updateStyles } = useContext(EditableContext);
 
-  // Retrieve content or fallbacks
-  const ctaTitle = findChild("title", 0);
-  const ctaDescription = findChild("paragraph", 1);
-  const ctaPrimaryButton = findChild("button", 2);
-  const ctaSecondaryButton = findChild("button", 3);
-  const ctaImage = findChild("image", 4);
+  const { drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: ctaRef,
+    onDropItem,
+  });
+
+  // 2) Find the CTA element in the global state by its ID
+  const ctaElement = elements.find((el) => el.id === uniqueId);
+
+  // 3) Apply default styles only if the styles object is empty
+  useEffect(() => {
+    if (!ctaElement) return;
+    const noCustomStyles =
+      !ctaElement.styles || Object.keys(ctaElement.styles).length === 0;
+
+    if (noCustomStyles) {
+      updateStyles(ctaElement.id, {
+        ...ctaOneStyles.cta,
+      });
+    }
+  }, [ctaElement, updateStyles]);
+
+  useEffect(() => {
+    setIsCompact(contentListWidth < 768);
+  }, [contentListWidth]);
 
   return (
     <section
-      style={ctaOneStyles.cta}
+      ref={(node) => {
+        ctaRef.current = node;
+        drop(node);
+      }}
+      style={{
+        ...ctaOneStyles.cta,
+        ...(ctaElement?.styles || {}),
+      }}
       onClick={(e) => handleSelect(e)}
     >
       <div style={ctaOneStyles.ctaContent}>
-        {/* Title */}
-        {ctaTitle.content && (
-          <Span
-            id={ctaTitle.id || `default-title-${uniqueId}`}
-            content={ctaTitle.content}
-            styles={ctaTitle.styles || ctaOneStyles.ctaTitle}
-          />
-        )}
-
-        {/* Description */}
-        {ctaDescription.content && (
-          <Span
-            id={ctaDescription.id || `default-description-${uniqueId}`}
-            content={ctaDescription.content}
-            styles={ctaDescription.styles || ctaOneStyles.ctaDescription}
-          />
-        )}
-
-        {/* Buttons */}
+        {children
+          .filter((child) => child?.type === 'title')
+          .map((child) => (
+            <Span key={child.id} id={child.id} content={child.content} styles={ctaOneStyles.ctaTitle} />
+          ))}
+        {children
+          .filter((child) => child?.type === 'paragraph')
+          .map((child) => (
+            <Span key={child.id} id={child.id} content={child.content} styles={ctaOneStyles.ctaDescription} />
+          ))}
         <div style={ctaOneStyles.buttonContainer}>
-          {ctaPrimaryButton.content && (
-            <Button
-              id={ctaPrimaryButton.id || `default-button-${uniqueId}`}
-              content={ctaPrimaryButton.content}
-              styles={ctaPrimaryButton.styles || ctaOneStyles.primaryButton}
-            />
-          )}
-
-          {ctaSecondaryButton.content && (
-            <Button
-              id={ctaSecondaryButton.id || `default-secondary-button-${uniqueId}`}
-              content={ctaSecondaryButton.content}
-              styles={ctaSecondaryButton.styles || ctaOneStyles.secondaryButton}
-            />
-          )}
+          {children
+            .filter((child) => child?.type === 'button')
+            .map((child, index) => (
+              <Button
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={index === 0 ? ctaOneStyles.primaryButton : ctaOneStyles.secondaryButton}
+              />
+            ))}
         </div>
       </div>
-
-      {/* Optional Image */}
-      {ctaImage.content && (
-        <Image
-          id={ctaImage.id || `default-image-${uniqueId}`}
-          src={ctaImage.content}
-          styles={ctaImage.styles || ctaOneStyles.ctaImage}
-        />
-      )}
+     
     </section>
   );
 };
