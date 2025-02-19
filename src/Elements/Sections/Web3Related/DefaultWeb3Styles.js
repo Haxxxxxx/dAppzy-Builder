@@ -93,6 +93,7 @@ export const mintingSectionStyles = {
   };
   
   export const buttonStyles = {
+
     button: {
       padding: '10px 20px',
       backgroundColor: '#4CAF50',

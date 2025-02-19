@@ -17,6 +17,7 @@ const CollapsibleSection = ({ title, children }) => {
           chevron_right
         </span>}</span>
       </h3>
+      <hr></hr>
       {!isCollapsed && <div>{children}</div>}
     </div>
   );

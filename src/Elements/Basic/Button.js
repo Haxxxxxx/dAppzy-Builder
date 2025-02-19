@@ -6,15 +6,14 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
     useContext(EditableContext);
   const buttonRef = useRef(null);
 
-  // Get element data dynamically
+  // Retrieve the full element data (which includes settings, configuration, etc.)
   const elementData = findElementById(id, elements) || {};
   const { content = initialContent, styles = {} } = elementData;
 
-
-  // Handle selection
+  // Handle selection by setting the entire element data
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'button', styles });
+    setSelectedElement(elementData);
   };
 
   // Update content on blur

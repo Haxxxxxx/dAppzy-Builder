@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { EditableContext } from "../../context/EditableContext";
 import { useDrop } from "react-dnd";
 
-const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {}, handleDrop }) => {
+const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }, handleDrop }) => {
   const { elements, updateStyles, setSelectedElement } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id) || {};
   const { styles = {} } = imageElement;
@@ -11,10 +11,16 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {},
   const [currentSrc, setCurrentSrc] = useState(styles.src || defaultSrc);
 
   useEffect(() => {
-    if (styles.src && styles.src !== currentSrc) {
-      setCurrentSrc(styles.src);
+    const storedImage = localStorage.getItem(`image-${id}`);
+
+    if (storedImage) {
+      setCurrentSrc(storedImage); // ✅ Fetch from LocalStorage first
+    } else if (styles.src && styles.src !== currentSrc) {
+      setCurrentSrc(styles.src); // ✅ Update from context if necessary
     }
-  }, [styles.src]);
+  }, [styles.src, id, elements]); // ✅ Ensure re-renders when context updates
+
+
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "mediaItem",
@@ -36,7 +42,7 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {},
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: "image" });
+    setSelectedElement({ id, type: "image", src: currentSrc, width: styles.width, height: styles.height, alt: styles.alt });
   };
 
   return (

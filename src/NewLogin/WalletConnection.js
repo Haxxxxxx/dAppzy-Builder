@@ -1,10 +1,10 @@
 // src/components/WalletConnection.js
 import React, { useState } from "react";
-import "../Importedlogin/PopupWallet.css";
 import { db, doc, getDoc, setDoc } from "../firebase"; // <-- Adjust path as needed
 import UAuth from "@uauth/js";
 import { auth } from "../firebase";
 import { signInWithCustomToken } from "firebase/auth";
+import './NewLogin.css'
 
 function WalletConnection({
     saveLoginEvent,
@@ -194,48 +194,64 @@ function WalletConnection({
             setErrorMessage("Unstoppable login failed. Please try again");
         }
     };
+  // --------------------- Render ---------------------
 
-    return (
+  return (
+    <div className="popup">
+      {/* Optional: main logo/image at the top */}
+      <img
+        className="popup-wallet-main-img"
+        src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2F3s-logo.png?alt=media&token=8a69bcce-2e9f-463e-8cba-f4c2fec1a904"
+        alt="Popup Logo"
+      />
+
+      <div className="popup-content">
+        <h1>Connect Your Wallet</h1>
+
         <div className="wallet-list">
-            {errorMessage && <div className="error-message">{errorMessage}</div>}
+          {errorMessage && (
+            <div className="error-message">{errorMessage}</div>
+          )}
 
-            <button
-                id="phantom"
-                className="wallet-btn ga-wallet-btn-phantom"
-                onClick={handleLoginWithPhantom}
-            >
-                <img
-                    src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fphantom-logo.png?alt=media&token=5ffe611b-3ccd-4663-81e4-59feeb1dbba7"
-                    alt="phantom"
-                />
-                Continue with Phantom
-            </button>
+          <button
+            id="phantom"
+            className="wallet-btn ga-wallet-btn-phantom"
+            onClick={handleLoginWithPhantom}
+          >
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fphantom-logo.png?alt=media&token=5ffe611b-3ccd-4663-81e4-59feeb1dbba7"
+              alt="phantom"
+            />
+            Continue with Phantom
+          </button>
 
-            <button
-                id="metamask"
-                className="wallet-btn ga-wallet-btn-metamask"
-                onClick={handleLoginWithMetamask}
-            >
-                <img
-                    src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media&token=507097be-0cc4-4d93-a87b-99c67d82cfe5"
-                    alt="metamask"
-                />
-                Continue with Metamask
-            </button>
+          <button
+            id="metamask"
+            className="wallet-btn ga-wallet-btn-metamask"
+            onClick={handleLoginWithMetamask}
+          >
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media&token=507097be-0cc4-4d93-a87b-99c67d82cfe5"
+              alt="metamask"
+            />
+            Continue with Metamask
+          </button>
 
-            <button
-                id="unstoppable"
-                className="wallet-btn ga-wallet-btn-ud"
-                onClick={handleLoginWithUnstoppable}
-            >
-                <img
-                    src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media&token=60b8c7c0-d644-4954-be2d-7afe3065b876"
-                    alt="unstoppable"
-                />
-                Continue with Unstoppable
-            </button>
+          <button
+            id="unstoppable"
+            className="wallet-btn ga-wallet-btn-ud"
+            onClick={handleLoginWithUnstoppable}
+          >
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media&token=60b8c7c0-d644-4954-be2d-7afe3065b876"
+              alt="unstoppable"
+            />
+            Continue with Unstoppable
+          </button>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default WalletConnection;

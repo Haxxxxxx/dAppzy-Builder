@@ -1,11 +1,11 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import { heroThreeStyles } from './defaultHeroStyles';
+import { CustomTemplateHeroStyles } from './defaultHeroStyles';
 import { Heading, Paragraph, Button, Image, Span } from '../../SelectableElements';
 
 /**
- * A "HeroThree" component that merges heroThreeStyles for layout and child styling.
+ * HeroThree - merges CustomTemplateHeroStyles for layout and child styling.
  */
 const HeroThree = ({
   uniqueId,
@@ -15,21 +15,19 @@ const HeroThree = ({
   handleSelect,
 }) => {
   const heroRef = useRef(null);
-
-  // 1) Access context
   const { elements, updateStyles } = useContext(EditableContext);
 
-  // 2) Make the hero droppable
+  // Make this hero droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: heroRef,
     onDropItem,
   });
 
-  // 3) Find the hero element in state
+  // Locate the hero element from global state
   const heroElement = elements.find((el) => el.id === uniqueId);
 
-  // 4) If no custom styles exist, apply heroThreeStyles.heroSection
+  // If no custom styles exist for the container, apply the defaults
   useEffect(() => {
     if (!heroElement) return;
 
@@ -38,22 +36,22 @@ const HeroThree = ({
 
     if (noCustomStyles) {
       updateStyles(heroElement.id, {
-        ...heroThreeStyles.heroSection,
+        ...CustomTemplateHeroStyles.heroSection,
       });
     }
   }, [heroElement, updateStyles]);
 
-  // 5) Identify children for layout
+  // Identify children for layout
   const captionChild = children.find((c) => c.type === 'span');
   const headingChild = children.find((c) => c.type === 'heading');
   const paragraphChild = children.find((c) => c.type === 'paragraph');
   const buttonChildren = children.filter((c) => c.type === 'button');
   const imageChild = children.find((c) => c.type === 'image');
 
-  // 6) Merge hero-level + highlight if drag is over
+  // Merge hero-level (container) styles + highlight if drag is over
   const sectionStyles = {
-    ...heroThreeStyles.heroSection,
-    ...(heroElement?.styles || {}),
+    ...CustomTemplateHeroStyles.heroSection,
+    ...(heroElement?.styles || {}), // user overrides
     ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
   };
 
@@ -70,36 +68,48 @@ const HeroThree = ({
       }}
     >
       {/* Left hero content */}
-      <div style={heroThreeStyles.heroContent}>
+      <div style={CustomTemplateHeroStyles.heroContent}>
+        {/* Caption (span) */}
         {captionChild && (
           <Span
             key={captionChild.id}
             id={captionChild.id}
             content={captionChild.content}
-            styles={captionChild.styles || heroThreeStyles.caption}
+            styles={{
+              ...CustomTemplateHeroStyles.caption,
+              ...(captionChild.styles || {}),
+            }}
           />
         )}
 
+        {/* Heading */}
         {headingChild && (
           <Heading
             key={headingChild.id}
             id={headingChild.id}
             content={headingChild.content}
-            styles={headingChild.styles || heroThreeStyles.heroTitle}
+            styles={{
+              ...CustomTemplateHeroStyles.heroTitle,
+              ...(headingChild.styles || {}),
+            }}
           />
         )}
 
+        {/* Paragraph */}
         {paragraphChild && (
           <Paragraph
             key={paragraphChild.id}
             id={paragraphChild.id}
             content={paragraphChild.content}
-            styles={paragraphChild.styles || heroThreeStyles.heroDescription}
+            styles={{
+              ...CustomTemplateHeroStyles.heroDescription,
+              ...(paragraphChild.styles || {}),
+            }}
           />
         )}
 
-        {/* Button container */}
-        <div style={heroThreeStyles.buttonContainer}>
+        {/* Buttons */}
+        <div style={CustomTemplateHeroStyles.buttonContainer}>
           {buttonChildren.map((btn, index) => (
             <Button
               key={btn.id}
@@ -107,8 +117,14 @@ const HeroThree = ({
               content={btn.content}
               styles={
                 index === 0
-                  ? (heroThreeStyles.primaryButton)
-                  : (heroThreeStyles.secondaryButton)
+                  ? {
+                      ...CustomTemplateHeroStyles.primaryButton,
+                      ...(btn.styles || {}),
+                    }
+                  : {
+                      ...CustomTemplateHeroStyles.secondaryButton,
+                      ...(btn.styles || {}),
+                    }
               }
             />
           ))}
@@ -117,12 +133,15 @@ const HeroThree = ({
 
       {/* Right hero image */}
       {imageChild && (
-        <div style={heroThreeStyles.heroImageContainer}>
+        <div style={CustomTemplateHeroStyles.heroImageContainer}>
           <Image
             key={imageChild.id}
             id={imageChild.id}
             src={imageChild.content}
-            styles={heroThreeStyles.heroImage}
+            styles={{
+              ...CustomTemplateHeroStyles.heroImage,
+              ...(imageChild.styles || {}),
+            }}
             handleOpenMediaPanel={handleOpenMediaPanel}
           />
         </div>

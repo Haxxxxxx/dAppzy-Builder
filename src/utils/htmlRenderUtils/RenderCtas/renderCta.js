@@ -85,11 +85,11 @@ export function renderCta(ctaElement, collectedStyles) {
     '.buttonContainer': ctaStyles.buttonContainer,
   };
 
-  collectedStyles.push({ className: `cta-${id}`, styles: mergedStyles });
+  collectedStyles.push({ className: `${id}`, styles: mergedStyles });
 
   // Final HTML structure for the CTA section
   return `
-    <section class="cta-${id}">
+    <section id="${id}" class="${id}">
       <div class="ctaSection">
         <div class="ctaContent">
           ${titleHtml}

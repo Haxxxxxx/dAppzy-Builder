@@ -1,10 +1,13 @@
+// src/context/EditableContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import {
   generateUniqueId,
   buildHierarchy,
   findElementById,
   removeElementById,
+  removeElementRecursively, // <--- import the new function
 } from '../utils/LeftBarUtils/elementUtils';
+
 import {
   saveToLocalStorage,
   loadFromLocalStorage,
@@ -17,26 +20,32 @@ const ELEMENTS_VERSION = '1.0';
 
 export const EditableProvider = ({ children }) => {
   const [selectedElement, setSelectedElement] = useState(null);
+
+  // Load from local storage on init
   const [elements, setElements] = useState(() => {
     const savedVersion = localStorage.getItem('elementsVersion');
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
-    return savedVersion === ELEMENTS_VERSION && Array.isArray(savedElements) ? savedElements : [];
+    return savedVersion === ELEMENTS_VERSION && Array.isArray(savedElements)
+      ? savedElements
+      : [];
   });
-  console.log(elements);
+
+  console.log("Current elements:", elements);
 
   const selectedStyle = {
     outline: '1px solid #4D70FF',
     boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
   };
 
+  // -------------- Add Element --------------
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     let newId = generateUniqueId(type);
-  
+
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
-  
+
     const baseElement = {
       id: newId,
       type,
@@ -69,10 +78,10 @@ export const EditableProvider = ({ children }) => {
       configuration: structure || null,
       settings: {},
     };
-  
+
+    // If we have a structure config
     if (structure && structureConfigurations[structure]) {
       baseElement.styles = structureConfigurations[structure].styles || {};
-  
       const children = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
@@ -81,113 +90,109 @@ export const EditableProvider = ({ children }) => {
         label: child.label || '',
         parentId: newId,
       }));
-  
       baseElement.children = children.map((child) => child.id);
-  
+
       setElements((prev) => [...prev, baseElement, ...children]);
     } else {
       setElements((prev) => [...prev, baseElement]);
     }
-  
+
     console.log('Added new element:', baseElement);
     return newId;
   };
-  
-  const handleRemoveElement = (id) => {
-    setElements((prevElements) => {
-      const updatedElements = removeElementById(id, prevElements);
-      saveToLocalStorage('editableElements', updatedElements);
-      setSelectedElement(null);
 
+  // -------------- Remove Element (recursively) --------------
+  const handleRemoveElement = (id) => {
+    setSelectedElement(null);
+    setElements((prevElements) => {
+      // Recursively remove the element + children
+      const updatedElements = removeElementRecursively(id, prevElements);
+      // Save to local storage
+      saveToLocalStorage('editableElements', updatedElements);
       return updatedElements;
     });
   };
 
+  // -------------- Update Content --------------
   const updateContent = (id, content) => {
     setElements((prev) =>
       prev.map((el) => (el.id === id ? { ...el, content } : el))
     );
   };
 
+  // -------------- Update Styles --------------
   const updateStyles = (id, newStyles) => {
     console.log(`Updating styles for ${id}:`, newStyles);
-
-    setElements((prev) =>
-      prev.map((el) => (el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el))
-    );
+    setElements((prev) => {
+      const updatedElements = prev.map((el) =>
+        el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el
+      );
+      saveToLocalStorage('editableElements', updatedElements);
+      return updatedElements;
+    });
   };
 
+  // -------------- Save Section to Local Storage --------------
   const saveSectionToLocalStorage = (sectionId) => {
     const section = findElementById(sectionId, elements);
     if (section) {
-      // Recursively build a nested structure
       const buildNestedStructure = (parentId) => {
         const parent = findElementById(parentId, elements);
         if (!parent) return null;
-  
-        // Map child elements to include their styles and content
         const children = parent.children.map((childId) => buildNestedStructure(childId));
         return {
           id: parent.id,
           type: parent.type,
           styles: parent.styles,
           content: parent.content,
-          children, // Nest the child elements here
+          children,
         };
       };
-  
       const navbarHierarchy = buildNestedStructure(sectionId);
-  
-      // Save the nested structure to local storage
       saveToLocalStorage(`section-${sectionId}`, navbarHierarchy);
     }
   };
-  
 
   const loadSectionFromLocalStorage = (sectionId) => {
     const savedSection = loadFromLocalStorage(`section-${sectionId}`);
     if (savedSection) {
       const flattenNestedStructure = (node, accumulator = []) => {
         if (!node) return accumulator;
-  
         const { children, ...rest } = node;
         accumulator.push(rest);
-  
         children.forEach((child) => flattenNestedStructure(child, accumulator));
-  
         return accumulator;
       };
-  
       const flattenedElements = flattenNestedStructure(savedSection);
       setElements(flattenedElements);
     }
   };
-  
-  
 
+  // -------------- Update Configuration --------------
   const updateConfiguration = (id, key, value) => {
-    setElements((prevElements) =>
-      prevElements.map((el) =>
+    setElements((prev) =>
+      prev.map((el) =>
         el.id === id
           ? {
-            ...el,
-            configuration: {
-              ...el.configuration,
-              [key]: value,
-            },
-            settings: {
-              ...el.settings,
-              [key]: value,
-            },
-          }
+              ...el,
+              configuration: {
+                ...el.configuration,
+                [key]: value,
+              },
+              settings: {
+                ...el.settings,
+                [key]: value,
+              },
+            }
           : el
       )
     );
   };
 
+  // -------------- Keep local storage in sync --------------
   useEffect(() => {
     saveToLocalStorage('editableElements', elements);
-    saveToLocalStorage('elementsVersion', ELEMENTS_VERSION);
+    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, [elements]);
 
   return (
@@ -204,7 +209,7 @@ export const EditableProvider = ({ children }) => {
         loadSectionFromLocalStorage,
         findElementById,
         buildHierarchy,
-        handleRemoveElement,
+        handleRemoveElement, // calls removeElementRecursively
         saveToLocalStorage,
         updateConfiguration,
         selectedStyle,

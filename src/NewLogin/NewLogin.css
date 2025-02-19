@@ -1,0 +1,130 @@
+/* Popup Container */
+.popup {
+    display: flex;
+    position: fixed;
+    align-items: center;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #030014;
+    z-index: 10;
+    justify-content: center;
+  }
+  
+  /* Main Logo/Image inside the popup */
+  .popup-wallet-main-img {
+    height: 70px;
+    width: 400px;
+    position: absolute;
+    top: 5%;
+  }
+  
+  /* Popup Content Container */
+  .popup-content {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    border-radius: 10px;
+    width: 40%;
+  }
+  
+  /* Wallet Buttons List */
+  .wallet-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  /* Error Message */
+  .error-message {
+    font-size: 14px;
+    margin: 10px;
+    display: flex;
+    justify-content: center;
+    color: #FF4747;
+    text-align: center;
+    font-family: Inter, sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: -0.64px;
+  }
+  
+  /* Wallet Buttons */
+  .wallet-btn {
+    color: #F4F0FF;
+    font-family: Inter, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 28px; /* approx. 172% of 16px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 60px;
+    gap: 5px;
+    width: 100%;
+    margin-bottom: 2vh;
+    border-radius: 10px;
+    border: 1px solid #24292E;
+    background: #1A1D21;
+    overflow: hidden;
+  }
+  
+  .wallet-btn img {
+    width: 35px;
+    height: 35px;
+    border-radius: 100px;
+  }
+  
+  /* Hover & Disabled States */
+  .wallet-btn:hover {
+    background: linear-gradient(
+        180deg,
+        rgba(60, 8, 126, 0.0) 0%,
+        rgba(60, 8, 126, 0.32) 100%
+      ),
+      rgba(113, 47, 255, 0.12);
+    box-shadow: 0px 0px 16.587px 0px rgba(191, 151, 255, 0.24) inset;
+    transition: 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .wallet-btn:disabled {
+    background: #1A1D21;
+    border: 1px solid #24292E;
+  }
+  
+  .wallet-btn:disabled:hover {
+    cursor: not-allowed;
+    background: #1A1D21;
+  }
+  
+  /* Typography for H1 in the Popup */
+  .popup-content h1 {
+    color: #F4F0FF;
+    margin-bottom: 2vh;
+    font-family: Inter, sans-serif;
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 40px; /* 125% */
+    letter-spacing: -0.64px;
+  }
+  
+  /* Media Queries */
+  @media screen and (max-width: 800px) {
+    .popup-content {
+      width: 70%;
+      margin: 0;
+    }
+  }
+  
+  @media screen and (max-width: 358px) {
+    .popup-content {
+      width: 90%;
+      margin: 0;
+    }
+  }
+  

@@ -7,21 +7,23 @@ const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
     useContext(EditableContext);
   const anchorRef = useRef(null);
 
-  // Dynamically fetch element data
+  // Dynamically fetch full element data (which may include settings/configuration)
   const elementData = findElementById(id, elements) || {};
   let { content = initialContent || 'Click here', href = '#', styles = {} } = elementData;
 
   // Ensure content is a string
   if (typeof content !== 'string') {
     console.warn(`Invalid content type for anchor with ID ${id}. Converting to string.`);
-    content = String(content); // Convert to string as a fallback
+    content = String(content);
   }
 
+  // When selecting, pass along the full element data
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'anchor', styles });
+    setSelectedElement(elementData);
   };
 
+  // Update content on blur
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
       updateContent(id, e.target.innerText.trim() || 'Click here');

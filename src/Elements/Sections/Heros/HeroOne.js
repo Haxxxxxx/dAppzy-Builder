@@ -1,41 +1,46 @@
+// src/Elements/Sections/Heros/HeroOne.jsx
+
 import React, { useContext, useEffect, useRef, useMemo } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { Image, Button, Heading, Paragraph } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import { defaultHeroStyles } from './defaultHeroStyles';
+import { Image, Button, Heading, Paragraph } from '../../SelectableElements';
 
-const HeroOne = ({   
+const HeroOne = ({
   handleSelect,
   uniqueId,
-  contentListWidth,
   children,
   onDropItem,
   handleOpenMediaPanel,
 }) => {
   const heroRef = useRef(null);
-
-  // Access global context
   const { elements, updateStyles } = useContext(EditableContext);
 
-  // Memoize hero element to avoid recalculations
-  const heroElement = useMemo(() => elements.find((el) => el.id === uniqueId), [elements, uniqueId]);
+  // Locate this hero element in global state
+  const heroElement = useMemo(
+    () => elements.find((el) => el.id === uniqueId),
+    [elements, uniqueId]
+  );
 
+  // Make the hero droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: heroRef,
     onDropItem,
   });
 
-  // Apply default styles only once
+  // If no custom styles exist, apply defaultHeroStyles
   useEffect(() => {
-    if (!heroElement || heroElement.styles?.applied) return;
+    if (!heroElement) return;
 
-    const noCustomStyles = !heroElement.styles || Object.keys(heroElement.styles).length === 0;
+    const noCustomStyles =
+      !heroElement.styles || Object.keys(heroElement.styles).length === 0;
 
     if (noCustomStyles) {
       updateStyles(heroElement.id, {
-        ...defaultHeroStyles.hero,
-        applied: true, // Add flag to mark as styled
+        ...defaultHeroStyles.heroSection,
+        // Optionally store a flag if you prefer:
+        // applied: true,
       });
     }
   }, [heroElement, updateStyles]);
@@ -53,10 +58,17 @@ const HeroOne = ({
         drop(node);
       }}
       style={{
-        ...defaultHeroStyles.hero,
+        // Merge default + user-defined hero-level styles:
+        ...defaultHeroStyles.heroSection,
+        ...(heroElement?.styles || {}),
+        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
       }}
-      onClick={(e) => handleSelect(e)}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e);
+      }}
     >
+      {/* Left side content */}
       <div style={defaultHeroStyles.heroContent}>
         {children
           .filter((child) => child?.type === 'heading')
@@ -65,7 +77,11 @@ const HeroOne = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={defaultHeroStyles.heroTitle}
+              // Merge default + user overrides for the heading
+              styles={{
+                ...defaultHeroStyles.heroTitle,
+                ...(child.styles || {}),
+              }}
             />
           ))}
 
@@ -76,7 +92,10 @@ const HeroOne = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={defaultHeroStyles.heroDescription}
+              styles={{
+                ...defaultHeroStyles.heroDescription,
+                ...(child.styles || {}),
+              }}
             />
           ))}
 
@@ -88,12 +107,16 @@ const HeroOne = ({
                 key={child.id}
                 id={child.id}
                 content={child.content}
-                styles={defaultHeroStyles.primaryButton}
+                styles={{
+                  ...defaultHeroStyles.primaryButton,
+                  ...(child.styles || {}),
+                }}
               />
             ))}
         </div>
       </div>
 
+      {/* Right side image */}
       <div style={defaultHeroStyles.heroImageContainer}>
         {children
           .filter((child) => child?.type === 'image')
@@ -102,9 +125,12 @@ const HeroOne = ({
               key={child.id}
               id={child.id}
               src={child.content}
-              styles={defaultHeroStyles.heroImage}
+              styles={{
+                ...defaultHeroStyles.heroImage,
+                ...(child.styles || {}),
+              }}
               handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={(item) => onDropItem(item, child.id)}
+              handleDrop={(item) => handleImageDrop(item, child.id)}
             />
           ))}
       </div>

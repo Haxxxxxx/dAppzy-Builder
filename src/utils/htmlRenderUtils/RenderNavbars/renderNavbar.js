@@ -43,7 +43,7 @@ export function renderNavbar(navbarElement, collectedStyles) {
 
   // 2) Merge default styles with user's custom styles,
   //    plus sub-rules for .logoContainer, .standardMenuContainer, etc.
-  const className = `element-${id}`;
+  const className = `${id}`;
 
   // We'll define "base" as the main nav defaults.
   // For "customTemplate" we might use `CustomTemplateNavbarStyles.nav` as the base instead.
@@ -93,7 +93,7 @@ export function renderNavbar(navbarElement, collectedStyles) {
     // - Left = logoHtml
     // - Right = (links + brandHtml + buttons) or brand can also be combined with links
     navbarHtml = `
-      <nav class="${className}">
+      <nav id="${className}" class="${className}">
         <div class="logoContainer">
           ${logoHtml}
         </div>
@@ -112,7 +112,7 @@ export function renderNavbar(navbarElement, collectedStyles) {
     // - Middle = links
     // - Right = brand + buttons (or brand could be middle, etc.)
     navbarHtml = `
-      <nav class="${className}">
+      <nav id="${className}" class="${className}">
         <div class="logoContainer">
           ${logoHtml}
         </div>
@@ -128,7 +128,7 @@ export function renderNavbar(navbarElement, collectedStyles) {
   } else if (configuration === 'customTemplate') {
     // The "classic" left/logo + brand, center=links, right=buttons approach
     navbarHtml = `
-      <nav class="${className}">
+      <nav id="${className}" class="${className}">
         <div class="logoContainer">
           ${logoHtml}
           ${brandHtml}

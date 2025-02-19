@@ -50,7 +50,6 @@ const DisplayEditor = () => {
 
   return (
     <div className="editor-section">
-      <h4 className="editor-title">Display Settings</h4>
       <div className="editor-group">
         <label>Display</label>
         <select value={display} onChange={handleDisplayChange} className="editor-select">

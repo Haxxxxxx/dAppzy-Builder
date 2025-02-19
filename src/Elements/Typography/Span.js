@@ -6,15 +6,14 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
     useContext(EditableContext);
   const spanRef = useRef(null);
 
-  // Get element data dynamically
+  // Get full element data (including settings, configuration, etc.)
   const elementData = findElementById(id, elements) || {};
   const { content = initialContent, styles = {} } = elementData;
 
-  // Handle selection
+  // When selecting, pass along the full element data
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent from being selected
-    setSelectedElement({ id, type: 'span', styles });
-    
+    setSelectedElement(elementData);
   };
 
   // Update content on blur
@@ -55,6 +54,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
             ...styles, // Apply dynamic styles first
             fontSize: '1rem',
             color: '#fff', // Content styling
+            border: 'none',
             cursor: 'text',
             wordWrap: 'break-word',
           }}
@@ -65,7 +65,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
     );
   }
 
-  // Render content only (older method)
+  // Render content only
   return (
     <span
       id={id}
@@ -75,9 +75,8 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
       style={{
-        ...styles, // Apply dynamic styles first
-        ...customStyles, // Override with custom styles
-        border: 'none',
+        ...styles,
+        ...customStyles,
         cursor: 'text',
       }}
     >

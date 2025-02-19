@@ -1,0 +1,204 @@
+/* BorderEditor.css */
+
+/* Main container */
+.border-editor {
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin-top: 3vh;
+}
+
+/* Spacing for each section */
+.border-radius-section,
+.borders-section {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Section labels */
+.border-radius-section label,
+.borders-section label {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #b3b3b3;
+    display: block;
+}
+
+/* 
+    A container that holds any numeric input plus a suffix (e.g. "PX").
+    The .suffix is positioned absolutely inside the input area.
+  */
+.input-with-suffix {
+    position: relative;
+    display: inline-block;
+}
+
+.input-with-suffix input[type="number"] {
+    width: 60px;
+    padding: 6px;
+    padding-right: 30px;
+    /* leaves room for the “PX” text on the right */
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+.input-with-suffix .suffix {
+    position: absolute;
+    right: 10px;
+    /* adjust as needed to position “PX” inside the input */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #b3b3b3;
+    pointer-events: none;
+    /* ignore clicks so user can still edit input */
+    font-size: 14px;
+}
+
+/* ---------- BORDERS ---------- */
+
+/* Container for all border settings (sides selector + style/width/color) */
+.border-config-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* The “sides” square buttons (top, right, bottom, left) plus center */
+.border-sides {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.middle-row {
+    display: flex;
+    gap: 4px;
+}
+
+.border-sides-selection {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Each side button is just a small square */
+.side-button {
+    width: 20px;
+    height: 20px;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 2px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Indicate “active” with a highlight color */
+.side-button.active {
+    background-color: #217bf4;
+    border-color: #217bf4;
+}
+
+/* The area where style, width, color controls appear side-by-side */
+.border-props {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 16px;
+}
+
+.border-style-group,
+.border-width-group,
+.border-color-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.border-style-group label,
+.border-width-group label,
+.border-color-group label {
+    font-size: 14px;
+    color: #b3b3b3;
+    margin-bottom: 4px;
+}
+
+/* ---------- Border Style Dropdown ---------- */
+.border-style-group select {
+    width: 100%;
+    padding: 6px;
+    font-size: 14px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+/* ---------- Border Color (combined color + hex) ---------- */
+.color-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    padding: 0 8px;
+    height: 36px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Remove default border from the color swatch input */
+.color-group input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.color-group input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-group input[type="color"]::-webkit-color-swatch {
+    border: none;
+}
+
+/* The read-only hex text field: no border, fill remaining space */
+.color-group .color-hex {
+    flex: 1;
+    border: none;
+    background-color: transparent;
+    color: #fff;
+    font-size: 14px;
+    cursor: default;
+    outline: none;
+    text-align: left;
+    padding: 0;
+}
+
+
+.border-actions button{
+    display: flex;
+    padding: 5px 8px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    border: 1px solid var(--Not-selectionned, #64748B);
+    background: var(--Not-selectionned, #64748B);
+    width: 50%;
+    color: var(--Texte---diteur, #CBD5E1);
+    text-align: center;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 120%;
+}

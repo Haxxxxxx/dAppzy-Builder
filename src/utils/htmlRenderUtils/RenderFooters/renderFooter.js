@@ -28,14 +28,14 @@ export function renderFooter(footerElement, collectedStyles) {
       .map((child) => renderElementToHtml(child, collectedStyles))
       .join('\n');
     footerHtml = `
-      <footer class="element-${id} simpleFooter">
+      <footer id="${id}" class="${id}">
         ${childrenHtml}
       </footer>
     `.trim();
     
     // Merge style objects
     collectedStyles.push({
-      className: `element-${id}`,
+      className: `${id}`,
       styles: {
         ...SimplefooterStyles.simpleFooter, // top-level
         ...styles, // user overrides
@@ -50,13 +50,13 @@ export function renderFooter(footerElement, collectedStyles) {
       .map((child) => renderElementToHtml(child, collectedStyles))
       .join('\n');
     footerHtml = `
-      <footer class="element-${id} detailedFooter">
+      <footer id="${id}" class="${id}">
         ${childrenHtml}
       </footer>
     `.trim();
 
     collectedStyles.push({
-      className: `element-${id}`,
+      className: `${id}`,
       styles: {
         ...SimplefooterStyles.detailedFooter, // or DetailedFooterStyles.footer
         ...styles,
@@ -95,7 +95,7 @@ export function renderFooter(footerElement, collectedStyles) {
 
     // Build final HTML with sub-divs:
     footerHtml = `
-      <footer class="element-${id} templateFooter">
+      <footer id="${id}" class="element-${id} templateFooter">
         <!-- left: navigation links -->
         <div class="navigationLinks">
           ${navHtml}

@@ -1,3 +1,4 @@
+// src/components/withSelectable.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
@@ -11,16 +12,17 @@ const withSelectable = (WrappedComponent) => {
       handleRemoveElement,
       updateStyles,
     } = useContext(EditableContext);
+
     const isSelected = selectedElement?.id === id;
 
     const handleSelect = (e) => {
-      e.stopPropagation(); // Prevent bubbling to parent elements
+      e.stopPropagation();
       setSelectedElement({ id, type: props.type, styles: props.styles });
     };
 
     const handleRemove = (e) => {
-      e.stopPropagation(); // Prevent triggering the select event
-      handleRemoveElement(id);
+      e.stopPropagation();
+      handleRemoveElement(id); // <--- triggers removal in local storage too
     };
 
     const handleStyleChange = (styleKey, value) => {
@@ -81,9 +83,8 @@ const withSelectable = (WrappedComponent) => {
           onClick={handleSelect}
           id={id}
           style={{
-            // Apply position: relative only if selected, otherwise reset it
             ...(props.style || {}),
-            position: isSelected ? 'relative' : 'static', // Default to static if not selected
+            position: isSelected ? 'relative' : 'static',
             ...(isSelected ? selectedStyle : {}),
             cursor: 'text',
             boxSizing: 'border-box',

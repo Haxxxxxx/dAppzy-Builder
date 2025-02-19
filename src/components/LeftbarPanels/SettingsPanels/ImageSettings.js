@@ -27,17 +27,27 @@ const ImageSettings = () => {
 
     useEffect(() => {
         if (selectedElement?.type === "image") {
-            const { id, styles = {} } = selectedElement;
+            const { id, src, width, height, alt } = selectedElement;
+    
             setElementId(id || "");
-            setImageSrc(styles.src || "https://picsum.photos/150");
-            setAltText(styles.alt || "My image");
-            fetchImageProperties(styles.src || "https://picsum.photos/150");
+    
+            // ✅ Check if the image is in LocalStorage
+            const storedImage = localStorage.getItem(`image-${id}`);
+            setImageSrc(storedImage || src || "https://picsum.photos/150");
+    
+            setImageWidth(width || "auto"); // ✅ Set width
+            setImageHeight(height || "auto"); // ✅ Set height
+            setAltText(alt || "My image"); // ✅ Set alt text
+    
+            fetchImageProperties(storedImage || src || "https://picsum.photos/150");
         }
-    }, [selectedElement, selectedElement?.styles?.src]);
+    }, [selectedElement]); // ✅ Ensures updates on selection change
+    
 
+    console.log(selectedElement);
     const handleDimensionChange = (e, dimensionType) => {
-        const value = e.target.value.endsWith("px") ? e.target.value : e.target.value + "px";
-
+        const value = e.target.value.endsWith("px") ? e.target.value : `${e.target.value}px`;
+    
         if (dimensionType === "width") {
             setImageWidth(value);
             if (selectedElement) {
@@ -50,6 +60,7 @@ const ImageSettings = () => {
             }
         }
     };
+    
 
     const handleAltTextChange = (e) => {
         const newAlt = e.target.value;
@@ -67,28 +78,37 @@ const ImageSettings = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            const newSrc = URL.createObjectURL(file);
-            setImageSrc(newSrc);
-
-            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2) + " MB";
-            setImageSize(fileSizeMB);
-
-            // Update the image styles in the context
-            if (selectedElement) {
-                updateStyles(selectedElement.id, { src: newSrc });
-            }
-
-            // Add the uploaded image to the Media Panel
-            if (window.addToMediaPanel) {
-                window.addToMediaPanel({
-                    id: Date.now(),
-                    type: "image",
-                    name: file.name,
-                    src: newSrc,
-                });
-            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const newSrc = reader.result; // Base64 Data URL
+                setImageSrc(newSrc);
+    
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+                setImageSize(fileSizeMB);
+    
+                // ✅ Ensure updateStyles updates the global context
+                if (selectedElement) {
+                    updateStyles(selectedElement.id, { src: newSrc });
+    
+                    // ✅ Save in LocalStorage
+                    localStorage.setItem(`image-${selectedElement.id}`, newSrc);
+                }
+    
+                // ✅ Update Media Panel
+                if (window.addToMediaPanel) {
+                    window.addToMediaPanel({
+                        id: Date.now(),
+                        type: "image",
+                        name: file.name,
+                        src: newSrc,
+                    });
+                }
+            };
+    
+            reader.readAsDataURL(file); // Convert image to Base64
         }
     };
+    
 
 
     return (
@@ -106,64 +126,64 @@ const ImageSettings = () => {
             </div>
             <hr />
             <CollapsibleSection title={"Image Settings"}>
-            <div className="image-settings-group">
-                <div className="image-preview-section">
-                    <div className="image-preview-wrapper">
-                        <img
-                            src={imageSrc || "https://picsum.photos/150"}
-                            alt="Preview"
-                            className="image-preview"
-                        />
+                <div className="image-settings-group">
+                    <div className="image-preview-section">
+                        <div className="image-preview-wrapper">
+                            <img
+                                src={imageSrc}
+                                alt="Preview"
+                                className="image-preview"
+                            />
+                        </div>
+                        <div className="image-info">
+                            <p>{(imageSrc || "placeholder.png").split("/").pop()}</p>
+                            <p>{imageWidth} x {imageHeight}</p>
+                            <p>{imageSize}</p>
+                            <button onClick={handleSrcChange} className="replace-image-button">
+                                Replace Image
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: "none" }}
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
+                        </div>
                     </div>
-                    <div className="image-info">
-                        <p>{(imageSrc || "placeholder.png").split("/").pop()}</p>
-                        <p>{imageWidth} x {imageHeight}</p>
-                        <p>{imageSize}</p>
-                        <button onClick={handleSrcChange} className="replace-image-button">
-                            Replace Image
-                        </button>
+                    <div className="settings-group">
+                        <label htmlFor="imageWidth">Width</label>
                         <input
-                            type="file"
-                            ref={fileInputRef}
-                            style={{ display: "none" }}
-                            accept="image/*"
-                            onChange={handleFileChange}
+                            type="text"
+                            id="imageWidth"
+                            value={imageWidth}
+                            onChange={(e) => setImageWidth(e.target.value)}
+                            onBlur={(e) => handleDimensionChange(e, "width")}
+                            className="settings-input"
+                        />
+                    </div>
+                    <div className="settings-group">
+                        <label htmlFor="imageHeight">Height</label>
+                        <input
+                            type="text"
+                            id="imageHeight"
+                            value={imageHeight}
+                            onChange={(e) => setImageHeight(e.target.value)}
+                            onBlur={(e) => handleDimensionChange(e, "height")}
+                            className="settings-input"
+                        />
+                    </div>
+                    <div className="settings-group">
+                        <label htmlFor="altText">Alt Text</label>
+                        <input
+                            type="text"
+                            id="altText"
+                            value={altText}
+                            onChange={handleAltTextChange}
+                            className="settings-input"
                         />
                     </div>
                 </div>
-                <div className="settings-group">
-                    <label htmlFor="imageWidth">Width</label>
-                    <input
-                        type="text"
-                        id="imageWidth"
-                        value={imageWidth}
-                        onChange={(e) => setImageWidth(e.target.value)}
-                        onBlur={(e) => handleDimensionChange(e, "width")}
-                        className="settings-input"
-                    />
-                </div>
-                <div className="settings-group">
-                    <label htmlFor="imageHeight">Height</label>
-                    <input
-                        type="text"
-                        id="imageHeight"
-                        value={imageHeight}
-                        onChange={(e) => setImageHeight(e.target.value)}
-                        onBlur={(e) => handleDimensionChange(e, "height")}
-                        className="settings-input"
-                    />
-                </div>
-                <div className="settings-group">
-                    <label htmlFor="altText">Alt Text</label>
-                    <input
-                        type="text"
-                        id="altText"
-                        value={altText}
-                        onChange={handleAltTextChange}
-                        className="settings-input"
-                    />
-                </div>
-            </div>
             </CollapsibleSection>
         </div>
     );

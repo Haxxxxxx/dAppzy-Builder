@@ -17,29 +17,8 @@ import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
 import BackgroundSettings from './SettingsPanels/BackgroundSettings';
 import '../css/EditorPanel.css'
-const CollapsiblePanel = ({ title, children }) => {
-  const [isOpen, setIsOpen] = useState(false);
+import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 
-  return (
-    <div className="collapsible-panel">
-      <div
-        className="panel-header"
-        onClick={() => setIsOpen(!isOpen)}
-
-      >
-        <h4 style={{ margin: 0 }}>{title}</h4>
-      </div>
-      {isOpen && (
-        <div
-          className="panel-content"
-
-        >
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const EditorPanel = ({ onUpdateSettings }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
@@ -90,7 +69,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
       );
     }
 
-    if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'link' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
+    if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
       return (
         <LinkSettings
           settings={selectedElement.settings || {}}
@@ -132,35 +111,35 @@ const EditorPanel = ({ onUpdateSettings }) => {
         {/* Conditional rendering based on viewMode */}
         {viewMode === 'style' ? (
           <div className="style-editor">
-            <CollapsiblePanel title="Typography">
+            <CollapsibleSection title="Typography">
               <TypographyEditor />
-            </CollapsiblePanel>
+            </CollapsibleSection>
 
             {/* New panel for Background & Global Settings */}
-            <CollapsiblePanel title="Background & Global Settings">
+            <CollapsibleSection title="Background & Global Settings">
               <BackgroundEditor />
-            </CollapsiblePanel>
+            </CollapsibleSection>
 
-            <CollapsiblePanel title="Borders">
+            <CollapsibleSection title="Borders">
               <BorderEditor />
-            </CollapsiblePanel>
-            <CollapsiblePanel title="Size">
+            </CollapsibleSection>
+            <CollapsibleSection title="Size">
               <SizeEditor />
-            </CollapsiblePanel>
-            <CollapsiblePanel title="Spacing">
+            </CollapsibleSection>
+            <CollapsibleSection title="Spacing">
               <SpacingEditor />
-            </CollapsiblePanel>
-            <CollapsiblePanel title="Display">
+            </CollapsibleSection>
+            {/* <CollapsibleSection title="Display">
               <DisplayEditor />
-            </CollapsiblePanel>
-            <CollapsiblePanel title="Effects">
+            </CollapsibleSection> */}
+            {/* <CollapsibleSection title="Effects">
               <EffectEditor />
-            </CollapsiblePanel>
-            {selectedElement?.type === 'button' && (
-              <CollapsiblePanel title="Button">
+            </CollapsibleSection> */}
+            {/* {selectedElement?.type === 'button' && (
+              <CollapsibleSection title="Button">
                 <ButtonEditor />
-              </CollapsiblePanel>
-            )}
+              </CollapsibleSection>
+            )} */}
           </div>
         ) : (
           <div className="settings-view">

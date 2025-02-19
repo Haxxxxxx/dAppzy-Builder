@@ -7,9 +7,11 @@ import reportWebVitals from './reportWebVitals';
 import { EditableProvider } from './context/EditableContext'; // Import EditableProvider
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+const userId =sessionStorage.getItem("userAccount");
 root.render(
   <React.StrictMode>
-    <EditableProvider>
+    <EditableProvider userId={userId}>
       <App />
     </EditableProvider>
   </React.StrictMode>

@@ -1,120 +1,158 @@
+/* TypographyEditor.css */
+
+/* --- Base Container --- */
 .typography-editor {
-    border-radius: 8px;
-    font-family: Arial, sans-serif;
-  }
-  
-  .editor-group {
-    margin-bottom: 16px;
-    width: auto;
-  }
-  
-  .editor-group label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 8px;
-  }
-  
-  .editor-group select,
-  .editor-group input { 
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  
-  .editor-regroup {
-    display: flex;
-    gap: 16px; /* Space between the fields */
-    align-items: flex-end; /* Align input and select at the bottom */
-  }
-  
-  .editor-group {
-    display: flex;
-    flex-direction: column; /* Stack label and input/select vertically */
-    flex: 1; /* Allow equal space for both groups */
-  }
-  
-  .editor-group label {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-  
-  .editor-group select,
-  .editor-group input {
-    width: 100%; /* Ensure the input/select fills its container */
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  
-  .color-group {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .color-hex {
-    flex: 1;
-    border: 1px solid #ccc;
-    padding: 8px;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 14px;
-    background: #fff;
-  }
-  
-  .color-group input { 
-    width: 10% !important;
-    padding: 0 !important;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  color: #ffffff;
 }
 
-  .text-decoration-group,
-  .text-align-group {
-    display: flex;
-    gap: 8px;
-    justify-content: space-between;
+/* Editor group container */
+.typography-editor .editor-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.typography-editor .editor-group label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #b3b3b3; /* soft gray */
+}
+
+/* Combine weight + size in a row */
+.typography-editor .editor-regroup {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+/* Make the size input fill available space if needed */
+.typography-editor .size-input {
+  width: 100% !important;
+}
+
+/* Buttons for text decoration or text align, plus the hr between them */
+.typography-editor .text-decoration-group,
+.typography-editor .text-align-group {
+  display: flex;
+  gap: 8px;
+  justify-content: space-evenly;
+}
+
+.typography-editor .text-decoration-group button,
+.typography-editor .text-align-group button {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.typography-editor .text-decoration-group button:hover,
+.typography-editor .text-align-group button:hover {
+  background: #3a3a3a;
+}
+
+.text-decoration-group button.active,
+.text-align-group button.active {
+  background-color: #217bf4;
+  border-color: #217bf4;
+}
+
+/* The vertical line between icon buttons */
+.typography-editor .custom-rule {
+  width: 1px;
+  height: 20px;
+  background: #131313;
+  border: none;
+  margin: auto 4px;
+}
+
+/* The material icon font usage */
+.typography-editor .material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
+}
+
+/* 
+  ---------- 
+  "Shared" styling for typical input/select elements 
+  ----------
+*/
+.typography-editor .editor-group select,
+.typography-editor .editor-group input {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #2a2a2a;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+/* 
+  ----------
+  The "single input bar" for color picker + hex code 
+  ----------
+*/
+.typography-editor .color-group-combined {
+  display: flex;
+  align-items: center;
+  border: 1px solid #444;      /* One border around the entire group */
+  border-radius: 4px;
+  background-color: #2a2a2a;   /* match your dark UI */
+  padding: 8px;              /* some horizontal padding */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Remove default color input border so it blends in */
+.typography-editor .color-group-combined input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Remove default swatch border (WebKit) */
+.typography-editor .color-group-combined input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.typography-editor .color-group-combined input[type="color"]::-webkit-color-swatch {
+  border: none;
+}
+
+/* The read-only hex text portion: no separate border, just fill space */
+.typography-editor .color-group-combined .color-hex {
+  flex: 1;
+  border: none;
+  background-color: transparent;
+  color: #fff;
+  font-size: 14px;
+  cursor: default;
+  outline: none;
+  text-align: left;
+  padding: 0;
+}
+
+/* 
+  ----------
+  Responsive Adjustments 
+  ----------
+*/
+@media (max-width: 600px) {
+  .typography-editor {
+    width: auto;
   }
-  
-  .text-decoration-group button,
-  .text-align-group button {
-    width: 36px;
-    height: 36px;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: background 0.3s ease, border-color 0.3s ease;
-  }
-  
-  .text-decoration-group button.active,
-  .text-align-group button.active {
-    background: #217bf4;
-    color: #fff;
-    border-color: #217bf4;
-  }
-  
-  .text-decoration-group button:hover,
-  .text-align-group button:hover {
-    background: #dcdcdc;
-  }
-  
-  .material-symbols-outlined {
-    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
-  }
-  
-  .editor-group button {
-    padding: 8px;
-    margin: 4px 0;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: background-color 0.3s, opacity 0.3s;
-  }
+}

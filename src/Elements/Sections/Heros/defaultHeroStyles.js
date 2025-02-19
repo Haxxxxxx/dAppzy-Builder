@@ -1,6 +1,7 @@
 
+
 export const defaultHeroStyles = {
-  hero: {
+  heroSection: {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -15,9 +16,8 @@ export const defaultHeroStyles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap:'1rem',
+    gap: '1rem',
   },
-
   heroTitle: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
@@ -28,7 +28,10 @@ export const defaultHeroStyles = {
     lineHeight: '1.5',
     marginBottom: '24px',
   },
-
+  buttonContainer: {
+    display: 'flex',
+    gap: '12px',
+  },
   primaryButton: {
     backgroundColor: '#334155',
     color: '#ffffff',
@@ -38,7 +41,6 @@ export const defaultHeroStyles = {
     cursor: 'pointer',
     borderRadius: '4px',
   },
-
   heroImageContainer: {
     flex: '1',
     minWidth: '300px',
@@ -55,7 +57,8 @@ export const defaultHeroStyles = {
   },
 };
 
-export const heroThreeStyles = {
+
+export const CustomTemplateHeroStyles = {
   heroSection: {
     display: 'flex',
     flexWrap: 'wrap',
@@ -63,7 +66,8 @@ export const heroThreeStyles = {
     justifyContent: 'space-around',
     padding: '40px',
     backgroundColor: '#ffffff',
-    gap:"10vw"
+    gap: '10vw',
+
   },
   heroContent: {
     flex: 1,
@@ -71,7 +75,7 @@ export const heroThreeStyles = {
     maxWidth: '600px',
     display: 'flex',
     flexDirection: 'column',
-    gap:'1rem',
+    gap: '1rem',
 
   },
   caption: {
@@ -124,6 +128,7 @@ export const heroThreeStyles = {
     borderRadius: '8px',
   },
 };
+
 
 export const heroTwoStyles = {
   heroSection: {

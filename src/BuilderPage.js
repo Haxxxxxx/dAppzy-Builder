@@ -1,13 +1,13 @@
 // src/BuilderPage.js
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db, auth } from "./firebase";
+import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 import ContentList from "./components/Canva";
 import SideBar from "./components/SideBar";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import "./BuilderPage.css";
+import "./BuilderPage.css"; // We'll add spinner CSS here
 import Topbar from "./components/TopBar";
 import LeftBar from "./components/LeftBar";
 import StructurePanel from "./components/LeftbarPanels/StructurePanel";
@@ -17,15 +17,18 @@ import WalletConnection from "./NewLogin/WalletConnection";
 
 function BuilderPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userId, setUserId] = useState(null); // <--- track the logged-in user’s ID
+  const [userId, setUserId] = useState(null);
+  const [loadingProject, setLoadingProject] = useState(false); // <-- new state
+
   const [openPanel, setOpenPanel] = useState("sidebar");
   const [contentListWidth, setContentListWidth] = useState(1200);
-  const { setSelectedElement, elements, setElements } = useContext(EditableContext);
+  const { setSelectedElement, setElements } = useContext(EditableContext);
   const [scale, setScale] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
+
   const [pageSettings, setPageSettings] = useState({
     siteTitle: "My Website",
     faviconUrl: "",
@@ -33,54 +36,50 @@ function BuilderPage() {
     author: "",
   });
 
+  // On first load, check sessionStorage for login info
   useEffect(() => {
     const sessionFlag = sessionStorage.getItem("isLoggedIn") === "true";
-    if (sessionFlag) {
+    const storedUserId = sessionStorage.getItem("userAccount");
+    if (sessionFlag && storedUserId) {
       setIsLoggedIn(true);
-      // Also retrieve the userAccount from sessionStorage if needed
-      const storedUserId = sessionStorage.getItem("userAccount");
-      if (storedUserId) setUserId(storedUserId);
+      setUserId(storedUserId);
     }
   }, []);
 
-  // Called after successful wallet connection
-  const handleUserLogin = (walletKey) => {
-    setIsLoggedIn(true);
-    setUserId(walletKey); // <--- store the wallet public key (user ID)
-    loadUserProject(walletKey);
-  };
-
-  const loadUserProject = async (walletKey) => {
-    const projectRef = doc(db, "projects", walletKey);
-    const projectSnap = await getDoc(projectRef);
-    if (projectSnap.exists()) {
-      const projectData = projectSnap.data();
-      if (projectData?.elements) {
-        setElements(projectData.elements);
-      }
-      // ...
-    }
-  };
-
+  // Whenever userId changes, load the user’s project
   useEffect(() => {
-    const fetchProject = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      // If you'd rather store under user.uid, you could do that.
-      // But if your Phantom "userId" is the doc ID, you can use userId here.
-      // Adjust according to your logic.
-      const projectRef = doc(db, "projects", user.uid);
+    if (!userId) return;
+    loadUserProject(userId);
+  }, [userId]);
+
+  // Load user’s project from Firestore
+  const loadUserProject = async (uid) => {
+    setLoadingProject(true); // start spinner
+    try {
+      const projectRef = doc(db, "projects", uid);
       const projectSnap = await getDoc(projectRef);
       if (projectSnap.exists()) {
         const projectData = projectSnap.data();
         if (projectData?.elements) {
           setElements(projectData.elements);
         }
+      } else {
+        console.log("No project doc found for user:", uid);
       }
-    };
+    } catch (error) {
+      console.error("Error loading user project:", error);
+    } finally {
+      setLoadingProject(false); // stop spinner
+    }
+  };
 
-    fetchProject();
-  }, []);
+  // Called after successful wallet connection
+  const handleUserLogin = (walletKey) => {
+    setIsLoggedIn(true);
+    setUserId(walletKey);
+    sessionStorage.setItem("isLoggedIn", "true");
+    sessionStorage.setItem("userAccount", walletKey);
+  };
 
   const handlePreviewToggle = () => {
     setIsPreviewMode((prev) => !prev);
@@ -92,7 +91,6 @@ function BuilderPage() {
 
   const handleUpdateSettings = (updatedSettings) => {
     setPageSettings(updatedSettings);
-    console.log("Updated page settings:", updatedSettings);
   };
 
   const handlePanelToggle = (panelName) => {
@@ -113,8 +111,17 @@ function BuilderPage() {
   if (!isLoggedIn) {
     return (
       <div className="login-container">
-        <h2>Please connect your wallet to continue</h2>
         <WalletConnection onUserLogin={handleUserLogin} />
+      </div>
+    );
+  }
+
+  // If we are currently loading the project from Firestore, show spinner
+  if (loadingProject) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading your project, please wait...</p>
       </div>
     );
   }
@@ -131,14 +138,13 @@ function BuilderPage() {
           onShowSettingsPanel={() => handlePanelToggle("settings")}
         />
         <div className="app">
-          {/* Pass userId to Topbar so we can display it or pass to Export */}
           <Topbar
             onResize={handleResize}
             scale={scale}
             isPreviewMode={isPreviewMode}
             onPreviewToggle={handlePreviewToggle}
             pageSettings={pageSettings}
-            userId={userId} // <--- pass userId to Topbar
+            userId={userId}
           />
           <div className="content-container">
             {openPanel === "sidebar" && (
@@ -161,6 +167,7 @@ function BuilderPage() {
                 <WebsiteSettingsPanel onUpdateSettings={handleUpdateSettings} />
               </div>
             )}
+
             <div
               className="main-content"
               onClick={handleMainContentClick}
