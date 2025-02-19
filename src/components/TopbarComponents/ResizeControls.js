@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import '../css/Topbar.css';
 
-const ResizeControls = ({ scale, onResize }) => {
+const ResizeControls = ({ scale, onResize, onScaleChange }) => {
   const [customSize, setCustomSize] = useState('');
   const [selectedSize, setSelectedSize] = useState(null);
 
   const handleResize = (size) => {
     if (onResize) onResize(size);
     setSelectedSize(size);
+    setCustomSize(size);
   };
 
   const handleCustomResize = (e) => {
@@ -18,6 +19,11 @@ const ResizeControls = ({ scale, onResize }) => {
         handleResize(parsedSize);
       }
     }
+  };
+
+  const handleScaleChange = (e) => {
+    const newScale = parseFloat(e.target.value);
+    if (onScaleChange) onScaleChange(newScale);
   };
 
   return (
@@ -54,7 +60,10 @@ const ResizeControls = ({ scale, onResize }) => {
         onChange={(e) => setCustomSize(e.target.value)}
         onKeyDown={handleCustomResize}
       />
+      <div className="scale-control">
       <span className="scale-percentage">Scale: {Math.round(scale * 100)}%</span>
+        
+      </div>
     </div>
   );
 };

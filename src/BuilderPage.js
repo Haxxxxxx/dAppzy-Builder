@@ -24,6 +24,7 @@ function BuilderPage() {
   const { setSelectedElement, setElements } = useContext(EditableContext);
   const [scale, setScale] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [availableCanvasWidth, setAvailableCanvasWidth] = useState(0);
 
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
@@ -117,7 +118,18 @@ function BuilderPage() {
       setSelectedElement(null);
     }
   };
+  useEffect(() => {
+    const updateCanvasWidth = () => {
+      if (mainContentRef.current) {
+        const { width } = mainContentRef.current.getBoundingClientRect();
+        setAvailableCanvasWidth(width);
+      }
+    };
 
+    updateCanvasWidth();
+    window.addEventListener('resize', updateCanvasWidth);
+    return () => window.removeEventListener('resize', updateCanvasWidth);
+  }, []);
   if (!isLoggedIn) {
     return (
       <div className="login-container">
@@ -149,6 +161,7 @@ function BuilderPage() {
           <Topbar
             onResize={handleResize}
             scale={scale}
+            setScale={setScale}
             isPreviewMode={isPreviewMode}
             onPreviewToggle={handlePreviewToggle}
             pageSettings={pageSettings}
@@ -182,6 +195,8 @@ function BuilderPage() {
             >
               <ContentList
                 contentListWidth={contentListWidth}
+                canvasWidth={availableCanvasWidth} // Pass the available width here
+
                 isSideBarVisible={openPanel === "sidebar"}
                 leftBarWidth={40}
                 handlePanelToggle={handlePanelToggle}

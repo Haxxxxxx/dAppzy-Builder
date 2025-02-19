@@ -29,15 +29,18 @@ const ContentList = forwardRef(
       selectedElement,
     } = useContext(EditableContext);
 
+    // In ContentList.js
     const calculateScale = () => {
-      const newScale = canvasWidth / contentListWidth;
-      setScale(newScale < 1 ? newScale : 1);
+      if (canvasWidth && contentListWidth) {
+        const newScale = canvasWidth / contentListWidth;
+        setScale(newScale < 1 ? newScale : 1);
+      }
     };
 
-    
     useEffect(() => {
       calculateScale();
     }, [contentListWidth, canvasWidth]);
+
 
     const handleDrop = (item, index, parentId = null) => {
       const safeIndex = index !== null && index !== undefined ? index : 0;

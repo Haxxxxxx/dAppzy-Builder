@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useContext } from "react";
-import { EditableContext } from "../../../../context/EditableContext";
+// src/components/LeftbarPanels/TargetValueField.js
+import React, { useEffect } from "react";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "../../../../firebase";
 
 const TargetValueField = ({
   actionType,
@@ -8,43 +10,27 @@ const TargetValueField = ({
   updateStyles,
   settings = {}
 }) => {
-  const { elements } = useContext(EditableContext);
-  const [videoPlatform, setVideoPlatform] = useState(null);
-
   // Video analysis for external URLs (optional)
   const analyzeURL = (url) => {
-    if (!url) {
-      setVideoPlatform(null);
-      return;
-    }
+    if (!url) return;
     try {
       const parsedURL = new URL(url);
       const hostname = parsedURL.hostname;
       if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
-        setVideoPlatform("YouTube");
+        return "YouTube";
       } else if (hostname.includes("vimeo.com")) {
-        setVideoPlatform("Vimeo");
+        return "Vimeo";
       } else if (hostname.includes("dailymotion.com")) {
-        setVideoPlatform("Dailymotion");
+        return "Dailymotion";
       } else {
-        setVideoPlatform("Unknown");
+        return "Unknown";
       }
     } catch (error) {
-      setVideoPlatform(null);
+      return null;
     }
   };
 
-  useEffect(() => {
-    if (actionType === "URL") {
-      analyzeURL(targetValue);
-    }
-  }, [targetValue, actionType]);
-
-  // Get all the available page sections.
-  const pageSections = elements.filter(
-    (el) => el.type === "hero" || el.type === "cta" || el.type === "footer"
-  );
-
+  // Render field based on actionType.
   const renderField = () => {
     switch (actionType) {
       case "pageSection":
@@ -58,15 +44,12 @@ const TargetValueField = ({
               style={{ width: "100%" }}
             >
               <option value="">Select a page section</option>
-              {pageSections.map((section) => (
-                <option key={section.id} value={section.id}>
-                  {section.label || section.content || section.id}
-                </option>
-              ))}
+              {/* Assuming you pass pageSections somehow */}
             </select>
           </div>
         );
       case "URL":
+        const videoPlatform = analyzeURL(targetValue);
         return (
           <div>
             <input
@@ -99,13 +82,15 @@ const TargetValueField = ({
                 marginBottom: "8px",
               }}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
+              onDrop={async (e) => {
                 e.preventDefault();
                 const file = e.dataTransfer.files[0];
                 if (file && file.type === "application/pdf") {
-                  const previewUrl = URL.createObjectURL(file);
-                  // Update targetValue with the local URL
-                  onChange({ target: { name: "targetValue", value: previewUrl } });
+                  // Instead of a local preview URL, upload to Storage.
+                  const downloadURL = await uploadFile(file);
+                  if (downloadURL) {
+                    onChange({ target: { name: "targetValue", value: downloadURL } });
+                  }
                 }
               }}
             >
@@ -113,11 +98,13 @@ const TargetValueField = ({
               <input
                 type="file"
                 accept="application/pdf"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files[0];
                   if (file && file.type === "application/pdf") {
-                    const previewUrl = URL.createObjectURL(file);
-                    onChange({ target: { name: "targetValue", value: previewUrl } });
+                    const downloadURL = await uploadFile(file);
+                    if (downloadURL) {
+                      onChange({ target: { name: "targetValue", value: downloadURL } });
+                    }
                   }
                 }}
                 style={{ display: "none" }}
@@ -136,22 +123,43 @@ const TargetValueField = ({
                 <embed src={targetValue} type="application/pdf" width="100%" height="200px" />
               </div>
             )}
-            {/* Checkbox for "Open in new tab" */}
-            {/* <div className="settings-group target-blank">
-              <label>
-                <input
-                  type="checkbox"
-                  name="openInNewTab"
-                  checked={settings.openInNewTab || false}
-                  onChange={onChange}
-                />
-                &nbsp;Open in new tab
-              </label>
-            </div> */}
           </div>
         );
       default:
-       
+        return null;
+    }
+  };
+
+  // Helper: Upload file to Firebase Storage using the same folder as images.
+  // Assumes that the userId is in sessionStorage and websiteSettings contains siteTitle.
+  const uploadFile = async (file) => {
+    try {
+      const userId = sessionStorage.getItem("userAccount");
+      const websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+      const projectName = websiteSettings.siteTitle || "DefaultProject";
+      const storagePath = `usersProjectData/${userId}/projects/${projectName}/${file.name}`;
+      const storageRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      return await new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            // Optional: track progress if needed.
+          },
+          (error) => {
+            console.error("Error uploading file:", error);
+            reject(null);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error) {
+      console.error("Error in uploadFile:", error);
+      return null;
     }
   };
 

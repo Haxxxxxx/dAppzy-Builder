@@ -9,7 +9,7 @@ import './css/Topbar.css';
 
 const Topbar = ({
   onResize,
-  scale,
+  scale,setScale,
   onPreviewToggle,
   isPreviewMode,
   pageSettings, // Contains website settings, including siteTitle.
@@ -38,7 +38,7 @@ const Topbar = ({
         faviconUrl={faviconUrl}
       />
       <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} />
-      <ResizeControls scale={scale} onResize={onResize} />
+      <ResizeControls scale={scale} onResize={onResize} onScaleChange={setScale} />
       <ExportSection
         elements={elements}
         buildHierarchy={buildHierarchy}

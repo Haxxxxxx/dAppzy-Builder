@@ -42,7 +42,12 @@ const MediaItem = ({
             <source src={item.src} type="video/mp4" />
           </video>
         )}
-        {item.type === 'file' && <div className="file-icon">📄</div>}
+        {item.type === 'file' && (
+          <div className="file-preview">
+            <div className="file-icon">📄</div>
+            <div className="file-label">File</div>
+          </div>
+        )}
 
         <div className="overlay">
           {editingItemId === item.id ? (
@@ -147,7 +152,7 @@ const MediaPanel = () => {
               newMediaItems.push({
                 id: file.name + Date.now(),
                 type: file.type.startsWith('image/') ? 'image' :
-                      file.type.startsWith('video/') ? 'video' : 'file',
+                  file.type.startsWith('video/') ? 'video' : 'file',
                 name: file.name,
                 src: downloadURL,
               });
@@ -316,6 +321,13 @@ const MediaPanel = () => {
                 <source src={previewItem.src} type="video/mp4" />
               </video>
             )}
+            {previewItem.type === 'file' && (
+              <div className="file-preview">
+                <div className="file-icon">📄</div>
+                <div className="file-label">File Preview</div>
+              </div>
+            )}
+
             <button className="close-button" onClick={closePreviewModal}>
               Close
             </button>

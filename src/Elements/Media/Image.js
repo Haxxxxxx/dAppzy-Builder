@@ -10,6 +10,20 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
 
   const defaultSrc = "https://picsum.photos/150";
   const [currentSrc, setCurrentSrc] = useState(imageElement.src || defaultSrc);
+  const [showErrorMessage, setShowErrorMessage] = useState(false);
+
+  // Helper to check if URL is an image URL.
+  const isImageUrl = (url) => {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    return (
+      lowerUrl.endsWith(".png") ||
+      lowerUrl.endsWith(".jpg") ||
+      lowerUrl.endsWith(".jpeg") ||
+      lowerUrl.endsWith(".gif") ||
+      lowerUrl.endsWith(".webp")
+    );
+  };
 
   useEffect(() => {
     if (imageElement.src && imageElement.src !== currentSrc) {
@@ -21,14 +35,21 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
     accept: "mediaItem",
     drop: (item) => {
       if (item.src) {
-        updateElementProperties(id, { src: item.src });
-        setCurrentSrc(item.src);
-        setSelectedElement({
-          id,
-          type: "image",
-          src: item.src,
-          styles, // keep existing styles (but don’t store src here)
-        });
+        if (isImageUrl(item.src)) {
+          // Valid image: update the element.
+          updateElementProperties(id, { src: item.src });
+          setCurrentSrc(item.src);
+          setSelectedElement({
+            id,
+            type: "image",
+            src: item.src,
+            styles, // keep existing styles (but don’t store src here)
+          });
+        } else {
+          // Not an image: show error message for 5 seconds.
+          setShowErrorMessage(true);
+          setTimeout(() => setShowErrorMessage(false), 5000);
+        }
       }
     },
     collect: (monitor) => ({
@@ -42,6 +63,7 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
   };
 
   return (
+    <>
     <div
       id={id}
       ref={drop}
@@ -66,7 +88,24 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
           maxHeight: "100%",
         }}
       />
+
     </div>
+      {showErrorMessage && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            background: "rgba(255, 0, 0, 0.8)",
+            color: "white",
+            fontSize: "12px",
+            padding: "4px",
+            textAlign: "center",
+          }}
+        >
+          Images slots are only for image items. Thanks Q/A explorer.
+        </div>
+      )}
+    </>
   );
 };
 
