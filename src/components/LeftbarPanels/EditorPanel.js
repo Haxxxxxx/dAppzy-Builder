@@ -20,7 +20,7 @@ import '../css/EditorPanel.css'
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 
 
-const EditorPanel = ({ onUpdateSettings }) => {
+const EditorPanel = ({ onUpdateSettings, userId }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
   const [viewMode, setViewMode] = useState('style'); // Default to 'style' view
   console.log("Selected Element type in EditorPanel : " + selectedElement?.type);
@@ -34,7 +34,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
         />
       );
     }
-    if (selectedElement?.type === 'bgVideo' || selectedElement?.type === 'section') {
+    if (selectedElement?.type === 'bgVideo' || selectedElement?.type === 'section' || selectedElement?.type === 'navbar' || selectedElement?.type === 'hero' || selectedElement?.type === 'cta' || selectedElement?.type === 'footer' || selectedElement?.type === 'mintingSection') {
       return (
         <BackgroundSettings
           settings={selectedElement.settings || {}}
@@ -149,7 +149,10 @@ const EditorPanel = ({ onUpdateSettings }) => {
 
         {elements.length > 0 && (
           <button
-            onClick={() => setElements([])}
+            onClick={() => {
+              localStorage.removeItem('editableElements'); // remove items from localStorage
+              setElements([]); // update your state if needed
+            }}
             style={{
               marginTop: '16px',
               padding: '8px',
@@ -163,6 +166,7 @@ const EditorPanel = ({ onUpdateSettings }) => {
             Clear All Elements
           </button>
         )}
+
       </div>
     </>
 

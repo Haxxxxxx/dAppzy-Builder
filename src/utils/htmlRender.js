@@ -1,3 +1,4 @@
+// src/utils/RenderUtils.js
 import { typeToTagMap } from './htmlRenderUtils/typeMapping';
 import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
 import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
@@ -13,7 +14,6 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
     attributesString += ` type="${attributes.type}"`;
   }
 
-  // Handle anchor elements
   if (type === 'anchor') {
     const href = attributes.href || settings.targetValue;
     if (href) {
@@ -24,8 +24,8 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
     }
   }
 
-  // Handle media elements
-  if (['img', 'video', 'audio', 'iframe', 'source'].includes(type) && src) {
+  // Include both "img" and "image" types.
+  if (['img', 'image', 'video', 'audio', 'iframe', 'source'].includes(type) && src) {
     attributesString += ` src="${src}"`;
   }
 
@@ -53,12 +53,7 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
     attributesString += ` type="date"`;
   }
 
-  // For buttons that are not Dropdowns, apply URL redirection if set.
-  if (
-    type === 'button' &&
-    settings.targetValue &&
-    settings.actionType !== 'Dropdown'
-  ) {
+  if (type === 'button' && settings.targetValue && settings.actionType !== 'Dropdown') {
     if (settings.openInNewTab) {
       attributesString += ` onclick="window.open('${settings.targetValue}', '_blank')"`;
     } else {
@@ -66,7 +61,6 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
     }
   }
 
-  // For spans: internal redirection and file redirection
   if (type === 'span' && settings.targetValue) {
     if (settings.actionType === 'pageSection') {
       attributesString += ` onclick="(function(){ var targetEl = document.getElementById('${settings.targetValue}'); if(targetEl){ targetEl.scrollIntoView({ behavior: 'smooth' }); } else { console.warn('Target element \\'${settings.targetValue}\\' not found'); } })()" style="cursor: pointer;"`;
@@ -83,10 +77,51 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
 }
 
 export function renderElementToHtml(element, collectedStyles) {
-  const { id, type, styles, content, src, attributes = {}, children = [], settings = {} } = element;
-  const tag = typeToTagMap[type];
+  const {
+    id,
+    type,
+    styles = {},
+    content,
+    attributes = {},
+    children = [],
+    settings = {}
+  } = element;
 
-  // Handle custom renderers first
+  // Compute the initial source.
+  let finalSrc = element.src || (styles && styles.src) || '';
+  console.log(`Rendering element ${id} with src:`, finalSrc);
+  
+  // If the element is a media type, update the URL if the project folder name is outdated.
+  if (finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
+    // We assume the URL contains a segment like: .../projects/{oldProjectName}/{fileName}...
+    const parts = finalSrc.split('/o/');
+    if (parts.length > 1) {
+      const [basePart, pathAndQuery] = parts;
+      const [encodedPath, query] = pathAndQuery.split('?');
+      const decodedPath = decodeURIComponent(encodedPath);
+      // Look for the segment "projects" – the next segment is the old project name.
+      const segments = decodedPath.split('/');
+      const projIndex = segments.indexOf('projects');
+      if (projIndex !== -1 && segments.length > projIndex + 1) {
+        const oldProjectName = segments[projIndex + 1];
+        // Use the current project name from settings.siteTitle.
+        const currentProjectName = (settings.siteTitle || '').trim();
+        if (currentProjectName && oldProjectName !== currentProjectName) {
+          // Replace old project name with the current one.
+          const newDecodedPath = decodedPath.replace(`/projects/${oldProjectName}/`, `/projects/${currentProjectName}/`);
+          const newEncodedPath = encodeURIComponent(newDecodedPath);
+          finalSrc = `${basePart}/o/${newEncodedPath}${query ? '?' + query : ''}`;
+          console.log(`Updated src for element ${id}:`, finalSrc);
+        }
+      }
+    }
+  }
+  
+  if (!finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
+    console.warn(`No valid source found for element ${id} of type ${type}.`);
+  }
+
+  // Handle custom renderers.
   if (type === 'navbar') {
     return renderNavbar(element, collectedStyles);
   }
@@ -103,56 +138,47 @@ export function renderElementToHtml(element, collectedStyles) {
     return renderMintingSection(element, collectedStyles);
   }
 
+  const tag = typeToTagMap[type];
   if (!tag) {
     console.warn(`No HTML tag mapping found for type: ${type}`);
     return '';
   }
 
-  // Create a unique class name and store the styles
   const className = `element-${id}`;
-  collectedStyles.push({ className, styles });
+  let styleForCSS = { ...styles };
+  if (['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
+    delete styleForCSS.src;
+  }
+  collectedStyles.push({ className, styles: styleForCSS });
 
-  // Build attributes including both id and class.
   let attributesString = `id="${id}" class="${className}"`;
-  attributesString += buildAttributesString(type, attributes, src, settings);
+  attributesString += buildAttributesString(type, attributes, finalSrc, settings);
 
   const selfClosingTags = ['img', 'input', 'hr', 'br', 'meta', 'link', 'source'];
   const childrenHtml = children
-    .map((childElement) => renderElementToHtml(childElement, collectedStyles))
+    .map(childElement => renderElementToHtml(childElement, collectedStyles))
     .join('');
 
-  // Special case: Button with Dropdown action type.
   if (
     type === 'button' &&
     settings.actionType === 'Dropdown' &&
     Array.isArray(settings.dropdownLinks) &&
     settings.dropdownLinks.length > 0
   ) {
-    // For a dropdown button, we want to override the onclick to toggle the dropdown.
     const toggleOnClick = "var dropdown = this.nextElementSibling; dropdown.style.display = (dropdown.style.display==='block' ? 'none' : 'block');";
-    // Append our toggle onclick to the attributesString.
     attributesString += ` onclick="${toggleOnClick}"`;
-
-    // Render the button as usual.
     const buttonHtml = `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
-
-    // Render the dropdown menu container.
-    // We set initial display to none so that it's hidden.
     let dropdownHtml = `<div class="dropdown-menu" style="${DropdownStyles.dropdownMenu}; display: none;">`;
     dropdownHtml += settings.dropdownLinks.map(link => {
-      // Render each dropdown link as an anchor element.
       const linkOnClick = link.openInNewTab
         ? `window.open('${link.targetValue}', '_blank')`
         : `window.location.href='${link.targetValue}'`;
       return `<a href="#" style="${DropdownStyles.dropdownItem}" onclick="${linkOnClick}">${link.content || link.targetValue}</a>`;
     }).join('');
     dropdownHtml += `</div>`;
-
-    // Return the combined HTML: button followed immediately by the dropdown menu.
     return buttonHtml + dropdownHtml;
   }
 
-  // Standard element rendering
   if (selfClosingTags.includes(tag)) {
     return `<${tag} ${attributesString} />`;
   } else {

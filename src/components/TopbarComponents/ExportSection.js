@@ -1,17 +1,18 @@
+// src/components/LeftbarPanels/ExportSection.js
 import React, { useState } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
 
-const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' }) => {
+const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
-
+console.log(websiteSettings);
   const handleExportHtml = async () => {
     setAutoSaveStatus('Publishing...');
 
     try {
-      // 1. Build the full HTML
+      // Build full HTML.
       const collectedStyles = [];
       const nestedElements = buildHierarchy(elements);
       const bodyHtml = nestedElements
@@ -19,10 +20,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
         .join('');
 
       const globalStyles = collectedStyles
-        .map(
-          ({ className, styles }) =>
-            `.${className} {\n${flattenStyles(styles)}\n}`
-        )
+        .map(({ className, styles }) => `.${className} {\n${flattenStyles(styles)}\n}`)
         .join('\n');
 
       const fullHtml = `
@@ -33,10 +31,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exported Website</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; }
     ${globalStyles}
   </style>
 </head>
@@ -46,47 +41,37 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
 </html>
       `.trim();
 
-      // 2. Determine the user ID
+      // Determine user ID.
       let finalUserId = userId;
       const currentUser = auth.currentUser;
-
       if (!finalUserId && currentUser) {
         finalUserId = currentUser.uid;
       }
-
       if (!finalUserId) {
         setAutoSaveStatus('Error: No valid user ID found!');
         return;
       }
 
-      // 3. Construct the preview URL based on the environment
+      // Build preview URL.
       const isLocal = window.location.hostname === 'localhost';
       const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.3rd-space.io';
+      const projectName = websiteSettings.siteTitle || 'MyWebsite';
+      const testUrl = `${baseUrl}/${finalUserId}/${projectName}`;
 
-      const testUrl = userChosenUrl
-        ? `${baseUrl}/${userChosenUrl}`
-        : `${baseUrl}/preview/${finalUserId}`;
-
-      // 4. Store the project under the user's document
+      // Save project in Firestore.
       const projectRef = doc(db, 'projects', finalUserId);
-
       await setDoc(projectRef, {
         html: fullHtml,
         elements: elements,
         userId: finalUserId,
         lastUpdated: serverTimestamp(),
-        customUrl: userChosenUrl || '',
         testUrl,
+        websiteSettings,
       });
 
       setAutoSaveStatus(`Project published!`);
-
-      // Copy the preview URL to clipboard
       await navigator.clipboard.writeText(testUrl);
-
-      // Open the preview in a new tab
       window.open(testUrl, '_blank');
-
     } catch (error) {
       console.error('Error publishing project:', error);
       setAutoSaveStatus('Error publishing project: ' + error.message);
@@ -95,14 +80,10 @@ const ExportSection = ({ elements, buildHierarchy, userId, userChosenUrl = '' })
 
   return (
     <div className="export-section">
-      <span
-        className="material-symbols-outlined export-cloud"
-        style={{ color: 'white' }}
-      >
+      <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
         cloud_done
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>
-
       <button className="button" onClick={handleExportHtml}>
         Publish
       </button>

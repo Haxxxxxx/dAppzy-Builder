@@ -11,7 +11,7 @@ function App() {
         <Route path="/" element={<BuilderPage />} />
         
         {/* Preview Page */}
-        <Route path="/preview/:userId" element={<PreviewPage />} />
+        <Route path="/:userId/:projectName" element={<PreviewPage />} />
         
         {/* Optional: If using custom URLs */}
         <Route path="/:customUrl" element={<PreviewPage />} />

@@ -26,9 +26,12 @@ const app = initializeApp(firebaseConfig);
 // Authentication
  const auth = getAuth(app);
 
+// Storage
+
+const storage = getStorage(app);
 export const analytics = getAnalytics(app);
 
-export {setDoc, doc, getDoc, db, auth };
+export {setDoc, doc, getDoc, db, auth, storage };
 
 // Storage (if needed)
 // export const storage = getStorage(app);

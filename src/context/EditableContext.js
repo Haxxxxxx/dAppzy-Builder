@@ -5,7 +5,7 @@ import {
   buildHierarchy,
   findElementById,
   removeElementById,
-  removeElementRecursively, // <--- import the new function
+  removeElementRecursively,
 } from '../utils/LeftBarUtils/elementUtils';
 
 import {
@@ -18,10 +18,9 @@ export const EditableContext = createContext();
 
 const ELEMENTS_VERSION = '1.0';
 
-export const EditableProvider = ({ children }) => {
+export const EditableProvider = ({ children, userId }) => {
   const [selectedElement, setSelectedElement] = useState(null);
 
-  // Load from local storage on init
   const [elements, setElements] = useState(() => {
     const savedVersion = localStorage.getItem('elementsVersion');
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
@@ -79,10 +78,15 @@ export const EditableProvider = ({ children }) => {
       settings: {},
     };
 
+    // For image elements, set a default top-level src.
+    if (type === 'image') {
+      baseElement.src = "https://picsum.photos/150";
+    }
+
     // If we have a structure config
     if (structure && structureConfigurations[structure]) {
       baseElement.styles = structureConfigurations[structure].styles || {};
-      const children = structureConfigurations[structure].children.map((child) => ({
+      const childrenElements = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
         content: child.content || '',
@@ -90,9 +94,9 @@ export const EditableProvider = ({ children }) => {
         label: child.label || '',
         parentId: newId,
       }));
-      baseElement.children = children.map((child) => child.id);
+      baseElement.children = childrenElements.map((child) => child.id);
 
-      setElements((prev) => [...prev, baseElement, ...children]);
+      setElements((prev) => [...prev, baseElement, ...childrenElements]);
     } else {
       setElements((prev) => [...prev, baseElement]);
     }
@@ -105,9 +109,7 @@ export const EditableProvider = ({ children }) => {
   const handleRemoveElement = (id) => {
     setSelectedElement(null);
     setElements((prevElements) => {
-      // Recursively remove the element + children
       const updatedElements = removeElementRecursively(id, prevElements);
-      // Save to local storage
       saveToLocalStorage('editableElements', updatedElements);
       return updatedElements;
     });
@@ -126,6 +128,17 @@ export const EditableProvider = ({ children }) => {
     setElements((prev) => {
       const updatedElements = prev.map((el) =>
         el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el
+      );
+      saveToLocalStorage('editableElements', updatedElements);
+      return updatedElements;
+    });
+  };
+
+  // -------------- Update Element Properties (e.g. top-level src) --------------
+  const updateElementProperties = (id, newProperties) => {
+    setElements((prev) => {
+      const updatedElements = prev.map((el) =>
+        el.id === id ? { ...el, ...newProperties } : el
       );
       saveToLocalStorage('editableElements', updatedElements);
       return updatedElements;
@@ -168,7 +181,6 @@ export const EditableProvider = ({ children }) => {
     }
   };
 
-  // -------------- Update Configuration --------------
   const updateConfiguration = (id, key, value) => {
     setElements((prev) =>
       prev.map((el) =>
@@ -189,7 +201,6 @@ export const EditableProvider = ({ children }) => {
     );
   };
 
-  // -------------- Keep local storage in sync --------------
   useEffect(() => {
     saveToLocalStorage('editableElements', elements);
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
@@ -209,10 +220,12 @@ export const EditableProvider = ({ children }) => {
         loadSectionFromLocalStorage,
         findElementById,
         buildHierarchy,
-        handleRemoveElement, // calls removeElementRecursively
+        handleRemoveElement,
         saveToLocalStorage,
         updateConfiguration,
         selectedStyle,
+        updateElementProperties,
+        userId,
       }}
     >
       {children}

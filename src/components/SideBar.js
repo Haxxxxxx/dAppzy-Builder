@@ -4,7 +4,7 @@ import EditorPanel from './LeftbarPanels/EditorPanel';
 import { EditableContext } from '../context/EditableContext';
 import './css/Sidebar.css';
 
-const SideBar = ({ contentListWidth }) => {
+const SideBar = ({ contentListWidth, userId }) => {
   const [viewMode, setViewMode] = useState('layout'); // Default to 'elements'
   const [searchQuery, setSearchQuery] = useState('');
   const { selectedElement } = useContext(EditableContext);

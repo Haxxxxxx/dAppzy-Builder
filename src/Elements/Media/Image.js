@@ -1,37 +1,33 @@
+// src/components/EditableElements/Image.js
 import React, { useContext, useEffect, useState } from "react";
 import { EditableContext } from "../../context/EditableContext";
 import { useDrop } from "react-dnd";
 
-const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }, handleDrop }) => {
-  const { elements, updateStyles, setSelectedElement } = useContext(EditableContext);
+const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} }) => {
+  const { elements, updateElementProperties, setSelectedElement } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id) || {};
   const { styles = {} } = imageElement;
 
-  const defaultSrc = "https://picsum.photos/150"; // Fallback placeholder
-  const [currentSrc, setCurrentSrc] = useState(styles.src || defaultSrc);
+  const defaultSrc = "https://picsum.photos/150";
+  const [currentSrc, setCurrentSrc] = useState(imageElement.src || defaultSrc);
 
   useEffect(() => {
-    const storedImage = localStorage.getItem(`image-${id}`);
-
-    if (storedImage) {
-      setCurrentSrc(storedImage); // ✅ Fetch from LocalStorage first
-    } else if (styles.src && styles.src !== currentSrc) {
-      setCurrentSrc(styles.src); // ✅ Update from context if necessary
+    if (imageElement.src && imageElement.src !== currentSrc) {
+      setCurrentSrc(imageElement.src);
     }
-  }, [styles.src, id, elements]); // ✅ Ensure re-renders when context updates
-
-
+  }, [imageElement.src, currentSrc]);
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "mediaItem",
     drop: (item) => {
       if (item.src) {
-        updateStyles(id, { src: item.src });
+        updateElementProperties(id, { src: item.src });
         setCurrentSrc(item.src);
         setSelectedElement({
           id,
           type: "image",
-          styles: { src: item.src, ...styles },
+          src: item.src,
+          styles, // keep existing styles (but don’t store src here)
         });
       }
     },
@@ -42,7 +38,7 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: "image", src: currentSrc, width: styles.width, height: styles.height, alt: styles.alt });
+    setSelectedElement({ id, type: "image", src: currentSrc, ...styles });
   };
 
   return (
@@ -62,10 +58,10 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => { }
         src={currentSrc}
         alt={styles.alt || "Editable element"}
         style={{
-          width: styles.width || customStyles.width || "auto", // ✅ Ensures proper width
-          height: styles.height || customStyles.height || "auto", // ✅ Ensures proper height
-          objectFit: styles.objectFit || "cover", // ✅ Applies object-fit correctly
-          borderRadius: styles.borderRadius || customStyles.borderRadius || "50%", // ✅ Ensures borderRadius applies
+          width: styles.width || customStyles.width || "auto",
+          height: styles.height || customStyles.height || "auto",
+          objectFit: styles.objectFit || "cover",
+          borderRadius: styles.borderRadius || customStyles.borderRadius || "50%",
           maxWidth: "100%",
           maxHeight: "100%",
         }}

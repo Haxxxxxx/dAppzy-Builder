@@ -7,19 +7,18 @@ import ContentList from "./components/Canva";
 import SideBar from "./components/SideBar";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import "./BuilderPage.css"; // We'll add spinner CSS here
-import Topbar from "./components/TopBar";
+import "./BuilderPage.css";
 import LeftBar from "./components/LeftBar";
 import StructurePanel from "./components/LeftbarPanels/StructurePanel";
 import MediaPanel from "./components/LeftbarPanels/MediaPanel";
 import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPanel";
 import WalletConnection from "./NewLogin/WalletConnection";
+import Topbar from "./components/TopBar";
 
 function BuilderPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [loadingProject, setLoadingProject] = useState(false); // <-- new state
-
+  const [loadingProject, setLoadingProject] = useState(false);
   const [openPanel, setOpenPanel] = useState("sidebar");
   const [contentListWidth, setContentListWidth] = useState(1200);
   const { setSelectedElement, setElements } = useContext(EditableContext);
@@ -29,14 +28,16 @@ function BuilderPage() {
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
 
+  // Page settings for the website (project info)
   const [pageSettings, setPageSettings] = useState({
     siteTitle: "My Website",
     faviconUrl: "",
     description: "",
     author: "",
+    // Optionally include customUrl if desired.
   });
 
-  // On first load, check sessionStorage for login info
+  // On first load, check sessionStorage for login info.
   useEffect(() => {
     const sessionFlag = sessionStorage.getItem("isLoggedIn") === "true";
     const storedUserId = sessionStorage.getItem("userAccount");
@@ -46,13 +47,13 @@ function BuilderPage() {
     }
   }, []);
 
-  // Whenever userId changes, load the user’s project
+  // Whenever userId changes, load the user’s project.
   useEffect(() => {
     if (!userId) return;
     loadUserProject(userId);
   }, [userId]);
 
-  // Load user’s project from Firestore
+  // Load user’s project from Firestore (including website settings)
   const loadUserProject = async (uid) => {
     setLoadingProject(true); // start spinner
     try {
@@ -62,6 +63,14 @@ function BuilderPage() {
         const projectData = projectSnap.data();
         if (projectData?.elements) {
           setElements(projectData.elements);
+        }
+        if (projectData?.websiteSettings) {
+          setPageSettings(projectData.websiteSettings);
+          // Save website settings to localStorage for other panels.
+          localStorage.setItem("websiteSettings", JSON.stringify(projectData.websiteSettings));
+        } else {
+          // If no websiteSettings exist, store the default.
+          localStorage.setItem("websiteSettings", JSON.stringify(pageSettings));
         }
       } else {
         console.log("No project doc found for user:", uid);
@@ -73,7 +82,7 @@ function BuilderPage() {
     }
   };
 
-  // Called after successful wallet connection
+  // Called after successful wallet connection.
   const handleUserLogin = (walletKey) => {
     setIsLoggedIn(true);
     setUserId(walletKey);
@@ -91,6 +100,8 @@ function BuilderPage() {
 
   const handleUpdateSettings = (updatedSettings) => {
     setPageSettings(updatedSettings);
+    // Store updated settings in localStorage for persistence.
+    localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
   };
 
   const handlePanelToggle = (panelName) => {
@@ -107,7 +118,6 @@ function BuilderPage() {
     }
   };
 
-  // If user is not logged in, show the wallet connection screen
   if (!isLoggedIn) {
     return (
       <div className="login-container">
@@ -116,7 +126,6 @@ function BuilderPage() {
     );
   }
 
-  // If we are currently loading the project from Firestore, show spinner
   if (loadingProject) {
     return (
       <div className="loading-container">
@@ -126,7 +135,6 @@ function BuilderPage() {
     );
   }
 
-  // Otherwise, show the builder
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="layout">
@@ -167,7 +175,6 @@ function BuilderPage() {
                 <WebsiteSettingsPanel onUpdateSettings={handleUpdateSettings} />
               </div>
             )}
-
             <div
               className="main-content"
               onClick={handleMainContentClick}
