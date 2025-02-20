@@ -5,8 +5,7 @@ import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebas
 import { storage } from '../../firebase';
 import { EditableContext } from '../../context/EditableContext';
 
-const WebsiteSettingsPanel = ({ onUpdateSettings }) => {
-  const { userId } = useContext(EditableContext); // userId must be provided in your context
+const WebsiteSettingsPanel = ({ onUpdateSettings, userId}) => {
 
   // Default settings for the website/project.
   const defaultSettings = {
