@@ -14,9 +14,8 @@ import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPane
 import WalletConnection from "./NewLogin/WalletConnection";
 import Topbar from "./components/TopBar";
 
-function BuilderPage() {
+function BuilderPage({userId, setUserId}) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userId, setUserId] = useState(null);
   const [loadingProject, setLoadingProject] = useState(false);
   const [openPanel, setOpenPanel] = useState("sidebar");
   const [contentListWidth, setContentListWidth] = useState(1200);

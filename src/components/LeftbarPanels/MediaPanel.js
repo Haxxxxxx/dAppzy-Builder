@@ -1,16 +1,40 @@
 // src/components/LeftbarPanels/MediaPanel.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import './css/MediaPanel.css';
-import { ref, listAll, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, uploadBytesResumable, deleteObject } from 'firebase/storage';
 import { storage } from '../../firebase';
-import { EditableContext } from '../../context/EditableContext';
 import { MediaItem } from './MediaItem';
 
-const MediaPanel = ({
-  projectName , // Now we receive projectName from props
-  isOpen,
-  userId
-}) => {
+/**
+ * A helper to determine file type from a File object (on upload).
+ * We use the MIME type to decide if it's an image, video, or file (pdf, doc, etc.).
+ */
+function getMediaTypeFromFile(file) {
+  const mime = file.type.toLowerCase();
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  // You can extend to more document types if needed
+  if (mime === "application/pdf") return "file";
+  return "file";
+}
+
+/**
+ * A helper to guess file type from an extension (when loading from Firebase).
+ * Because we don’t have direct access to the MIME type in `listAll`.
+ */
+function guessTypeFromExtension(filename) {
+  const ext = filename.toLowerCase().split(".").pop();
+  const images = ["png","jpg","jpeg","webp","gif","svg","bmp","ico","tiff"];
+  const videos = ["mp4","mov","avi","wmv","mkv","webm"];
+  
+  if (images.includes(ext)) return "image";
+  if (videos.includes(ext)) return "video";
+  if (ext === "pdf") return "file"; // Could add doc, docx, etc.
+  
+  return "file";
+}
+
+const MediaPanel = ({ projectName, isOpen, userId }) => {
   const [mediaItems, setMediaItems] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
   const [filterType, setFilterType] = useState('all');
@@ -19,11 +43,11 @@ const MediaPanel = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-
-  // Retrieve website settings and use siteTitle as projectName.
-  // 1) Make fetchMedia async
+  /**
+   * 1) Fetch media from Firebase Storage for this user/project.
+   *    We guess the file type from its extension.
+   */
   const fetchMedia = async () => {
-    // If user isn't logged in or no project name, skip
     if (!userId || !projectName.trim()) {
       setMediaItems([]);
       return;
@@ -33,25 +57,19 @@ const MediaPanel = ({
     try {
       const folderPath = `usersProjectData/${userId}/projects/${projectName}`;
       const folderRef = ref(storage, folderPath);
-
-      // 2) Await the listAll call
       const res = await listAll(folderRef);
 
-      // 3) For each item, await getDownloadURL
       const promises = res.items.map(async (itemRef) => {
         const url = await getDownloadURL(itemRef);
         return {
           id: itemRef.name,
-          type: 'image', // adjust logic if you also have video/files
+          type: guessTypeFromExtension(itemRef.name), // <--- Distinguish type here
           name: itemRef.name,
           src: url,
         };
       });
 
-      // 4) Await the array of file objects
       const files = await Promise.all(promises);
-
-      console.log("Retrieved files:", files); // Now it's the actual array
       setMediaItems(files);
     } catch (error) {
       console.error("Error listing files in storage:", error);
@@ -60,11 +78,13 @@ const MediaPanel = ({
     }
   };
 
-
-  // Upload etc. (unchanged)
+  /**
+   * 2) Handle file uploads by setting the correct `type` using MIME.
+   */
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
     const newMediaItems = [];
+
     for (const file of files) {
       try {
         const storagePath = `usersProjectData/${userId}/projects/${projectName}/${file.name}`;
@@ -73,15 +93,18 @@ const MediaPanel = ({
 
         await new Promise((resolve, reject) => {
           uploadTask.on(
-            'state_changed',
-            () => { },
+            "state_changed",
+            () => {},
             (error) => reject(error),
             async () => {
+              // Once upload is complete, get the download URL
               const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              // Determine type from MIME
+              const fileType = getMediaTypeFromFile(file);
+
               newMediaItems.push({
-                id: file.name + Date.now(),
-                type: file.type.startsWith('image/') ? 'image'
-                  : file.type.startsWith('video/') ? 'video' : 'file',
+                id: file.name + Date.now(), // Unique ID
+                type: fileType,            // image, video, or file
                 name: file.name,
                 src: downloadURL,
               });
@@ -93,24 +116,48 @@ const MediaPanel = ({
         console.error("Error uploading file:", error);
       }
     }
+    // Merge with existing media
     setMediaItems((prevItems) => [...newMediaItems, ...prevItems]);
   };
 
+  /**
+   * 3) Drag & Drop Upload
+   */
   const handleDrop = async (event) => {
     event.preventDefault();
     const files = Array.from(event.dataTransfer.files);
     await handleFileUpload({ target: { files } });
   };
-
   const handleDragOver = (event) => event.preventDefault();
 
-  const handleRemoveClick = (itemId) => {
-    setMediaItems((prev) => prev.filter((item) => item.id !== itemId));
+  /**
+   * 4) Remove items from Firebase + local state
+   */
+  const handleRemoveClick = async (itemId) => {
+    const itemToRemove = mediaItems.find((item) => item.id === itemId);
+    if (!itemToRemove) return;
+
+    try {
+      const itemRef = ref(
+        storage,
+        `usersProjectData/${userId}/projects/${projectName}/${itemToRemove.name}`
+      );
+      await deleteObject(itemRef);
+      setMediaItems((prev) => prev.filter((item) => item.id !== itemId));
+    } catch (error) {
+      console.error("Error deleting file from storage:", error);
+    }
   };
+
+  /**
+   * 5) Preview modal handlers
+   */
   const handlePreviewClick = (item) => setPreviewItem(item);
   const closePreviewModal = () => setPreviewItem(null);
-  const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
+  /**
+   * 6) In-line editing of file names
+   */
   const handleNameDoubleClick = (item) => {
     setEditingItemId(item.id);
     setEditingName(item.name || "");
@@ -131,35 +178,44 @@ const MediaPanel = ({
     }
   };
 
+  /**
+   * 7) Filtering logic: images & videos -> "media", pdf/other -> "documents"
+   */
   const handleSetFilterType = (type) => {
     setFilterType(type);
   };
 
-
-
   const filteredItems = mediaItems.filter((item) => {
+    // Filter by type
     let typeMatch = false;
     if (filterType === 'all') {
       typeMatch = true;
     } else if (filterType === 'media') {
+      // Accept both images and videos
       typeMatch = (item.type === 'image' || item.type === 'video');
     } else if (filterType === 'documents') {
+      // Non-image, non-video => "file"
       typeMatch = (item.type === 'file');
     }
+
+    // Filter by name
     const nameMatch = (item.name || "").toLowerCase().includes(searchQuery.toLowerCase());
     return typeMatch && nameMatch;
   });
 
-
-  // 5) Use an effect that calls fetchMedia whenever userId or projectName changes
+  /**
+   * 8) Fetch media when panel opens
+   */
   useEffect(() => {
     if (isOpen) {
       fetchMedia();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
-  
 
-  // Provide a global function to add items from outside
+  /**
+   * 9) Optional: Provide a global way to add items from outside
+   */
   useEffect(() => {
     window.addToMediaPanel = (newItem) => {
       setMediaItems((prev) => [newItem, ...prev]);
@@ -169,6 +225,9 @@ const MediaPanel = ({
     };
   }, []);
 
+  /**
+   * 10) Render
+   */
   return (
     <div
       className="media-panel scrollable-panel"
@@ -176,6 +235,7 @@ const MediaPanel = ({
       onDragOver={handleDragOver}
     >
       <h3>Media Library</h3>
+
       <div className="filter-buttons">
         <button
           className={filterType === 'media' ? 'active' : ''}
@@ -202,7 +262,7 @@ const MediaPanel = ({
           type="text"
           placeholder="Search by name..."
           value={searchQuery}
-          onChange={handleSearchChange}
+          onChange={e => setSearchQuery(e.target.value)}
         />
       </div>
       <hr />
@@ -219,7 +279,7 @@ const MediaPanel = ({
           />
         </label>
         <div className="dropzone">
-          Drag & Drop Files Here
+          Drag &amp; Drop Files Here
         </div>
       </div>
 

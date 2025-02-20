@@ -1,21 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { EditableProvider } from './context/EditableContext';
 
+const RootComponent = () => {
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const storedUserId = sessionStorage.getItem("userAccount");
+    console.log("Fetched userId from sessionStorage:", storedUserId);
+    setUserId(storedUserId);
+  }, []);
+
+  return (
+    <React.StrictMode>
+      <EditableProvider userId={userId}>
+        <App userId={userId} setUserId={setUserId} />
+      </EditableProvider>
+    </React.StrictMode>
+  );
+};
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-
-const userId = sessionStorage.getItem("userAccount");
-console.log("userId in index.js:", userId);
-
-root.render(
-  <React.StrictMode>
-    <EditableProvider userId={userId}>
-      <App />
-    </EditableProvider>
-  </React.StrictMode>
-);
+root.render(<RootComponent />);
 
 reportWebVitals();

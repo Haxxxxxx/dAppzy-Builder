@@ -129,9 +129,9 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
             <CollapsibleSection title="Spacing">
               <SpacingEditor />
             </CollapsibleSection>
-            {/* <CollapsibleSection title="Display">
+            <CollapsibleSection title="Display">
               <DisplayEditor />
-            </CollapsibleSection> */}
+            </CollapsibleSection>
             {/* <CollapsibleSection title="Effects">
               <EffectEditor />
             </CollapsibleSection> */}
