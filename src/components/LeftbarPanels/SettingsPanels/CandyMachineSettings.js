@@ -4,35 +4,6 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './css/CandyMachineSettings.css';
 
-const parseTimerToDate = (timerString) => {
-  if (!timerString) return null;
-  const match = timerString.match(/(\d+)d\s(\d+)h\s(\d+)m\s(\d+)s/);
-  if (!match) return null;
-
-  const [_, days, hours, minutes, seconds] = match.map(Number);
-  const now = new Date();
-  return new Date(
-    now.getTime() +
-      days * 24 * 60 * 60 * 1000 +
-      hours * 60 * 60 * 1000 +
-      minutes * 60 * 1000 +
-      seconds * 1000
-  );
-};
-
-const formatDateToTimer = (date) => {
-  if (!date) return '';
-  const now = new Date();
-  const diff = Math.max(0, date - now);
-
-  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
-  const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-  const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-  const seconds = Math.floor((diff % (60 * 1000)) / 1000);
-
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-};
-
 const CandyMachineSettings = () => {
   const { updateContent, selectedElement, elements, findElementById } = useContext(EditableContext);
   const [localSettings, setLocalSettings] = useState({});
@@ -40,19 +11,27 @@ const CandyMachineSettings = () => {
 
   useEffect(() => {
     if (selectedElement) {
-      const childrenElements = elements.filter((el) => el.parentId === selectedElement.id);
+      const childrenElements = elements.filter(el => el.parentId === selectedElement.id);
       const settings = childrenElements.reduce((acc, child) => {
         acc[child.type] = child.content || '';
         return acc;
       }, {});
-      const timerDate = parseTimerToDate(settings.timer);
-      setLocalSettings((prev) => ({
-        ...prev,
-        ...settings,
-        timer: timerDate || null,
-      }));
+
+      // If `settings.timer` is an ISO string, parse it:
+      if (settings.timer) {
+        const parsed = new Date(settings.timer);
+        if (!isNaN(parsed.getTime())) {
+          settings.timer = parsed; // now it’s a valid Date object
+        } else {
+          // Fallback if it’s not parseable
+          settings.timer = null;
+        }
+      }
+
+      setLocalSettings(settings);
     }
   }, [selectedElement, elements]);
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -87,21 +66,45 @@ const CandyMachineSettings = () => {
       reader.readAsDataURL(file);
     }
   };
-  
 
-  const handleDateChange = (date) => {
-    setLocalSettings((prev) => ({ ...prev, timer: date }));
+  // 2) Only track changes in local state in handleChange:
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setLocalSettings((prev) => ({ ...prev, [name]: value }));
+  };
 
-    if (selectedElement) {
-      const childElement = elements.find(
-        (el) => el.parentId === selectedElement.id && el.type === 'timer'
-      );
-      if (childElement) {
-        const formattedTimer = formatDateToTimer(date);
-        updateContent(childElement.id, formattedTimer);
-      }
+  // 3) On blur, persist local state to context:
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    if (!selectedElement) return;
+
+    const childElement = elements.find(
+      (el) => el.parentId === selectedElement.id && el.type === name
+    );
+    if (childElement) {
+      updateContent(childElement.id, localSettings[name]);
     }
   };
+
+  // 4) Same approach for DatePicker: 
+  //    - onChange => local state
+  //    - onCalendarClose => final "blur" or "done" event => update context
+  const handleDateChange = (date) => {
+    setLocalSettings((prev) => ({ ...prev, timer: date }));
+  };
+
+  const handleDateClose = () => {
+    if (!selectedElement) return;
+    const childElement = elements.find(
+      (el) => el.parentId === selectedElement.id && el.type === 'timer'
+    );
+    if (childElement) {
+      const date = localSettings.timer;
+      // save as ISO string
+      updateContent(childElement.id, date ? date.toISOString() : '');
+    }
+  };
+
   const handleImageArrayChange = (e, key, index) => {
     const file = e.target.files[0];
     if (file) {
@@ -112,7 +115,7 @@ const CandyMachineSettings = () => {
           updatedImages[index] = reader.result;
           return { ...prev, [key]: updatedImages };
         });
-  
+
         if (selectedElement) {
           const childElement = elements.find(
             (el) => el.parentId === selectedElement.id && el.type === key
@@ -127,7 +130,7 @@ const CandyMachineSettings = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   const renderInputs = () => {
     const inputTypes = {
       title: 'text',
@@ -143,9 +146,9 @@ const CandyMachineSettings = () => {
       // 'rare-item': 'image-array',
       // 'document-item': 'image-array',
     };
-    
 
-      const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
+
+    const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
 
     return Object.keys(localSettings).map((key) => {
       switch (inputTypes[key]) {
@@ -165,16 +168,16 @@ const CandyMachineSettings = () => {
         case 'date':
           return (
             <div className="settings-group" key={key}>
-              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <label htmlFor={key}>{key}</label>
               <DatePicker
-                selected={localSettings[key]}
+                selected={localSettings.timer} // a valid Date
                 onChange={handleDateChange}
+                onCalendarClose={handleDateClose} // Save on close
                 dateFormat="MMMM d, yyyy h:mm aa"
                 showTimeSelect
                 timeFormat="HH:mm"
                 timeIntervals={15}
                 timeCaption="time"
-                placeholderText="Select a date and time"
                 className="settings-input"
               />
             </div>
@@ -197,29 +200,29 @@ const CandyMachineSettings = () => {
               </select>
             </div>
           );
-          case 'image':
-            return (
-              <div className="settings-group" key={key}>
-                <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
-                {/* Button to trigger file selection */}
-                <button
-                  type="button"
-                  onClick={() => document.getElementById(`${key}-file-input`).click()}
-                  className="settings-button"
-                >
-                  Choose Image
-                </button>
-                {/* Hidden file input */}
-                <input
-                  type="file"
-                  id={`${key}-file-input`}
-                  accept="image/*"
-                  onChange={(e) => handleImageChange(e, key)}
-                  style={{ display: 'none' }}
-                />
-              </div>
-            );
-          
+        case 'image':
+          return (
+            <div className="settings-group" key={key}>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              {/* Button to trigger file selection */}
+              <button
+                type="button"
+                onClick={() => document.getElementById(`${key}-file-input`).click()}
+                className="settings-button"
+              >
+                Choose Image
+              </button>
+              {/* Hidden file input */}
+              <input
+                type="file"
+                id={`${key}-file-input`}
+                accept="image/*"
+                onChange={(e) => handleImageChange(e, key)}
+                style={{ display: 'none' }}
+              />
+            </div>
+          );
+
         default:
           return (
             <div className="settings-group" key={key}>

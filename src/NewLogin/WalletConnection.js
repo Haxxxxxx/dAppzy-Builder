@@ -141,7 +141,7 @@ function WalletConnection({ onUserLogin }) {
         const response = await window.solana.connect();
         const publicKey = response.publicKey.toString();
         const message = new TextEncoder().encode(
-          "Please sign this message to confirm your identity."
+          "Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time."
         );
         const { signature } = await window.solana.signMessage(message);
         const customToken = await getPhantomCustomTokenFromServer(

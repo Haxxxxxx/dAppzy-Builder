@@ -1,11 +1,7 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-
-// Import your default styles
 import { SimplefooterStyles } from './defaultFooterStyles';
-
-// Import your selectable elements
 import { Span, Button, Image } from '../../SelectableElements';
 
 const SimpleFooter = ({
@@ -13,26 +9,26 @@ const SimpleFooter = ({
   children = [],
   handleSelect,
   onDropItem,
+  handleOpenMediaPanel,
 }) => {
   const footerRef = useRef(null);
 
-  // 1) Access global context for elements & style updates
+  // Access elements & updateStyles from context
   const { elements, updateStyles } = useContext(EditableContext);
 
-  // 2) Make the footer droppable, if you want to drag new elements onto it
+  // Make footer droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: footerRef,
     onDropItem,
   });
 
-  // 3) Find the footer element in global state
+  // Find the footer element in global state
   const footerElement = elements.find((el) => el.id === uniqueId);
 
-  // 4) Apply default styles if no custom styles exist yet
+  // Apply default styles if none exist
   useEffect(() => {
     if (!footerElement) return;
-
     const noCustomStyles =
       !footerElement.styles || Object.keys(footerElement.styles).length === 0;
 
@@ -43,62 +39,80 @@ const SimpleFooter = ({
     }
   }, [footerElement, updateStyles]);
 
-  // 5) Render the footer
+  // Handle drag-and-drop image replacement
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src);
+    }
+  };
+
+  // Merge local + custom + highlight if dragging
+  const footerStyles = {
+    ...SimplefooterStyles.simpleFooter,
+    ...(footerElement?.styles || {}),
+    border: isOverCurrent
+      ? '2px solid blue'
+      : SimplefooterStyles.simpleFooter.border,
+  };
+
   return (
     <footer
       ref={(node) => {
         footerRef.current = node;
         drop(node);
       }}
-      style={{
-        // Merge your default style plus the element’s own styles
-        ...SimplefooterStyles.simpleFooter,
-        ...(footerElement?.styles || {}),
-        border: isOverCurrent
-          ? '2px solid blue'
-          : SimplefooterStyles.simpleFooter.border,
-      }}
+      style={footerStyles}
       onClick={(e) => {
         e.stopPropagation();
         handleSelect(e);
       }}
     >
-      {/* Map over the children. 
-          Because you already created them in addNewElement(...) with
-          type: 'span', 'button', or 'image', just render them here. */}
-      {children.map((child) => {
-        switch (child.type) {
-          case 'span':
-            return (
-              <Span
-                key={child.id}
-                id={child.id}
-                content={child.content}
-                styles={child.styles || SimplefooterStyles.companyInfo}
-              />
-            );
-          case 'button':
-            return (
-              <Button
-                key={child.id}
-                id={child.id}
-                content={child.content}
-                styles={child.styles || SimplefooterStyles.socialButton}
-              />
-            );
-          case 'image':
-            return (
-              <Image
-                key={child.id}
-                id={child.id}
-                src={child.content}
-                styles={child.styles || SimplefooterStyles.socialButton}
-              />
-            );
-          default:
-            return null;
-        }
-      })}
+      {/* Render ALL Spans */}
+      {children
+        .filter((child) => child.type === 'span')
+        .map((child) => (
+          <Span
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...SimplefooterStyles.companyInfo,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
+
+      {/* Render ALL Buttons */}
+      {children
+        .filter((child) => child.type === 'button')
+        .map((child) => (
+          <Button
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...SimplefooterStyles.socialButton,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
+
+      {/* Render ALL Images (droppable) */}
+      {children
+        .filter((child) => child.type === 'image')
+        .map((child) => (
+          <Image
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={{
+              ...SimplefooterStyles.socialButton,
+              ...(child.styles || {}),
+            }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+          />
+        ))}
     </footer>
   );
 };

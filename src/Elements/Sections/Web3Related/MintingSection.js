@@ -1,12 +1,18 @@
-import React, { useRef, useEffect } from 'react';
-import { Image, Span, Button, DateComponent  } from '../../SelectableElements';
-import useElementDrop from '../../../utils/useElementDrop';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
+import React, { useContext, useRef, useEffect } from 'react';
+import { EditableContext } from '../../../context/EditableContext';
+import { Image, Span, Button, DateComponent } from '../../SelectableElements';
 import { mintingSectionStyles } from './DefaultWeb3Styles';
-
+import useElementDrop from '../../../utils/useElementDrop';
 
 const MintingSection = ({
-  handleSelect, uniqueId, children, onDropItem, contentListWidth, handleOpenMediaPanel }) => {
+  handleSelect,
+  uniqueId,
+  onDropItem,
+  handleOpenMediaPanel,
+  // you can remove `children` if you don't need it anymore
+}) => {
+  const { elements } = useContext(EditableContext);
+  
   const sectionRef = useRef(null);
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
@@ -14,45 +20,32 @@ const MintingSection = ({
     onDropItem,
   });
 
-  // Load the `mintingSection` configuration
-  const { mintingSection } = structureConfigurations;
+  // 1) Filter out the child elements from context
+  const childElements = elements.filter((el) => el.parentId === uniqueId);
 
-  // Merge default children with overrides
-  const mergedChildren = mintingSection.children.map((defaultChild, index) => {
-    const overrideChild = children.find((child) => child.id === `${uniqueId}-minting-child-${index}`);
-    return overrideChild || { ...defaultChild, id: `${uniqueId}-minting-child-${index}` };
-  });
+  // 2) Grab each element by type
+  const getChildByType = (type) => childElements.find((child) => child.type === type);
+  const getChildrenByType = (type) => childElements.filter((child) => child.type === type);
 
-  // Extract specific elements
-  const getChildByType = (type) => mergedChildren.find((child) => child.type === type);
-  const getChildrenByType = (type) => mergedChildren.filter((child) => child.type === type);
-
-  const logo = getChildByType('image');
-  const timer = getChildByType('timer');
-  const remaining = getChildByType('remaining');
-  const value = getChildByType('value');
-  const currency = getChildByType('currency');
-  const quantity = getChildByType('quantity');
-  const totalPrice = getChildByType('price');
-  const title = getChildByType('title');
-  const description = getChildByType('description');
-  const mintButton = getChildByType('button');
-  const rareItemsTitle = getChildByType('rareItemsTitle');
+  const logo          = getChildByType('image');
+  const timer         = getChildByType('timer');
+  const remaining     = getChildByType('remaining');
+  const value         = getChildByType('value');
+  const currency      = getChildByType('currency');
+  const quantity      = getChildByType('quantity');
+  const totalPrice    = getChildByType('price');
+  const title         = getChildByType('title');
+  const description   = getChildByType('description');
+  const mintButton    = getChildByType('button');
+  const rareItemsTitle= getChildByType('rareItemsTitle');
   const docItemsTitle = getChildByType('docItemsTitle');
-  const rareItems = getChildrenByType('rare-item');
+  const rareItems     = getChildrenByType('rare-item');
   const documentItems = getChildrenByType('document-item');
 
-
-
-  const handleImageDrop = (droppedItem, imageId) => {
-    if (droppedItem.mediaType === 'image') {
-      onDropItem(imageId, droppedItem.src); // Update the image's content
-    }
-  };
-
+  // 3) UseEffect just to see them in console
   useEffect(() => {
-    console.log('Merged Children for MintingSection:', mergedChildren);
-  }, [mergedChildren]);
+    console.log('MintingSection: childElements =', childElements);
+  }, [childElements]);
 
   return (
     <section
@@ -64,7 +57,7 @@ const MintingSection = ({
         ...mintingSectionStyles.section,
         border: isOverCurrent ? '2px dashed blue' : 'none',
       }}
-      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
+      onClick={handleSelect}
     >
       {/* Left Section */}
       <div style={mintingSectionStyles.leftSection}>
@@ -74,10 +67,10 @@ const MintingSection = ({
             src={logo.content}
             styles={mintingSectionStyles.logo}
             handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-
+            // handleDrop if you have custom dropping
           />
         )}
+        
         {timer && (
           <DateComponent
             id={timer.id}
@@ -86,6 +79,7 @@ const MintingSection = ({
             styles={mintingSectionStyles.timer}
           />
         )}
+
         <div style={mintingSectionStyles.details}>
           {remaining && (
             <Span
@@ -112,6 +106,7 @@ const MintingSection = ({
             />
           )}
         </div>
+
         {mintButton && (
           <Button
             id={mintButton.id}
@@ -124,28 +119,29 @@ const MintingSection = ({
       {/* Right Section */}
       <div style={mintingSectionStyles.rightSection}>
         <div style={mintingSectionStyles.rightSectionHeader}>
-        {title && (
-          <Span
-            id={title.id}
-            content={title.content}
-            styles={mintingSectionStyles.title}
-          />
-        )}
-        {description && (
-          <Span
-            id={description.id}
-            content={description.content}
-            styles={mintingSectionStyles.description}
-          />
-        )}
-        {rareItemsTitle && (
-          <Span
-            id={rareItemsTitle.id}
-            content={rareItemsTitle.content}
-            styles={mintingSectionStyles.sectionTitle}
-          />
-        )}
+          {title && (
+            <Span
+              id={title.id}
+              content={title.content}
+              styles={mintingSectionStyles.title}
+            />
+          )}
+          {description && (
+            <Span
+              id={description.id}
+              content={description.content}
+              styles={mintingSectionStyles.description}
+            />
+          )}
+          {rareItemsTitle && (
+            <Span
+              id={rareItemsTitle.id}
+              content={rareItemsTitle.content}
+              styles={mintingSectionStyles.sectionTitle}
+            />
+          )}
         </div>
+
         <div style={mintingSectionStyles.itemsContainer}>
           {rareItems.map((item) => (
             <Image
@@ -157,6 +153,7 @@ const MintingSection = ({
             />
           ))}
         </div>
+
         {docItemsTitle && (
           <Span
             id={docItemsTitle.id}
@@ -164,6 +161,7 @@ const MintingSection = ({
             styles={mintingSectionStyles.sectionTitle}
           />
         )}
+
         <div style={mintingSectionStyles.itemsContainer}>
           {documentItems.map((item) => (
             <Image

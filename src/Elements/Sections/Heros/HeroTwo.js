@@ -13,20 +13,20 @@ const HeroTwo = ({
 }) => {
   const sectionRef = useRef(null);
 
-  // 1) Grab elements & updateStyles from context
+  // 1) Access global editable context
   const { elements, updateStyles } = useContext(EditableContext);
 
-  // 2) Make this hero droppable
+  // 2) Make hero droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
     onDropItem,
   });
 
-  // 3) Find the hero element in global state
+  // 3) Find this hero's corresponding element object in global state
   const heroElement = elements.find((el) => el.id === uniqueId);
 
-  // 4) If no custom styles exist yet, apply `heroTwoStyles.heroSection`
+  // 4) Apply default styles if none exist
   useEffect(() => {
     if (!heroElement) return;
 
@@ -35,24 +35,25 @@ const HeroTwo = ({
 
     if (noCustomStyles) {
       updateStyles(heroElement.id, {
-        ...heroTwoStyles.heroSection, // your default background, color, etc.
+        ...heroTwoStyles.heroSection,
       });
     }
   }, [heroElement, updateStyles]);
 
-  // 5) Identify children by type for layout
-  const headingChild = children.find((c) => c.type === 'heading');
-  const paragraphChild = children.find((c) => c.type === 'paragraph');
-  const imageChild = children.find((c) => c.type === 'image');
-  const buttonChild = children.find((c) => c.type === 'button');
-
-  // 6) Merge hero-level + highlight if dragging over
+  // 5) Merge global hero styles + highlight on drag
   const sectionStyles = {
     ...heroTwoStyles.heroSection,
+    ...(heroElement?.styles || {}), // user-defined or dynamically-updated
     ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
   };
 
-  // 7) Render
+  // 6) Handle image drops (if you want images to be replaceable via drag-and-drop)
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src);
+    }
+  };
+
   return (
     <section
       ref={(node) => {
@@ -65,31 +66,64 @@ const HeroTwo = ({
         handleSelect(e);
       }}
     >
-      {/* Heading */}
-      {headingChild && (
-        <Heading
-          id={headingChild.id}
-          content={headingChild.content}
-          styles={heroTwoStyles.heroTitle}
-        />
-      )}
+      {/* Render ALL Headings */}
+      {children
+        .filter((child) => child.type === 'heading')
+        .map((child) => (
+          <Heading
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...heroTwoStyles.heroTitle,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
 
-      {/* Paragraph */}
-      {paragraphChild && (
-        <Paragraph
-          id={paragraphChild.id}
-          content={paragraphChild.content}
-          styles={heroTwoStyles.heroDescription}
-        />
-      )}
-      {/* Button */}
-      {buttonChild && (
-        <Button
-          id={buttonChild.id}
-          content={buttonChild.content}
-          styles={heroTwoStyles.primaryButton}
-        />
-      )}
+      {/* Render ALL Paragraphs */}
+      {children
+        .filter((child) => child.type === 'paragraph')
+        .map((child) => (
+          <Paragraph
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...heroTwoStyles.heroDescription,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
+
+      {/* Render ALL Images */}
+      {children
+        .filter((child) => child.type === 'image')
+        .map((child) => (
+          <Image
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={{ ...(child.styles || {}) }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+          />
+        ))}
+
+      {/* Render ALL Buttons */}
+      {children
+        .filter((child) => child.type === 'button')
+        .map((child) => (
+          <Button
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...heroTwoStyles.primaryButton,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
     </section>
   );
 };

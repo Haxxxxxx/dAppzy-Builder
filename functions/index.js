@@ -22,7 +22,7 @@ exports.verifyPhantom = functions.https.onRequest(async (req, res) => {
 
       // Convert data to Buffers
       const signatureBuffer = Buffer.from(signature);
-      const messageBuffer = Buffer.from("Please sign this message to confirm your identity.");
+      const messageBuffer = Buffer.from("Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time.");
 
       // Create a Solana PublicKey object
       const pubKey = new PublicKey(publicKey);

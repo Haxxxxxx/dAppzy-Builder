@@ -1,70 +1,100 @@
-import React, { useContext, useEffect, useRef } from 'react';
+// DateComponent.jsx
+// -------------------------------------------
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const DateComponent = ({ id, styles = {}, label }) => {
-  const { selectedElement, setSelectedElement, updateContent, elements, findElementById } = useContext(EditableContext);
+  const {
+    selectedElement,
+    setSelectedElement,
+    updateContent,
+    elements,
+    findElementById
+  } = useContext(EditableContext);
+
   const dateRef = useRef(null);
 
-  // Fetch the latest element data, defaulting to current date if not provided
+  // 1) Read the user-selected date (stored as ISO string)
   const elementData = findElementById(id, elements);
-  const { content = new Date().toLocaleString() } = elementData || {}; // Default: current date as string
+  const isoString = elementData?.content;  // e.g. "2025-03-10T10:35:00Z"
 
+  // 2) Convert ISO string to a JavaScript Date
+  const targetDate = isoString && !isNaN(Date.parse(isoString))
+    ? new Date(isoString)
+    : null;
+
+  // 3) Local state to store the "time remaining" string
+  const [timeRemaining, setTimeRemaining] = useState('');
+
+  // 4) Each second, recalc how much time is left and set it
+  useEffect(() => {
+    if (!targetDate) {
+      setTimeRemaining('No valid date');
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      const now = new Date();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        // date is in the past
+        setTimeRemaining('0d 0h 0m 0s');
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+
+        setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [targetDate]);
+
+  // (Optional) contentEditable logic
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent bubbling to parent elements
-    setSelectedElement({ id, type: 'date' });
+    e.stopPropagation();
   };
 
   const handleBlur = () => {
     if (selectedElement?.id === id) {
+      // If you want user text edits, you can store them:
       const newContent = dateRef.current?.innerText || '';
       updateContent(id, newContent);
     }
   };
 
-  useEffect(() => {
-    if (selectedElement?.id === id && dateRef.current) {
-      dateRef.current.focus();
-    }
-  }, [selectedElement, id]);
-
   return (
     <div
       id={id}
+      ref={dateRef}
       onClick={handleSelect}
-      suppressContentEditableWarning={true}
+      contentEditable={selectedElement?.id === id}
+      onBlur={handleBlur}
       style={{
         display: 'flex',
-        flexDirection: 'column', // Stack elements vertically
-        alignItems: 'center', // Center align for a neat look
+        flexDirection: 'column',
+        alignItems: 'center',
         ...styles,
       }}
     >
       {label && (
-        <div
-          style={{
-            fontSize: '1rem', // Smaller font for label
-            color: '#ccc', // Subtle color for label
-            marginBottom: '0.5rem', // Space between label and date
-          }}
-        >
+        <div style={{ fontSize: '1rem', color: '#ccc', marginBottom: '0.5rem' }}>
           {label}
         </div>
       )}
-      <div
-        ref={dateRef}
-        contentEditable={selectedElement?.id === id}
-        onBlur={handleBlur}
-        style={{
-          fontSize: '1.5rem', // Larger font size for the date
-          color: '#fff', // Highlight the date
-          textAlign: 'center', // Center-align the date
-          wordWrap: 'break-word',
-          outline: 'none', // Remove focus outline
-        }}
-      >
-        {typeof content === 'object' && content instanceof Date
-          ? content.toLocaleString() // Ensure Date is formatted as string
-          : content}
+
+      {/* The dynamic countdown string */}
+      <div style={{
+        fontSize: '1.5rem',
+        color: '#fff',
+        textAlign: 'center',
+        wordWrap: 'break-word',
+        outline: 'none',
+      }}>
+        {timeRemaining}
       </div>
     </div>
   );

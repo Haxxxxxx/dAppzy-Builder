@@ -15,19 +15,20 @@ const CTAOne = ({
   const ctaRef = useRef(null);
   const [isCompact, setIsCompact] = useState(false);
 
-  // 1) Access elements & updateStyles from context
+  // Access elements & updateStyles from context
   const { elements, updateStyles } = useContext(EditableContext);
 
-  const { drop } = useElementDrop({
+  // Make the CTA droppable
+  const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: ctaRef,
     onDropItem,
   });
 
-  // 2) Find the CTA element in the global state by its ID
+  // Locate the CTA element in global state
   const ctaElement = elements.find((el) => el.id === uniqueId);
 
-  // 3) Apply default styles only if the styles object is empty
+  // Apply default container styles if none exist
   useEffect(() => {
     if (!ctaElement) return;
     const noCustomStyles =
@@ -40,9 +41,23 @@ const CTAOne = ({
     }
   }, [ctaElement, updateStyles]);
 
+  // Basic responsive toggle
   useEffect(() => {
     setIsCompact(contentListWidth < 768);
   }, [contentListWidth]);
+
+  // Handle drag-and-drop image replacement
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src);
+    }
+  };
+
+  const containerStyles = {
+    ...ctaOneStyles.cta,
+    ...(ctaElement?.styles || {}),
+    ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+  };
 
   return (
     <section
@@ -50,23 +65,42 @@ const CTAOne = ({
         ctaRef.current = node;
         drop(node);
       }}
-      style={{
-        ...ctaOneStyles.cta,
-        ...(ctaElement?.styles || {}),
-      }}
+      style={containerStyles}
       onClick={(e) => handleSelect(e)}
     >
+      {/* Main CTA content */}
       <div style={ctaOneStyles.ctaContent}>
+        {/* Render ALL title elements */}
         {children
           .filter((child) => child?.type === 'title')
           .map((child) => (
-            <Span key={child.id} id={child.id} content={child.content} styles={ctaOneStyles.ctaTitle} />
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...ctaOneStyles.ctaTitle,
+                ...(child.styles || {}),
+              }}
+            />
           ))}
+
+        {/* Render ALL paragraph elements */}
         {children
           .filter((child) => child?.type === 'paragraph')
           .map((child) => (
-            <Span key={child.id} id={child.id} content={child.content} styles={ctaOneStyles.ctaDescription} />
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...ctaOneStyles.ctaDescription,
+                ...(child.styles || {}),
+              }}
+            />
           ))}
+
+        {/* Render ALL buttons (first = primary, rest = secondary) */}
         <div style={ctaOneStyles.buttonContainer}>
           {children
             .filter((child) => child?.type === 'button')
@@ -75,12 +109,38 @@ const CTAOne = ({
                 key={child.id}
                 id={child.id}
                 content={child.content}
-                styles={index === 0 ? ctaOneStyles.primaryButton : ctaOneStyles.secondaryButton}
+                styles={
+                  index === 0
+                    ? {
+                        ...ctaOneStyles.primaryButton,
+                        ...(child.styles || {}),
+                      }
+                    : {
+                        ...ctaOneStyles.secondaryButton,
+                        ...(child.styles || {}),
+                      }
+                }
               />
             ))}
         </div>
       </div>
-     
+
+      {/* Render ALL images (droppable) */}
+      {children
+        .filter((child) => child?.type === 'image')
+        .map((child) => (
+          <Image
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={{
+              ...ctaOneStyles.ctaImage,
+              ...(child.styles || {}),
+            }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+          />
+        ))}
     </section>
   );
 };

@@ -4,9 +4,6 @@ import useElementDrop from '../../../utils/useElementDrop';
 import { CustomTemplateHeroStyles } from './defaultHeroStyles';
 import { Heading, Paragraph, Button, Image, Span } from '../../SelectableElements';
 
-/**
- * HeroThree - merges CustomTemplateHeroStyles for layout and child styling.
- */
 const HeroThree = ({
   uniqueId,
   children = [],
@@ -27,7 +24,7 @@ const HeroThree = ({
   // Locate the hero element from global state
   const heroElement = elements.find((el) => el.id === uniqueId);
 
-  // If no custom styles exist for the container, apply the defaults
+  // If no custom styles exist for the container, apply defaults
   useEffect(() => {
     if (!heroElement) return;
 
@@ -41,18 +38,18 @@ const HeroThree = ({
     }
   }, [heroElement, updateStyles]);
 
-  // Identify children for layout
-  const captionChild = children.find((c) => c.type === 'span');
-  const headingChild = children.find((c) => c.type === 'heading');
-  const paragraphChild = children.find((c) => c.type === 'paragraph');
-  const buttonChildren = children.filter((c) => c.type === 'button');
-  const imageChild = children.find((c) => c.type === 'image');
-
-  // Merge hero-level (container) styles + highlight if drag is over
+  // Merge container-level styles + highlight if dragging over
   const sectionStyles = {
     ...CustomTemplateHeroStyles.heroSection,
-    ...(heroElement?.styles || {}), // user overrides
+    ...(heroElement?.styles || {}),
     ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+  };
+
+  // Handle image replacement via drag-and-drop
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src);
+    }
   };
 
   return (
@@ -69,83 +66,94 @@ const HeroThree = ({
     >
       {/* Left hero content */}
       <div style={CustomTemplateHeroStyles.heroContent}>
-        {/* Caption (span) */}
-        {captionChild && (
-          <Span
-            key={captionChild.id}
-            id={captionChild.id}
-            content={captionChild.content}
-            styles={{
-              ...CustomTemplateHeroStyles.caption,
-              ...(captionChild.styles || {}),
-            }}
-          />
-        )}
-
-        {/* Heading */}
-        {headingChild && (
-          <Heading
-            key={headingChild.id}
-            id={headingChild.id}
-            content={headingChild.content}
-            styles={{
-              ...CustomTemplateHeroStyles.heroTitle,
-              ...(headingChild.styles || {}),
-            }}
-          />
-        )}
-
-        {/* Paragraph */}
-        {paragraphChild && (
-          <Paragraph
-            key={paragraphChild.id}
-            id={paragraphChild.id}
-            content={paragraphChild.content}
-            styles={{
-              ...CustomTemplateHeroStyles.heroDescription,
-              ...(paragraphChild.styles || {}),
-            }}
-          />
-        )}
-
-        {/* Buttons */}
-        <div style={CustomTemplateHeroStyles.buttonContainer}>
-          {buttonChildren.map((btn, index) => (
-            <Button
-              key={btn.id}
-              id={btn.id}
-              content={btn.content}
-              styles={
-                index === 0
-                  ? {
-                      ...CustomTemplateHeroStyles.primaryButton,
-                      ...(btn.styles || {}),
-                    }
-                  : {
-                      ...CustomTemplateHeroStyles.secondaryButton,
-                      ...(btn.styles || {}),
-                    }
-              }
+        {/* Render all Span (captions) */}
+        {children
+          .filter((child) => child.type === 'span')
+          .map((child) => (
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...CustomTemplateHeroStyles.caption,
+                ...(child.styles || {}),
+              }}
             />
           ))}
+
+        {/* Render all Heading elements */}
+        {children
+          .filter((child) => child.type === 'heading')
+          .map((child) => (
+            <Heading
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...CustomTemplateHeroStyles.heroTitle,
+                ...(child.styles || {}),
+              }}
+            />
+          ))}
+
+        {/* Render all Paragraph elements */}
+        {children
+          .filter((child) => child.type === 'paragraph')
+          .map((child) => (
+            <Paragraph
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...CustomTemplateHeroStyles.heroDescription,
+                ...(child.styles || {}),
+              }}
+            />
+          ))}
+
+        {/* Render all Buttons */}
+        <div style={CustomTemplateHeroStyles.buttonContainer}>
+          {children
+            .filter((child) => child.type === 'button')
+            .map((btn, index) => (
+              <Button
+                key={btn.id}
+                id={btn.id}
+                content={btn.content}
+                styles={
+                  index === 0
+                    ? {
+                        ...CustomTemplateHeroStyles.primaryButton,
+                        ...(btn.styles || {}),
+                      }
+                    : {
+                        ...CustomTemplateHeroStyles.secondaryButton,
+                        ...(btn.styles || {}),
+                      }
+                }
+              />
+            ))}
         </div>
       </div>
 
-      {/* Right hero image */}
-      {imageChild && (
-        <div style={CustomTemplateHeroStyles.heroImageContainer}>
-          <Image
-            key={imageChild.id}
-            id={imageChild.id}
-            src={imageChild.content}
-            styles={{
-              ...CustomTemplateHeroStyles.heroImage,
-              ...(imageChild.styles || {}),
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-          />
-        </div>
-      )}
+      {/* Right hero image(s) */}
+      <div style={CustomTemplateHeroStyles.heroImageContainer}>
+        {children
+          .filter((child) => child.type === 'image')
+          .map((child) => (
+            <Image
+              key={child.id}
+              id={child.id}
+              src={child.content}
+              styles={{
+                ...CustomTemplateHeroStyles.heroImage,
+                ...(child.styles || {}),
+              }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={handleImageDrop}
+            />
+          ))}
+      </div>
     </section>
   );
 };

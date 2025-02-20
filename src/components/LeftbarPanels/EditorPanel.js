@@ -34,7 +34,7 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
         />
       );
     }
-    if (selectedElement?.type === 'bgVideo' || selectedElement?.type === 'section' || selectedElement?.type === 'navbar' || selectedElement?.type === 'hero' || selectedElement?.type === 'cta' || selectedElement?.type === 'footer' || selectedElement?.type === 'mintingSection') {
+    if (selectedElement?.type === 'bgVideo' || selectedElement?.type === 'section' || selectedElement?.type === 'navbar' || selectedElement?.type === 'hero' || selectedElement?.type === 'cta' || selectedElement?.type === 'footer' ) {
       return (
         <BackgroundSettings
           settings={selectedElement.settings || {}}

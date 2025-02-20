@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { ctaOneStyles, ctaTwoStyles } from '../../../Elements/Sections/CTAs/defaultCtaStyles';
-import { Button, Span } from '../../SelectableElements';
+import { ctaTwoStyles } from '../../../Elements/Sections/CTAs/defaultCtaStyles';
+import { Button, Span, Image } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 
 const CTATwo = ({
@@ -19,21 +19,23 @@ const CTATwo = ({
   // Access elements & updateStyles from context
   const { elements, updateStyles } = useContext(EditableContext);
 
-  const { drop } = useElementDrop({
+  // Make the CTA droppable
+  const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: ctaRef,
     onDropItem,
   });
 
-  // Find the CTA element in the global state by its ID
+  // Locate the CTA element in global state
   const ctaElement = elements.find((el) => el.id === uniqueId);
 
-  // Select the correct styles for the CTA configuration
+  // Choose your base style (here it's always ctaTwoStyles)
   const ctaStyles = ctaTwoStyles;
 
-  // Apply default styles only if the styles object is empty
+  // Apply default container styles if none exist
   useEffect(() => {
     if (!ctaElement) return;
+
     const noCustomStyles =
       !ctaElement.styles || Object.keys(ctaElement.styles).length === 0;
 
@@ -42,16 +44,25 @@ const CTATwo = ({
         ...ctaStyles.cta,
       });
     }
-  }, [ctaElement, updateStyles, configuration]);
+  }, [ctaElement, updateStyles, configuration, ctaStyles]);
 
+  // Basic responsive toggle
   useEffect(() => {
     setIsCompact(contentListWidth < 768);
   }, [contentListWidth]);
 
-  // Find buttons separately
-  const buttons = children.filter((child) => child?.type === 'button');
-  const primaryButton = buttons[0] || null;
-  const secondaryButton = buttons[1] || null;
+  // Handle drag-and-drop image replacement
+  const handleImageDrop = (droppedItem, imageId) => {
+    if (droppedItem.mediaType === 'image') {
+      onDropItem(imageId, droppedItem.src);
+    }
+  };
+
+  const containerStyles = {
+    ...ctaStyles.cta,
+    ...(ctaElement?.styles || {}),
+    ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+  };
 
   return (
     <section
@@ -59,38 +70,81 @@ const CTATwo = ({
         ctaRef.current = node;
         drop(node);
       }}
-      style={{
-        ...ctaStyles.cta,
-        ...(ctaElement?.styles || {}),
-      }}
+      style={containerStyles}
       onClick={(e) => handleSelect(e)}
     >
       <div style={ctaStyles.ctaContent}>
+        {/* Render ALL title elements */}
         {children
           .filter((child) => child?.type === 'title')
           .map((child) => (
-            <Span key={child.id} id={child.id} content={child.content} styles={ctaStyles.ctaTitle} />
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...ctaStyles.ctaTitle,
+                ...(child.styles || {}),
+              }}
+            />
           ))}
 
+        {/* (Optional) Render ALL paragraphs if you want them */}
+        {children
+          .filter((child) => child?.type === 'paragraph')
+          .map((child) => (
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...ctaStyles.ctaDescription,
+                ...(child.styles || {}),
+              }}
+            />
+          ))}
+
+        {/* Render ALL buttons (first = primary, rest = secondary) */}
         <div style={ctaStyles.buttonContainer}>
-          {primaryButton && (
-            <Button
-              key={primaryButton.id}
-              id={primaryButton.id}
-              content={primaryButton.content}
-              styles={ctaStyles.primaryButton}
-            />
-          )}
-          {secondaryButton && (
-            <Button
-              key={secondaryButton.id}
-              id={secondaryButton.id}
-              content={secondaryButton.content}
-              styles={ctaStyles.secondaryButton}
-            />
-          )}
+          {children
+            .filter((child) => child?.type === 'button')
+            .map((child, index) => (
+              <Button
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={
+                  index === 0
+                    ? {
+                        ...ctaStyles.primaryButton,
+                        ...(child.styles || {}),
+                      }
+                    : {
+                        ...ctaStyles.secondaryButton,
+                        ...(child.styles || {}),
+                      }
+                }
+              />
+            ))}
         </div>
       </div>
+
+      {/* Render ALL images (droppable) */}
+      {children
+        .filter((child) => child?.type === 'image')
+        .map((child) => (
+          <Image
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={{
+              ...ctaStyles.ctaImage,
+              ...(child.styles || {}),
+            }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+          />
+        ))}
     </section>
   );
 };
