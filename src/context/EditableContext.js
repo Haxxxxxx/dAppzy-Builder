@@ -1,4 +1,3 @@
-// src/context/EditableContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import {
   generateUniqueId,
@@ -7,7 +6,6 @@ import {
   removeElementById,
   removeElementRecursively,
 } from '../utils/LeftBarUtils/elementUtils';
-
 import {
   saveToLocalStorage,
   loadFromLocalStorage,
@@ -19,8 +17,9 @@ export const EditableContext = createContext();
 const ELEMENTS_VERSION = '1.0';
 
 export const EditableProvider = ({ children, userId }) => {
-  const [selectedElement, setSelectedElement] = useState(null);
+  console.log("EditableProvider received userId:", userId);
 
+  const [selectedElement, setSelectedElement] = useState(null);
   const [elements, setElements] = useState(() => {
     const savedVersion = localStorage.getItem('elementsVersion');
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
@@ -36,15 +35,12 @@ export const EditableProvider = ({ children, userId }) => {
     boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
   };
 
-  // -------------- Add Element --------------
   const addNewElement = (type, level = 1, index = null, parentId = null, structure = null) => {
     let newId = generateUniqueId(type);
-
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
-
     const baseElement = {
       id: newId,
       type,
@@ -77,13 +73,9 @@ export const EditableProvider = ({ children, userId }) => {
       configuration: structure || null,
       settings: {},
     };
-
-    // For image elements, set a default top-level src.
     if (type === 'image') {
       baseElement.src = "https://picsum.photos/150";
     }
-
-    // If we have a structure config
     if (structure && structureConfigurations[structure]) {
       baseElement.styles = structureConfigurations[structure].styles || {};
       const childrenElements = structureConfigurations[structure].children.map((child) => ({
@@ -95,17 +87,14 @@ export const EditableProvider = ({ children, userId }) => {
         parentId: newId,
       }));
       baseElement.children = childrenElements.map((child) => child.id);
-
       setElements((prev) => [...prev, baseElement, ...childrenElements]);
     } else {
       setElements((prev) => [...prev, baseElement]);
     }
-
     console.log('Added new element:', baseElement);
     return newId;
   };
 
-  // -------------- Remove Element (recursively) --------------
   const handleRemoveElement = (id) => {
     setSelectedElement(null);
     setElements((prevElements) => {
@@ -115,14 +104,12 @@ export const EditableProvider = ({ children, userId }) => {
     });
   };
 
-  // -------------- Update Content --------------
   const updateContent = (id, content) => {
     setElements((prev) =>
       prev.map((el) => (el.id === id ? { ...el, content } : el))
     );
   };
 
-  // -------------- Update Styles --------------
   const updateStyles = (id, newStyles) => {
     console.log(`Updating styles for ${id}:`, newStyles);
     setElements((prev) => {
@@ -134,7 +121,6 @@ export const EditableProvider = ({ children, userId }) => {
     });
   };
 
-  // -------------- Update Element Properties (e.g. top-level src) --------------
   const updateElementProperties = (id, newProperties) => {
     setElements((prev) => {
       const updatedElements = prev.map((el) =>
@@ -145,7 +131,6 @@ export const EditableProvider = ({ children, userId }) => {
     });
   };
 
-  // -------------- Save Section to Local Storage --------------
   const saveSectionToLocalStorage = (sectionId) => {
     const section = findElementById(sectionId, elements);
     if (section) {

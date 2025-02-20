@@ -1,4 +1,3 @@
-// src/BuilderPage.js
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
@@ -29,34 +28,32 @@ function BuilderPage() {
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
 
-  // Page settings for the website (project info)
   const [pageSettings, setPageSettings] = useState({
     siteTitle: "My Website",
     faviconUrl: "",
     description: "",
     author: "",
-    // Optionally include customUrl if desired.
   });
 
-  // On first load, check sessionStorage for login info.
   useEffect(() => {
     const sessionFlag = sessionStorage.getItem("isLoggedIn") === "true";
     const storedUserId = sessionStorage.getItem("userAccount");
+    console.log("Session flag:", sessionFlag);
+    console.log("Stored userId:", storedUserId);
     if (sessionFlag && storedUserId) {
       setIsLoggedIn(true);
       setUserId(storedUserId);
     }
   }, []);
 
-  // Whenever userId changes, load the user’s project.
   useEffect(() => {
     if (!userId) return;
+    console.log("Loading project for userId:", userId);
     loadUserProject(userId);
   }, [userId]);
 
-  // Load user’s project from Firestore (including website settings)
   const loadUserProject = async (uid) => {
-    setLoadingProject(true); // start spinner
+    setLoadingProject(true);
     try {
       const projectRef = doc(db, "projects", uid);
       const projectSnap = await getDoc(projectRef);
@@ -67,10 +64,8 @@ function BuilderPage() {
         }
         if (projectData?.websiteSettings) {
           setPageSettings(projectData.websiteSettings);
-          // Save website settings to localStorage for other panels.
           localStorage.setItem("websiteSettings", JSON.stringify(projectData.websiteSettings));
         } else {
-          // If no websiteSettings exist, store the default.
           localStorage.setItem("websiteSettings", JSON.stringify(pageSettings));
         }
       } else {
@@ -79,16 +74,17 @@ function BuilderPage() {
     } catch (error) {
       console.error("Error loading user project:", error);
     } finally {
-      setLoadingProject(false); // stop spinner
+      setLoadingProject(false);
     }
   };
 
-  // Called after successful wallet connection.
   const handleUserLogin = (walletKey) => {
+    console.log("User logged in with walletKey:", walletKey);
     setIsLoggedIn(true);
     setUserId(walletKey);
     sessionStorage.setItem("isLoggedIn", "true");
     sessionStorage.setItem("userAccount", walletKey);
+    console.log("userId set in sessionStorage:", walletKey);
   };
 
   const handlePreviewToggle = () => {
@@ -101,7 +97,6 @@ function BuilderPage() {
 
   const handleUpdateSettings = (updatedSettings) => {
     setPageSettings(updatedSettings);
-    // Store updated settings in localStorage for persistence.
     localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
   };
 
@@ -118,6 +113,7 @@ function BuilderPage() {
       setSelectedElement(null);
     }
   };
+
   useEffect(() => {
     const updateCanvasWidth = () => {
       if (mainContentRef.current) {
@@ -130,6 +126,7 @@ function BuilderPage() {
     window.addEventListener('resize', updateCanvasWidth);
     return () => window.removeEventListener('resize', updateCanvasWidth);
   }, []);
+
   if (!isLoggedIn) {
     return (
       <div className="login-container">
@@ -180,7 +177,11 @@ function BuilderPage() {
             )}
             {openPanel === "media" && (
               <div id="media-panel">
-                <MediaPanel />
+                <MediaPanel
+                  projectName={pageSettings.siteTitle}
+                  isOpen={openPanel}
+                  userId={userId}
+                />
               </div>
             )}
             {openPanel === "settings" && (
@@ -195,8 +196,7 @@ function BuilderPage() {
             >
               <ContentList
                 contentListWidth={contentListWidth}
-                canvasWidth={availableCanvasWidth} // Pass the available width here
-
+                canvasWidth={availableCanvasWidth}
                 isSideBarVisible={openPanel === "sidebar"}
                 leftBarWidth={40}
                 handlePanelToggle={handlePanelToggle}
