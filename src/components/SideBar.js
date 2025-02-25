@@ -4,11 +4,10 @@ import EditorPanel from './LeftbarPanels/EditorPanel';
 import { EditableContext } from '../context/EditableContext';
 import './css/Sidebar.css';
 
-const SideBar = ({ contentListWidth, userId }) => {
+const SideBar = ({ contentListWidth, pageSettings }) => {
   const [viewMode, setViewMode] = useState('layout'); // Default to 'elements'
   const [searchQuery, setSearchQuery] = useState('');
   const { selectedElement } = useContext(EditableContext);
-
   return (
     <div className="sidebar-container">
       {!selectedElement && (
@@ -38,7 +37,7 @@ const SideBar = ({ contentListWidth, userId }) => {
       </div>
       {selectedElement ? (
         <div className="editor-panel-container">
-          <EditorPanel searchQuery={searchQuery} />
+          <EditorPanel searchQuery={searchQuery} pageSettings={pageSettings}/>
         </div>
       ) : (
         <div className="default-sidebar-container">

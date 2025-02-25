@@ -212,7 +212,8 @@ function BuilderPage({ userId, setUserId }) {
           <div className="content-container">
             {openPanel === "sidebar" && (
               <div className="sidebar" id="sidebar">
-                <SideBar contentListWidth={contentListWidth} />
+                <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings}
+                />
               </div>
             )}
 

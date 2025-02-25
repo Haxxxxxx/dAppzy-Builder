@@ -16,7 +16,7 @@ export const ctaOneStyles = {
     display: "flex",
     flexDirection: "column",
     maxWidth: "500px",
-    alignItems:'center',
+    alignItems:'flex-start',
   },
   ctaTitle: {
     fontSize: "2.5rem",
@@ -106,5 +106,5 @@ export const ctaTwoStyles = {
     fontWeight: 'bold',
     cursor: 'pointer',
     borderRadius: '4px',
-  },
+  }
 };

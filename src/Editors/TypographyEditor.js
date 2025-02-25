@@ -33,21 +33,21 @@ const TypographyEditor = () => {
       const vh = window.innerHeight / 100;
       return parseFloat(fontSizeStr) * vh;
     }
-    // Default fallback
     return parseFloat(fontSizeStr) || 16;
   }
 
-  // Local state for the typography controls
+  // Local state for the typography controls.
   const [styles, setStyles] = useState({
     fontSize: "",
     fontFamily: "Arial",
     fontWeight: "normal",
+    fontStyle: "normal", // For italic toggling.
     color: "#217BF4",
     textAlign: "left",
     textDecoration: "none",
   });
 
-  // When a new element is selected, read its computed styles into local state
+  // When a new element is selected, read its computed styles into local state.
   useEffect(() => {
     if (selectedElement) {
       const element = document.getElementById(selectedElement.id);
@@ -55,11 +55,11 @@ const TypographyEditor = () => {
         const computedStyles = getComputedStyle(element);
         const pixelFontSize = convertToPx(element, computedStyles.fontSize);
         const hexColor = rgbToHex(computedStyles.color);
-
         setStyles({
           fontSize: pixelFontSize,
           fontFamily: computedStyles.fontFamily || "Arial",
           fontWeight: computedStyles.fontWeight || "normal",
+          fontStyle: computedStyles.fontStyle || "normal", // retrieve fontStyle.
           color: hexColor || "#217BF4",
           textAlign: computedStyles.textAlign || "left",
           textDecoration: computedStyles.textDecoration || "none",
@@ -68,7 +68,7 @@ const TypographyEditor = () => {
     }
   }, [selectedElement]);
 
-  // Update both local state and the global context
+  // Update both local state and the global context.
   const handleStyleChange = (styleKey, value) => {
     setStyles((prev) => ({ ...prev, [styleKey]: value }));
     updateStyles(selectedElement.id, { [styleKey]: value });
@@ -117,12 +117,14 @@ const TypographyEditor = () => {
             className="size-input"
             type="number"
             value={styles.fontSize !== "" ? parseFloat(styles.fontSize) : ""}
-            onChange={(e) => handleStyleChange("fontSize", e.target.value + "px")}
+            onChange={(e) =>
+              handleStyleChange("fontSize", e.target.value + "px")
+            }
           />
         </div>
       </div>
 
-      {/* Color Picker + Hex Value in ONE input bar */}
+      {/* Color Picker + Hex Value */}
       <div className="editor-group">
         <label>Color</label>
         <div className="color-group-combined">
@@ -144,33 +146,48 @@ const TypographyEditor = () => {
       <div className="editor-group">
         <label>Text Decoration</label>
         <div className="text-decoration-group">
+          {/* Italic toggle via fontStyle; clicking again toggles it off */}
           <button
-            className={styles.textDecoration === "italic" ? "active" : ""}
-            onClick={() => handleStyleChange("textDecoration", "italic")}
+            className={styles.fontStyle === "italic" ? "active" : ""}
+            onClick={() =>
+              handleStyleChange(
+                "fontStyle",
+                styles.fontStyle === "italic" ? "normal" : "italic"
+              )
+            }
           >
             <span className="material-symbols-outlined">format_italic</span>
           </button>
           <hr className="custom-rule" />
-
           <button
             className={styles.textDecoration === "underline" ? "active" : ""}
             onClick={() => handleStyleChange("textDecoration", "underline")}
           >
-            <span className="material-symbols-outlined">format_underlined</span>
+            <span className="material-symbols-outlined">
+              format_underlined
+            </span>
           </button>
           <hr className="custom-rule" />
-
           <button
             className={styles.textDecoration === "line-through" ? "active" : ""}
-            onClick={() => handleStyleChange("textDecoration", "line-through")}
+            onClick={() =>
+              handleStyleChange("textDecoration", "line-through")
+            }
           >
             <span className="material-symbols-outlined">strikethrough_s</span>
           </button>
           <hr className="custom-rule" />
-
+          {/* Format clear now resets both textDecoration and fontStyle */}
           <button
-            className={styles.textDecoration === "none" ? "active" : ""}
-            onClick={() => handleStyleChange("textDecoration", "none")}
+            className={
+              styles.textDecoration === "none" && styles.fontStyle === "normal"
+                ? "active"
+                : ""
+            }
+            onClick={() => {
+              handleStyleChange("textDecoration", "none");
+              handleStyleChange("fontStyle", "normal");
+            }}
           >
             <span className="material-symbols-outlined">format_clear</span>
           </button>
@@ -188,15 +205,15 @@ const TypographyEditor = () => {
             <span className="material-symbols-outlined">format_align_left</span>
           </button>
           <hr className="custom-rule" />
-
           <button
             className={styles.textAlign === "center" ? "active" : ""}
             onClick={() => handleStyleChange("textAlign", "center")}
           >
-            <span className="material-symbols-outlined">format_align_center</span>
+            <span className="material-symbols-outlined">
+              format_align_center
+            </span>
           </button>
           <hr className="custom-rule" />
-
           <button
             className={styles.textAlign === "right" ? "active" : ""}
             onClick={() => handleStyleChange("textAlign", "right")}
@@ -204,12 +221,13 @@ const TypographyEditor = () => {
             <span className="material-symbols-outlined">format_align_right</span>
           </button>
           <hr className="custom-rule" />
-
           <button
             className={styles.textAlign === "justify" ? "active" : ""}
             onClick={() => handleStyleChange("textAlign", "justify")}
           >
-            <span className="material-symbols-outlined">format_align_justify</span>
+            <span className="material-symbols-outlined">
+              format_align_justify
+            </span>
           </button>
         </div>
       </div>

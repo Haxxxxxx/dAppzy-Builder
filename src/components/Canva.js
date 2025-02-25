@@ -118,7 +118,7 @@ const ContentList = forwardRef(
             className="default-dropzone"
             onClick={(e) => {
               e.stopPropagation();
-              handlePanelToggle('sidebar');
+              setSelectedElement('');
             }}
           />
         )}

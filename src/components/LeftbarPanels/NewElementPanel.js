@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import FooterPanel from '../SectionsPanels/FooterPanel';
 import NavbarPanel from '../SectionsPanels/NavbarPanel';
 import DraggableElement from '../../Elements/DraggableElements/DraggableElement';
@@ -15,7 +15,27 @@ import FormElements from './ElementsMapping/FormElements';
 import MediaElements from './ElementsMapping/MediaElements';
 
 const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
-  const [expandedSections, setExpandedSections] = useState({});
+  // Define default expanded state based on view mode.
+  const defaultExpanded =
+    viewMode === 'layout'
+      ? {
+          Navbar: true,
+          Hero: true,
+          cta: true,
+          Footer: true,
+          'Web3 Sections': true,
+        }
+      : {
+          Structure: true,
+          Basic: true,
+          'Web 3 Blocks': true,
+          Typography: true,
+          Media: true,
+          Advanced: true,
+          Forms: true,
+        };
+
+  const [expandedSections, setExpandedSections] = useState(defaultExpanded);
 
   const toggleSection = (sectionName) => {
     setExpandedSections((prev) => ({
@@ -62,8 +82,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
         {layoutSections.map(({ name, component }) => (
           <div key={name} className="content-section">
             <h4 onClick={() => toggleSection(name)} style={{ cursor: 'pointer' }}>
-              {name}
-              <span>{expandedSections[name] ? '▼' : '▶'}</span>
+              {name} <span>{expandedSections[name] ? '▼' : '▶'}</span>
             </h4>
             {expandedSections[name] && <div className="bento-display-layout">{component}</div>}
             <hr />
@@ -83,7 +102,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
             <span>{expandedSections[category] ? '▼' : '▶'}</span>
           </h4>
           {expandedSections[category] && (
-            <div className={`bento-display-elements`}>
+            <div className="bento-display-elements">
               {items.map((item) => (
                 <DraggableElement
                   key={item.type}

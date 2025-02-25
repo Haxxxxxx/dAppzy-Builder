@@ -129,22 +129,6 @@ const CTATwo = ({
         </div>
       </div>
 
-      {/* Render ALL images (droppable) */}
-      {children
-        .filter((child) => child?.type === 'image')
-        .map((child) => (
-          <Image
-            key={child.id}
-            id={child.id}
-            src={child.content}
-            styles={{
-              ...ctaStyles.ctaImage,
-              ...(child.styles || {}),
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-          />
-        ))}
     </section>
   );
 };

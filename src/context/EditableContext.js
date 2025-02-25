@@ -1,3 +1,4 @@
+// EditableContext.js
 import React, { createContext, useState, useEffect } from 'react';
 import {
   generateUniqueId,
@@ -28,8 +29,16 @@ export const EditableProvider = ({ children, userId }) => {
       : [];
   });
 
-  console.log("Current elements:", elements);
+  // Define the forced border style. This is what we want to appear on any selected element.
+  const forcedBorderStyle = {
+    outline: '1px solid #4D70FF',
+    boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
+  };
 
+  // For our purposes, we want to force the border when any element is selected.
+  const forceBorder = selectedElement !== null;
+  
+  // Also keep the original selectedStyle if needed elsewhere.
   const selectedStyle = {
     outline: '1px solid #4D70FF',
     boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
@@ -211,6 +220,8 @@ export const EditableProvider = ({ children, userId }) => {
         selectedStyle,
         updateElementProperties,
         userId,
+        forcedBorderStyle,
+        forceBorder,
       }}
     >
       {children}

@@ -126,6 +126,7 @@ const CTAOne = ({
       </div>
 
       {/* Render ALL images (droppable) */}
+      <div style={ctaOneStyles.ctaImage}>
       {children
         .filter((child) => child?.type === 'image')
         .map((child) => (
@@ -141,6 +142,7 @@ const CTAOne = ({
             handleDrop={handleImageDrop}
           />
         ))}
+        </div>
     </section>
   );
 };

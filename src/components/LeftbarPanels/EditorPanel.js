@@ -1,42 +1,42 @@
-import React, { useContext, useState } from 'react';
+// EditorPanel.js (only the concerned parts)
+import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import TypographyEditor from '../../Editors/TypographyEditor';
 import BorderEditor from '../../Editors/BorderEditor';
 import SizeEditor from '../../Editors/SizeEditor';
 import SpacingEditor from '../../Editors/SpacingEditor';
 import DisplayEditor from '../../Editors/DisplayEditor';
-import EffectEditor from '../../Editors/EffectEditor';
-import ButtonEditor from '../../Editors/ButtonEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettings from './SettingsPanels/WalletSettings';
 import LinkSettings from './SettingsPanels/LinkSettings';
-import BackgroundEditor from '../../Editors/BackgroundEditor'; // Import the new component
+import BackgroundEditor from '../../Editors/BackgroundEditor'; // Use BackgroundEditor here
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
-import BackgroundSettings from './SettingsPanels/BackgroundSettings';
-import '../css/EditorPanel.css'
+import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 
-
-const EditorPanel = ({ onUpdateSettings, userId }) => {
+const EditorPanel = ({ onUpdateSettings,pageSettings }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
   const [viewMode, setViewMode] = useState('style'); // Default to 'style' view
-  console.log("Selected Element type in EditorPanel : " + selectedElement?.type);
+
+  // Switch back to the style editor whenever the selected element changes.
+  useEffect(() => {
+    setViewMode('style');
+  }, [selectedElement]);
 
   const renderSettingsView = () => {
-    if (selectedElement?.type === 'title' || selectedElement?.type === 'paragraph' || selectedElement?.type === 'blockquote' || selectedElement?.type === 'code' || selectedElement?.type === 'pre' || selectedElement?.type === 'caption') {
+    if (
+      selectedElement?.type === 'title' ||
+      selectedElement?.type === 'paragraph' ||
+      selectedElement?.type === 'blockquote' ||
+      selectedElement?.type === 'code' ||
+      selectedElement?.type === 'pre' ||
+      selectedElement?.type === 'caption'
+    ) {
       return (
         <TextualSettings
-          settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
-        />
-      );
-    }
-    if (selectedElement?.type === 'bgVideo' || selectedElement?.type === 'section' || selectedElement?.type === 'navbar' || selectedElement?.type === 'hero' || selectedElement?.type === 'cta' || selectedElement?.type === 'footer' ) {
-      return (
-        <BackgroundSettings
           settings={selectedElement.settings || {}}
           onUpdateSettings={onUpdateSettings}
         />
@@ -51,14 +51,20 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
       );
     }
     if (selectedElement?.type === 'image') {
-      return <ImageSettings settings={selectedElement.settings || {}}
-        onUpdateSettings={onUpdateSettings}
-      />;
+      return (
+        <ImageSettings
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
     }
     if (selectedElement?.type === 'video') {
-      return <VideoSettings settings={selectedElement.settings || {}}
-        onUpdateSettings={onUpdateSettings}
-      />;
+      return (
+        <VideoSettings
+          settings={selectedElement.settings || {}}
+          onUpdateSettings={onUpdateSettings}
+        />
+      );
     }
     if (selectedElement?.type === 'mintingSection') {
       return (
@@ -68,8 +74,13 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
         />
       );
     }
-
-    if ((selectedElement?.type === 'anchor' || selectedElement?.type === 'span' || selectedElement?.type === 'button') && selectedElement.label !== 'title') {
+   
+    if (
+      (selectedElement?.type === 'anchor' ||
+        selectedElement?.type === 'span' ||
+        selectedElement?.type === 'button') &&
+      selectedElement.label !== 'title'
+    ) {
       return (
         <LinkSettings
           settings={selectedElement.settings || {}}
@@ -77,7 +88,10 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
         />
       );
     }
-    if ((selectedElement?.type === 'list' || selectedElement?.type === 'list-item')) {
+    if (
+      selectedElement?.type === 'list' ||
+      selectedElement?.type === 'list-item'
+    ) {
       return (
         <ListSettings
           settings={selectedElement.settings || {}}
@@ -85,7 +99,6 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
         />
       );
     }
-
     return <p>No settings available for this element yet.</p>;
   };
 
@@ -106,20 +119,14 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
         </button>
       </div>
       <div className="editor-panel">
-        {/* Toggle between Settings and Style Views */}
-
-        {/* Conditional rendering based on viewMode */}
         {viewMode === 'style' ? (
           <div className="style-editor">
             <CollapsibleSection title="Typography">
               <TypographyEditor />
             </CollapsibleSection>
-
-            {/* New panel for Background & Global Settings */}
             <CollapsibleSection title="Background & Global Settings">
-              <BackgroundEditor />
+              <BackgroundEditor pageSettings={pageSettings} />
             </CollapsibleSection>
-
             <CollapsibleSection title="Borders">
               <BorderEditor />
             </CollapsibleSection>
@@ -132,26 +139,17 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
             <CollapsibleSection title="Display">
               <DisplayEditor />
             </CollapsibleSection>
-            {/* <CollapsibleSection title="Effects">
-              <EffectEditor />
-            </CollapsibleSection> */}
-            {/* {selectedElement?.type === 'button' && (
-              <CollapsibleSection title="Button">
-                <ButtonEditor />
-              </CollapsibleSection>
-            )} */}
           </div>
         ) : (
           <div className="settings-view">
             {renderSettingsView()}
           </div>
         )}
-
         {elements.length > 0 && (
           <button
             onClick={() => {
-              localStorage.removeItem('editableElements'); // remove items from localStorage
-              setElements([]); // update your state if needed
+              localStorage.removeItem('editableElements');
+              setElements([]);
             }}
             style={{
               marginTop: '16px',
@@ -166,10 +164,8 @@ const EditorPanel = ({ onUpdateSettings, userId }) => {
             Clear All Elements
           </button>
         )}
-
       </div>
     </>
-
   );
 };
 
