@@ -1,47 +1,44 @@
 // functions/index.js
-const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const cors = require("cors");
-const nacl = require("tweetnacl");  // <-- import tweetnacl
+const nacl = require("tweetnacl");
 const { PublicKey } = require("@solana/web3.js");
 
 admin.initializeApp();
-const corsHandler = cors({ origin: true });
 
-exports.verifyPhantom = functions.https.onRequest(async (req, res) => {
-  return corsHandler(req, res, async () => {
+exports.verifyPhantom = onRequest(
+  { region: "us-central1", cors: true, invoker: "public" },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
     try {
-      if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method Not Allowed" });
-      }
-
       const { publicKey, signature } = req.body;
       if (!publicKey || !signature) {
         return res.status(400).json({ error: "Missing parameters" });
       }
 
-      // Convert data to Buffers
       const signatureBuffer = Buffer.from(signature);
-      const messageBuffer = Buffer.from("Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time.");
+      const messageBuffer = Buffer.from(
+        "Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time."
+      );
 
-      // Create a Solana PublicKey object
       const pubKey = new PublicKey(publicKey);
-
-      // Convert the public key to bytes so tweetnacl can use it
       const pubKeyBytes = pubKey.toBytes();
 
-      // Use nacl.sign.detached.verify
       const isVerified = nacl.sign.detached.verify(
         messageBuffer,
         signatureBuffer,
         pubKeyBytes
       );
-
       if (!isVerified) {
         return res.status(401).json({ error: "Signature verification failed" });
       }
 
-      // If the signature is valid, create a custom token
       const customToken = await admin.auth().createCustomToken(publicKey, {
         walletType: "Phantom",
       });
@@ -51,5 +48,5 @@ exports.verifyPhantom = functions.https.onRequest(async (req, res) => {
       console.error("Error in verifyPhantom:", error);
       return res.status(500).json({ error: error.message });
     }
-  });
-});
+  }
+);
