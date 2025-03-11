@@ -1,13 +1,10 @@
-// src/components/LeftbarPanels/ExportSection.js
+// src/components/LeftbarPanels/ExportSection.jsx
 import React, { useState } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
-// We’re using Pinata’s API for pinning (not ipfs-http-client)
- 
-// Import your Pinata configuration values from environment variables.
-import { pinataJwt, pinataGateway } from '../../utils/configPinata';
+import { pinataJwt } from '../../utils/configPinata';
 
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
@@ -16,12 +13,11 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
   const [shareableUrl, setShareableUrl] = useState('');
   const [showDeployOptions, setShowDeployOptions] = useState(false);
 
-  // Generate the full HTML from your elements and styles.
   const generateFullHtml = () => {
     const collectedStyles = [];
     const nestedElements = buildHierarchy(elements);
     const bodyHtml = nestedElements
-      .map((element) => renderElementToHtml(element, collectedStyles))
+      .map(element => renderElementToHtml(element, collectedStyles))
       .join('');
     const globalStyles = collectedStyles
       .map(({ className, styles }) => `.${className} {\n${flattenStyles(styles)}\n}`)
@@ -32,11 +28,14 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exported Website</title>
+  <title>${websiteSettings.siteTitle || 'Exported Website'}</title>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
     ${globalStyles}
   </style>
+  <!-- Include Solana web3 and Metaplex from CDN for production minting -->
+  <script src="https://unpkg.com/@solana/web3.js@1.73.2/lib/index.iife.js"></script>
+  <script src="https://unpkg.com/@metaplex-foundation/js/dist/index.umd.js"></script>
 </head>
 <body>
   ${bodyHtml}
@@ -46,19 +45,14 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     return fullHtml;
   };
 
-  // Save project details in Firestore.
-  // For Web2, we build a shareable URL using the base URL, userId, and projectName.
-  // For IPFS, we store the shareable URL (e.g. a Pinata gateway URL) as provided.
   const saveProjectToFirestore = async (finalUserId, fullHtml, deployType, deployUrl) => {
     const isLocal = window.location.hostname === 'localhost';
     const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.3rd-space.io';
     const projectName = websiteSettings.siteTitle || 'MyWebsite';
     let testUrl;
     if (deployType === 'web2') {
-      // Use the original shareable URL format:
       testUrl = `${baseUrl}/${finalUserId}/${projectName}`;
     } else {
-      // For IPFS, use the provided deployUrl (assumed to be a full URL).
       testUrl = websiteSettings.customDomain
         ? `https://${websiteSettings.customDomain}`
         : `${deployUrl}`;
@@ -71,12 +65,11 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
       lastUpdated: serverTimestamp(),
       testUrl,
       websiteSettings,
-      deployType, // 'web2' or 'ipfs'
+      deployType,
     });
     return testUrl;
   };
 
-  // Web2 deployment (existing flow)
   const handleExportWeb2 = async () => {
     setAutoSaveStatus('Publishing to Web2...');
     try {
@@ -97,17 +90,12 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     }
   };
 
-  // Helper function to pin a directory to Pinata with metadata.
-  // This function wraps an array of files in a directory.
   const pinDirectoryToPinata = async (files, metadata) => {
     const formData = new FormData();
     files.forEach(({ file, fileName }) => {
-      // fileName can include a path, e.g. "userId/index.html"
       formData.append('file', file, fileName);
     });
-    // Wrap the files in a directory.
     formData.append('pinataOptions', JSON.stringify({ wrapWithDirectory: true }));
-    // Append metadata.
     formData.append('pinataMetadata', JSON.stringify(metadata));
 
     const response = await fetch(PINATA_PIN_FILE_URL, {
@@ -123,8 +111,6 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     return response.json();
   };
 
-  // IPFS deployment using Pinata with directory wrapping.
-  // The returned CID is used to construct the shareable URL.
   const handleExportToIPFS = async () => {
     setAutoSaveStatus('Publishing to IPFS via Pinata...');
     try {
@@ -134,25 +120,15 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
         setAutoSaveStatus('Error: No valid user ID found!');
         return;
       }
-      
-      // Create a Blob for the HTML content.
       const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
-      // Set file name with a folder path, e.g. "userId/index.html"
       const files = [{ file: htmlBlob, fileName: `${finalUserId}/index.html` }];
-      
-      // Define metadata.
       const metadata = {
         name: websiteSettings.siteTitle || 'MyWebsite',
         keyvalues: { userId: finalUserId },
       };
-
-      // Pin the directory of files to Pinata.
       const result = await pinDirectoryToPinata(files, metadata);
       const cid = result.IpfsHash;
-      // Construct the shareable URL using a public gateway.
       const ipfsUrl = `https://ipfs.io/ipfs/${cid}/${userId}`;
-      
-      // Save the project in Firestore.
       const testUrl = await saveProjectToFirestore(finalUserId, fullHtml, 'ipfs', ipfsUrl);
       setAutoSaveStatus('Project published on IPFS!');
       setShareableUrl(testUrl);
@@ -173,7 +149,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
         cloud_done
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>
-      {shareableUrl && (
+      {/* {shareableUrl && (
         <div className="shareable-url">
           <p>
             Shareable URL:{' '}
@@ -182,7 +158,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
             </a>
           </p>
         </div>
-      )}
+      )} */}
       <button className="button" onClick={openDeployOptions}>
         Publish
       </button>

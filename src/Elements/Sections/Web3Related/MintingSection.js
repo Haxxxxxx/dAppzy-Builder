@@ -9,10 +9,8 @@ const MintingSection = ({
   uniqueId,
   onDropItem,
   handleOpenMediaPanel,
-  // you can remove `children` if you don't need it anymore
 }) => {
-  const { elements } = useContext(EditableContext);
-  
+  const { elements, updateContent } = useContext(EditableContext);
   const sectionRef = useRef(null);
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
@@ -20,32 +18,46 @@ const MintingSection = ({
     onDropItem,
   });
 
-  // 1) Filter out the child elements from context
+  // Filter out child elements for this section.
   const childElements = elements.filter((el) => el.parentId === uniqueId);
 
-  // 2) Grab each element by type
+  // Helper functions to retrieve child elements by type.
   const getChildByType = (type) => childElements.find((child) => child.type === type);
   const getChildrenByType = (type) => childElements.filter((child) => child.type === type);
 
-  const logo          = getChildByType('image');
-  const timer         = getChildByType('timer');
-  const remaining     = getChildByType('remaining');
-  const value         = getChildByType('value');
-  const currency      = getChildByType('currency');
-  const quantity      = getChildByType('quantity');
-  const totalPrice    = getChildByType('price');
-  const title         = getChildByType('title');
-  const description   = getChildByType('description');
-  const mintButton    = getChildByType('button');
-  const rareItemsTitle= getChildByType('rareItemsTitle');
+  // Retrieve elements.
+  const logo = getChildByType('image');
+  const timer = getChildByType('timer');
+  const remaining = getChildByType('remaining');
+  const value = getChildByType('value');
+  const currency = getChildByType('currency');
+  const quantity = getChildByType('quantity');
+  const totalPrice = getChildByType('price');
+  const title = getChildByType('title');
+  const description = getChildByType('description');
+  const mintButton = getChildByType('button');
+  const rareItemsTitle = getChildByType('rareItemsTitle');
   const docItemsTitle = getChildByType('docItemsTitle');
-  const rareItems     = getChildrenByType('rare-item');
+  const rareItems = getChildrenByType('rare-item');
   const documentItems = getChildrenByType('document-item');
 
-  // 3) UseEffect just to see them in console
   useEffect(() => {
     console.log('MintingSection: childElements =', childElements);
   }, [childElements]);
+
+  // Handlers for incrementing and decrementing the quantity
+  const handleIncrement = () => {
+    const currentValue = parseInt(quantity.content, 10) || 0;
+    const newValue = currentValue + 1;
+    updateContent(quantity.id, newValue.toString());
+  };
+
+  const handleDecrement = () => {
+    const currentValue = parseInt(quantity.content, 10) || 0;
+    // Optionally prevent negative values:
+    const newValue = currentValue > 0 ? currentValue - 1 : 0;
+    updateContent(quantity.id, newValue.toString());
+  };
 
   return (
     <section
@@ -67,10 +79,8 @@ const MintingSection = ({
             src={logo.content}
             styles={mintingSectionStyles.logo}
             handleOpenMediaPanel={handleOpenMediaPanel}
-            // handleDrop if you have custom dropping
           />
         )}
-        
         {timer && (
           <DateComponent
             id={timer.id}
@@ -79,7 +89,6 @@ const MintingSection = ({
             styles={mintingSectionStyles.timer}
           />
         )}
-
         <div style={mintingSectionStyles.details}>
           {remaining && (
             <Span
@@ -97,16 +106,72 @@ const MintingSection = ({
               styles={mintingSectionStyles.price}
             />
           )}
-          {quantity && totalPrice && (
+          {quantity && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <span style={{ fontSize: '1rem', color: '#aaa' }}>
+                {quantity.label}
+              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.2rem', // small gap for tight grouping
+                }}
+              >
+                <button
+                  onClick={handleDecrement}
+                  style={{
+                    width: '2rem',
+                    height: '2rem',
+                    cursor: 'pointer',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    fontWeight: '800',
+                  }}
+                >
+                  -
+                </button>
+                <Span
+                  id={quantity.id}
+                  content={quantity.content}
+                  styles={mintingSectionStyles.quantity}
+                />
+                <button
+                  onClick={handleIncrement}
+                  style={{
+                    width: '2rem',
+                    height: '2rem',
+                    cursor: 'pointer',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    fontWeight: '800',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Optionally, render total price separately if needed */}
+          {totalPrice && (
             <Span
-              id={quantity.id}
-              content={`${quantity.content} (${totalPrice.label}: ${totalPrice.content})`}
-              label={quantity.label}
-              styles={mintingSectionStyles.quantity}
+              id={totalPrice.id}
+              label={totalPrice.label}
+              content={`${totalPrice.label}: ${totalPrice.content}`}
+              styles={mintingSectionStyles.quantity} // reuse the style or create a separate one
             />
           )}
         </div>
-
         {mintButton && (
           <Button
             id={mintButton.id}
@@ -141,7 +206,6 @@ const MintingSection = ({
             />
           )}
         </div>
-
         <div style={mintingSectionStyles.itemsContainer}>
           {rareItems.map((item) => (
             <Image
@@ -153,7 +217,6 @@ const MintingSection = ({
             />
           ))}
         </div>
-
         {docItemsTitle && (
           <Span
             id={docItemsTitle.id}
@@ -161,7 +224,6 @@ const MintingSection = ({
             styles={mintingSectionStyles.sectionTitle}
           />
         )}
-
         <div style={mintingSectionStyles.itemsContainer}>
           {documentItems.map((item) => (
             <Image

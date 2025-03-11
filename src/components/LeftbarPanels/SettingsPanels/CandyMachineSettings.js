@@ -1,3 +1,4 @@
+// src/components/Settings/CandyMachineSettings.jsx
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import DatePicker from 'react-datepicker';
@@ -5,9 +6,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import './css/CandyMachineSettings.css';
 
 const CandyMachineSettings = () => {
-  const { updateContent, selectedElement, elements, findElementById } = useContext(EditableContext);
+  const { updateContent, selectedElement, elements } = useContext(EditableContext);
   const [localSettings, setLocalSettings] = useState({});
-  const [imagePreviews, setImagePreviews] = useState({}); // Track image previews
 
   useEffect(() => {
     if (selectedElement) {
@@ -17,30 +17,21 @@ const CandyMachineSettings = () => {
         return acc;
       }, {});
 
-      // If `settings.timer` is an ISO string, parse it:
+      // Parse timer if set.
       if (settings.timer) {
         const parsed = new Date(settings.timer);
-        if (!isNaN(parsed.getTime())) {
-          settings.timer = parsed; // now it’s a valid Date object
-        } else {
-          // Fallback if it’s not parseable
-          settings.timer = null;
-        }
+        settings.timer = !isNaN(parsed.getTime()) ? parsed : null;
       }
 
       setLocalSettings(settings);
     }
   }, [selectedElement, elements]);
 
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setLocalSettings((prev) => ({ ...prev, [name]: value }));
-
+    setLocalSettings(prev => ({ ...prev, [name]: value }));
     if (selectedElement) {
-      const childElement = elements.find(
-        (el) => el.parentId === selectedElement.id && el.type === name
-      );
+      const childElement = elements.find(el => el.parentId === selectedElement.id && el.type === name);
       if (childElement) {
         updateContent(childElement.id, value);
       }
@@ -52,12 +43,9 @@ const CandyMachineSettings = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setLocalSettings((prev) => ({ ...prev, [key]: reader.result }));
-
+        setLocalSettings(prev => ({ ...prev, [key]: reader.result }));
         if (selectedElement) {
-          const childElement = elements.find(
-            (el) => el.parentId === selectedElement.id && el.type === key
-          );
+          const childElement = elements.find(el => el.parentId === selectedElement.id && el.type === key);
           if (childElement) {
             updateContent(childElement.id, reader.result);
           }
@@ -67,72 +55,23 @@ const CandyMachineSettings = () => {
     }
   };
 
-  // 2) Only track changes in local state in handleChange:
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setLocalSettings((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // 3) On blur, persist local state to context:
-  const handleBlur = (e) => {
-    const { name } = e.target;
-    if (!selectedElement) return;
-
-    const childElement = elements.find(
-      (el) => el.parentId === selectedElement.id && el.type === name
-    );
-    if (childElement) {
-      updateContent(childElement.id, localSettings[name]);
-    }
-  };
-
-  // 4) Same approach for DatePicker: 
-  //    - onChange => local state
-  //    - onCalendarClose => final "blur" or "done" event => update context
   const handleDateChange = (date) => {
-    setLocalSettings((prev) => ({ ...prev, timer: date }));
+    setLocalSettings(prev => ({ ...prev, timer: date }));
   };
 
   const handleDateClose = () => {
     if (!selectedElement) return;
-    const childElement = elements.find(
-      (el) => el.parentId === selectedElement.id && el.type === 'timer'
-    );
+    const childElement = elements.find(el => el.parentId === selectedElement.id && el.type === 'timer');
     if (childElement) {
       const date = localSettings.timer;
-      // save as ISO string
       updateContent(childElement.id, date ? date.toISOString() : '');
     }
   };
 
-  const handleImageArrayChange = (e, key, index) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setLocalSettings((prev) => {
-          const updatedImages = [...(prev[key] || [])];
-          updatedImages[index] = reader.result;
-          return { ...prev, [key]: updatedImages };
-        });
-
-        if (selectedElement) {
-          const childElement = elements.find(
-            (el) => el.parentId === selectedElement.id && el.type === key
-          );
-          if (childElement) {
-            const updatedContent = [...(childElement.content || [])];
-            updatedContent[index] = reader.result;
-            updateContent(childElement.id, updatedContent);
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const renderInputs = () => {
+    // Define input types including a new field for candyMachineId.
     const inputTypes = {
+      candyMachineId: 'text', // Candy Machine public key.
       title: 'text',
       description: 'textarea',
       timer: 'date',
@@ -140,17 +79,14 @@ const CandyMachineSettings = () => {
       price: 'text',
       quantity: 'number',
       currency: 'dropdown',
-      image: 'image', // Add this line
+      image: 'image',
       rareItemsTitle: 'text',
       docItemsTitle: 'text',
-      // 'rare-item': 'image-array',
-      // 'document-item': 'image-array',
     };
-
 
     const availableCurrencies = ['SOL', 'ETH', 'USDC', 'BTC'];
 
-    return Object.keys(localSettings).map((key) => {
+    return Object.keys(localSettings).map(key => {
       switch (inputTypes[key]) {
         case 'textarea':
           return (
@@ -168,16 +104,16 @@ const CandyMachineSettings = () => {
         case 'date':
           return (
             <div className="settings-group" key={key}>
-              <label htmlFor={key}>{key}</label>
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
               <DatePicker
-                selected={localSettings.timer} // a valid Date
+                selected={localSettings.timer}
                 onChange={handleDateChange}
-                onCalendarClose={handleDateClose} // Save on close
+                onCalendarClose={handleDateClose}
                 dateFormat="MMMM d, yyyy h:mm aa"
                 showTimeSelect
                 timeFormat="HH:mm"
                 timeIntervals={15}
-                timeCaption="time"
+                timeCaption="Time"
                 className="settings-input"
               />
             </div>
@@ -192,7 +128,7 @@ const CandyMachineSettings = () => {
                 onChange={handleInputChange}
                 className="settings-input"
               >
-                {availableCurrencies.map((currency) => (
+                {availableCurrencies.map(currency => (
                   <option key={currency} value={currency}>
                     {currency}
                   </option>
@@ -204,7 +140,6 @@ const CandyMachineSettings = () => {
           return (
             <div className="settings-group" key={key}>
               <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
-              {/* Button to trigger file selection */}
               <button
                 type="button"
                 onClick={() => document.getElementById(`${key}-file-input`).click()}
@@ -212,7 +147,6 @@ const CandyMachineSettings = () => {
               >
                 Choose Image
               </button>
-              {/* Hidden file input */}
               <input
                 type="file"
                 id={`${key}-file-input`}
@@ -222,7 +156,6 @@ const CandyMachineSettings = () => {
               />
             </div>
           );
-
         default:
           return (
             <div className="settings-group" key={key}>
@@ -242,7 +175,7 @@ const CandyMachineSettings = () => {
   };
 
   return (
-    <div>
+    <div className="candy-machine-settings">
       <h3>Minting Section Settings</h3>
       {renderInputs()}
     </div>

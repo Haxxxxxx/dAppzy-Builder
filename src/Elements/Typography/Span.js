@@ -31,39 +31,41 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
   }, [selectedElement, id]);
 
   if (label) {
-    // Render label and content with flex layout
     return (
-      <>
+      <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
         <span
           style={{
             fontSize: '1rem',
-            color: '#aaa', // Label styling
+            color: '#aaa',
             marginRight: '1rem',
           }}
         >
           {label}
         </span>
-        <span
-          id={id}
-          ref={spanRef}
-          onClick={handleSelect}
-          contentEditable={selectedElement?.id === id}
-          onBlur={handleBlur}
-          suppressContentEditableWarning={true}
-          style={{
-            ...styles, // Apply dynamic styles first
-            fontSize: '1rem',
-            color: '#fff', // Content styling
-            border: 'none',
-            cursor: 'text',
-            wordWrap: 'break-word',
-          }}
-        >
-          {content || 'Editable Span'}
-        </span>
-      </>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
+          <span
+            id={id}
+            ref={spanRef}
+            onClick={handleSelect}
+            contentEditable={selectedElement?.id === id}
+            onBlur={handleBlur}
+            suppressContentEditableWarning={true}
+            style={{
+              ...styles,
+              fontSize: '1rem',
+              color: '#fff',
+              border: 'none',
+              cursor: 'text',
+              wordWrap: 'break-word',
+            }}
+          >
+            {content || 'Editable Span'}
+          </span>
+        </div>
+      </div>
     );
   }
+
 
   // Render content only
   return (

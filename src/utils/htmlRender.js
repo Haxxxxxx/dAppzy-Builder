@@ -1,5 +1,5 @@
 // src/utils/RenderUtils.js
-import { typeToTagMap } from './htmlRenderUtils/typeMapping';
+import { typeToTagMap } from '../Mapping/typeMapping';
 import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
 import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
 import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
