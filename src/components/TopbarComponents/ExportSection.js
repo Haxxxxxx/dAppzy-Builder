@@ -1,10 +1,11 @@
-// src/components/LeftbarPanels/ExportSection.jsx
-import React, { useState } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+// src/components/ExportSection.jsx
+import React, { useState, useEffect } from 'react';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
 import { pinataJwt } from '../../utils/configPinata';
+import ScanDomains from './ScanDomains';
 
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
@@ -12,17 +13,78 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
   const [shareableUrl, setShareableUrl] = useState('');
   const [showDeployOptions, setShowDeployOptions] = useState(false);
+  const [showDomainLinking, setShowDomainLinking] = useState(true);
+  const [solAddress, setSolAddress] = useState('');
+  const [ethAddress, setEthAddress] = useState('');
+
+  // Connect to Phantom for Solana using window.solana
+  useEffect(() => {
+    const getSolanaAddress = async () => {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          let response;
+          // Use a trusted connection if already connected; otherwise prompt the user.
+          if (window.solana.isConnected) {
+            response = await window.solana.connect({ onlyIfTrusted: true });
+          } else {
+            response = await window.solana.connect();
+          }
+          setSolAddress(response.publicKey.toString());
+        } catch (error) {
+          console.error('Error connecting to Phantom Solana wallet:', error);
+        }
+      }
+    };
+    getSolanaAddress();
+  }, []);
+
+  // Check Firestore for an Ethereum address linked to the userId (Solana address)
+  // If none exists, then attempt to fetch it using window.ethereum and update Firestore.
+  useEffect(() => {
+    const checkOrFetchEthAddress = async () => {
+      if (!userId) return;
+      try {
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          if (userData.ethAddress) {
+            setEthAddress(userData.ethAddress);
+            return;
+          }
+        }
+        // If no Ethereum address is stored, try to fetch it using window.ethereum.
+        if (window.ethereum) {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            setEthAddress(accounts[0]);
+            // Update Firestore with the fetched Ethereum address.
+            await updateDoc(userRef, {
+              ethAddress: accounts[0],
+              lastUpdated: serverTimestamp(),
+            });
+          }
+        } else {
+          console.warn('Ethereum provider not available. Ensure your Phantom wallet supports Ethereum.');
+        }
+      } catch (error) {
+        console.error('Error checking or fetching Ethereum address:', error);
+      }
+    };
+
+    checkOrFetchEthAddress();
+  }, [userId]);
 
   const generateFullHtml = () => {
     const collectedStyles = [];
     const nestedElements = buildHierarchy(elements);
     const bodyHtml = nestedElements
-      .map(element => renderElementToHtml(element, collectedStyles))
+      .map((element) => renderElementToHtml(element, collectedStyles))
       .join('');
     const globalStyles = collectedStyles
       .map(({ className, styles }) => `.${className} {\n${flattenStyles(styles)}\n}`)
       .join('\n');
-    const fullHtml = `
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +95,6 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     body { margin: 0; font-family: Arial, sans-serif; }
     ${globalStyles}
   </style>
-  <!-- Include Solana web3 and Metaplex from CDN for production minting -->
   <script src="https://unpkg.com/@solana/web3.js@1.73.2/lib/index.iife.js"></script>
   <script src="https://unpkg.com/@metaplex-foundation/js/dist/index.umd.js"></script>
 </head>
@@ -42,7 +103,6 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
 </body>
 </html>
     `.trim();
-    return fullHtml;
   };
 
   const saveProjectToFirestore = async (finalUserId, fullHtml, deployType, deployUrl) => {
@@ -55,13 +115,15 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     } else {
       testUrl = websiteSettings.customDomain
         ? `https://${websiteSettings.customDomain}`
-        : `${deployUrl}`;
+        : deployUrl;
     }
     const projectRef = doc(db, 'projects', finalUserId);
     await setDoc(projectRef, {
       html: fullHtml,
       elements,
       userId: finalUserId,
+      solAddress,
+      ethAddress,
       lastUpdated: serverTimestamp(),
       testUrl,
       websiteSettings,
@@ -97,7 +159,6 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     });
     formData.append('pinataOptions', JSON.stringify({ wrapWithDirectory: true }));
     formData.append('pinataMetadata', JSON.stringify(metadata));
-
     const response = await fetch(PINATA_PIN_FILE_URL, {
       method: 'POST',
       headers: {
@@ -132,6 +193,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
       const testUrl = await saveProjectToFirestore(finalUserId, fullHtml, 'ipfs', ipfsUrl);
       setAutoSaveStatus('Project published on IPFS!');
       setShareableUrl(testUrl);
+      setShowDomainLinking(true);
       await navigator.clipboard.writeText(testUrl);
       window.open(testUrl, '_blank');
     } catch (error) {
@@ -142,23 +204,12 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
 
   const openDeployOptions = () => setShowDeployOptions(true);
   const closeDeployOptions = () => setShowDeployOptions(false);
-
   return (
     <div className="export-section">
       <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
         cloud_done
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>
-      {/* {shareableUrl && (
-        <div className="shareable-url">
-          <p>
-            Shareable URL:{' '}
-            <a href={shareableUrl} target="_blank" rel="noopener noreferrer">
-              {shareableUrl}
-            </a>
-          </p>
-        </div>
-      )} */}
       <button className="button" onClick={openDeployOptions}>
         Publish
       </button>
@@ -177,6 +228,16 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
             </button>
           </div>
         </div>
+      )}
+      {showDomainLinking && ethAddress && (
+        <ScanDomains
+          walletAddress={ethAddress}
+          userId={userId}
+          websiteSettings={websiteSettings}
+          onDomainSelected={(domain) => {
+            console.log('Domain linked to project:', domain);
+          }}
+        />
       )}
     </div>
   );
