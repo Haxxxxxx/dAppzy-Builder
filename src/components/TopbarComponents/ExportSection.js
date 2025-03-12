@@ -230,15 +230,20 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
         </div>
       )}
       {showDomainLinking && ethAddress && (
-        <ScanDomains
-          walletAddress={ethAddress}
-          userId={userId}
-          websiteSettings={websiteSettings}
-          onDomainSelected={(domain) => {
-            console.log('Domain linked to project:', domain);
-          }}
-        />
+        <div className="domain-popup">
+          <div className="domain-popup-content">
+            <ScanDomains
+              walletAddress={ethAddress}
+              userId={userId}
+              websiteSettings={websiteSettings}
+              onDomainSelected={(domain) => {
+                console.log('Domain linked to project:', domain);
+              }}
+            />
+          </div>
+        </div>
       )}
+
     </div>
   );
 };

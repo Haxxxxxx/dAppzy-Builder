@@ -1,8 +1,12 @@
 const { onRequest } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
+
 const admin = require("firebase-admin");
 const nacl = require("tweetnacl");
 const { PublicKey } = require("@solana/web3.js");
 const fetch = require("node-fetch");
+const functions = require("firebase-functions");
+const udJwt = defineSecret("UD_JWT");
 
 admin.initializeApp();
 
@@ -54,24 +58,28 @@ exports.verifyPhantom = onRequest(
 
 // Updated reverseLookup endpoint using the Partner API v3
 exports.reverseLookup = onRequest(
-  { region: "us-central1", cors: true, invoker: "public" },
+  { 
+    cors: true,
+    invoker: "public",
+    secrets: [udJwt]  // make the secret available to the function
+  },
   async (req, res) => {
     if (req.method !== "GET") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
     try {
-      // Get the Ethereum address from the query parameters.
       const address = req.query.address;
       if (!address) {
         return res.status(400).json({ error: "Missing address parameter" });
       }
 
-      const udJwt = process.env.UD_JWT; // Your UD API key (set as UD_JWT)
-      if (!udJwt) {
+      // Use the new secret value
+      const jwtValue = udJwt.value().trim();
+
+      if (!jwtValue) {
         return res.status(500).json({ error: "UD JWT not configured" });
       }
 
-      // Use the Partner API endpoint to look up domains owned by this address.
       const apiUrl = `https://api.unstoppabledomains.com/partner/v3/owners/${address}/domains`;
       const queryParams = new URLSearchParams({ "$expand": "records" }).toString();
       const fullUrl = `${apiUrl}?${queryParams}`;
@@ -79,13 +87,12 @@ exports.reverseLookup = onRequest(
       const response = await fetch(fullUrl, {
         method: "GET",
         headers: {
-          "Authorization": `${udJwt}`,
+          "Authorization":  `Bearer ${jwtValue}`,
           "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        // Attempt to get error details from the UD API response.
         const errorText = await response.text();
         console.error("Error fetching domain data from UD API:", response.status, errorText);
         return res.status(response.status).json({
