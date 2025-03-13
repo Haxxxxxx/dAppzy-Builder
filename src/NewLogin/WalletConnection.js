@@ -3,13 +3,45 @@ import { db, doc, getDoc, setDoc } from "../firebase";
 import UAuth from "@uauth/js";
 import { auth } from "../firebase";
 import { signInWithCustomToken } from "firebase/auth";
+import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighter API methods
+import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
+import Web3 from "web3";
 import "./NewLogin.css";
 
 function WalletConnection({ onUserLogin }) {
-  const [phantomInitiated, setPhantomInitiated] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Save wallet info to Firestore
+  const saveWalletToFirestore = async (walletId, walletType) => {
+    const walletRef = doc(db, "wallets", walletId);
+    const walletSnap = await getDoc(walletRef);
+    const timestamp = new Date().toISOString();
+
+    if (!walletSnap.exists()) {
+      await setDoc(walletRef, {
+        walletId,
+        lastLogin: timestamp,
+        walletType,
+      });
+      console.log("Wallet ID saved to Firestore:", walletId);
+    } else {
+      console.log("Wallet data retrieved:", walletSnap.data());
+    }
+  };
+
+  // Process login by saving session data
+  const processLogin = (userId, walletType) => {
+    if (typeof onUserLogin === "function") {
+      onUserLogin(userId);
+      sessionStorage.setItem("isLoggedIn", "true");
+      sessionStorage.setItem("userAccount", userId);
+    } else {
+      console.error("onUserLogin is not a function");
+    }
+  };
+
+  // --- MetaMask Integration (unchanged) ---
   const authenticateWithEthereum = async (walletId) => {
     try {
       const message = "Please sign this message to confirm your identity.";
@@ -26,80 +58,6 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
-  const authenticateWithSolana = async (publicKey) => {
-    try {
-      const message = new TextEncoder().encode(
-        "Please sign this message to confirm your identity."
-      );
-      const { signature } = await window.solana.signMessage(message);
-      processLogin(publicKey, "Solana");
-    } catch (error) {
-      console.error("Error during Solana authentication:", error);
-      setErrorMessage("Solana authentication failed. Please try again");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const authenticateWithUnstoppable = async (authorization) => {
-    try {
-      const userId = authorization.idToken.sub;
-      if (!userId) {
-        throw new Error("Username is undefined in the authorization object");
-      }
-      processLogin(userId, "Unstoppable");
-    } catch (error) {
-      console.error("Error during Unstoppable authentication:", error);
-      setErrorMessage("Unstoppable authentication failed. Please try again");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const processLogin = (userId, walletType) => {
-    if (typeof onUserLogin === "function") {
-      onUserLogin(userId);
-      sessionStorage.setItem("isLoggedIn", "true");
-      sessionStorage.setItem("userAccount", userId);
-    } else {
-      console.error("onUserLogin is not a function");
-    }
-  };
-
-  const getPhantomCustomTokenFromServer = async (publicKey, signature) => {
-    const body = { publicKey, signature: Array.from(signature) };
-    const response = await fetch(
-      "https://us-central1-third--space.cloudfunctions.net/verifyPhantom",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.customToken;
-  };
-
-  const saveWalletToFirestore = async (publicKey) => {
-    const walletRef = doc(db, "wallets", publicKey);
-    const walletSnap = await getDoc(walletRef);
-    const timestamp = new Date().toISOString();
-
-    if (!walletSnap.exists()) {
-      await setDoc(walletRef, {
-        walletId: publicKey,
-        lastLogin: timestamp,
-        walletType: "Solana",
-      });
-      console.log("Wallet ID saved to Firestore:", publicKey);
-    } else {
-      console.log("Wallet data retrieved:", walletSnap.data());
-    }
-  };
-
   const handleLoginWithMetamask = async () => {
     setIsLoading(true);
     if (window.ethereum) {
@@ -108,20 +66,7 @@ function WalletConnection({ onUserLogin }) {
           method: "eth_requestAccounts",
         });
         const account = accounts[0];
-        const walletRef = doc(db, "wallets", account);
-        const walletSnap = await getDoc(walletRef);
-        const timestamp = new Date().toISOString();
-
-        if (!walletSnap.exists()) {
-          await setDoc(walletRef, {
-            walletId: account,
-            lastLogin: timestamp,
-            walletType: "Ethereum",
-          });
-          console.log("Wallet ID saved to Firestore:", account);
-        } else {
-          console.log("Wallet data retrieved:", walletSnap.data());
-        }
+        await saveWalletToFirestore(account, "Ethereum");
         await authenticateWithEthereum(account);
       } catch (error) {
         console.error("Error with MetaMask login:", error);
@@ -134,6 +79,7 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
+  // --- Phantom Integration (unchanged) ---
   const handleLoginWithPhantom = async () => {
     setIsLoading(true);
     try {
@@ -163,6 +109,39 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
+  const getPhantomCustomTokenFromServer = async (publicKey, signature) => {
+    const body = { publicKey, signature: Array.from(signature) };
+    const response = await fetch(
+      "https://us-central1-third--space.cloudfunctions.net/verifyPhantom",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.customToken;
+  };
+
+  // --- Unstoppable Integration (unchanged) ---
+  const authenticateWithUnstoppable = async (authorization) => {
+    try {
+      const userId = authorization.idToken.sub;
+      if (!userId) {
+        throw new Error("Username is undefined in the authorization object");
+      }
+      processLogin(userId, "Unstoppable");
+    } catch (error) {
+      console.error("Error during Unstoppable authentication:", error);
+      setErrorMessage("Unstoppable authentication failed. Please try again");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLoginWithUnstoppable = async () => {
     setIsLoading(true);
     const uauth = new UAuth({
@@ -179,6 +158,71 @@ function WalletConnection({ onUserLogin }) {
       setIsLoading(false);
     }
   };
+
+  // --- Freighter Integration Using @stellar/freighter-api ---
+  const handleLoginWithFreighter = async () => {
+    setIsLoading(true);
+    try {
+      // Request access to Freighter (this will prompt the user if not already allowed)
+      const accessObj = await requestAccess();
+      if (accessObj.error) {
+        throw new Error(accessObj.error.message);
+      }
+      const publicKey = accessObj.address;
+      if (!publicKey) {
+        throw new Error("Unable to retrieve public key from Freighter.");
+      }
+      
+      // Ask the user to sign a message to mimic other wallet flows
+      const message = "Please sign this message to confirm your identity.";
+      const signResult = await signMessage(message, { address: publicKey });
+      if (signResult.error) {
+        throw new Error(signResult.error);
+      }
+      const signature = signResult.signedMessage;
+      console.log("Freighter signature:", signature);
+      
+      await saveWalletToFirestore(publicKey, "Freighter");
+      processLogin(publicKey, "Freighter");
+    } catch (error) {
+      console.error("Error with Freighter login:", error);
+      setErrorMessage("Freighter authentication failed. Please try again");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // // --- Coinbase Wallet Integration ---
+  // const handleLoginWithCoinbase = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     // Initialize Coinbase Wallet SDK with your app details.
+  //     const coinbaseWallet = new CoinbaseWalletSDK({
+  //       appName: "Your App Name", // Replace with your app name
+  //       appLogoUrl: "https://example.com/logo.png", // Replace with your app logo URL
+  //       darkMode: false,
+  //     });
+      
+  //     // Create a Web3 provider using Coinbase Wallet.
+  //     // Here we use the Polygon mainnet endpoint so the chain ID should be 137.
+  //     const ethereum = coinbaseWallet.makeWeb3Provider(
+  //       "https://polygon-mainnet.infura.io/v3/065dcf3394a94a4cab29ac97be680697",
+  //       137
+  //     );
+      
+  //     const web3 = new Web3(ethereum);
+  //     const accounts = await web3.eth.getAccounts();
+  //     const account = accounts[0];
+      
+  //     await saveWalletToFirestore(account, "Coinbase");
+  //     processLogin(account, "Coinbase");
+  //   } catch (error) {
+  //     console.error("Error with Coinbase Wallet login:", error);
+  //     setErrorMessage("Coinbase Wallet authentication failed. Please try again");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <div className="popup">
@@ -216,18 +260,40 @@ function WalletConnection({ onUserLogin }) {
               onClick={handleLoginWithMetamask}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media&token=507097be-0cc4-4d93-a87b-99c67d82cfe5"
+                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media"
                 alt="metamask"
               />
               Continue with Metamask
             </button>
+            <button
+              id="freighter"
+              className="wallet-btn ga-wallet-btn-freighter"
+              onClick={handleLoginWithFreighter}
+            >
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fstellar_logo.png?alt=media&token=320a9042-cb19-4cf9-aab0-3a9b368b5e2c" // Replace with your Freighter logo URL
+                alt="freighter"
+              />
+              Continue with Freighter
+            </button>
+            {/* <button
+              id="coinbase"
+              className="wallet-btn ga-wallet-btn-coinbase"
+              onClick={handleLoginWithCoinbase}
+            >
+              <img
+                src="https://example.com/path-to-coinbase-logo.png" // Replace with your Coinbase logo URL
+                alt="coinbase"
+              />
+              Continue with Coinbase
+            </button> */}
             <button
               id="unstoppable"
               className="wallet-btn ga-wallet-btn-ud"
               onClick={handleLoginWithUnstoppable}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media&token=60b8c7c0-d644-4954-be2d-7afe3065b876"
+                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media"
                 alt="unstoppable"
               />
               Continue with Unstoppable

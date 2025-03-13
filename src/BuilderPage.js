@@ -93,8 +93,8 @@ function BuilderPage({ userId, setUserId }) {
         }
       } else {
         // If no doc found, user hasn't created project => open Settings panel
-        console.log("No project doc found for user:", uid);
-        setOpenPanel("settings");
+        alert("No project doc found for user:", uid);
+        // setOpenPanel("settings");
       }
     } catch (error) {
       console.error("Error loading user project:", error);

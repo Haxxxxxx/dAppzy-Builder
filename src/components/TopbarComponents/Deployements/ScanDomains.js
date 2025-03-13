@@ -1,7 +1,7 @@
 // src/components/ScanDomains.jsx
 import React, { useEffect, useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../../../firebase';
 
 const ScanDomains = ({ walletAddress, userId, websiteSettings, onDomainSelected }) => {
   const [domains, setDomains] = useState([]);

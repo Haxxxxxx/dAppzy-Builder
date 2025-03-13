@@ -1,11 +1,10 @@
-// src/components/ExportSection.jsx
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { renderElementToHtml } from '../../utils/htmlRender';
 import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
 import { pinataJwt } from '../../utils/configPinata';
-import ScanDomains from './ScanDomains';
+import ScanDomains from './Deployements/ScanDomains';
 
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
@@ -13,17 +12,20 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
   const [shareableUrl, setShareableUrl] = useState('');
   const [showDeployOptions, setShowDeployOptions] = useState(false);
-  const [showDomainLinking, setShowDomainLinking] = useState(true);
+  const [showDomainSelectionPopup, setShowDomainSelectionPopup] = useState(false);
+  const [showUDDomainLinking, setShowUDDomainLinking] = useState(false); // for UD scan popup
   const [solAddress, setSolAddress] = useState('');
   const [ethAddress, setEthAddress] = useState('');
+  
+  // Use websiteSettings directly (no custom domain logic)
+  const localWebsiteSettings = websiteSettings;
 
-  // Connect to Phantom for Solana using window.solana
+  // Connect to Phantom for Solana
   useEffect(() => {
     const getSolanaAddress = async () => {
       if (window.solana && window.solana.isPhantom) {
         try {
           let response;
-          // Use a trusted connection if already connected; otherwise prompt the user.
           if (window.solana.isConnected) {
             response = await window.solana.connect({ onlyIfTrusted: true });
           } else {
@@ -38,8 +40,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     getSolanaAddress();
   }, []);
 
-  // Check Firestore for an Ethereum address linked to the userId (Solana address)
-  // If none exists, then attempt to fetch it using window.ethereum and update Firestore.
+  // For UD deployment, check Firestore for an Ethereum address
   useEffect(() => {
     const checkOrFetchEthAddress = async () => {
       if (!userId) return;
@@ -53,25 +54,22 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
             return;
           }
         }
-        // If no Ethereum address is stored, try to fetch it using window.ethereum.
         if (window.ethereum) {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           if (accounts && accounts.length > 0) {
             setEthAddress(accounts[0]);
-            // Update Firestore with the fetched Ethereum address.
             await updateDoc(userRef, {
               ethAddress: accounts[0],
               lastUpdated: serverTimestamp(),
             });
           }
         } else {
-          console.warn('Ethereum provider not available. Ensure your Phantom wallet supports Ethereum.');
+          console.warn('Ethereum provider not available. UD deployment requires an Ethereum address.');
         }
       } catch (error) {
         console.error('Error checking or fetching Ethereum address:', error);
       }
     };
-
     checkOrFetchEthAddress();
   }, [userId]);
 
@@ -90,7 +88,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${websiteSettings.siteTitle || 'Exported Website'}</title>
+  <title>${localWebsiteSettings.siteTitle || 'Exported Website'}</title>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
     ${globalStyles}
@@ -105,17 +103,16 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     `.trim();
   };
 
+  // Save project to Firestore.
   const saveProjectToFirestore = async (finalUserId, fullHtml, deployType, deployUrl) => {
     const isLocal = window.location.hostname === 'localhost';
     const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.3rd-space.io';
-    const projectName = websiteSettings.siteTitle || 'MyWebsite';
+    const projectName = localWebsiteSettings.siteTitle || 'MyWebsite';
     let testUrl;
     if (deployType === 'web2') {
       testUrl = `${baseUrl}/${finalUserId}/${projectName}`;
     } else {
-      testUrl = websiteSettings.customDomain
-        ? `https://${websiteSettings.customDomain}`
-        : deployUrl;
+      testUrl = deployUrl;
     }
     const projectRef = doc(db, 'projects', finalUserId);
     await setDoc(projectRef, {
@@ -126,12 +123,13 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
       ethAddress,
       lastUpdated: serverTimestamp(),
       testUrl,
-      websiteSettings,
+      websiteSettings: localWebsiteSettings,
       deployType,
     });
     return testUrl;
   };
 
+  // Web2 deploy using the provided (default) domain
   const handleExportWeb2 = async () => {
     setAutoSaveStatus('Publishing to Web2...');
     try {
@@ -152,6 +150,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     }
   };
 
+  // IPFS deploy via Pinata
   const pinDirectoryToPinata = async (files, metadata) => {
     const formData = new FormData();
     files.forEach(({ file, fileName }) => {
@@ -184,7 +183,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
       const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
       const files = [{ file: htmlBlob, fileName: `${finalUserId}/index.html` }];
       const metadata = {
-        name: websiteSettings.siteTitle || 'MyWebsite',
+        name: localWebsiteSettings.siteTitle || 'MyWebsite',
         keyvalues: { userId: finalUserId },
       };
       const result = await pinDirectoryToPinata(files, metadata);
@@ -193,8 +192,6 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
       const testUrl = await saveProjectToFirestore(finalUserId, fullHtml, 'ipfs', ipfsUrl);
       setAutoSaveStatus('Project published on IPFS!');
       setShareableUrl(testUrl);
-      setShowDomainLinking(true);
-      await navigator.clipboard.writeText(testUrl);
       window.open(testUrl, '_blank');
     } catch (error) {
       console.error('Error publishing project to IPFS:', error);
@@ -202,8 +199,14 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
     }
   };
 
+  // Popup open/close handlers
   const openDeployOptions = () => setShowDeployOptions(true);
   const closeDeployOptions = () => setShowDeployOptions(false);
+
+  // Open the domain selection popup (for Web2)
+  const openDomainSelectionPopup = () => setShowDomainSelectionPopup(true);
+  const closeDomainSelectionPopup = () => setShowDomainSelectionPopup(false);
+
   return (
     <div className="export-section">
       <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
@@ -213,11 +216,18 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
       <button className="button" onClick={openDeployOptions}>
         Publish
       </button>
+
       {showDeployOptions && (
         <div className="deploy-options-popup">
           <div className="deploy-options-content">
             <h3>Choose Deploy Option</h3>
-            <button className="button" onClick={() => { closeDeployOptions(); handleExportWeb2(); }}>
+            <button
+              className="button"
+              onClick={() => {
+                closeDeployOptions();
+                openDomainSelectionPopup();
+              }}
+            >
               Deploy to Web2
             </button>
             <button className="button" onClick={() => { closeDeployOptions(); handleExportToIPFS(); }}>
@@ -229,21 +239,43 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings }) =>
           </div>
         </div>
       )}
-      {showDomainLinking && ethAddress && (
+
+      {/* Domain Selection Popup for Web2 deployment */}
+      {showDomainSelectionPopup && (
+        <div className="domain-popup">
+          <div className="domain-popup-content">
+            <h3>Select Deploy Option</h3>
+            <button
+              className="button"
+              onClick={() => {
+                closeDomainSelectionPopup();
+                handleExportWeb2();
+              }}
+            >
+              Use Provided Domain
+            </button>
+            <button className="button cancel" onClick={closeDomainSelectionPopup}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* UD domain linking: only show if ethAddress is available */}
+      {showUDDomainLinking && ethAddress && (
         <div className="domain-popup">
           <div className="domain-popup-content">
             <ScanDomains
               walletAddress={ethAddress}
               userId={userId}
-              websiteSettings={websiteSettings}
+              websiteSettings={localWebsiteSettings}
               onDomainSelected={(domain) => {
-                console.log('Domain linked to project:', domain);
+                console.log('UD Domain linked to project:', domain);
               }}
             />
           </div>
         </div>
       )}
-
     </div>
   );
 };
