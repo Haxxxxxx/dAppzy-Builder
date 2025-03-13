@@ -3,7 +3,7 @@ import { EditableContext } from '../../../context/EditableContext';
 import { Image, Span, Button, DateComponent } from '../../SelectableElements';
 import { mintingSectionStyles } from './DefaultWeb3Styles';
 import useElementDrop from '../../../utils/useElementDrop';
-
+import CircularProgressCustomImage from './CircularProgressCustomImage';
 const MintingSection = ({
   handleSelect,
   uniqueId,
@@ -45,18 +45,48 @@ const MintingSection = ({
     console.log('MintingSection: childElements =', childElements);
   }, [childElements]);
 
-  // Handlers for incrementing and decrementing the quantity
+  // Function to update linked values when quantity changes.
+  const updateLinkedValues = (newQuantity) => {
+    // Calculate and update total price.
+    const basePrice = parseFloat(value.content) || 0;
+    const computedTotal = basePrice * newQuantity;
+    updateContent(totalPrice.id, `${computedTotal} ${currency.content}`);
+
+    // Update remaining global quantity.
+    // Assuming remaining.content is in the format "available/total" (e.g., "1000/1000")
+    if (remaining && remaining.content.includes('/')) {
+      const [_, totalSupplyStr] = remaining.content.split('/');
+      const totalSupply = parseInt(totalSupplyStr.trim(), 10);
+      const newAvailable = totalSupply - newQuantity;
+      updateContent(remaining.id, `${newAvailable}/${totalSupply}`);
+    }
+  };
+
+  // Assume remaining.content is in the format "available/total", e.g., "900/1000"
+  const calculateProgress = (remainingContent) => {
+    if (!remainingContent || !remainingContent.includes('/')) return 0;
+    const [available, total] = remainingContent.split('/').map(num => parseInt(num.trim(), 10));
+    // For a progress that fills as tokens are minted:
+    const minted = total - available;
+    return (minted / total) * 100;
+  };
+
+  // Inside your MintingSection component, for example:
+  const progressPercentage = remaining ? calculateProgress(remaining.content) : 0;
+
+  // Handlers for incrementing and decrementing the quantity.
   const handleIncrement = () => {
     const currentValue = parseInt(quantity.content, 10) || 0;
     const newValue = currentValue + 1;
     updateContent(quantity.id, newValue.toString());
+    updateLinkedValues(newValue);
   };
 
   const handleDecrement = () => {
     const currentValue = parseInt(quantity.content, 10) || 0;
-    // Optionally prevent negative values:
     const newValue = currentValue > 0 ? currentValue - 1 : 0;
     updateContent(quantity.id, newValue.toString());
+    updateLinkedValues(newValue);
   };
 
   return (
@@ -74,13 +104,16 @@ const MintingSection = ({
       {/* Left Section */}
       <div style={mintingSectionStyles.leftSection}>
         {logo && (
-          <Image
+          <CircularProgressCustomImage
             id={logo.id}
             src={logo.content}
             styles={mintingSectionStyles.logo}
             handleOpenMediaPanel={handleOpenMediaPanel}
+            progress={progressPercentage}
+
           />
         )}
+
         {timer && (
           <DateComponent
             id={timer.id}
@@ -122,7 +155,7 @@ const MintingSection = ({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.2rem', // small gap for tight grouping
+                  gap: '0.2rem',
                 }}
               >
                 <button
@@ -162,13 +195,13 @@ const MintingSection = ({
             </div>
           )}
 
-          {/* Optionally, render total price separately if needed */}
+          {/* Render total price */}
           {totalPrice && (
             <Span
               id={totalPrice.id}
               label={totalPrice.label}
               content={`${totalPrice.label}: ${totalPrice.content}`}
-              styles={mintingSectionStyles.quantity} // reuse the style or create a separate one
+              styles={mintingSectionStyles.quantity}
             />
           )}
         </div>
