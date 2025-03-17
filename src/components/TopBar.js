@@ -14,6 +14,7 @@ const Topbar = ({
   isPreviewMode,
   pageSettings, // Contains website settings, including siteTitle.
   userId,
+  projectId
 }) => {
   const { elements, buildHierarchy } = useContext(EditableContext);
 
@@ -23,7 +24,7 @@ const Topbar = ({
 
   // Determine base URL based on hostname.
   const isLocal = window.location.hostname === 'localhost';
-  const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.3rd-space.io';
+  const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.dappzy.io';
 
   // Construct the preview URL in the format:
   // https://{baseUrl}/{userId}/{projectName}
@@ -44,6 +45,7 @@ const Topbar = ({
         buildHierarchy={buildHierarchy}
         userId={userId}
         websiteSettings={pageSettings} // Pass website settings to ExportSection.
+        projectId={projectId}
       />
     </div>
   );

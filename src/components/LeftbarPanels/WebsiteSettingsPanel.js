@@ -5,7 +5,7 @@ import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebas
 import { storage } from '../../firebase';
 import { EditableContext } from '../../context/EditableContext';
 
-const WebsiteSettingsPanel = ({ onUpdateSettings, userId}) => {
+const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
 
   // Default settings for the website/project.
   const defaultSettings = {
@@ -25,13 +25,8 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId}) => {
   // Use a ref to store the initial project name for comparison.
   const initialProjectNameRef = useRef(settings.siteTitle);
 
-  // Whenever settings change, update localStorage and call the callback.
-  useEffect(() => {
-    localStorage.setItem('websiteSettings', JSON.stringify(settings));
-    if (onUpdateSettings) {
-      onUpdateSettings(settings);
-    }
-  }, [settings, onUpdateSettings]);
+
+
 
   // Handler for input changes.
   const handleInputChange = (e) => {
@@ -81,15 +76,13 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId}) => {
     }
   };
 
-  // Optional: a manual save button for other settings.
   const handleSave = () => {
-    // You might not need this if rename happens automatically.
+    localStorage.setItem('websiteSettings', JSON.stringify(settings));
     if (onUpdateSettings) {
       onUpdateSettings(settings);
-    } else {
-      console.error('onUpdateSettings is not defined');
     }
   };
+
 
   return (
     <div className="settings-panel scrollable-panel">

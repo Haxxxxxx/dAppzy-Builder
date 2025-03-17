@@ -7,17 +7,32 @@ import { EditableProvider } from './context/EditableContext';
 
 const RootComponent = () => {
   const [userId, setUserId] = useState(null);
+  const [projectId, setProjectId] = useState(null);
 
   useEffect(() => {
-    const storedUserId = sessionStorage.getItem("userAccount");
-    console.log("Fetched userId from sessionStorage:", storedUserId);
-    setUserId(storedUserId);
+    const params = new URLSearchParams(window.location.search);
+    const queryUserId = params.get("userId");
+    const queryProjectId = params.get("projectId");
+
+    if (queryUserId) {
+      setUserId(queryUserId);
+      setProjectId(queryProjectId); // Set projectId from query params
+      sessionStorage.setItem("userAccount", queryUserId);
+    } else {
+      const storedUserId = sessionStorage.getItem("userAccount");
+      if (storedUserId) {
+        setUserId(storedUserId);
+        // Optionally, you can retrieve a stored projectId if needed.
+      }
+    }
   }, []);
+
+  console.log(projectId);
 
   return (
     <React.StrictMode>
       <EditableProvider userId={userId}>
-        <App userId={userId} setUserId={setUserId} />
+        <App userId={userId} setUserId={setUserId} projectId={projectId} />
       </EditableProvider>
     </React.StrictMode>
   );

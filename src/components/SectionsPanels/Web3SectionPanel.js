@@ -3,7 +3,7 @@ import DraggableWeb3Elements from '../../Elements/DraggableLayout/DraggableMinti
 
 const Web3SectionPanel = ({ searchQuery }) => {
   const web3Configurations = [
-    { imgSrc: './previewcomponent.png', configuration: 'mintingSection', label: 'Minting Section' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'mintingSection', label: 'Minting Section' },
     // { imgSrc: './walletIntegration.png', configuration: 'walletIntegration', label: 'Wallet Integration' },
     // { imgSrc: './tokenomicsSection.png', configuration: 'tokenomicsSection', label: 'Tokenomics Section' },
   ];

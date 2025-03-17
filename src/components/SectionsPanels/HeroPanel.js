@@ -4,9 +4,9 @@ import '../css/Sidebar.css'
 const HeroPanel = ({ contentListWidth, searchQuery }) => {
 
   const heroConfigurations = [
-    { imgSrc: './previewcomponent.png', configuration: 'heroOne', label: 'Hero One' },
-    { imgSrc: './previewcomponent.png', configuration: 'heroTwo', label: 'Hero Two' },
-    { imgSrc: './previewcomponent.png', configuration: 'heroThree', label: 'Hero Three' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'heroOne', label: 'Hero One' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'heroTwo', label: 'Hero Two' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'heroThree', label: 'Hero Three' },
   ];
 
   // Filter hero configurations based on search query

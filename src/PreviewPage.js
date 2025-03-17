@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
 const PreviewPage = () => {
-  const { userId, customUrl } = useParams();
+  // Destructure userId, projectId, and projectName from URL parameters.
+  const { userId, projectId, projectName } = useParams();
   const [projectHtml, setProjectHtml] = useState("");
   const [error, setError] = useState(null);
 
@@ -13,11 +14,12 @@ const PreviewPage = () => {
       try {
         let projectRef;
 
-        if (userId) {
-          projectRef = doc(db, "projects", userId);
-        } else if (customUrl) {
-          // If using custom URL, fetch based on `customUrl`
-          const q = query(collection(db, "projects"), where("customUrl", "==", customUrl));
+        // If we have userId and projectId, build the correct reference.
+        if (userId && projectId) {
+          projectRef = doc(db, "projects", userId, "ProjectRef", projectId);
+        } else {
+          // If using custom URL, fetch based on `customUrl` (if needed).
+          const q = query(collection(db, "projects"), where("customUrl", "==", userId)); // Adjust if necessary
           const querySnapshot = await getDocs(q);
 
           if (!querySnapshot.empty) {
@@ -43,7 +45,7 @@ const PreviewPage = () => {
     };
 
     fetchProject();
-  }, [userId, customUrl]);
+  }, [userId, projectId]);
 
   return (
     <div>

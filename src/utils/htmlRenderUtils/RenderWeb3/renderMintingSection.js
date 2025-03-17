@@ -226,14 +226,13 @@ export function renderMintingSection(mintingElement, collectedStyles) {
   `;
   }
 
-
   const mintButtonHtml = mintButton
     ? `<button class="mintButton" id="mint-btn-${id}" onclick="mintNFT()" disabled>${mintButton.content || 'MINT'}</button>`
     : '';
 
   const titleHtml = title
     ? `<span class="title">
-         ${title.label ? title.label + ': ' : ''}${title.content || ''}
+         ${title.content || ''}
        </span>`
     : '';
 

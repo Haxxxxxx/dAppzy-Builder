@@ -1,87 +1,270 @@
-// src/components/ScanDomains.jsx
 import React, { useEffect, useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { pinataJwt } from '../../../utils/configPinata';
+import './DomainsStyles.css';
 
-const ScanDomains = ({ walletAddress, userId, websiteSettings, onDomainSelected }) => {
+const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+const ScanDomains = ({
+  userId,
+  walletAddress,        // <-- New prop: the user's ETH address
+  elements,
+  buildHierarchy,
+  websiteSettings,
+  onDomainSelected,
+  onCancel,
+  setAutoSaveStatus,
+  generateFullHtml,
+  saveProjectToFirestore
+}) => {
+  const [deploymentStage, setDeploymentStage] = useState('SELECTING');
   const [domains, setDomains] = useState([]);
   const [status, setStatus] = useState('Scanning your wallet for Unstoppable Domains...');
+  const [selectedDomain, setSelectedDomain] = useState(null);
 
+  // -----------------------------------------------------
+  // 1) Fetch UD domains from your Cloud Function
+  // -----------------------------------------------------
   useEffect(() => {
-    const fetchDomains = async () => {
-      try {
-        // Use an environment variable for the endpoint if needed; otherwise, default to a relative URL.
-        const endpoint = process.env.REACT_APP_REVERSE_LOOKUP_URL;
-        const response = await fetch(`${endpoint}?address=${walletAddress}`);
-        console.log(endpoint, response);
+    const fetchUDDomains = async () => {
+      if (!walletAddress) {
+        setStatus('No wallet address provided.');
+        return;
+      }
+      setStatus('Scanning your wallet for Unstoppable Domains...');
 
+      try {
+        // Replace with your actual function URL
+        // e.g. "https://us-central1-yourProject.cloudfunctions.net/reverseLookup"
+        const functionUrl = "https://reverselookup-xkek6fohuq-uc.a.run.app";
+        // Build the final endpoint with the user's address
+        const endpoint = `${functionUrl}?address=${walletAddress}`;
+
+        const response = await fetch(endpoint);
         if (!response.ok) {
-          throw new Error(`Proxy error: ${response.statusText}`);
+          throw new Error(`UD lookup failed: ${response.statusText}`);
         }
-        const result = await response.json();
-        // For the Partner API, we expect a CursorList with an "items" array.
-        const items = result.items;
-        // For simplicity, take the first domain from the list (if available)
-        const domain = items && Array.isArray(items) && items.length > 0 ? items[0].name : null;
-        if (domain) {
-          setDomains([domain]);
-          setStatus('Found a UD domain in your wallet.');
+        const data = await response.json();
+
+        // The Partner API v3 returns an object with an "items" array
+        // Each item typically has a "name" property (the UD domain)
+        if (data.items && data.items.length > 0) {
+          const foundDomains = data.items.map((item) => item.name);
+          setDomains(foundDomains);
+          setStatus('Found UD domains in your wallet.');
         } else {
           setStatus('No UD domains found in your wallet.');
         }
       } catch (error) {
-        console.error('Error scanning wallet for UD domains:', error);
-        setStatus('Error scanning wallet: ' + error.message);
+        console.error('Error fetching UD domains:', error);
+        setStatus(`Error scanning wallet for UD domains: ${error.message}`);
       }
     };
 
-    if (walletAddress) {
-      fetchDomains();
-    }
+    fetchUDDomains();
   }, [walletAddress]);
 
-  const handleDomainSelect = async (selectedDomain) => {
+  // -----------------------------------------------------
+  // 2) Pin files to Pinata => returns final IPFS URL
+  // -----------------------------------------------------
+  const pinDirectoryToPinata = async (files, metadata) => {
+    const formData = new FormData();
+    files.forEach(({ file, fileName }) => {
+      formData.append('file', file, fileName);
+    });
+    formData.append('pinataOptions', JSON.stringify({ wrapWithDirectory: true }));
+    formData.append('pinataMetadata', JSON.stringify(metadata));
+
+    const response = await fetch(PINATA_PIN_FILE_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${pinataJwt}`,
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error(`Pinata pinFileToIPFS failed: ${response.statusText}`);
+    }
+    return response.json();
+  };
+
+  // -----------------------------------------------------
+  // 3) Deploy to IPFS on demand
+  // -----------------------------------------------------
+  const handleDeployToIPFS = async () => {
+    setAutoSaveStatus('Publishing to IPFS...');
     try {
-      const projectRef = doc(db, 'projects', userId);
-      const updatedSettings = { ...websiteSettings, customDomain: selectedDomain };
-      await updateDoc(projectRef, {
-        websiteSettings: updatedSettings,
-        lastUpdated: serverTimestamp(),
-      });
-      setStatus(`Domain "${selectedDomain}" linked to your project successfully!`);
-      if (onDomainSelected) onDomainSelected(selectedDomain);
+      if (!userId) {
+        setAutoSaveStatus('Error: No valid user ID found!');
+        return null;
+      }
+      const fullHtml = generateFullHtml();
+      const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
+      const files = [{ file: htmlBlob, fileName: `${userId}/index.html` }];
+
+      const metadata = {
+        name: websiteSettings.siteTitle || 'MyWebsite',
+        keyvalues: { userId },
+      };
+      const result = await pinDirectoryToPinata(files, metadata);
+      const cid = result.IpfsHash;
+      const ipfsUrl = `https://ipfs.io/ipfs/${cid}/${userId}`;
+
+      // Optionally save to Firestore
+      await saveProjectToFirestore(userId, fullHtml, 'ipfs', ipfsUrl);
+
+      setAutoSaveStatus('IPFS deploy complete!');
+      return ipfsUrl;
     } catch (error) {
-      console.error('Error updating project with selected domain:', error);
+      setAutoSaveStatus(`Error publishing to IPFS: ${error.message}`);
+      console.error('IPFS error:', error);
+      return null;
+    }
+  };
+
+  // -----------------------------------------------------
+  // 4) Link domain in Firestore
+  // -----------------------------------------------------
+  const linkDomainInFirestore = async (domainValue) => {
+    const projectRef = doc(db, 'projects', userId);
+    const updatedSettings = { ...websiteSettings, customDomain: domainValue };
+    await updateDoc(projectRef, {
+      websiteSettings: updatedSettings,
+      lastUpdated: serverTimestamp(),
+    });
+  };
+
+  // -----------------------------------------------------
+  // 5) When user selects a domain & clicks "Select Domain"
+  // -----------------------------------------------------
+  const handleSelectDomain = async () => {
+    if (!selectedDomain) return;
+
+    try {
+      setDeploymentStage('DEPLOYING');
+      setStatus('Deployment in Progress...');
+
+      let finalUrl = null;
+      if (selectedDomain === 'Use IPFS fallback') {
+        // Deploy to IPFS
+        finalUrl = await handleDeployToIPFS();
+        if (!finalUrl) {
+          setStatus('IPFS deploy failed. Cannot proceed.');
+          return;
+        }
+        await linkDomainInFirestore(finalUrl);
+      } else {
+        // If user picks a UD domain or default domain
+        await linkDomainInFirestore(selectedDomain);
+        finalUrl = `https://${selectedDomain}`;
+      }
+
+      setDeploymentStage('COMPLETE');
+      setStatus('Deployment Complete!');
+      setAutoSaveStatus('All changes saved.');
+
+      // Optionally open the new tab in background
+      const newTab = window.open(finalUrl, '_blank', 'noopener,noreferrer');
+      if (newTab) {
+        newTab.blur();
+        window.focus();
+      }
+
+    } catch (error) {
+      console.error('Error linking domain:', error);
       setStatus('Error linking domain: ' + error.message);
     }
   };
 
+  // -----------------------------------------------------
+  // 6) Render domain cards
+  // -----------------------------------------------------
+  const renderDomainCards = () => {
+    // Start with UD domains from the user's wallet
+    const domainCards = [...domains];
+
+    // Add your default provided domain (if you like)
+    const defaultDomain = websiteSettings.defaultDomain || 'myProvidedDomain.x';
+    domainCards.push(defaultDomain);
+
+    // Add IPFS fallback
+    domainCards.push('Use IPFS fallback');
+
+    if (domainCards.length === 0) return null;
+
+    return domainCards.map((domainName, index) => (
+      <div
+        key={index}
+        className={`domain-card ${selectedDomain === domainName ? 'selected' : ''}`}
+        onClick={() => setSelectedDomain(domainName)}
+      >
+        <div className="radio-circle">
+          {selectedDomain === domainName && <div className="radio-circle-inner" />}
+        </div>
+        <p className="domain-text">{domainName}</p>
+      </div>
+    ));
+  };
+
+  // -----------------------------------------------------
+  // 7) Conditional UI
+  // -----------------------------------------------------
+  if (deploymentStage === 'DEPLOYING') {
+    return (
+      <div className="domain-selection-modal">
+        <button className="close-btn" onClick={onCancel}>×</button>
+        <div className="deployment-status">
+          <div className="spinner" />
+          <h2>Deployment in Progress</h2>
+          <p>Your project is currently being deployed. This may take a few moments.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (deploymentStage === 'COMPLETE') {
+    return (
+      <div className="domain-selection-modal">
+        <button className="close-btn" onClick={onCancel}>×</button>
+        <div className="deployment-status">
+          <div className="check-circle" />
+          <h2>Deployment Complete</h2>
+          <p>Your project has been successfully deployed and is now live.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise, "SELECTING"
   return (
-    <div className="scan-domains">
-      <h3>Scan Your Wallet for Unstoppable Domains</h3>
-      <p>{status}</p>
-      {domains.length > 0 ? (
-        <div>
-          <p>Select a domain to use for your website:</p>
-          <ul>
-            {domains.map((domain, index) => (
-              <li key={index}>
-                <button onClick={() => handleDomainSelect(domain)}>{domain}</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div>
-          <p>
-            It appears you don’t own any Unstoppable Domains NFTs in your wallet. Please visit{' '}
-            <a href="https://unstoppabledomains.com/" target="_blank" rel="noopener noreferrer">
-              Unstoppable Domains
-            </a>{' '}
-            to purchase a domain.
-          </p>
-        </div>
-      )}
+    <div className="domain-selection-modal">
+      <button className="close-btn" onClick={onCancel}>×</button>
+
+      <h2>Choose a Domain</h2>
+      <p className="subtitle">
+        Select your Unstoppable Domain, a default domain, or IPFS fallback to deploy on IPFS.
+      </p>
+
+      <p className="status">{status}</p>
+
+      <div className="domain-grid">{renderDomainCards()}</div>
+
+      <div className="buttons">
+        <button className="cancel-btn" onClick={onCancel}>
+          Cancel
+        </button>
+        <button className="select-btn" onClick={handleSelectDomain}>
+          Select Domain
+        </button>
+      </div>
+        <p className="no-domains-message">
+          If you don’t own any Unstoppable Domains NFTs in your wallet. Please visit{' '}
+          <a href="https://unstoppabledomains.com/" target="_blank" rel="noopener noreferrer">
+            Unstoppable Domains
+          </a>{' '}
+          to purchase a domain.
+        </p>
     </div>
   );
 };

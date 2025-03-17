@@ -4,9 +4,9 @@ import DraggableNavbar from '../../Elements/DraggableLayout/DraggableNavbar';
 const NavbarPanel = ({ contentListWidth, searchQuery }) => {
 
   const navbarConfigurations = [
-    { imgSrc: './previewcomponent.png', configuration: 'customTemplate', label: 'Custom Navbar' },
-    { imgSrc: './previewcomponent.png', configuration: 'twoColumn', label: 'Two Column Navbar' },
-    { imgSrc: './previewcomponent.png', configuration: 'threeColumn', label: 'Three Column Navbar' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'customTemplate', label: 'Custom Navbar' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'twoColumn', label: 'Two Column Navbar' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'threeColumn', label: 'Three Column Navbar' },
   ];
 
   // Filter navbar configurations based on search query

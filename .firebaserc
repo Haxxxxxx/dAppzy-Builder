@@ -6,8 +6,11 @@
   "targets": {
     "third--space": {
       "hosting": {
-        "3rd-demo": [
+        "default": [
           "3rd-demo"
+        ],
+        "builder": [
+          "3rd-builder"
         ]
       }
     }
