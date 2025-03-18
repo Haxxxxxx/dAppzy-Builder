@@ -12,6 +12,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  align-items: center;
 }
 
 .return-button {
@@ -49,7 +50,9 @@
   display: flex;
   align-items: baseline;
 }
-
+.project-info img{
+  max-width: 40px;
+}
 .project-details-url {
   display: flex;
   align-items: flex-end;

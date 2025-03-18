@@ -61,6 +61,7 @@ export const CustomTemplateNavbarStyles = {
     position: 'relative',
     borderBottom: '1px solid transparent',
     borderRadius: '4px',
+
   },
   logoContainer: {
     display: 'flex',
@@ -71,18 +72,22 @@ export const CustomTemplateNavbarStyles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    width: '100%',
     marginTop: '16px',
     backgroundColor: '#ffffff',
     padding: '16px',
-    position: 'absolute',
-    top: '100%',
-    left: '0',
     zIndex: '10',
     boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
   },
   compactMenu: {
+    position:"absolute",
     boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)', // Deeper shadow for custom compact menu
+    top: '100%',
+    width:'90%',
+    display:'flex',
+    flexDirection:'column',
+    gap:'10px',
+    alignItems:'center'
+
   },
   standardMenuContainer: {
     display: 'flex',

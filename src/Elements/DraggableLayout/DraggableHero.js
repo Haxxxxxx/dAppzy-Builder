@@ -25,7 +25,7 @@ const DraggableHero = ({
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     // rename config -> structure so handleDrop sees item.structure
-    item: { type: 'hero', structure: configuration },
+    item: {id, type: 'hero', structure: configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

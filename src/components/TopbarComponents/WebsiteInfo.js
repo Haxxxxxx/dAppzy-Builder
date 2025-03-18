@@ -9,9 +9,9 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url }) => {
     // For example: const authToken = document.cookie.split(';').find(c => c.trim().startsWith("authToken="));
     // Then navigate to the dashboard URL which, in production, might be "https://dashboard.myurl.com".
     // For local development, if you have set up your hosts file to simulate subdomains, you might do:
-    // window.location.href = "http://localhost:3000/dashboard"; 
+    window.location.href = "http://localhost:3000/dashboard"; 
     // or in production:
-    window.location.href = "https://dashboard.dappzy.io";
+    // window.location.href = "https://dashboard.dappzy.io";
   };
 
   return (

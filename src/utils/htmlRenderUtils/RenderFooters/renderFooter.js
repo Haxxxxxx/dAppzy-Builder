@@ -58,7 +58,7 @@ export function renderFooter(footerElement, collectedStyles) {
     collectedStyles.push({
       className: `${id}`,
       styles: {
-        ...SimplefooterStyles.detailedFooter, // or DetailedFooterStyles.footer
+        ...DetailedFooterStyles.footer, // or DetailedFooterStyles.footer
         ...styles,
       },
     });

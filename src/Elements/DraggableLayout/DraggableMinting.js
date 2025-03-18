@@ -22,7 +22,7 @@ const DraggableMinting = ({
   // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type: 'mintingSection', configuration },
+    item: {id, type: 'mintingSection', configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

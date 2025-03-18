@@ -1,34 +1,34 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
 import '../components/css/Sidebar.css';
-import '../components/css/dropzone.css'
-
+import '../components/css/dropzone.css';
 
 const DropZone = ({ onDrop, parentId, onClick, text, className, scale }) => {
   const [{ isOver }, drop] = useDrop({
     accept: 'ELEMENT',
-    drop: (item) => {
+    drop: (item, monitor) => {
+      // Only trigger the drop if this is the shallow (most specific) drop target.
+      if (monitor.didDrop()) {
+        return;
+      }
       if (onDrop) {
         onDrop(item, parentId);
       }
     },
     collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
+      // Use shallow so that only the topmost drop zone that is hovered is considered.
+      isOver: monitor.isOver({ shallow: true }),
     }),
   });
 
   React.useEffect(() => {
-    if (isOver) {
-      document.body.style.cursor = 'grab';
-    } else {
-      document.body.style.cursor = 'default';
-    }
+    document.body.style.cursor = isOver ? 'grab' : 'default';
     return () => {
       document.body.style.cursor = 'default';
     };
   }, [isOver]);
 
-  // Dynamically adjust the size based on scale
+  // Dynamically adjust the size based on scale.
   const dropzoneStyle =
     className === 'first-dropzone'
       ? {
@@ -47,7 +47,7 @@ const DropZone = ({ onDrop, parentId, onClick, text, className, scale }) => {
       onClick={onClick}
     >
       <div className="dropzone-text">
-        {isOver ? 'Drop here to add an element' : text || 'Click to add a section'}
+        {isOver ? 'Drop here to add an element' : text || 'Drop here !'}
       </div>
     </div>
   );

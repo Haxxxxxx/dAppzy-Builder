@@ -2,9 +2,9 @@
 
 import {
   CustomTemplateHeroStyles,
+  defaultHeroStyles
   // ...others, e.g. heroTwoStyles, heroThreeStyles, etc.
 } from '../../../Elements/Sections/Heros/defaultHeroStyles';
-import { renderElementToHtml } from '../../htmlRender'; 
 // Assume you have a helper that can convert a single child to raw HTML if needed
 
 export function renderHero(heroElement, collectedStyles) {
@@ -21,9 +21,11 @@ export function renderHero(heroElement, collectedStyles) {
   if (configuration === 'heroThree' || configuration === 'customTemplate') {
     baseHeroSection = CustomTemplateHeroStyles.heroSection;
   } 
-  // else if (configuration === 'heroTwo') ...
-  // else if (configuration === 'heroOne') ...
-  // fallback if needed
+  if (configuration === 'heroTwo' || configuration === 'customTemplate') {
+    baseHeroSection = defaultHeroStyles.heroSection;
+  }   if (configuration === 'heroOne' || configuration === 'customTemplate') {
+    baseHeroSection = defaultHeroStyles.heroSection;
+  } 
 
   // 2) Parse children to produce HTML (caption, heading, paragraph, multiple buttons, image)
   let captionHtml = '';

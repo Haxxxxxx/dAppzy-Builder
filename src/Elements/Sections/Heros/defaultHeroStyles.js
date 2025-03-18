@@ -3,6 +3,7 @@
 export const defaultHeroStyles = {
   heroSection: {
     display: 'flex',
+    position:'relative',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',

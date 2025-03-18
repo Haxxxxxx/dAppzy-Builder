@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, forwardRef } from 'react';
+import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../context/EditableContext';
 import DropZone from '../utils/DropZone';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
-import { loadFromLocalStorage } from '../utils/LeftBarUtils/storageUtils';
 
 const ContentList = forwardRef(
   (
@@ -12,7 +12,7 @@ const ContentList = forwardRef(
       scale,
       setScale,
       isPreviewMode,
-      handleOpenMediaPanel = () => { },
+      handleOpenMediaPanel = () => {},
       isSideBarVisible,
       handlePanelToggle,
     },
@@ -21,15 +21,20 @@ const ContentList = forwardRef(
     const {
       elements,
       addNewElement,
+      moveElement,
       setSelectedElement,
       setElements,
-      ELEMENTS_VERSION,
       saveToLocalStorage,
       selectedStyle,
       selectedElement,
     } = useContext(EditableContext);
 
-    // In ContentList.js
+    // Use useDragLayer to determine if any drag is active.
+    const { isDragging } = useDragLayer((monitor) => ({
+      isDragging: monitor.getItem() !== null,
+    }));
+
+    // Calculate scaling based on canvas and content list widths.
     const calculateScale = () => {
       if (canvasWidth && contentListWidth) {
         const newScale = canvasWidth / contentListWidth;
@@ -41,10 +46,17 @@ const ContentList = forwardRef(
       calculateScale();
     }, [contentListWidth, canvasWidth]);
 
-
     const handleDrop = (item, index, parentId = null) => {
-      const safeIndex = index !== null && index !== undefined ? index : 0;
+      const safeIndex = index ?? 0;
 
+      // If the dropped item has an id, it is an existing element to be moved.
+      if (item && item.id) {
+        moveElement(item.id, safeIndex);
+        setSelectedElement({ id: item.id, type: item.type });
+        return;
+      }
+
+      // Otherwise, add a new element.
       if (item.type === 'button' || item.type === 'image') {
         const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
         setSelectedElement({ id: newElementId, type: item.type });
@@ -52,7 +64,8 @@ const ContentList = forwardRef(
         item.type === 'hero' ||
         item.type === 'navbar' ||
         item.type === 'cta' ||
-        item.type === 'mintingSection'
+        item.type === 'mintingSection' ||
+        item.type === 'footer'
       ) {
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
         setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
@@ -72,7 +85,6 @@ const ContentList = forwardRef(
           transform: `scale(${scale})`,
           transition: 'transform 0.3s ease',
           margin: scale < 1 ? '0 auto' : '0',
-          position: 'relative',
         }}
         onClick={(e) => {
           if (e.target === ref.current) {
@@ -80,13 +92,14 @@ const ContentList = forwardRef(
           }
         }}
       >
-        {!isPreviewMode && elements.length === 0 && (
+        {/* Render drop zone only when dragging and no elements exist */}
+        {!isPreviewMode && elements.length === 0 && isDragging && (
           <DropZone
             index={0}
             onDrop={(item) => handleDrop(item, 0)}
             text="Add layout"
             className="first-dropzone"
-            scale={scale} // Pass scale to DropZone
+            scale={scale}
             onClick={(e) => {
               e.stopPropagation();
             }}
@@ -95,25 +108,37 @@ const ContentList = forwardRef(
 
         {elements
           .filter((element) => !element.parentId)
-          .map((element) =>
-            renderElement(
-              element,
-              elements,
-              contentListWidth,
-              setSelectedElement,
-              setElements,
-              handlePanelToggle,
-              selectedElement,
-              selectedStyle,
-              isPreviewMode,
-              handleOpenMediaPanel
-            )
-          )}
+          .map((element, index) => (
+            <React.Fragment key={element.id}>
+              {/* Render drop zone before each element only during dragging */}
+              {isDragging && (
+                <DropZone
+                  index={index}
+                  onDrop={(item) => handleDrop(item, index)}
+                  text=""
+                  className="section-dropzone"
+                />
+              )}
+              {renderElement(
+                element,
+                elements,
+                contentListWidth,
+                setSelectedElement,
+                setElements,
+                handlePanelToggle,
+                selectedElement,
+                selectedStyle,
+                isPreviewMode,
+                handleOpenMediaPanel
+              )}
+            </React.Fragment>
+          ))}
 
-        {!isPreviewMode && elements.length > 0 && (
+        {/* Render drop zone after the last element only during dragging */}
+        {!isPreviewMode && elements.length > 0 && isDragging && (
           <DropZone
             index={elements.length}
-            onDrop={(item) => handleDrop(item, null)}
+            onDrop={(item) => handleDrop(item, elements.length)}
             text="Click or Drop items here to add to the page"
             className="default-dropzone"
             onClick={(e) => {
@@ -124,7 +149,6 @@ const ContentList = forwardRef(
         )}
       </div>
     );
-
   }
 );
 

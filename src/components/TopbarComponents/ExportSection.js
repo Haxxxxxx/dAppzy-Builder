@@ -60,7 +60,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
     const globalStyles = collectedStyles
       .map(({ className, styles }) => `.${className} {\n${flattenStyles(styles)}\n}`)
       .join('\n');
-
+    console.log(websiteSettings);
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -68,6 +68,11 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${websiteSettings.siteTitle || 'Exported Website'}</title>
+        ${
+          websiteSettings.faviconUrl
+            ? `<link rel="icon" href="${websiteSettings.faviconUrl}" type="image/x-icon">`
+            : ''
+        }
         <style>
           body { margin: 0; font-family: Arial, sans-serif; }
           ${globalStyles}
@@ -79,6 +84,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
       </html>
     `.trim();
   };
+  
   // ------------------------------------------------------------------
   // Save project to Firestore
   // ------------------------------------------------------------------
@@ -86,16 +92,19 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
     const isLocal = window.location.hostname === 'localhost';
     const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.dappzy.io';
     const projectName = websiteSettings.siteTitle || 'MyWebsite';
-
+  
+    // If projectId is not defined, use the placeholder.
+    if (!projectId) {
+      projectId = "R2WJQxozoXx2mGAMlmPU";
+    }
+  
     let testUrl;
     if (deployType === 'web2') {
       testUrl = `${baseUrl}/${userId}/ProjectRef/${projectId}/${projectName}`;
     } else {
       testUrl = deployUrl; // IPFS or custom domain
     }
-    if (!projectId) {
-      throw new Error("No valid projectId provided.");
-    }
+  
     const projectRef = doc(db, 'projects', userId, "ProjectRef", projectId);
     await setDoc(
       projectRef,
@@ -110,10 +119,10 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
       },
       { merge: true }
     );
-
+  
     return testUrl;
   };
-
+  
 
   // ------------------------------------------------------------------
   // Web2 Deploy

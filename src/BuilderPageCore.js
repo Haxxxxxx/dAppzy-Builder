@@ -7,10 +7,11 @@ import LeftBar from "./components/LeftBar";
 import StructurePanel from "./components/LeftbarPanels/StructurePanel";
 import MediaPanel from "./components/LeftbarPanels/MediaPanel";
 import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPanel";
-import ContentList from "./components/Canva";
+import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
 import Topbar from "./components/TopBar";
 import SideBar from './components/SideBar'
+
 const BuilderPageCore = ({
   userId,
   projectId,

@@ -1,12 +1,65 @@
-// src/components/LeftbarPanels/SettingsPanel.js
+// src/components/LeftbarPanels/WebsiteSettingsPanel.js
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import '../css/SettingsPanel.css';
 import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
 import { storage } from '../../firebase';
 import { EditableContext } from '../../context/EditableContext';
+import { pinata, pinataJwt } from '../../utils/configPinata';
+
+// Helper function to get or create a group on Pinata.
+async function getOrCreateGroup(walletId) {
+  try {
+    if (!pinata.groups) {
+      throw new Error("Pinata groups is undefined. Check your SDK version and configuration.");
+    }
+    const groupsResponse = await pinata.groups.list().name(walletId);
+    if (groupsResponse.groups && groupsResponse.groups.length > 0) {
+      console.log("Found group:", groupsResponse.groups[0]);
+      return groupsResponse.groups[0];
+    } else {
+      const newGroup = await pinata.groups.create({ name: walletId });
+      console.log("Created new group:", newGroup);
+      return newGroup;
+    }
+  } catch (error) {
+    console.error("Error fetching or creating group:", error);
+    throw error;
+  }
+}
+
+// Helper function to upload a file to Pinata.
+async function uploadFileToPinata(file, walletId, projectName) {
+  try {
+    const group = await getOrCreateGroup(walletId);
+    const url = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+    const formData = new FormData();
+    formData.append('file', file);
+    // Attach metadata to simulate a folder structure and preserve file info.
+    const metadata = {
+      name: `${walletId}/${file.name}`,
+      keyvalues: {
+        walletId: walletId,
+        projectName: projectName,
+      },
+    };
+    formData.append('pinataMetadata', JSON.stringify(metadata));
+    const response = await fetch(`${url}?group=${group.id}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${pinataJwt}`,
+      },
+      body: formData,
+    });
+    const data = await response.json();
+    console.log("Pinata upload response:", data);
+    return data;
+  } catch (error) {
+    console.error("Error uploading file to Pinata:", error);
+    throw error;
+  }
+}
 
 const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
-
   // Default settings for the website/project.
   const defaultSettings = {
     siteTitle: 'My Website',
@@ -16,7 +69,7 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
     // Add additional settings as needed.
   };
 
-  // On mount, load saved settings from localStorage (if any).
+  // Load saved settings from localStorage (if any) on mount.
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('websiteSettings');
     return saved ? JSON.parse(saved) : defaultSettings;
@@ -24,9 +77,6 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
 
   // Use a ref to store the initial project name for comparison.
   const initialProjectNameRef = useRef(settings.siteTitle);
-
-
-
 
   // Handler for input changes.
   const handleInputChange = (e) => {
@@ -76,13 +126,28 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
     }
   };
 
+  // Handle favicon image upload using Pinata.
+  const handleFaviconUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      // Upload the file to Pinata using the userId as the walletId and 'favicon' as the projectName.
+      const response = await uploadFileToPinata(file, userId, 'favicon');
+      if (response && response.IpfsHash) {
+        const url = `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`;
+        setSettings(prev => ({ ...prev, faviconUrl: url }));
+      }
+    } catch (error) {
+      console.error("Error uploading favicon via Pinata:", error);
+    }
+  };
+
   const handleSave = () => {
     localStorage.setItem('websiteSettings', JSON.stringify(settings));
     if (onUpdateSettings) {
       onUpdateSettings(settings);
     }
   };
-
 
   return (
     <div className="settings-panel scrollable-panel">
@@ -109,6 +174,23 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
         />
       </div>
       <div className="settings-group">
+        <label htmlFor="faviconUpload">Upload Favicon:</label>
+        <input
+          id="faviconUpload"
+          type="file"
+          accept="image/*"
+          onChange={handleFaviconUpload}
+        />
+        {settings.faviconUrl && (
+          <img
+            src={settings.faviconUrl}
+            alt="Favicon Preview"
+            style={{ width: '32px', height: '32px', marginTop: '8px' }}
+          />
+        )}
+      </div>
+      {/* Uncomment the sections below if you need additional settings fields.
+      <div className="settings-group">
         <label htmlFor="description">Description:</label>
         <textarea
           name="description"
@@ -127,6 +209,7 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
           placeholder="Enter author name"
         />
       </div>
+      */}
       <button onClick={handleSave} className="save-button">
         Save Settings
       </button>

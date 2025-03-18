@@ -97,7 +97,8 @@ export const SimplefooterStyles = {
 export const DetailedFooterStyles = {
   footer: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
+    justifyContent : 'space-evenly',
     gap: '16px',
     padding: '24px',
     backgroundColor: '#444444',

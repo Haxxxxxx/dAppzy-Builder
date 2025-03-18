@@ -21,7 +21,7 @@ const DraggableFooter = ({
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { type: 'footer', configuration },
+    item: { id, type: 'footer', configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

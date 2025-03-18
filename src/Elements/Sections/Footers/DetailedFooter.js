@@ -37,7 +37,7 @@ const DetailedFooter = ({
 
     if (noCustomStyles) {
       updateStyles(footerElement.id, {
-        ...DetailedFooterStyles.nav,
+        ...DetailedFooterStyles.footer,
       });
     }
   }, [footerElement, updateStyles]);
@@ -56,7 +56,7 @@ const DetailedFooter = ({
 
   // Merge local + custom + highlight if dragging
   const footerStyles = {
-    ...DetailedFooterStyles.nav,
+    ...DetailedFooterStyles.footer,
     ...(footerElement?.styles || {}),
     ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
   };

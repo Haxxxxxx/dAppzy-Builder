@@ -1,4 +1,3 @@
-// src/components/withSelectable.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
@@ -8,26 +7,26 @@ const withSelectable = (WrappedComponent) => {
     const {
       selectedElement,
       setSelectedElement,
-      selectedStyle,
       handleRemoveElement,
-      updateStyles,
     } = useContext(EditableContext);
 
     const isSelected = selectedElement?.id === id;
 
     const handleSelect = (e) => {
       e.stopPropagation();
-      setSelectedElement({ id, type: props.type, styles: props.styles });
+      // When selected, we set the selected element.
+      setSelectedElement({ id, type: props.type });
     };
 
     const handleRemove = (e) => {
       e.stopPropagation();
-      handleRemoveElement(id); // <--- triggers removal in local storage too
+      handleRemoveElement(id);
     };
 
-    const handleStyleChange = (styleKey, value) => {
-      updateStyles(id, { [styleKey]: value });
-    };
+    // When selected, force a blue outline border.
+    const forcedSelectedStyle = isSelected
+      ? { outline: '2px solid var(----purple, #5C4EFA)'}
+      : {};
 
     return (
       <>
@@ -78,18 +77,16 @@ const withSelectable = (WrappedComponent) => {
             </span>
           </div>
         )}
-        <WrappedComponent
-          {...props}
+        <div
           onClick={handleSelect}
-          id={id}
           style={{
-            ...(props.style || {}),
-            position: isSelected ? 'relative' : 'static',
-            ...(isSelected ? selectedStyle : {}),
-            cursor: 'text',
+            position: 'relative',
+            ...forcedSelectedStyle,
             boxSizing: 'border-box',
           }}
-        />
+        >
+          <WrappedComponent {...props} />
+        </div>
       </>
     );
   };

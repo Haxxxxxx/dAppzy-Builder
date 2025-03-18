@@ -44,7 +44,8 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
           padding: '8px',
           margin: '8px 0',
           borderRadius: '4px',
-          color: '#686868'
+          color: '#686868',
+          position:'relative',
         }}
       >
         {/* Icon display */}

@@ -24,7 +24,7 @@ const DraggableNavbar = ({
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     // rename config -> structure so handleDrop sees item.structure
-    item: { type: 'navbar', structure: configuration },
+    item: {id, type: 'navbar', structure: configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

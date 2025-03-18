@@ -22,7 +22,7 @@ const DraggableCTA = ({
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     // rename config -> structure so handleDrop sees item.structure
-    item: { type: 'cta', structure: configuration },
+    item: { id, type: 'cta', structure: configuration },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

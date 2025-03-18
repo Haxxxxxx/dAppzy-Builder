@@ -13,12 +13,12 @@ const LeftBar = ({ openPanel, onShowSidebar, onShowStructurePanel, onShowMediaPa
           <span className="material-symbols-outlined">add</span>
         </button>
         {/* Structure Icon */}
-        <button
+        {/* <button
           onClick={onShowStructurePanel}
           className={`icon-button ${openPanel === 'structure' ? 'active' : ''}`}
         >
           <span className="material-symbols-outlined">stacks</span>
-        </button>
+        </button> */}
         {/* Media Icon */}
         <button
           onClick={onShowMediaPanel}
