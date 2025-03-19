@@ -52,39 +52,28 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
   // Generate full HTML (used for Web2 deployment)
   // ------------------------------------------------------------------
   const generateFullHtml = () => {
-    const collectedStyles = [];
-    const nestedElements = buildHierarchy(elements);
-    const bodyHtml = nestedElements
-      .map((element) => renderElementToHtml(element, collectedStyles))
-      .join('');
-    const globalStyles = collectedStyles
-      .map(({ className, styles }) => `.${className} {\n${flattenStyles(styles)}\n}`)
-      .join('\n');
-    console.log(websiteSettings);
+    const title = websiteSettings.siteTitle || 'Exported Website';
+    const favicon = websiteSettings.faviconUrl || '/favicon.ico';
     return `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${websiteSettings.siteTitle || 'Exported Website'}</title>
-        ${
-          websiteSettings.faviconUrl
-            ? `<link rel="icon" href="${websiteSettings.faviconUrl}" type="image/x-icon">`
-            : ''
-        }
+        <link rel="icon" href="${favicon}">
+        <title>${title}</title>
         <style>
-          body { margin: 0; font-family: Arial, sans-serif; }
-          ${globalStyles}
+          /* Your global styles */
         </style>
       </head>
       <body>
-        ${bodyHtml}
+        <!-- Your content here -->
       </body>
       </html>
     `.trim();
   };
-  
+
+
   // ------------------------------------------------------------------
   // Save project to Firestore
   // ------------------------------------------------------------------
@@ -92,19 +81,22 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
     const isLocal = window.location.hostname === 'localhost';
     const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.dappzy.io';
     const projectName = websiteSettings.siteTitle || 'MyWebsite';
-  
+
     // If projectId is not defined, use the placeholder.
     if (!projectId) {
-      projectId = "R2WJQxozoXx2mGAMlmPU";
+      // DEV ONLY : 
+      // projectId = "R2WJQxozoXx2mGAMlmPU";
+      // production
+      throw new Error("No valid projectId provided.");
     }
-  
+
     let testUrl;
     if (deployType === 'web2') {
       testUrl = `${baseUrl}/${userId}/ProjectRef/${projectId}/${projectName}`;
     } else {
       testUrl = deployUrl; // IPFS or custom domain
     }
-  
+
     const projectRef = doc(db, 'projects', userId, "ProjectRef", projectId);
     await setDoc(
       projectRef,
@@ -119,10 +111,10 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
       },
       { merge: true }
     );
-  
+
     return testUrl;
   };
-  
+
 
   // ------------------------------------------------------------------
   // Web2 Deploy

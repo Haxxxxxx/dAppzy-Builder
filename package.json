@@ -26,6 +26,7 @@
     "https-browserify": "^1.0.0",
     "ipfs-http-client": "^60.0.1",
     "jszip": "^3.10.1",
+    "nodemailer": "^6.10.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "pinata": "^1.10.1",

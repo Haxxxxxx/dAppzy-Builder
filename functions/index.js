@@ -6,13 +6,82 @@ const nacl = require("tweetnacl");
 const { PublicKey } = require("@solana/web3.js");
 const fetch = require("node-fetch");
 const cors = require("cors")({ origin: true }); // For manual CORS handling
+const nodemailer = require("nodemailer");
 
 // 1) Define your secret using firebase-functions/params
 const udJwt = defineSecret("UD_JWT");
-
+const EMAIL_USER = defineSecret("EMAIL_USER");
+const EMAIL_PASS = defineSecret("EMAIL_PASS");
 // 2) Initialize Firebase Admin
 admin.initializeApp();
 
+
+
+exports.sendSupportEmail = onRequest(
+  {
+    secrets: [EMAIL_USER, EMAIL_PASS],
+    cors: true,        // For v2, handles OPTIONS automatically
+    invoker: "public", // Make it publicly callable
+  },
+  (req, res) => {
+    cors(req, res, async () => {
+      if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method Not Allowed" });
+      }
+
+      try {
+        // Parse incoming data
+        const { text, imageBase64 } = req.body;
+
+        // Validate
+        if (!text || text.trim().length === 0) {
+          return res.status(400).json({ error: "Message text is required" });
+        }
+
+        // Create a Nodemailer transporter
+        // Example uses Gmail; adapt as needed (service, port, auth, etc.)
+        let transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: EMAIL_USER.value(),
+            pass: EMAIL_PASS.value(),
+          },
+        });
+
+        // Build mail options
+        const mailOptions = {
+          from: EMAIL_USER.value(),           // Sender (your developer email)
+          to: "developer@example.com",        // The developer's address
+          subject: "New Support Request",     // Email subject
+          text: text,                         // Email body in plain text
+        };
+
+        // If an image was provided, attach it
+        if (imageBase64) {
+          // imageBase64 should be something like "data:image/png;base64,iVBORw0KGgoAAAANS..."
+          // We can split off the 'base64,' part and use the remainder as raw base64 data
+          const base64Data = imageBase64.split("base64,")[1];
+          mailOptions.attachments = [
+            {
+              filename: "screenshot.png", // Or any name you prefer
+              content: base64Data,
+              encoding: "base64",
+            },
+          ];
+        }
+
+        // Send the email
+        await transporter.sendMail(mailOptions);
+
+        // Respond success
+        return res.json({ success: true, message: "Email sent successfully" });
+      } catch (error) {
+        console.error("Error sending support email:", error);
+        return res.status(500).json({ error: error.message });
+      }
+    });
+  }
+);
 // 3) Reverse Lookup Function
 exports.reverseLookup = onRequest(
   {
@@ -75,7 +144,6 @@ exports.reverseLookup = onRequest(
   }
 );
 
-
 // 6) Existing Phantom verification endpoint (unchanged)
 exports.verifyPhantom = onRequest(
   {
@@ -125,3 +193,5 @@ exports.verifyPhantom = onRequest(
     }
   }
 );
+
+
