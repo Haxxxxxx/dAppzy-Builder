@@ -4,28 +4,17 @@
 
 .media-panel {
   padding: 16px;
+  font-family: Montserrat, sans-serif;
 }
 
 /* Upload Buttons */
 .upload-buttons {
   display: flex;
   gap: 16px;
-  margin-bottom: 16px;
-  align-items: center
-}
+  margin: 20px 0;
+  align-items: center;
+  font-family: Montserrat, sans-serif;
 
-.upload-button {
-  background-color: #28a745;
-  color: #fff;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  position: relative;
-}
-
-.upload-button:hover {
-  background-color: #218838;
 }
 
 .dropzone {
@@ -36,35 +25,54 @@
   text-align: center;
   color: #6c757d;
   cursor: pointer;
+  margin: 0;
 }
 
 .dropzone:hover {
-  background-color: #f8f9fa;
+  background-color: #7e889154;
 }
 
 /* Filter Buttons */
 .filter-buttons {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   margin-bottom: 16px;
   justify-content: space-between;
 }
 
+/* Shared default for all filter buttons */
 .filter-buttons button {
-  padding: 8px 16px;
+  height: 35px;
+  padding: 4px;
+  flex: 1 0 0;
+  border-radius: 5px;
   border: none;
-  background-color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.10);
+  color: rgba(217, 217, 217, 1);
+  font-family: Montserrat;
   cursor: pointer;
-  border-radius: 4px;
 }
 
+/* Shared active style for Media/Documents */
 .filter-buttons button.active {
-  background-color: #007bff;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.50);
+  color: #FFF;
 }
 
-.filter-buttons button:hover {
-  background-color: #d0d0d0;
+/* ============ SPECIAL All button ============ */
+
+/* All button default (unselected) */
+.filter-buttons button.all-button {
+  background-color: #5c4efa63;
+  /* example color */
+  color: #FFF;
+}
+
+/* All button selected (active) */
+.filter-buttons button.all-button.active {
+  background-color: #5C4EFA;
+  /* example color */
+  color: #FFF;
 }
 
 /* Media Grid for Square Items */
@@ -79,11 +87,12 @@
 .media-item {
   position: relative;
   overflow: hidden;
-  width: 100px;
+  width: 120px;
   /* Fixed width */
-  height: 100px;
+  height: 120px;
   /* Fixed height to make it square */
   border-radius: 8px;
+  padding: 0;
 }
 
 .media-preview {
@@ -149,19 +158,19 @@
 .overlay-button {
   background-color: #007bff;
   border: none;
-  padding: 6px 12px;
+  padding: 6px;
   border-radius: 4px;
   cursor: pointer;
-  color: #fff;
+  color: #fff !important;
   font-size: 14px;
 }
 
 .overlay-button:hover {
-  background-color: #0056b3;
+  background-color: #5C4EFA;
 }
 
 .remove-button {
-  background-color: #dc3545;
+  background-color: #dc35465e;
 }
 
 .remove-button:hover {
@@ -197,8 +206,8 @@
 
 .close-button {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 15px;
+  right: 15px;
   background-color: #dc3545;
   color: #fff;
   border: none;
@@ -234,19 +243,59 @@
   opacity: 1;
 }
 
-.search-bar {
-  margin: 16px 0;
+
+.preview-title-edit {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+  color: black;
+  gap: 10px;
 }
 
-.search-bar input {
-  padding: 8px;
-  font-size: 16px;
-  border: 1px solid #ccc;
+.preview-title-edit p {
+  margin: 4px;
+}
+
+.preview-title-edit input {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 1rem;
+}
+
+.save-changes-btn {
+  background-color: #66bb6a;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
   border-radius: 4px;
-  
+  cursor: pointer;
 }
 
-.search-bar input:focus {
-  outline: none;
-  border-color: #007bff;
+.save-changes-btn:hover {
+  background-color: #57a05a;
+}
+
+.media-panel .media-panel-search-bar{
+  margin-bottom: 15px;
+}
+
+.media-panel-search-bar {
+  display: flex;
+  height: 30px;
+  padding: 4px 9px;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  color: var(----editor-text, #D9D9D9);
+
+  border-radius: 3px;
+  border: 0.7px solid var(----not-selected, #838389);
+  background: #313031;
+}
+
+.media-panel-search-bar input {
+  border: none;
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
 }

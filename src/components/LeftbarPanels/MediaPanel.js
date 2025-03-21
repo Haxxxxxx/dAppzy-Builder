@@ -1,5 +1,5 @@
 // src/components/LeftbarPanels/MediaPanel.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './css/MediaPanel.css';
 import { MediaItem } from './MediaItem';
 import { PinataSDK } from '@pinata/sdk';
@@ -111,9 +111,16 @@ async function deleteFileFromPinata(ipfsHash) {
       'Authorization': `Bearer ${pinataJwt}`,
     },
   });
-  const data = await response.json();
-  return data;
+  
+  if (!response.ok) {
+    throw new Error(`Failed to unpin: ${response.status} - ${response.statusText}`);
+  }
+  
+  // We expect a plain text or empty response, so use .text()
+  const resultText = await response.text();
+  return resultText; // e.g. "OK"
 }
+
 
 const MediaPanel = ({ projectName, isOpen, userId }) => {
   const [mediaItems, setMediaItems] = useState([]);
@@ -123,6 +130,7 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
   const [editingName, setEditingName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchMedia = async () => {
     if (!userId || !projectName.trim()) {
@@ -188,11 +196,13 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
     const itemToRemove = mediaItems.find(item => item.id === itemId);
     if (!itemToRemove) return;
     try {
-      await deleteFileFromPinata(itemToRemove.ipfsHash);
+      const result = await deleteFileFromPinata(itemToRemove.ipfsHash);
+      console.log('Delete file response:', result); // Should log "OK"
       setMediaItems(prev => prev.filter(item => item.id !== itemId));
     } catch (error) {
       console.error("Error deleting file from Pinata:", error);
     }
+    
   };
 
   const handlePreviewClick = (item) => setPreviewItem(item);
@@ -240,34 +250,91 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
     window.addToMediaPanel = (newItem) => setMediaItems(prev => [newItem, ...prev]);
     return () => { window.addToMediaPanel = null; };
   }, []);
+  // 1) Additional local states
+  const [previewEditingName, setPreviewEditingName] = useState('');
+  const [previewHasChanges, setPreviewHasChanges] = useState(false);
+
+
+
+  // 3) A method to save changes when user clicks "Save"
+  const handlePreviewSave = () => {
+    if (!previewItem) return;
+
+    // Update the item in mediaItems
+    setMediaItems(prev =>
+      prev.map(mItem =>
+        mItem.id === previewItem.id
+          ? { ...mItem, name: previewEditingName }
+          : mItem
+      )
+    );
+
+    // Update the previewItem so it reflects the new name if we keep the modal open
+    setPreviewItem(prev => ({ ...prev, name: previewEditingName }));
+
+    // Optionally, you could also call an API to persist the name change to Pinata here
+    // e.g. updatePinataMetadata(ipfsHash, newName);
+
+    // Reset the "has changes" flag
+    setPreviewHasChanges(false);
+  };
 
   return (
     <div className="media-panel scrollable-panel" onDrop={handleDrop} onDragOver={handleDragOver}>
-      <h3>Media Library</h3>
       <div className="filter-buttons">
-        <button className={filterType === 'media' ? 'active' : ''} onClick={() => handleSetFilterType('media')}>
+        <button
+          className={filterType === 'media' ? 'active' : ''}
+          onClick={() => handleSetFilterType('media')}
+        >
           Media
         </button>
-        <button className={filterType === 'documents' ? 'active' : ''} onClick={() => handleSetFilterType('documents')}>
+
+        <button
+          className={filterType === 'documents' ? 'active' : ''}
+          onClick={() => handleSetFilterType('documents')}
+        >
           Documents
         </button>
-        <button className={filterType === 'all' ? 'active' : ''} onClick={() => handleSetFilterType('all')}>
+
+        {/* Add a custom class "all-button" */}
+        <button
+          className={`all-button ${filterType === 'all' ? 'active' : ''}`}
+          onClick={() => handleSetFilterType('all')}
+        >
           All
         </button>
       </div>
-      <div className="search-bar">
-        <input type="text" placeholder="Search by name..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      <div className="media-panel-search-bar">
+        <span className="material-symbols-outlined">search</span>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
       </div>
       <hr />
       <div className="upload-buttons">
-        <label htmlFor="file-upload" className="upload-button">
-          Upload Files
-          <input id="file-upload" type="file" multiple onChange={handleFileUpload} style={{ display: 'none' }} />
-        </label>
-        <div className="dropzone">
-          Drag &amp; Drop Files Here
+        <div
+          className="dropzone"
+          onClick={() => fileInputRef.current.click()}    // trigger hidden input on click
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          <img src='./img/UploadMediaPanel.png'></img>
+          <p>Click or Drag &amp; Drop Files Here</p>
+          <input
+            id="file-upload"
+            type="file"
+            multiple
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
         </div>
       </div>
+      <hr />
+
       {isLoading ? (
         <div className="media-loading-state">
           <div className="spinner" />
@@ -295,7 +362,31 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
       {previewItem && (
         <div className="preview-modal" onClick={closePreviewModal}>
           <div className="preview-content" onClick={e => e.stopPropagation()}>
-            {previewItem.type === 'image' && <img src={previewItem.src} alt={previewItem.name || "Preview"} />}
+
+            {/* Title editing section */}
+            {previewItem.type === 'image' && (
+              <div className="preview-title-edit">
+                <p>Default Name : {previewItem.id}</p>
+                <input
+                  type="text"
+                  value={previewEditingName}
+                  onChange={(e) => {
+                    setPreviewEditingName(e.target.value);
+                    setPreviewHasChanges(e.target.value !== previewItem.name);
+                  }}
+                />
+                {previewHasChanges && (
+                  <button onClick={handlePreviewSave} className="save-changes-btn">
+                    Save
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* The rest of your preview */}
+            {previewItem.type === 'image' && (
+              <img src={previewItem.src} alt={previewItem.name || "Preview"} />
+            )}
             {previewItem.type === 'video' && (
               <video controls autoPlay>
                 <source src={previewItem.src} type="video/mp4" />
@@ -307,10 +398,12 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
                 <div className="file-label">File Preview</div>
               </div>
             )}
+
             <button className="close-button" onClick={closePreviewModal}>Close</button>
           </div>
         </div>
       )}
+
     </div>
   );
 };
