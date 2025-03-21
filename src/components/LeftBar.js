@@ -1,32 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './css/LeftBar.css';
+import SupportPopup from './LeftbarPanels/SupportPopup';
 
-const LeftBar = ({ openPanel, onShowSidebar, onShowStructurePanel, onShowMediaPanel, onShowSettingsPanel }) => {
+const LeftBar = ({ 
+  openPanel, 
+  onShowSidebar, 
+  onShowStructurePanel, 
+  onShowMediaPanel, 
+  onShowSettingsPanel 
+}) => {
+  // Track whether SupportPopup is visible
+  const [showSupportPopup, setShowSupportPopup] = useState(false);
+
+  const handleHelpClick = () => {
+    setShowSupportPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowSupportPopup(false);
+  };
+
   return (
     <div className="leftbar">
       <div className="buttons-group">
-        {/* Layout/Element Icon */}
         <button
           onClick={onShowSidebar}
           className={`icon-button ${openPanel === 'sidebar' ? 'active' : ''}`}
         >
           <span className="material-symbols-outlined">add</span>
         </button>
-        {/* Structure Icon */}
-        {/* <button
-          onClick={onShowStructurePanel}
-          className={`icon-button ${openPanel === 'structure' ? 'active' : ''}`}
-        >
-          <span className="material-symbols-outlined">stacks</span>
-        </button> */}
-        {/* Media Icon */}
+
         <button
           onClick={onShowMediaPanel}
           className={`icon-button ${openPanel === 'media' ? 'active' : ''}`}
         >
           <span className="material-symbols-outlined">perm_media</span>
         </button>
-        {/* Settings Icon */}
+
         <button
           onClick={onShowSettingsPanel}
           className={`icon-button ${openPanel === 'settings' ? 'active' : ''}`}
@@ -34,11 +44,17 @@ const LeftBar = ({ openPanel, onShowSidebar, onShowStructurePanel, onShowMediaPa
           <span className="material-symbols-outlined">settings</span>
         </button>
       </div>
+
       <div className="help-center">
-        <button className="help-center-button">
+        <button className="help-center-button" onClick={handleHelpClick}>
           <span className="material-symbols-outlined">help</span>
         </button>
       </div>
+
+      {/* Conditionally render the SupportPopup */}
+      {showSupportPopup && (
+        <SupportPopup onClose={handleClosePopup} />
+      )}
     </div>
   );
 };

@@ -14,72 +14,72 @@ const EMAIL_USER = defineSecret("EMAIL_USER");
 const EMAIL_PASS = defineSecret("EMAIL_PASS");
 // 2) Initialize Firebase Admin
 admin.initializeApp();
-
-
+const db = admin.firestore(); // Firestore instance
 
 exports.sendSupportEmail = onRequest(
   {
     secrets: [EMAIL_USER, EMAIL_PASS],
-    cors: true,        // For v2, handles OPTIONS automatically
-    invoker: "public", // Make it publicly callable
+    cors: true,
+    invoker: "public",
   },
-  (req, res) => {
-    cors(req, res, async () => {
-      if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method Not Allowed" });
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    try {
+      const { text, imageBase64, userId } = req.body;
+
+      // Validate
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "Message text is required" });
       }
 
-      try {
-        // Parse incoming data
-        const { text, imageBase64 } = req.body;
+      // 3) Store the text in Firestore (no image)
+      await db.collection("supportRequests").add({
+        message: text,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        userId:userId,
+      });
 
-        // Validate
-        if (!text || text.trim().length === 0) {
-          return res.status(400).json({ error: "Message text is required" });
-        }
+      // 4) Create a Nodemailer transporter
+      let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: EMAIL_USER.value(),
+          pass: EMAIL_PASS.value(),
+        },
+      });
 
-        // Create a Nodemailer transporter
-        // Example uses Gmail; adapt as needed (service, port, auth, etc.)
-        let transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: EMAIL_USER.value(),
-            pass: EMAIL_PASS.value(),
+      // 5) Build mail options
+      const mailOptions = {
+        from: EMAIL_USER.value(),
+        to: "vcharles@dappzy.io",  // The developer's address
+        subject: "New Support Request",
+        text: text,
+      };
+
+      // 6) Attach the image if present
+      if (imageBase64) {
+        const base64Data = imageBase64.split("base64,")[1];
+        mailOptions.attachments = [
+          {
+            filename: "screenshot.png",
+            content: base64Data,
+            encoding: "base64",
           },
-        });
-
-        // Build mail options
-        const mailOptions = {
-          from: EMAIL_USER.value(),           // Sender (your developer email)
-          to: "developer@example.com",        // The developer's address
-          subject: "New Support Request",     // Email subject
-          text: text,                         // Email body in plain text
-        };
-
-        // If an image was provided, attach it
-        if (imageBase64) {
-          // imageBase64 should be something like "data:image/png;base64,iVBORw0KGgoAAAANS..."
-          // We can split off the 'base64,' part and use the remainder as raw base64 data
-          const base64Data = imageBase64.split("base64,")[1];
-          mailOptions.attachments = [
-            {
-              filename: "screenshot.png", // Or any name you prefer
-              content: base64Data,
-              encoding: "base64",
-            },
-          ];
-        }
-
-        // Send the email
-        await transporter.sendMail(mailOptions);
-
-        // Respond success
-        return res.json({ success: true, message: "Email sent successfully" });
-      } catch (error) {
-        console.error("Error sending support email:", error);
-        return res.status(500).json({ error: error.message });
+        ];
       }
-    });
+
+      // 7) Send the email
+      await transporter.sendMail(mailOptions);
+
+      // 8) Respond success
+      return res.json({ success: true, message: "Email sent & Firestore updated" });
+    } catch (error) {
+      console.error("Error sending support email:", error);
+      return res.status(500).json({ error: error.message });
+    }
   }
 );
 // 3) Reverse Lookup Function
