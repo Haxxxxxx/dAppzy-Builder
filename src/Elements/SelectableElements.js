@@ -14,6 +14,7 @@ import DraggableNavbar from './DraggableLayout/DraggableNavbar';
 import DraggableFooter from './DraggableLayout/DraggableFooter';
 import DraggableHero from './DraggableLayout/DraggableHero';
 import DraggableCTA from './DraggableLayout/DraggableCTA';
+import DraggableContentSections from './DraggableLayout/DraggableContentSections';
 import Anchor from './Basic/Anchor';
 import Textarea from './Forms/Textarea';
 import Select from './Forms/Select';
@@ -62,6 +63,7 @@ const SelectableDraggableNavbar = withSelectable(DraggableNavbar);
 const SelectableDraggableFooter = withSelectable(DraggableFooter);
 const SelectableDraggableHero = withSelectable(DraggableHero);
 const SelectableDraggableCTA = withSelectable(DraggableCTA);
+const SelectableDraggableContentSections = withSelectable(DraggableContentSections);
 const SelectableAnchor = withSelectable(Anchor);
 const SelectableTextarea = withSelectable(Textarea);
 const SelectableSelect = withSelectable(Select);
@@ -112,6 +114,7 @@ export {
   SelectableDraggableFooter as DraggableFooter,
   SelectableDraggableHero as DraggableHero,
   SelectableDraggableCTA as DraggableCTA,
+  SelectableDraggableContentSections as DraggableContentSections,
   SelectableAnchor as Anchor,
   SelectableTextarea as Textarea,
   SelectableSelect as Select,

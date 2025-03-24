@@ -73,14 +73,11 @@ export const CustomTemplateNavbarStyles = {
     flexDirection: 'column',
     gap: '16px',
     marginTop: '16px',
-    backgroundColor: '#ffffff',
     padding: '16px',
     zIndex: '10',
-    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
   },
   compactMenu: {
     position:"absolute",
-    boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.1)', // Deeper shadow for custom compact menu
     top: '100%',
     width:'90%',
     display:'flex',

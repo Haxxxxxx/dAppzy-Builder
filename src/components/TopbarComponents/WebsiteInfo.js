@@ -1,17 +1,17 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const WebsiteInfo = ({ projectName, description, faviconUrl, url }) => {
-  const navigate = useNavigate();
-  
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  // Fallback return URL if none is provided
+  const returnUrl = searchParams.get('returnUrl') || 
+    (window.location.hostname === "localhost" 
+      ? "http://localhost:3000/dashboard" 
+      : "https://dashboard.dappzy.io");
+
   const handleReturn = () => {
-    // Optionally, read your auth cookie to confirm the logged in status
-    // For example: const authToken = document.cookie.split(';').find(c => c.trim().startsWith("authToken="));
-    // Then navigate to the dashboard URL which, in production, might be "https://dashboard.myurl.com".
-    // For local development, if you have set up your hosts file to simulate subdomains, you might do:
-    window.location.href = "http://localhost:3000/dashboard"; 
-    // or in production:
-    // window.location.href = "https://dashboard.dappzy.io";
+    window.location.href = returnUrl;
   };
 
   return (

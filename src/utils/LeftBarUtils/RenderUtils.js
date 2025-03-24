@@ -45,6 +45,7 @@ import {
   Line,
   LinkBlock,
   YouTubeVideo,
+  DraggableContentSections,
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
@@ -124,7 +125,7 @@ export const renderElement = (
 
 
   // Warn for missing configurations in structured elements
-  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' || type === 'cta' || type === 'footer') && !configuration) {
+  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' || type === 'cta' || type === 'footer'|| type === 'ContentSection') && !configuration) {
     if (!warnedElements.has(id)) {
       warnedElements.add(id);
     }
@@ -203,6 +204,17 @@ export const renderElement = (
         handleOpenMediaPanel={handleOpenMediaPanel}
 
       />
+    ),
+    ContentSection: (
+      <DraggableContentSections
+      id={id}
+      key={id}
+      configuration={configuration}
+      children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      contentListWidth={contentListWidth}
+      handlePanelToggle={handlePanelToggle}
+      handleOpenMediaPanel={handleOpenMediaPanel}
+/>
     ),
     table: <Table id={id} key={id} styles={{ ...element.styles }} />,
     tableRow: <TableRow id={id} key={id} styles={{ ...element.styles }} />,

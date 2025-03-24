@@ -40,6 +40,7 @@ export const typeToTagMap = {
   caption: 'caption',
   date: 'input',
   mintingSection: 'section',
+  ContentSection:'section',
   connectWalletButton: 'button',
   bgVideo: 'video',
   container: 'div',

@@ -65,6 +65,7 @@ const ContentList = forwardRef(
         item.type === 'navbar' ||
         item.type === 'cta' ||
         item.type === 'mintingSection' ||
+        item.type === 'ContentSection' ||
         item.type === 'footer'
       ) {
         const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
@@ -93,7 +94,7 @@ const ContentList = forwardRef(
         }}
       >
         {/* Render drop zone only when dragging and no elements exist */}
-        {!isPreviewMode && elements.length === 0 && isDragging && (
+        {!isPreviewMode && elements.length === 0 && (
           <DropZone
             index={0}
             onDrop={(item) => handleDrop(item, 0)}

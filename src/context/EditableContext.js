@@ -341,6 +341,7 @@ export const EditableProvider = ({ children, userId }) => {
         selectedElement,
         setSelectedElement,
         elements,
+        setElements,
         // CRUD
         addNewElement,
         moveElement,

@@ -153,13 +153,20 @@
 }
 
 .submit-btn {
-  border-color: #66bb6a;
-  background-color: #66bb6a;
+  border-color: #5C4EFA;
+  background-color: #5C4EFA;
   color: #fff;
 }
 
 .submit-btn:hover {
-  background-color: #57a05a;
+  background-color: #5c4efacc;
+  border-color: #5c4efacc;
+}
+
+.submit-btn:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
 }
 
 /* Status message */

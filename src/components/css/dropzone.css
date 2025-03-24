@@ -51,3 +51,12 @@
   background-color: #f0f8ff;
   border-color: #007bff;
 }
+
+
+.section-dropzone{
+  width: 100%;
+  padding: 8px;
+  border: 1px dotted #313031;
+  text-align: center;
+  color: #313031;
+}

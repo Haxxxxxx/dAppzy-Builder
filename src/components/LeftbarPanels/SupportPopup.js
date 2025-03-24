@@ -1,6 +1,6 @@
 import React, { useState, useRef, useContext } from 'react';
 import './SupportPopup.css';
-import {EditableContext} from '../../context/EditableContext'
+import { EditableContext } from '../../context/EditableContext'
 const SupportPopup = ({ onClose }) => {
   const [text, setText] = useState('');
   const [imageBase64, setImageBase64] = useState(null);
@@ -176,9 +176,10 @@ const SupportPopup = ({ onClose }) => {
             <button type="button" className="cancel-btn" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="submit-btn">
+            <button type="submit" className="submit-btn" disabled={!text.trim()}>
               Submit
             </button>
+
           </div>
         </form>
 

@@ -13,6 +13,7 @@ import Web3Elements from './ElementsMapping/Web3Elements';
 import AdvancedElements from './ElementsMapping/AdvancedElements';
 import FormElements from './ElementsMapping/FormElements';
 import MediaElements from './ElementsMapping/MediaElements';
+import ContentSectionsPanel from '../SectionsPanels/ContentSectionsPanel';
 
 const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   // Define default expanded state based on view mode.
@@ -23,7 +24,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
           Hero: true,
           cta: true,
           Footer: true,
-          'Web3 Sections': true,
+          ContentSection: true,
         }
       : {
           Structure: true,
@@ -48,10 +49,10 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   const elements = {
     Structure: StructureElements,
     Basic: BasicElements,
-    'Web 3 Blocks': Web3Elements,
+    // 'Web 3 Blocks': Web3Elements,
     Typography: TypographyElements,
     Media: MediaElements,
-    Advanced: AdvancedElements,
+    // Advanced: AdvancedElements,
     Forms: FormElements,
   };
 
@@ -61,7 +62,8 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
     { name: 'Hero', component: <HeroPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'cta', component: <CTAPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'Footer', component: <FooterPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
+    { name: 'ContentSection', component: <ContentSectionsPanel contentListWidth={contentListWidth} searchQuery={searchQuery}/>}
+    // { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
   ];
 
   const filteredElements = Object.entries(elements)

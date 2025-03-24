@@ -1,5 +1,4 @@
-// src/components/Topbar.js
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import ResizeControls from './TopbarComponents/ResizeControls';
 import ExportSection from './TopbarComponents/ExportSection';
@@ -9,7 +8,8 @@ import './css/Topbar.css';
 
 const Topbar = ({
   onResize,
-  scale,setScale,
+  scale,
+  setScale,
   onPreviewToggle,
   isPreviewMode,
   pageSettings, // Contains website settings, including siteTitle.
@@ -26,16 +26,22 @@ const Topbar = ({
   const isLocal = window.location.hostname === 'localhost';
   const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.dappzy.io';
 
-  // Construct the preview URL in the format:
-  // https://{baseUrl}/{userId}/{projectName}
-  const previewUrl = `${baseUrl}/${userId}/${projectName}`;
+  // Set initial project URL (Web2 preview) 
+  const [projectUrl, setProjectUrl] = useState(`${baseUrl}/${userId}/${projectName}`);
+
+  // Update the URL if pageSettings change and there's no IPFS URL yet.
+  useEffect(() => {
+    if (!pageSettings.testUrl) {
+      setProjectUrl(`${baseUrl}/${userId}/${projectName}`);
+    }
+  }, [pageSettings, baseUrl, userId, projectName]);
 
   return (
     <div className="topbar">
       <WebsiteInfo
         projectName={projectName}
         description={description}
-        url={previewUrl}
+        url={projectUrl}
         faviconUrl={faviconUrl}
       />
       <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} />
@@ -44,8 +50,9 @@ const Topbar = ({
         elements={elements}
         buildHierarchy={buildHierarchy}
         userId={userId}
-        websiteSettings={pageSettings} // Pass website settings to ExportSection.
+        websiteSettings={pageSettings}
         projectId={projectId}
+        onProjectPublished={(ipfsUrl) => setProjectUrl(ipfsUrl)}
       />
     </div>
   );

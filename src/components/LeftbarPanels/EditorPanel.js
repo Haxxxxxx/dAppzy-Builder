@@ -1,5 +1,4 @@
-// EditorPanel.js (only the concerned parts)
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import TypographyEditor from '../../Editors/TypographyEditor';
 import BorderEditor from '../../Editors/BorderEditor';
@@ -9,7 +8,7 @@ import DisplayEditor from '../../Editors/DisplayEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettings from './SettingsPanels/WalletSettings';
 import LinkSettings from './SettingsPanels/LinkSettings';
-import BackgroundEditor from '../../Editors/BackgroundEditor'; // Use BackgroundEditor here
+import BackgroundEditor from '../../Editors/BackgroundEditor';
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
@@ -17,14 +16,13 @@ import VideoSettings from './SettingsPanels/VideoSettings';
 import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 
-const EditorPanel = ({ onUpdateSettings,pageSettings }) => {
+const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
-  const [viewMode, setViewMode] = useState('style'); // Default to 'style' view
 
-  // Switch back to the style editor whenever the selected element changes.
+  // Reset editor view mode to 'style' whenever the selected element changes.
   useEffect(() => {
     setViewMode('style');
-  }, [selectedElement]);
+  }, [selectedElement, setViewMode]);
 
   const renderSettingsView = () => {
     if (
@@ -74,7 +72,6 @@ const EditorPanel = ({ onUpdateSettings,pageSettings }) => {
         />
       );
     }
-   
     if (
       (selectedElement?.type === 'anchor' ||
         selectedElement?.type === 'span' ||
@@ -104,7 +101,7 @@ const EditorPanel = ({ onUpdateSettings,pageSettings }) => {
 
   return (
     <>
-      <div className="sidebar-toggle-buttons">
+      {/* <div className="sidebar-toggle-buttons">
         <button
           onClick={() => setViewMode('style')}
           className={viewMode === 'style' ? 'active' : ''}
@@ -117,7 +114,7 @@ const EditorPanel = ({ onUpdateSettings,pageSettings }) => {
         >
           Element Setting
         </button>
-      </div>
+      </div> */}
       <div className="editor-panel">
         {viewMode === 'style' ? (
           <div className="style-editor">

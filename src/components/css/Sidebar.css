@@ -160,6 +160,8 @@
   grid-template-columns: repeat(2, 1fr); /* 2 elements per row for layout */
   grid-gap: 1rem; /* Adjust gap between items */
   margin-bottom: 2rem;
+  justify-items: start
+
 }
 .bento-display-layout .bento-display-elements>*:nth-child(2n + 1):last-child {
   grid-column: 1 / -1;
@@ -190,3 +192,7 @@
   align-items: center;
 }
 
+
+.sidebar-container hr{
+display: none;
+}

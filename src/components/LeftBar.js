@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import './css/LeftBar.css';
 import SupportPopup from './LeftbarPanels/SupportPopup';
+import { EditableContext } from '../context/EditableContext';
 
 const LeftBar = ({ 
   openPanel, 
@@ -11,6 +12,7 @@ const LeftBar = ({
 }) => {
   // Track whether SupportPopup is visible
   const [showSupportPopup, setShowSupportPopup] = useState(false);
+  const { selectedElement } = useContext(EditableContext);
 
   const handleHelpClick = () => {
     setShowSupportPopup(true);
@@ -25,7 +27,7 @@ const LeftBar = ({
       <div className="buttons-group">
         <button
           onClick={onShowSidebar}
-          className={`icon-button ${openPanel === 'sidebar' ? 'active' : ''}`}
+          className={`icon-button ${openPanel === 'sidebar' &&!selectedElement ? 'active' : ''}`}
         >
           <span className="material-symbols-outlined">add</span>
         </button>

@@ -1,55 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
-import { renderElementToHtml } from '../../utils/htmlRender';
-import { flattenStyles } from '../../utils/htmlRenderUtils/cssUtils';
-import ScanDomains from './Deployements/ScanDomains';
+import { pinataJwt } from '../../utils/configPinata';
 
-const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, projectId }) => {
+// Pinata configuration
+const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+const ExportSection = ({
+  elements,
+  buildHierarchy,
+  userId,
+  websiteSettings,
+  projectId,
+  onProjectPublished  // <-- new prop
+}) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
   const [shareableUrl, setShareableUrl] = useState('');
-  const [showDeployOptions, setShowDeployOptions] = useState(false);
-  const [showDomainSelectionPopup, setShowDomainSelectionPopup] = useState(false);
-  const [showUDDomainLinking, setShowUDDomainLinking] = useState(false);
-  const [ethAddress, setEthAddress] = useState(null);
-
-  useEffect(() => {
-    const checkOrFetchEthAddress = async () => {
-      if (!userId) return;
-      try {
-        const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          if (userData.ethAddress) {
-            setEthAddress(userData.ethAddress);
-            return;
-          }
-        }
-        if (window.ethereum) {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0) {
-            setEthAddress(accounts[0]);
-            await updateDoc(userRef, {
-              ethAddress: accounts[0],
-              lastUpdated: serverTimestamp(),
-            });
-          }
-        } else {
-          console.warn('Ethereum provider not available. UD deployment requires an Ethereum address.');
-        }
-      } catch (error) {
-        console.error('Error checking or fetching Ethereum address:', error);
-      }
-    };
-    checkOrFetchEthAddress();
-  }, [userId]);
-
-  // We won't do IPFS or domain logic here; it will happen in ScanDomains.
-  // We'll only do Web2 deployment and pass the necessary helper functions to the child.
 
   // ------------------------------------------------------------------
-  // Generate full HTML (used for Web2 deployment)
+  // Generate full HTML (used for deployment)
   // ------------------------------------------------------------------
   const generateFullHtml = () => {
     const title = websiteSettings.siteTitle || 'Exported Website';
@@ -73,20 +42,39 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
     `.trim();
   };
 
+  // ------------------------------------------------------------------
+  // Helper function: Pin directory to Pinata
+  // ------------------------------------------------------------------
+  const pinDirectoryToPinata = async (files, metadata) => {
+    const formData = new FormData();
+    files.forEach(({ file, fileName }) => {
+      formData.append('file', file, fileName);
+    });
+    formData.append('pinataOptions', JSON.stringify({ wrapWithDirectory: true }));
+    formData.append('pinataMetadata', JSON.stringify(metadata));
+
+    const response = await fetch(PINATA_PIN_FILE_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${pinataJwt}`,
+      },
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error(`Pinata pinFileToIPFS failed: ${response.statusText}`);
+    }
+    return response.json();
+  };
 
   // ------------------------------------------------------------------
-  // Save project to Firestore
+  // Save project to Firestore (for record keeping)
   // ------------------------------------------------------------------
   const saveProjectToFirestore = async (finalUserId, fullHtml, deployType, deployUrl) => {
     const isLocal = window.location.hostname === 'localhost';
     const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.dappzy.io';
     const projectName = websiteSettings.siteTitle || 'MyWebsite';
 
-    // If projectId is not defined, use the placeholder.
     if (!projectId) {
-      // DEV ONLY : 
-      // projectId = "R2WJQxozoXx2mGAMlmPU";
-      // production
       throw new Error("No valid projectId provided.");
     }
 
@@ -94,7 +82,7 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
     if (deployType === 'web2') {
       testUrl = `${baseUrl}/${userId}/ProjectRef/${projectId}/${projectName}`;
     } else {
-      testUrl = deployUrl; // IPFS or custom domain
+      testUrl = deployUrl;
     }
 
     const projectRef = doc(db, 'projects', userId, "ProjectRef", projectId);
@@ -115,39 +103,52 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
     return testUrl;
   };
 
-
   // ------------------------------------------------------------------
-  // Web2 Deploy
+  // Deploy to IPFS: Create HTML blob, pin it, and update Firestore.
   // ------------------------------------------------------------------
-  const handleExportWeb2 = async () => {
-    setAutoSaveStatus('Publishing to Web2...');
+  const handleDeployToIPFS = async () => {
+    setAutoSaveStatus('Publishing to IPFS...');
     try {
-      const finalUserId = userId || (auth.currentUser && auth.currentUser.uid);
-      if (!finalUserId) {
+      if (!userId) {
         setAutoSaveStatus('Error: No valid user ID found!');
-        return;
+        return null;
       }
       const fullHtml = generateFullHtml();
-      const testUrl = await saveProjectToFirestore(finalUserId, fullHtml, 'web2');
-      setAutoSaveStatus('Project published on Web2!');
-      setShareableUrl(testUrl);
+      const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
+      const files = [{ file: htmlBlob, fileName: `${userId}/index.html` }];
+      const metadata = {
+        name: websiteSettings.siteTitle || 'MyWebsite',
+        keyvalues: { userId },
+      };
 
-      await navigator.clipboard.writeText(testUrl);
-      window.open(testUrl, '_blank');
+      const result = await pinDirectoryToPinata(files, metadata);
+      const cid = result.IpfsHash;
+      const ipfsUrl = `https://ipfs.io/ipfs/${cid}/${userId}`;
+
+      // Save the deployed project to Firestore
+      await saveProjectToFirestore(userId, fullHtml, 'ipfs', ipfsUrl);
+      setAutoSaveStatus('IPFS deploy complete!');
+      return ipfsUrl;
     } catch (error) {
-      console.error('Error publishing project to Web2:', error);
-      setAutoSaveStatus('Error publishing project: ' + error.message);
+      setAutoSaveStatus(`Error publishing to IPFS: ${error.message}`);
+      console.error('IPFS error:', error);
+      return null;
     }
   };
 
   // ------------------------------------------------------------------
-  // Popups: Deploy Options & Domain Selection
+  // Publish: Deploy to IPFS directly and open the project URL in a new tab.
   // ------------------------------------------------------------------
-  const openDeployOptions = () => setShowDeployOptions(true);
-  const closeDeployOptions = () => setShowDeployOptions(false);
-
-  const openDomainSelectionPopup = () => setShowDomainSelectionPopup(true);
-  const closeDomainSelectionPopup = () => setShowDomainSelectionPopup(false);
+  const handlePublish = async () => {
+    const ipfsUrl = await handleDeployToIPFS();
+    if (ipfsUrl) {
+      setShareableUrl(ipfsUrl);
+      if (onProjectPublished) {
+        onProjectPublished(ipfsUrl);  // Pass IPFS URL to parent (Topbar)
+      }
+      window.open(ipfsUrl, '_blank');
+    }
+  };
 
   return (
     <div className="export-section">
@@ -155,88 +156,9 @@ const ExportSection = ({ elements, buildHierarchy, userId, websiteSettings, proj
         cloud_done
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>
-      <button className="button" onClick={openDeployOptions}>
+      <button className="button" onClick={handlePublish}>
         Publish
       </button>
-
-      {/* Deploy Options Popup */}
-      {showDeployOptions && (
-        <div className="deploy-options-popup">
-          <div className="deploy-options-content">
-            <h3>Choose Deploy Option</h3>
-
-            {/* Web2 */}
-            <button
-              className="button"
-              onClick={() => {
-                closeDeployOptions();
-                openDomainSelectionPopup();
-              }}
-            >
-              Deploy to Web2
-            </button>
-
-            {/* Web3 => open ScanDomains popup. Actual IPFS logic is inside that component. */}
-            <button
-              className="button"
-              onClick={() => {
-                closeDeployOptions();
-                setShowUDDomainLinking(true);
-              }}
-            >
-              Deploy to Web3
-            </button>
-
-            <button className="button cancel" onClick={closeDeployOptions}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Domain Selection Popup for Web2 */}
-      {showDomainSelectionPopup && (
-        <div className="domain-popup">
-          <div className="domain-popup-content">
-            <h3>Select Deploy Option</h3>
-            <button
-              className="button"
-              onClick={() => {
-                closeDomainSelectionPopup();
-                handleExportWeb2();
-              }}
-            >
-              Use Provided Domain
-            </button>
-            <button className="button cancel" onClick={closeDomainSelectionPopup}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Web3 Domain Linking Popup */}
-      {showUDDomainLinking && (
-        <div className="domain-popup">
-          <div className="domain-popup-content">
-            <ScanDomains
-              userId={userId}
-              elements={elements}
-              walletAddress={ethAddress}  // from your parent
-              buildHierarchy={buildHierarchy}
-              websiteSettings={websiteSettings}
-              setAutoSaveStatus={setAutoSaveStatus}
-              generateFullHtml={generateFullHtml}
-              saveProjectToFirestore={saveProjectToFirestore}
-              onDomainSelected={() => {
-                // domain chosen => close popup or do other logic
-                setShowUDDomainLinking(false);
-              }}
-              onCancel={() => setShowUDDomainLinking(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

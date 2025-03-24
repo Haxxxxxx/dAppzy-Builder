@@ -3,9 +3,8 @@
 /* Common panel styles */
 .settings-panel {
   background-color: #313031;
-  width: 300px;
-  max-width: 350px;
-  min-width: 300px;
+  max-width: 300px;
+  min-width: 200px;
   color: var(----editor-text, #D9D9D9);
   text-align: left;
   font-family: "Montserrat", sans-serif;
