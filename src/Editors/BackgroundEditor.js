@@ -36,7 +36,7 @@ const BackgroundEditor = ({ pageSettings }) => {
       } else {
         setBackgroundUrl("");
       }
-      setBackgroundColor(styles.backgroundColor || "#ffffff");
+      setBackgroundColor(styles.backgroundColor && styles.backgroundColor !== "" ? styles.backgroundColor : "#ffffff");
     }
   }, [selectedElement]);
 
@@ -120,9 +120,7 @@ const BackgroundEditor = ({ pageSettings }) => {
           />
         </div>
       </div>
-      <button className="add-image-button" onClick={handleAddImageClick}>
-          {backgroundUrl ? "Replace Image" : "Add an Image"} <span>+</span>
-        </button>
+      <div className="background-editor-image-preview-wrapper" >
 
       {/* Add Image Button & Preview */}
       <div className="editor-group image-preview">
@@ -143,6 +141,12 @@ const BackgroundEditor = ({ pageSettings }) => {
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
+      </div>
+      <button className="add-image-button" onClick={handleAddImageClick}>
+          {backgroundUrl ? "Replace Image" : "Add an Image"} <span>+</span>
+        </button>
+
+
       </div>
       {/* (Optional) Clear Background Button */}
       {/* <button className="clear-button" onClick={handleClearBackground}>

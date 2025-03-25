@@ -3,10 +3,10 @@ import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 
-const Section = ({ id }) => {
+const Section = ({ id, style: extraStyles = {}, onClick: extraOnClick, children }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
   const sectionElement = elements.find((el) => el.id === id) || {};
-  const { styles = {}, children = [] } = sectionElement;
+  const { styles = {}, children: childrenIds = [] } = sectionElement;
   const sectionRef = useRef(null);
 
   const { isOverCurrent, drop } = useElementDrop({
@@ -14,8 +14,8 @@ const Section = ({ id }) => {
     elementRef: sectionRef,
     onDropItem: (item, parentId) => {
       const newId = addNewElement(item.type, item.level || 1, null, parentId);
-      setElements((prev) =>
-        prev.map((el) =>
+      setElements((prevElements) =>
+        prevElements.map((el) =>
           el.id === parentId
             ? { ...el, children: [...new Set([...el.children, newId])] }
             : el
@@ -27,9 +27,12 @@ const Section = ({ id }) => {
   const handleSelect = (e) => {
     e.stopPropagation();
     setSelectedElement({ id, type: 'section', styles });
+    if (typeof extraOnClick === 'function') {
+      extraOnClick(e);
+    }
   };
 
-  // Background rendering logic for video or image
+  // Background rendering for video or image if provided in styles
   const backgroundContent =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
@@ -64,7 +67,7 @@ const Section = ({ id }) => {
     ) : null;
 
   return (
-    <div
+    <section
       id={id}
       ref={(node) => {
         sectionRef.current = node;
@@ -76,22 +79,26 @@ const Section = ({ id }) => {
         position: 'relative',
         padding: styles.padding || '10px',
         margin: styles.margin || '10px 0',
-        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
+        backgroundColor: isOverCurrent
+          ? 'rgba(0, 0, 0, 0.1)'
+          : styles.backgroundColor || 'transparent',
+        ...extraStyles,
       }}
     >
       {backgroundContent}
-      {children.map((childId) =>
+      {/* Render children from global state if none are passed directly */}
+      {children || childrenIds.map((childId) =>
         renderElement(
           elements.find((el) => el.id === childId),
           elements,
           null, // Assuming contentListWidth is not needed here
           setSelectedElement,
           setElements,
-          null, // handlePanelToggle is not defined
+          null, // handlePanelToggle is not defined here
           selectedElement
         )
       )}
-    </div>
+    </section>
   );
 };
 

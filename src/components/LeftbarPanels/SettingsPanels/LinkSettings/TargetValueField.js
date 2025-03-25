@@ -1,4 +1,3 @@
-// src/components/LeftbarPanels/TargetValueField.js
 import React, { useEffect, useState } from "react";
 import { ref, uploadBytesResumable, getDownloadURL, listAll } from "firebase/storage";
 import { storage } from "../../../../firebase";
@@ -98,18 +97,24 @@ const TargetValueField = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionType]);
 
-  // Helper: parse external URL to detect video platform (optional)
+  // Helper: Analyze the external URL and detect known social platforms.
   const analyzeURL = (url) => {
     if (!url) return;
     try {
       const parsedURL = new URL(url);
-      const hostname = parsedURL.hostname;
-      if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
-        return "YouTube";
-      } else if (hostname.includes("vimeo.com")) {
-        return "Vimeo";
-      } else if (hostname.includes("dailymotion.com")) {
-        return "Dailymotion";
+      const hostname = parsedURL.hostname.toLowerCase();
+      if (hostname.includes("twitter.com")) {
+        return "Twitter";
+      } else if (hostname.includes("instagram.com")) {
+        return "Instagram";
+      }else if (hostname.includes("X.com")) {
+        return "X";
+      } else if (hostname.includes("facebook.com")) {
+        return "Facebook";
+      } else if (hostname.includes("linkedin.com")) {
+        return "LinkedIn";
+      } else if (hostname.includes("pinterest.com")) {
+        return "Pinterest";
       } else {
         return "Unknown";
       }
@@ -141,9 +146,9 @@ const TargetValueField = ({
         );
 
       case "URL": {
-        const videoPlatform = analyzeURL(targetValue);
+        const platform = analyzeURL(targetValue);
         return (
-          <div>
+          <>
             <input
               type="text"
               name="targetValue"
@@ -151,22 +156,21 @@ const TargetValueField = ({
               onChange={onChange}
               placeholder="Enter external URL"
               className="settings-input"
-              style={{ width: "100%" }}
             />
-            {videoPlatform && (
+            {platform && (
               <p className="platform-info">
-                {videoPlatform === "Unknown"
+                {platform === "Unknown"
                   ? "Unrecognized platform."
-                  : `Detected platform: ${videoPlatform}`}
+                  : `Detected platform: ${platform}`}
               </p>
             )}
-          </div>
+          </>
         );
       }
 
       case "file":
         return (
-          <div>
+          <>
             {/* 1) Dropdown for existing PDF files */}
             <label>Select Existing PDF:</label>
             <select
@@ -250,7 +254,7 @@ const TargetValueField = ({
                 />
               </div>
             )}
-          </div>
+          </>
         );
 
       default:

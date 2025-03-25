@@ -19,6 +19,12 @@ export const defaultHeroStyles = {
     alignItems: 'center',
     gap: '1rem',
   },
+  heroRightContent:{
+
+  },  
+  heroLeftContent:{
+
+  },
   heroTitle: {
     fontSize: '2.5rem',
     fontWeight: 'bold',

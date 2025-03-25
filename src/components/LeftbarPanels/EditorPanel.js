@@ -133,9 +133,9 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
             <CollapsibleSection title="Spacing">
               <SpacingEditor />
             </CollapsibleSection>
-            <CollapsibleSection title="Display">
+            {/* <CollapsibleSection title="Display">
               <DisplayEditor />
-            </CollapsibleSection>
+            </CollapsibleSection> */}
           </div>
         ) : (
           <div className="settings-view">

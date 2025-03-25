@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import FooterPanel from '../SectionsPanels/FooterPanel';
 import NavbarPanel from '../SectionsPanels/NavbarPanel';
 import DraggableElement from '../../Elements/DraggableElements/DraggableElement';
@@ -18,26 +18,23 @@ import ContentSectionsPanel from '../SectionsPanels/ContentSectionsPanel';
 const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   // Define default expanded state based on view mode.
   const defaultExpanded =
-    viewMode === 'layout'
-      ? {
+       {
           Navbar: true,
           Hero: true,
           cta: true,
           Footer: true,
           ContentSection: true,
-        }
-      : {
           Structure: true,
           Basic: true,
-          'Web 3 Blocks': true,
           Typography: true,
           Media: true,
-          Advanced: true,
           Forms: true,
         };
 
   const [expandedSections, setExpandedSections] = useState(defaultExpanded);
-
+  useEffect(() => {
+    console.log("Expanded sections:", expandedSections);
+  }, []);
   const toggleSection = (sectionName) => {
     setExpandedSections((prev) => ({
       ...prev,

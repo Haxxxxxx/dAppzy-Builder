@@ -12,7 +12,7 @@ const ContentList = forwardRef(
       scale,
       setScale,
       isPreviewMode,
-      handleOpenMediaPanel = () => {},
+      handleOpenMediaPanel = () => { },
       isSideBarVisible,
       handlePanelToggle,
     },
@@ -112,14 +112,7 @@ const ContentList = forwardRef(
           .map((element, index) => (
             <React.Fragment key={element.id}>
               {/* Render drop zone before each element only during dragging */}
-              {isDragging && (
-                <DropZone
-                  index={index}
-                  onDrop={(item) => handleDrop(item, index)}
-                  text=""
-                  className="section-dropzone"
-                />
-              )}
+
               {renderElement(
                 element,
                 elements,
@@ -132,11 +125,19 @@ const ContentList = forwardRef(
                 isPreviewMode,
                 handleOpenMediaPanel
               )}
+              {isDragging && (
+                <DropZone
+                  index={index}
+                  onDrop={(item) => handleDrop(item, index)}
+                  text=""
+                  className="default-dropzone"
+                />
+              )}
             </React.Fragment>
           ))}
 
         {/* Render drop zone after the last element only during dragging */}
-        {!isPreviewMode && elements.length > 0 && isDragging && (
+        {!isPreviewMode && elements.length < 0  && (
           <DropZone
             index={elements.length}
             onDrop={(item) => handleDrop(item, elements.length)}

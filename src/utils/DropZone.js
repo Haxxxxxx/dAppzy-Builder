@@ -28,22 +28,11 @@ const DropZone = ({ onDrop, parentId, onClick, text, className, scale }) => {
     };
   }, [isOver]);
 
-  // Dynamically adjust the size based on scale.
-  const dropzoneStyle =
-    className === 'first-dropzone'
-      ? {
-          width: `${10 * scale}%`,
-          position: 'absolute',
-          top: '40%',
-          left: '45%',
-        }
-      : {};
 
   return (
     <div
       ref={drop}
       className={`${className} ${isOver ? 'dropzone-hover' : ''}`}
-      style={dropzoneStyle}
       onClick={onClick}
     >
       <div className="dropzone-text">

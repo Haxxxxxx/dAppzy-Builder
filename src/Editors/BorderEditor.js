@@ -299,6 +299,7 @@ const BorderEditor = () => {
         <div className="input-with-suffix">
           <input
             type="number"
+            min={0}
             value={borderRadius}
             onChange={handleBorderRadiusChange}
           />

@@ -1,6 +1,7 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import './SupportPopup.css';
-import { EditableContext } from '../../context/EditableContext'
+import { EditableContext } from '../../context/EditableContext';
+
 const SupportPopup = ({ onClose }) => {
   const [text, setText] = useState('');
   const [imageBase64, setImageBase64] = useState(null);
@@ -9,6 +10,22 @@ const SupportPopup = ({ onClose }) => {
 
   // We use a ref so we can "click" the file input when user clicks the drop zone
   const fileInputRef = useRef(null);
+  // This ref is for the popup container
+  const popupRef = useRef(null);
+
+  // Close popup if click happens outside the popup container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (popupRef.current && !popupRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   // Handle file selection
   const handleImageChange = async (e) => {
@@ -66,7 +83,7 @@ const SupportPopup = ({ onClose }) => {
 
   return (
     <div className="support-popup-overlay">
-      <div className="support-popup-content">
+      <div className="support-popup-content" ref={popupRef}>
         <h2>Found a bug ? Contact-us !</h2>
         <p className="description">
           Here you can explain and describe the bug/issue you're having with DAppzy.
@@ -171,7 +188,6 @@ const SupportPopup = ({ onClose }) => {
             </a>
           </div>
 
-
           <div className="button-row">
             <button type="button" className="cancel-btn" onClick={onClose}>
               Cancel
@@ -179,7 +195,6 @@ const SupportPopup = ({ onClose }) => {
             <button type="submit" className="submit-btn" disabled={!text.trim()}>
               Submit
             </button>
-
           </div>
         </form>
 

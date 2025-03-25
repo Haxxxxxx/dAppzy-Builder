@@ -246,6 +246,7 @@ export const EditableProvider = ({ children, userId }) => {
     );
   };
 
+
   /**
    * Update inline styles (merge with existing).
    */
@@ -256,7 +257,15 @@ export const EditableProvider = ({ children, userId }) => {
         el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el
       )
     );
+    // Also update the selected element if it's the one being updated.
+    if (selectedElement && selectedElement.id === id) {
+      setSelectedElement((prevSelected) => ({
+        ...prevSelected,
+        styles: { ...prevSelected.styles, ...newStyles },
+      }));
+    }
   };
+
 
   /**
    * Update entire element (merge in newProperties).

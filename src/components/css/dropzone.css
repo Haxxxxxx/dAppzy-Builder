@@ -1,16 +1,16 @@
 /* First dropzone specific styles */
 .first-dropzone {
   position: absolute;
-  top: 40%;
-  left: 45%;
-  width: 10%;
+  width: 95%;
+  left: 1%;
+  top: 1%;
   display: inline-flex;
   padding: 9px 13px;
   justify-content: center;
   align-items: center;
   gap: 10px;
+  height: 90%;
 
-  color: var(----white, #FFF);
   text-align: center;
   font-family: Montserrat;
   font-size: 14px;
@@ -18,8 +18,8 @@
   font-weight: 500;
   line-height: normal;
 
+  border: 5px dashed #5C4EFA;
   border-radius: 5px;
-  background: var(----purple, #5C4EFA);
 }
 
 @media (max-width: 768px) {
@@ -53,7 +53,7 @@
 }
 
 
-.section-dropzone{
+.section-dropzone {
   width: 100%;
   padding: 8px;
   border: 1px dotted #313031;

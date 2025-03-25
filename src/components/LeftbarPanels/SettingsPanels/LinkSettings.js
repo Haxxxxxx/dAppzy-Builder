@@ -14,7 +14,7 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
   // Default settings for the link/button element
   const defaultSettings = {
     id: '',
-    actionType: 'page',
+    actionType: 'URL',
     targetValue: '',
     openInNewTab: false,
     dropdownLinks: [] // we'll store dropdown links here

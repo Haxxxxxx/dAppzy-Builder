@@ -3,6 +3,7 @@ import { EditableContext } from '../../context/EditableContext';
 import DropZone from '../../utils/DropZone';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils'; // Ensure this utility renders child elements correctly
 import FormStructureModal from '../../utils/SectionQuickAdd/FormStructureModal';
+
 const Form = ({ id }) => {
   const { selectedElement, elements, addNewElement, setSelectedElement, setElements } =
     useContext(EditableContext);

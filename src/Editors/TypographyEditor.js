@@ -11,32 +11,30 @@ const TypographyEditor = () => {
     return `#${result.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
   }
 
-  // Utility: Convert any CSS font size (px, rem, em, vw, vh) to px
+  // Utility: Convert any CSS font size (px, rem, em, vw, vh) to px, then round it.
   function convertToPx(element, fontSizeStr) {
+    let size;
     if (fontSizeStr.endsWith("px")) {
-      return parseFloat(fontSizeStr);
+      size = parseFloat(fontSizeStr);
     } else if (fontSizeStr.endsWith("rem")) {
-      const rootFontSize = parseFloat(
-        getComputedStyle(document.documentElement).fontSize
-      );
-      return parseFloat(fontSizeStr) * rootFontSize;
+      const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      size = parseFloat(fontSizeStr) * rootFontSize;
     } else if (fontSizeStr.endsWith("em")) {
-      const parentFontSize = parseFloat(
-        getComputedStyle(element.parentElement || document.documentElement)
-          .fontSize
-      );
-      return parseFloat(fontSizeStr) * parentFontSize;
+      const parentFontSize = parseFloat(getComputedStyle(element.parentElement || document.documentElement).fontSize);
+      size = parseFloat(fontSizeStr) * parentFontSize;
     } else if (fontSizeStr.endsWith("vw")) {
       const vw = window.innerWidth / 100;
-      return parseFloat(fontSizeStr) * vw;
+      size = parseFloat(fontSizeStr) * vw;
     } else if (fontSizeStr.endsWith("vh")) {
       const vh = window.innerHeight / 100;
-      return parseFloat(fontSizeStr) * vh;
+      size = parseFloat(fontSizeStr) * vh;
+    } else {
+      size = parseFloat(fontSizeStr) || 16;
     }
-    return parseFloat(fontSizeStr) || 16;
+    return Math.round(size);
   }
 
-  // Local state for the typography controls.
+  // Local state for typography controls.
   const [styles, setStyles] = useState({
     fontSize: "",
     fontFamily: "Arial",
@@ -56,19 +54,23 @@ const TypographyEditor = () => {
         const pixelFontSize = convertToPx(element, computedStyles.fontSize);
         const hexColor = rgbToHex(computedStyles.color);
         setStyles({
-          fontSize: pixelFontSize,
+          fontSize: pixelFontSize + "px",
           fontFamily: computedStyles.fontFamily || "Arial",
           fontWeight: computedStyles.fontWeight || "normal",
-          fontStyle: computedStyles.fontStyle || "normal", // retrieve fontStyle.
+          fontStyle: computedStyles.fontStyle || "normal",
           color: hexColor || "#217BF4",
           textAlign: computedStyles.textAlign || "left",
-          textDecoration: computedStyles.textDecoration || "none",
+          textDecoration: computedStyles.textDecoration.includes("underline")
+            ? "underline"
+            : computedStyles.textDecoration.includes("line-through")
+              ? "line-through"
+              : "none",
         });
       }
     }
   }, [selectedElement]);
 
-  // Update both local state and the global context.
+  // Update both local state and global context.
   const handleStyleChange = (styleKey, value) => {
     setStyles((prev) => ({ ...prev, [styleKey]: value }));
     updateStyles(selectedElement.id, { [styleKey]: value });
@@ -118,7 +120,8 @@ const TypographyEditor = () => {
             type="number"
             value={styles.fontSize !== "" ? parseFloat(styles.fontSize) : ""}
             onChange={(e) =>
-              handleStyleChange("fontSize", e.target.value + "px")
+              // Round the value before appending "px"
+              handleStyleChange("fontSize", Math.round(e.target.value) + "px")
             }
           />
         </div>
@@ -133,12 +136,7 @@ const TypographyEditor = () => {
             value={styles.color}
             onChange={(e) => handleStyleChange("color", e.target.value)}
           />
-          <input
-            type="text"
-            value={styles.color}
-            readOnly
-            className="color-hex"
-          />
+          <input type="text" value={styles.color} readOnly className="color-hex" />
         </div>
       </div>
 
@@ -146,44 +144,45 @@ const TypographyEditor = () => {
       <div className="editor-group">
         <label>Text Decoration</label>
         <div className="text-decoration-group">
-          {/* Italic toggle via fontStyle; clicking again toggles it off */}
+          {/* Italic toggle: clicking again toggles it off */}
           <button
             className={styles.fontStyle === "italic" ? "active" : ""}
             onClick={() =>
-              handleStyleChange(
-                "fontStyle",
-                styles.fontStyle === "italic" ? "normal" : "italic"
-              )
+              handleStyleChange("fontStyle", styles.fontStyle === "italic" ? "normal" : "italic")
             }
           >
             <span className="material-symbols-outlined">format_italic</span>
           </button>
           <hr className="custom-rule" />
+          {/* Underline toggle: toggles on/off */}
           <button
             className={styles.textDecoration === "underline" ? "active" : ""}
-            onClick={() => handleStyleChange("textDecoration", "underline")}
+            onClick={() =>
+              handleStyleChange(
+                "textDecoration",
+                styles.textDecoration === "underline" ? "none" : "underline"
+              )
+            }
           >
-            <span className="material-symbols-outlined">
-              format_underlined
-            </span>
+            <span className="material-symbols-outlined">format_underlined</span>
           </button>
           <hr className="custom-rule" />
+          {/* Line-through toggle: toggles on/off */}
           <button
             className={styles.textDecoration === "line-through" ? "active" : ""}
             onClick={() =>
-              handleStyleChange("textDecoration", "line-through")
+              handleStyleChange(
+                "textDecoration",
+                styles.textDecoration === "line-through" ? "none" : "line-through"
+              )
             }
           >
             <span className="material-symbols-outlined">strikethrough_s</span>
           </button>
           <hr className="custom-rule" />
-          {/* Format clear now resets both textDecoration and fontStyle */}
+          {/* Clear: resets both textDecoration and fontStyle */}
           <button
-            className={
-              styles.textDecoration === "none" && styles.fontStyle === "normal"
-                ? "active"
-                : ""
-            }
+            className={styles.textDecoration === "none" && styles.fontStyle === "normal" ? "active" : ""}
             onClick={() => {
               handleStyleChange("textDecoration", "none");
               handleStyleChange("fontStyle", "normal");
@@ -209,9 +208,7 @@ const TypographyEditor = () => {
             className={styles.textAlign === "center" ? "active" : ""}
             onClick={() => handleStyleChange("textAlign", "center")}
           >
-            <span className="material-symbols-outlined">
-              format_align_center
-            </span>
+            <span className="material-symbols-outlined">format_align_center</span>
           </button>
           <hr className="custom-rule" />
           <button
@@ -225,9 +222,7 @@ const TypographyEditor = () => {
             className={styles.textAlign === "justify" ? "active" : ""}
             onClick={() => handleStyleChange("textAlign", "justify")}
           >
-            <span className="material-symbols-outlined">
-              format_align_justify
-            </span>
+            <span className="material-symbols-outlined">format_align_justify</span>
           </button>
         </div>
       </div>
