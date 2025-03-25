@@ -41,6 +41,9 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
       style={{
         ...customStyles, // Override with custom styles
         cursor: 'text',
+        border: 'none',     // Remove any border
+        outline: 'none'     // Remove focus outline
+
       }}
     >
       {content || 'Editable Button'}

@@ -80,6 +80,9 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
         ...styles,
         ...customStyles,
         cursor: 'text',
+        border: 'none',     // Remove any border
+        outline: 'none'     // Remove focus outline
+
       }}
     >
       {content || 'Editable Span'}

@@ -4,11 +4,13 @@ export const defaultHeroStyles = {
   heroSection: {
     display: 'flex',
     position:'relative',
+    flexDirection:'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '40px',
+    padding: '20px',
     backgroundColor: '#ffffff',
+    gap:'1rem',
   },
   heroContent: {
     flex: '1',
@@ -20,10 +22,14 @@ export const defaultHeroStyles = {
     gap: '1rem',
   },
   heroRightContent:{
-
+    backgroundColor: '#ffffff',
   },  
   heroLeftContent:{
-
+    display:'flex',
+    justifyContent:'center',
+    alignItems:'center',
+    flexDirection:'column',
+    backgroundColor: '#ffffff',
   },
   heroTitle: {
     fontSize: '2.5rem',

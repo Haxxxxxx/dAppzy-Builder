@@ -34,6 +34,10 @@ const Textarea = ({ id }) => {
         border: '1px solid #ccc',
         borderRadius: '4px',
         resize: 'vertical',
+        cursor: 'text',
+        border: 'none',     // Remove any border
+        outline: 'none'     // Remove focus outline
+
       }}
     />
   );

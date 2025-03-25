@@ -48,7 +48,9 @@ const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
       style={{
         ...styles,
         ...customStyles,
-        cursor: 'pointer',
+        cursor: 'text',
+        border: 'none',     // Remove any border
+        outline: 'none',     // Remove focus outline
         textDecoration: 'underline',
         color: '#007BFF',
       }}

@@ -1,18 +1,18 @@
-import React, { useContext, useEffect, useRef, useMemo } from 'react';
+import React, { useContext, useMemo, useRef, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
 import { defaultHeroStyles } from './defaultHeroStyles';
 import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
 
 const HeroOne = ({
-  handleSelect, // parent selection handler for the overall hero
+  handleSelect, // Parent selection handler for the overall hero
   uniqueId,
-  children, // typically passed from DraggableHero after mapping via findElementById
+  children, // Typically passed from DraggableHero after mapping via findElementById
   onDropItem,
   handleOpenMediaPanel,
 }) => {
   const heroRef = useRef(null);
-  const { elements, updateStyles } = useContext(EditableContext);
+  const { elements, setSelectedElement, findElementById, updateStyles } = useContext(EditableContext);
 
   // Find the hero element in context
   const heroElement = useMemo(
@@ -20,7 +20,7 @@ const HeroOne = ({
     [elements, uniqueId]
   );
 
-  // Fallback: if no children are passed and heroElement.children is empty, use configuration children
+  // Determine children to render (fallback logic)
   const heroChildren =
     children && children.length > 0
       ? children
@@ -35,18 +35,28 @@ const HeroOne = ({
     onDropItem,
   });
 
-  // Apply default hero styles if no custom styles exist
+  // On mount, if no custom styles exist, apply defaults
   useEffect(() => {
     if (!heroElement) return;
-    const noCustomStyles =
-      !heroElement.styles || Object.keys(heroElement.styles).length === 0;
+    const noCustomStyles = !heroElement.styles || Object.keys(heroElement.styles).length === 0;
     if (noCustomStyles) {
-      updateStyles(heroElement.id, {
-        ...defaultHeroStyles.heroSection,
-      });
+      updateStyles(heroElement.id, { ...defaultHeroStyles.heroSection });
     }
   }, [heroElement, updateStyles]);
 
+  // Handle inner div selection by setting the selected element from context
+  const handleInnerDivClick = (e, divId) => {
+    e.stopPropagation();
+    const element = findElementById(divId, elements);
+    if (element) {
+      setSelectedElement(element);
+    } else {
+      // Optionally, if not found, simply set a temporary selected element.
+      setSelectedElement({ id: divId, type: 'div', styles: { ...defaultHeroStyles.heroLeftContent } });
+    }
+  };
+
+  // Handle image drop for image elements
   const handleImageDrop = (droppedItem, imageId) => {
     if (droppedItem.mediaType === 'image') {
       onDropItem(imageId, droppedItem.src);
@@ -63,14 +73,18 @@ const HeroOne = ({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        handleSelect(e);
+        // Optionally select the overall hero element here if desired:
+        handleSelect(e, uniqueId);
       }}
+      ref={drop}
     >
-      {/* Left side: render all non‑image content in an editable Div */}
+      {/* Left side: Render all non‑image content */}
       <Div
-        id={uniqueId + '-left'}
-        styles={{...defaultHeroStyles.heroContent}}
+        id={`${uniqueId}-left`}
+        parentId={uniqueId}
+        styles={{ ...defaultHeroStyles.heroLeftContent }}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-left`)}
       >
         {heroChildren
           .filter((child) => child?.type !== 'image')
@@ -116,11 +130,13 @@ const HeroOne = ({
           })}
       </Div>
 
-      {/* Right side: render image content in an editable Div */}
+      {/* Right side: Render image content */}
       <Div
-        id={uniqueId + '-right'}
-        styles={defaultHeroStyles.heroImageContainer}
+        id={`${uniqueId}-right`}
+        parentId={uniqueId}
+        styles={{ ...defaultHeroStyles.heroRightContent }}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-right`)}
       >
         {heroChildren
           .filter((child) => child?.type === 'image')

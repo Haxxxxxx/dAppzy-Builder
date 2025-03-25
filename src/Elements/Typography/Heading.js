@@ -43,6 +43,9 @@ const Heading = ({ id, content: initialContent, styles: customStyles }) => {
         wordWrap: 'break-word',
         whiteSpace: 'pre-wrap',
         overflowWrap: 'break-word',
+        cursor: 'text',
+        border: 'none',     // Remove any border
+        outline: 'none'     // Remove focus outline
       }}
     >
       {content || 'New Heading'}

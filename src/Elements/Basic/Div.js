@@ -3,15 +3,14 @@ import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 
-const Div = ({ id, handleOpenMediaPanel, styles: passedStyles = {}, children: passedChildren }) => {
+const Div = ({ id, parentId = null, handleOpenMediaPanel, styles: passedStyles = {}, children: passedChildren }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
-  const divElement = elements.find((el) => el.id === id);
+  let divElement = elements.find((el) => el.id === id);
   const contextStyles = (divElement && divElement.styles) || {};
   const contextChildren = (divElement && divElement.children) || [];
   
-  // Merge passed styles (which we want to use in layout) with context styles;
-  // passedStyles take precedence.
-  const styles = { ...contextStyles, ...passedStyles };
+  // Merge passed styles (used in layout) with context styles; passedStyles take precedence.
+  const styles = { ...passedStyles, ...contextStyles };
 
   // If children are passed as React nodes, use them; otherwise, fall back to contextChildren.
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
@@ -34,13 +33,18 @@ const Div = ({ id, handleOpenMediaPanel, styles: passedStyles = {}, children: pa
   });
 
   const handleSelect = (e) => {
-    // Only select the container if the click is on the container itself.
-    if (e.target === e.currentTarget) {
-      e.stopPropagation();
-      setSelectedElement({ id, type: 'div', styles });
+    e.stopPropagation();
+    if (!divElement) {
+      // Create a new element with the parentId if provided.
+      const newDivElement = { id, type: 'div', styles: passedStyles, children: [], parentId };
+      setElements((prev) => [...prev, newDivElement]);
+      setSelectedElement(newDivElement);
+      divElement = newDivElement; // update our local reference
+    } else {
+      setSelectedElement(divElement);
     }
   };
-
+  
   const backgroundStyle =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
@@ -92,7 +96,7 @@ const Div = ({ id, handleOpenMediaPanel, styles: passedStyles = {}, children: pa
       {backgroundStyle}
       {Array.isArray(childrenToRender)
         ? childrenToRender.map((child) => {
-            // If the passed children are React nodes, render them directly.
+            // If passed children are React nodes, render them directly.
             // Otherwise, assume they are IDs from context.
             if (React.isValidElement(child)) {
               return child;

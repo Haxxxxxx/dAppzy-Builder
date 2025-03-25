@@ -46,6 +46,9 @@ const Paragraph = ({ id, content: initialContent, styles:customStyles }) => {
         wordBreak: 'break-word',
         whiteSpace: 'normal',
         overflowWrap: 'break-word',
+        cursor: 'text',
+        border: 'none',     // Remove any border
+        outline: 'none'     // Remove focus outline
 
       }}
     >
