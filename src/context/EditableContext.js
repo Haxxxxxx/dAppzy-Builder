@@ -127,19 +127,30 @@ export const EditableProvider = ({ children, userId }) => {
    * Add a new element (with optional children if using a structure).
    * Insert at `index` if top-level, or append if it has a parent.
    */
-  const addNewElement = (type, level = 1, index = 0, parentId = null, structure = null) => {
+  const addNewElement = (type, level = 1, index = 0, parentId = null, config = null) => {
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
-
+  
+    // Determine if config is a structure (string) or a configuration (object)
+    let configuration = null;
+    let structure = null;
+    if (typeof config === 'string' && structureConfigurations[config]) {
+      structure = config;
+      configuration = config; // (or you might want to leave configuration null in this case)
+    } else if (config && typeof config === 'object') {
+      configuration = config;
+    }
+  
     const baseElement = {
       id: newId,
       type,
       styles: {},
       level,
       children: [],
+      // Optional label property (could be redundant if in configuration)
       label: '',
       parentId: parentId || null,
       content: (() => {
@@ -163,15 +174,15 @@ export const EditableProvider = ({ children, userId }) => {
         }
       })(),
       structure: structure || null,
-      configuration: structure || null,
+      configuration: configuration || null,
       settings: {},
     };
-
+  
     if (type === 'image') {
       baseElement.src = 'https://picsum.photos/150';
     }
-
-    // If user chose a structure (e.g., "navbar"), create children from config
+  
+    // If a structure was provided and exists in structureConfigurations, create children accordingly.
     if (structure && structureConfigurations[structure]) {
       baseElement.styles = structureConfigurations[structure].styles || {};
       const childrenElements = structureConfigurations[structure].children.map((child) => ({
@@ -183,8 +194,7 @@ export const EditableProvider = ({ children, userId }) => {
         parentId: newId,
       }));
       baseElement.children = childrenElements.map((child) => child.id);
-
-      // If top-level, insert at the provided index
+  
       if (!parentId) {
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
@@ -192,28 +202,25 @@ export const EditableProvider = ({ children, userId }) => {
           return newElements;
         });
       } else {
-        // If child, just append
         recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
       }
     } else {
-      // No structure config
+      // No structure configuration provided, so just add the base element.
       if (!parentId) {
-        // Insert top-level at the provided index
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
           newElements.splice(index, 0, baseElement);
           return newElements;
         });
       } else {
-        // Append as child
         recordElementsUpdate((prev) => [...prev, baseElement]);
       }
     }
-
+  
     console.log('Added new element:', baseElement);
     return newId;
   };
-
+  
   /**
    * Move an existing element to a new index (top-level reorder).
    */

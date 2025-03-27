@@ -1,4 +1,3 @@
-// src/components/Table.js
 import React, { useContext, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { useDrag } from 'react-dnd';
@@ -47,9 +46,7 @@ const TableRow = ({ id }) => {
     if (rowElement && children.length === 0) {
       const newCellId = addNewElement('table-cell', 1, null, id);
       setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === id ? { ...el, children: [newCellId] } : el
-        )
+        prevElements.map((el) => (el.id === id ? { ...el, children: [newCellId] } : el))
       );
     }
   }, [rowElement, id, addNewElement, setElements]);
@@ -68,7 +65,6 @@ const Table = ({ id }) => {
   const { elements, addNewElement, setElements, setSelectedElement } = useContext(EditableContext);
   const tableElement = elements.find((el) => el.id === id);
 
-  // Integrate useDrag to enable drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { type: 'table', id },
@@ -103,7 +99,7 @@ const Table = ({ id }) => {
   return (
     <table
       id={id}
-      ref={drag} // Attach drag reference
+      ref={drag}
       style={{
         opacity: isDragging ? 0.5 : 1,
         width: '100%',
@@ -113,10 +109,27 @@ const Table = ({ id }) => {
       }}
     >
       <tbody>
-        {children.map((childId) => {
-          const childElement = elements.find((el) => el.id === childId);
-          return childElement ? <TableRow key={childId} id={childId} /> : null;
-        })}
+        {children.length === 0 ? (
+          <tr>
+            <td
+              style={{
+                padding: '8px',
+                border: '1px solid #ccc',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                color: '#888', 
+                fontFamily:'Montserrat'
+              }}
+            >
+              Empty Table – Drop items here
+            </td>
+          </tr>
+        ) : (
+          children.map((childId) => {
+            const childElement = elements.find((el) => el.id === childId);
+            return childElement ? <TableRow key={childId} id={childId} /> : null;
+          })
+        )}
       </tbody>
     </table>
   );

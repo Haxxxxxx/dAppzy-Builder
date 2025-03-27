@@ -62,3 +62,59 @@
     line-height: normal;
     width: 100%;
 }
+
+.backgroundcolor-preview{
+    padding: 0px !important;
+    border: none !important;
+}
+
+.background-color-preview{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+
+
+/* Ensure the wrapper is a flex container with centered items */
+.color-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  /* Set a fixed height for all children, for example 40px */
+  .color-input-wrapper .settings-input,
+  .color-input-wrapper .toggle-button {
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0;
+    text-align: center;
+  }
+  
+  /* Optionally, you can adjust the widths */
+  .color-picker {
+    width: 40px;  /* square */
+
+    padding: 0;
+    border: none !important;
+  }
+  
+  .color-code-input {
+    flex: 1;      /* take remaining space */
+    padding: 0 8px;
+    width: 80%;
+
+  }
+  
+  .toggle-button {
+    width: 60px;  /* fixed width, adjust as needed */
+    background-color: #5C4EFA;
+
+    color: #FFF;
+    text-align: center;
+    font-family: Montserrat;
+    border: none;
+    border-radius: 5px;
+  }
+  

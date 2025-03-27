@@ -25,7 +25,7 @@ const withSelectable = (WrappedComponent) => {
 
     // When selected, force a blue outline border.
     const forcedSelectedStyle = isSelected
-      ? { outline: '2px solid var(----purple, #5C4EFA)'}
+      ? { outline: '2px solid var(----purple, #5C4EFA)', borderInline:'0.5px solid var(----purple, #5C4EFA)'}
       : {};
 
     return (

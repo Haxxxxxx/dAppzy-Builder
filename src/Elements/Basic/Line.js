@@ -32,6 +32,7 @@ const Line = ({ id, styles: customStyles }) => {
         ...styles,
         border: styles.border || '1px solid #000',
         margin: styles.margin || '10px 0',
+        width:'100%',
       }}
     />
   );

@@ -3,48 +3,64 @@ import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 
-const Div = ({ id, parentId = null, handleOpenMediaPanel, styles: passedStyles = {}, children: passedChildren }) => {
+const Div = ({
+  id,
+  parentId = null,
+  handleOpenMediaPanel,
+  styles: passedStyles = {},
+  children: passedChildren,
+  onDropItem,
+}) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
+
+  // Look up this Div's element in state
   let divElement = elements.find((el) => el.id === id);
   const contextStyles = (divElement && divElement.styles) || {};
   const contextChildren = (divElement && divElement.children) || [];
-  
-  // Merge passed styles (used in layout) with context styles; passedStyles take precedence.
+
+  // Merge passed styles (passedStyles takes precedence)
   const styles = { ...passedStyles, ...contextStyles };
 
-  // If children are passed as React nodes, use them; otherwise, fall back to contextChildren.
+  // Determine children to render: use passedChildren if available, otherwise from state
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
-
   const divRef = useRef(null);
 
+  // Set up drop handling for this Div
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: divRef,
-    onDropItem: (item, parentId) => {
-      const newId = addNewElement(item.type, item.level || 1, null, parentId);
-      setElements((prev) =>
-        prev.map((el) =>
-          el.id === parentId
-            ? { ...el, children: [...new Set([...el.children, newId])] }
-            : el
-        )
-      );
+    onDropItem: (item) => {
+      let currentDivElement = elements.find((el) => el.id === id);
+      if (!currentDivElement) {
+        const newDivElement = { id, type: 'div', styles: passedStyles, children: [], parentId };
+        setElements((prev) => [...prev, newDivElement]);
+        currentDivElement = newDivElement;
+      }
+      if (onDropItem) {
+        onDropItem(item, id);
+      } else {
+        const newId = addNewElement(item.type, item.level || 1, null, id);
+        setElements((prev) =>
+          prev.map((el) => (el.id === id ? { ...el, children: [...el.children, newId] } : el))
+        );
+      }
     },
   });
 
+  // When this Div is clicked, select it (or create it if missing)
   const handleSelect = (e) => {
     e.stopPropagation();
     if (!divElement) {
-      // Create a new element with the parentId if provided.
       const newDivElement = { id, type: 'div', styles: passedStyles, children: [], parentId };
       setElements((prev) => [...prev, newDivElement]);
       setSelectedElement(newDivElement);
-      divElement = newDivElement; // update our local reference
+      divElement = newDivElement;
     } else {
       setSelectedElement(divElement);
     }
   };
-  
+
+  // Optional background rendering if video/image backgrounds are used
   const backgroundStyle =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
@@ -91,21 +107,27 @@ const Div = ({ id, parentId = null, handleOpenMediaPanel, styles: passedStyles =
         padding: styles.padding || '10px',
         margin: styles.margin || '10px 0',
         position: 'relative',
+        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
       }}
     >
       {backgroundStyle}
-      {Array.isArray(childrenToRender)
-        ? childrenToRender.map((child) => {
-            // If passed children are React nodes, render them directly.
-            // Otherwise, assume they are IDs from context.
-            if (React.isValidElement(child)) {
-              return child;
-            } else {
-              const childEl = elements.find((el) => el === child || el.id === child);
-              return renderElement({ handleOpenMediaPanel }, childEl, elements, selectedElement);
-            }
-          })
-        : childrenToRender}
+      {(!childrenToRender ||
+        (Array.isArray(childrenToRender) && childrenToRender.length === 0)) ? (
+        <div className="empty-placeholder" style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', fontFamily:'Montserrat' }}>
+          Empty Div – Drop items here
+        </div>
+      ) : Array.isArray(childrenToRender) ? (
+        childrenToRender.map((child) => {
+          if (React.isValidElement(child)) {
+            return child;
+          } else {
+            const childEl = elements.find((el) => el === child || el.id === child);
+            return renderElement({ handleOpenMediaPanel }, childEl, elements, selectedElement);
+          }
+        })
+      ) : (
+        childrenToRender
+      )}
     </div>
   );
 };

@@ -32,7 +32,6 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
   // Build the icon path based on the element type
   // e.g., type = 'paragraph' => "/icons/icon-paragraph.svg"
   const iconPath = `./img/icon-${type}.svg`;
-  console.log(iconPath);
   return (
     <div className='bento-extract-display'>
       <div

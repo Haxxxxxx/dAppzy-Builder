@@ -4,7 +4,8 @@ import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 
 const Container = ({ id }) => {
-  const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, elements, addNewElement, setElements } =
+    useContext(EditableContext);
   const containerElement = elements.find((el) => el.id === id) || {};
   const { styles = {}, children = [] } = containerElement;
   const containerRef = useRef(null);
@@ -46,15 +47,24 @@ const Container = ({ id }) => {
         maxWidth: styles.maxWidth || '1200px',
       }}
     >
-      {children.map((childId) =>
-        renderElement(
-          elements.find((el) => el.id === childId),
-          elements,
-          null,
-          setSelectedElement,
-          setElements,
-          null,
-          selectedElement
+      {children.length === 0 ? (
+        <div
+          className="empty-placeholder"
+          style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', fontFamily:'Montserrat' }}
+        >
+          Empty Container – Drop items here
+        </div>
+      ) : (
+        children.map((childId) =>
+          renderElement(
+            elements.find((el) => el.id === childId),
+            elements,
+            null,
+            setSelectedElement,
+            setElements,
+            null,
+            selectedElement
+          )
         )
       )}
     </div>

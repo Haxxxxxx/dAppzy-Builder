@@ -1,0 +1,13 @@
+.form-settings-panel{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.form-general-settings,
+.form-advanced-settings{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}

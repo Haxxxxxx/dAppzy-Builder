@@ -3,36 +3,68 @@ import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 
-const Section = ({ id, style: extraStyles = {}, onClick: extraOnClick, children }) => {
+const Section = ({
+  id,
+  parentId = null,
+  handleOpenMediaPanel,
+  styles: passedStyles = {},
+  children: passedChildren,
+  onDropItem,
+  onClick: extraOnClick,
+}) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
-  const sectionElement = elements.find((el) => el.id === id) || {};
-  const { styles = {}, children: childrenIds = [] } = sectionElement;
+
+  // Look up this Section's element in state.
+  let sectionElement = elements.find((el) => el.id === id);
+  const contextStyles = (sectionElement && sectionElement.styles) || {};
+  const contextChildren = (sectionElement && sectionElement.children) || [];
+
+  // Merge passed styles with state styles (passedStyles takes precedence).
+  const styles = { ...contextStyles, ...passedStyles };
+
+  // Determine children to render: use passedChildren if provided; otherwise use children from state.
+  const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
   const sectionRef = useRef(null);
 
+  // Set up drop handling for this Section.
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: sectionRef,
-    onDropItem: (item, parentId) => {
-      const newId = addNewElement(item.type, item.level || 1, null, parentId);
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === parentId
-            ? { ...el, children: [...new Set([...el.children, newId])] }
-            : el
-        )
-      );
+    onDropItem: (item) => {
+      let currentSection = elements.find((el) => el.id === id);
+      if (!currentSection) {
+        const newSectionElement = { id, type: 'section', styles: passedStyles, children: [], parentId };
+        setElements((prev) => [...prev, newSectionElement]);
+        currentSection = newSectionElement;
+      }
+      if (onDropItem) {
+        onDropItem(item, id);
+      } else {
+        const newId = addNewElement(item.type, item.level || 1, null, id);
+        setElements((prev) =>
+          prev.map((el) => (el.id === id ? { ...el, children: [...el.children, newId] } : el))
+        );
+      }
     },
   });
 
+  // When the Section is clicked, select it (or create it if missing).
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'section', styles });
+    if (!sectionElement) {
+      const newSectionElement = { id, type: 'section', styles: passedStyles, children: [], parentId };
+      setElements((prev) => [...prev, newSectionElement]);
+      setSelectedElement(newSectionElement);
+      sectionElement = newSectionElement;
+    } else {
+      setSelectedElement(sectionElement);
+    }
     if (typeof extraOnClick === 'function') {
       extraOnClick(e);
     }
   };
 
-  // Background rendering for video or image if provided in styles
+  // Optional background rendering if a video or image background is provided.
   const backgroundContent =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
@@ -79,24 +111,35 @@ const Section = ({ id, style: extraStyles = {}, onClick: extraOnClick, children 
         position: 'relative',
         padding: styles.padding || '10px',
         margin: styles.margin || '10px 0',
-        backgroundColor: isOverCurrent
-          ? 'rgba(0, 0, 0, 0.1)'
-          : styles.backgroundColor || 'transparent',
-        ...extraStyles,
+        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
       }}
     >
       {backgroundContent}
-      {/* Render children from global state if none are passed directly */}
-      {children || childrenIds.map((childId) =>
-        renderElement(
-          elements.find((el) => el.id === childId),
-          elements,
-          null, // Assuming contentListWidth is not needed here
-          setSelectedElement,
-          setElements,
-          null, // handlePanelToggle is not defined here
-          selectedElement
-        )
+      {(!childrenToRender ||
+        (Array.isArray(childrenToRender) && childrenToRender.length === 0)) ? (
+        <div className="empty-placeholder" style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', fontFamily:'Montserrat' }}>
+          Empty Section – Drop items here
+        </div>
+      ) : Array.isArray(childrenToRender) ? (
+        childrenToRender.map((child, index) => {
+          if (React.isValidElement(child)) {
+            return child;
+          } else {
+            const childEl = elements.find((el) => el === child || el.id === child);
+            return renderElement(
+              childEl,
+              elements,
+              null,
+              setSelectedElement,
+              setElements,
+              null,
+              selectedElement,
+              handleOpenMediaPanel
+            );
+          }
+        })
+      ) : (
+        childrenToRender
       )}
     </section>
   );

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Input = ({ id }) => {
@@ -8,12 +8,12 @@ const Input = ({ id }) => {
   const inputRef = useRef(null);
 
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent propagation to parent elements
+    e.stopPropagation();
     setSelectedElement({ id, type: 'input', styles });
   };
 
   const handleChange = (e) => {
-    e.stopPropagation(); // Prevent propagation during input change
+    e.stopPropagation();
     updateContent(id, e.target.value);
   };
 
@@ -28,13 +28,14 @@ const Input = ({ id }) => {
       id={id}
       ref={inputRef}
       value={content}
+      placeholder="Enter text..."
       onClick={handleSelect}
       onChange={handleChange}
       style={{
         ...styles,
-        border:  '1px solid #ccc', // Add visual cue for selected input
+        border: '1px solid #ccc',
         padding: '5px',
-        margin: '5px',
+        margin: '5px', fontFamily:'Montserrat'
       }}
     />
   );

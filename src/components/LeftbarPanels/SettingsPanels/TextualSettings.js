@@ -70,7 +70,7 @@ const TextualSettings = () => {
           className="settings-input"
         />
       </div>
-      <hr />
+      {/* <hr />
       <CollapsibleSection title={`${localSettings.type} Settings`}>
         <div className="settings-wrapper">
           {localSettings.type === 'code' ? (
@@ -111,7 +111,7 @@ const TextualSettings = () => {
             />
           )}
         </div>
-      </CollapsibleSection>
+      </CollapsibleSection> */}
     </div>
   );
 };

@@ -58,6 +58,11 @@
   border: 1px solid #CBD5E1;
 }
 
+.settings-panel option{
+  background-color: #57575B;
+}
+
+
 .settings-panel textarea {
   resize: vertical;
   min-height: 80px;

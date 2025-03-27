@@ -1,10 +1,10 @@
-// src/Elements/Interact/Textarea.js
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Textarea = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id);
+  // Default content is empty string; placeholder will show if content is empty.
   const { content = '' } = element || {};
   const isSelected = selectedElement?.id === id;
   const textareaRef = useRef(null);
@@ -26,18 +26,17 @@ const Textarea = ({ id }) => {
     <textarea
       ref={textareaRef}
       value={content}
+      placeholder="Enter text here..."
       onClick={handleSelect}
       onChange={handleChange}
       style={{
         width: '100%',
         padding: '8px',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
+        border: 'none',
+        outline: 'none',
         resize: 'vertical',
-        cursor: 'text',
-        border: 'none',     // Remove any border
-        outline: 'none'     // Remove focus outline
-
+        cursor: 'text', fontFamily:'Montserrat'
+        
       }}
     />
   );

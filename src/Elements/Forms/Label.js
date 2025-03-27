@@ -1,11 +1,11 @@
-// src/Elements/Interact/Label.js
 import React, { useContext } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Label = ({ id }) => {
   const { selectedElement, setSelectedElement, updateContent, elements } = useContext(EditableContext);
   const element = elements.find((el) => el.id === id);
-  const { content = 'Label' } = element || {};
+  // Use default text "Label" if no content exists (or if content is whitespace)
+  const content = element?.content?.trim() || 'Label';
   const isSelected = selectedElement?.id === id;
 
   const handleSelect = (e) => {
@@ -14,7 +14,7 @@ const Label = ({ id }) => {
   };
 
   const handleBlur = (e) => {
-    if (isSelected) updateContent(id, e.target.innerText);
+    if (isSelected) updateContent(id, e.target.innerText || 'Label');
   };
 
   return (
@@ -23,7 +23,7 @@ const Label = ({ id }) => {
       suppressContentEditableWarning={true}
       onClick={handleSelect}
       onBlur={handleBlur}
-      style={{ padding: '4px' }}
+      style={{ padding: '4px', cursor: 'text', fontFamily:'Montserrat' }}
     >
       {content}
     </label>

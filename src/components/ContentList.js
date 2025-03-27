@@ -86,6 +86,7 @@ const ContentList = forwardRef(
           transform: `scale(${scale})`,
           transition: 'transform 0.3s ease',
           margin: scale < 1 ? '0 auto' : '0',
+          marginBottom:'30px',
         }}
         onClick={(e) => {
           if (e.target === ref.current) {
@@ -125,19 +126,19 @@ const ContentList = forwardRef(
                 isPreviewMode,
                 handleOpenMediaPanel
               )}
-              {isDragging && (
+              {/* {isDragging && (
                 <DropZone
                   index={index}
                   onDrop={(item) => handleDrop(item, index)}
                   text=""
                   className="default-dropzone"
                 />
-              )}
+              )} */}
             </React.Fragment>
           ))}
 
         {/* Render drop zone after the last element only during dragging */}
-        {!isPreviewMode && elements.length < 0  && (
+        {!isPreviewMode && isDragging && elements.length > 0  && (
           <DropZone
             index={elements.length}
             onDrop={(item) => handleDrop(item, elements.length)}

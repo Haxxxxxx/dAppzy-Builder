@@ -15,15 +15,20 @@ import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
 import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
+import BackgroundSettings from './SettingsPanels/BackgroundSettings';
+import FormSettings from './SettingsPanels/FormSettings';
 
-const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, searchQuery }) => {
+const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
 
   // Reset editor view mode to 'style' whenever the selected element changes.
   useEffect(() => {
-    setViewMode('style');
+    // Only reset to 'style' if no element is selected,
+    // or if you want to reset only on initial mount.
+    if (!selectedElement) {
+      setViewMode('style');
+    }
   }, [selectedElement, setViewMode]);
-
   const renderSettingsView = () => {
     if (
       selectedElement?.type === 'title' ||
@@ -36,7 +41,6 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <TextualSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
         />
       );
     }
@@ -44,7 +48,13 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <WalletSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }    
+    if (selectedElement?.type === 'div' || selectedElement?.type === 'section') {
+      return (
+        <BackgroundSettings
+          settings={selectedElement.settings || {}}
         />
       );
     }
@@ -52,7 +62,6 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <ImageSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
         />
       );
     }
@@ -60,7 +69,6 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <VideoSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
         />
       );
     }
@@ -68,7 +76,6 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <CandyMachineSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
         />
       );
     }
@@ -81,7 +88,6 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <LinkSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
         />
       );
     }
@@ -92,7 +98,15 @@ const EditorPanel = ({ onUpdateSettings, pageSettings, viewMode, setViewMode, se
       return (
         <ListSettings
           settings={selectedElement.settings || {}}
-          onUpdateSettings={onUpdateSettings}
+        />
+      );
+    }
+    if (
+      selectedElement?.type === 'form' 
+    ) {
+      return (
+        <FormSettings
+          settings={selectedElement.settings || {}}
         />
       );
     }
