@@ -7,6 +7,7 @@ const ContentSectionsPanel = ({ contentListWidth, searchQuery }) => {
     { imgSrc: './img/previewcomponent.png', configuration: 'sectionOne', label: 'Section One' },
     { imgSrc: './img/previewcomponent.png', configuration: 'sectionTwo', label: 'Section Two' },
     { imgSrc: './img/previewcomponent.png', configuration: 'sectionThree', label: 'Section Three' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'sectionFour', label: 'Section Four' },
   ];
 
   // Filter section configurations based on the search query

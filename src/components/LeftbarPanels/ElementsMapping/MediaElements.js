@@ -18,6 +18,12 @@ const MediaElements = [
     label: 'Youtube Video',
     description: 'A Youtube Video player element.',
     icon: elementIconPaths.youtubevideo,
+  }, 
+  {
+    type: 'icon',
+    label: 'Icon ',
+    description: 'A icon for your footers.',
+    icon: elementIconPaths.image,
   },
 
 ];

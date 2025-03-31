@@ -19,7 +19,6 @@ export const defaultSectionStyles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '1rem',
-    padding: '20px',
   },
   heading: {
     fontSize: '2rem',
@@ -84,49 +83,84 @@ export const defaultSectionStyles = {
   },
 };
 
-
-
-export const customTemplateSectionStyles = {
+// sectionThreeStyles.js
+export const sectionThreeStyles = {
   sectionContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    padding: '40px',
-    backgroundColor: '#ffffff',
-    gap: '10vw',
-  },
-  contentWrapper: {
-    flex: '1',
-    minWidth: '300px',
-    maxWidth: '600px',
+    backgroundColor: '#FFFFFF',
+    padding: '60px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem',
-    padding: '20px',
+    alignItems: 'center',
+    textAlign: 'center',
   },
+  // "Caption" style
   caption: {
-    fontWeight: 'bold',
-    color: '#334155',
+    textTransform: 'uppercase',
+    color: '#6B7280',
+    fontSize: '0.875rem',   // ~14px
+    fontWeight: 700,
     marginBottom: '8px',
   },
   heading: {
-    fontSize: '2.5rem',
+    color: '#1F2937',
+    fontSize: '2rem',       // ~32px
     fontWeight: 'bold',
-    marginBottom: '16px',
+    margin: '0 0 16px 0',
   },
   paragraph: {
-    fontSize: '1rem',
+    color: '#4B5563',
+    fontSize: '1rem',       // ~16px
     lineHeight: '1.5',
-    marginBottom: '24px',
+    margin: '0 0 24px 0',
+  },
+};
+
+// sectionTwoStyles.js
+export const sectionTwoStyles = {
+  sectionContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: '60px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  // "Caption" style
+  caption: {
+    textTransform: 'uppercase',
+    color: '#6B7280',
+    fontSize: '0.875rem',   // ~14px
+    fontWeight: 700,
+    marginBottom: '8px',
+  },
+  heading: {
+    color: '#1F2937',
+    fontSize: '2rem',       // ~32px
+    fontWeight: 'bold',
+    margin: '0 0 16px 0',
+  },
+  paragraph: {
+    color: '#4B5563',
+    fontSize: '1rem',       // ~16px
+    lineHeight: '1.5',
+    margin: '0 0 24px 0',
+    maxWidth: '600px',
+  },
+  buttonContainer: {
+    display: 'flex',
+    gap: '12px',
+    marginTop: '24px',
+    justifyContent:'center',
+
   },
   primaryButton: {
     backgroundColor: '#334155',
-    color: '#ffffff',
+    color: '#FFFFFF',
     padding: '12px 24px',
     fontWeight: 'bold',
     border: 'none',
     cursor: 'pointer',
+    borderRadius: '4px',
   },
   secondaryButton: {
     backgroundColor: 'transparent',
@@ -135,49 +169,91 @@ export const customTemplateSectionStyles = {
     border: '2px solid #334155',
     fontWeight: 'bold',
     cursor: 'pointer',
-  },
-  imageContainer: {
-    flex: '1',
-    minWidth: '300px',
-    maxWidth: '600px',
-    textAlign: 'center',
-    marginTop: '20px',
-  },
-  image: {
-    maxWidth: '100%',
-    height: 'auto',
-    objectFit: 'cover',
-    borderRadius: '8px',
+    borderRadius: '4px',
   },
 };
 
-export const sectionTwoStyles = {
+// sectionFourStyles.js
+export const sectionFourStyles = {
+  // Outer container for the entire section
   sectionContainer: {
-    backgroundColor: '#6B7280',
-    color: '#fff',
+    backgroundColor: '#FFFFFF',
     padding: '60px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     textAlign: 'center',
-    borderRadius: '8px',
   },
+
+  // Top label (span)
+  caption: {
+    textTransform: 'uppercase',
+    color: '#6B7280',
+    fontSize: '0.875rem', // ~14px
+    fontWeight: 700,
+    marginBottom: '8px',
+  },
+
+  // Main heading
   heading: {
-    fontSize: '2.5rem',
+    color: '#1F2937',
+    fontSize: '2rem', // ~32px
     fontWeight: 'bold',
-    marginBottom: '16px',
+    margin: '0 0 24px 0',
   },
-  paragraph: {
-    fontSize: '1rem',
-    lineHeight: '1.5',
+
+  // Container for the 4 feature items
+  featuresContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '24px',
     marginBottom: '24px',
+    maxWidth: '1000px',
   },
+
+  // Each feature item (icon + text)
+  featureItem: {
+    flex: '0 1 calc(25% - 24px)',
+    minWidth: '180px',
+    maxWidth: '220px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+  },
+
+  // Icon/image inside each feature
+  featureIcon: {
+    width: '40px',
+    height: '40px',
+    marginBottom: '8px',
+  },
+
+  // Optional sub-heading inside each feature
+  featureHeading: {
+    fontSize: '1rem',
+    fontWeight: 600,
+    margin: '0 0 8px 0',
+    color: '#1F2937',
+  },
+
+  // Text inside each feature
+  featureText: {
+    fontSize: '0.875rem',
+    lineHeight: '1.4',
+    color: '#4B5563',
+    margin: '0',
+  },
+
+  // Single primary button at the bottom
   primaryButton: {
-    border: 'none',
     backgroundColor: '#334155',
-    color: '#fff',
+    color: '#FFFFFF',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    border: 'none',
     cursor: 'pointer',
-    padding: '10px 20px',
     borderRadius: '4px',
   },
 };

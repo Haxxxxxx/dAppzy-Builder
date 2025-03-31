@@ -31,7 +31,7 @@ const elementIconPaths = {
     video: './img/video.svg',
     audio: './img/audio.svg',
     iframe: './img/iframe.svg',
-  
+    icon: './img/image.svg',
     // Interactive Elements
     button: './img/button.svg',
     progress: './img/progress.svg',

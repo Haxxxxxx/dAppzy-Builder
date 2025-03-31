@@ -4,6 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 import SectionOne from '../Sections/ContentSections/SectionOne';
 import SectionTwo from '../Sections/ContentSections/SectionTwo';
 import SectionThree from '../Sections/ContentSections/SectionThree';
+import SectionFour from '../Sections/ContentSections/SectionFour';
 
 const DraggableContentSections = ({
   id,
@@ -80,6 +81,7 @@ const DraggableContentSections = ({
     sectionOne: 'Section One',
     sectionTwo: 'Section Two',
     sectionThree: 'Section Three',
+    sectionFour: 'Section Four',
   };
 
 
@@ -133,6 +135,18 @@ const DraggableContentSections = ({
   } else if (configuration === 'sectionThree') {
     SectionComponent = (
       <SectionThree
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+        onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+      />
+    );
+  }else if (configuration === 'sectionFour') {
+    SectionComponent = (
+      <SectionFour
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}

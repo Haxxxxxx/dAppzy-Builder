@@ -13,19 +13,14 @@ const Div = ({
 }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
 
-  // Look up this Div's element in state
   let divElement = elements.find((el) => el.id === id);
   const contextStyles = (divElement && divElement.styles) || {};
   const contextChildren = (divElement && divElement.children) || [];
 
-  // Merge passed styles (passedStyles takes precedence)
   const styles = { ...passedStyles, ...contextStyles };
-
-  // Determine children to render: use passedChildren if available, otherwise from state
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
   const divRef = useRef(null);
 
-  // Set up drop handling for this Div
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: divRef,
@@ -47,7 +42,6 @@ const Div = ({
     },
   });
 
-  // When this Div is clicked, select it (or create it if missing)
   const handleSelect = (e) => {
     e.stopPropagation();
     if (!divElement) {
@@ -60,7 +54,6 @@ const Div = ({
     }
   };
 
-  // Optional background rendering if video/image backgrounds are used
   const backgroundStyle =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
@@ -113,8 +106,20 @@ const Div = ({
       {backgroundStyle}
       {(!childrenToRender ||
         (Array.isArray(childrenToRender) && childrenToRender.length === 0)) ? (
-        <div className="empty-placeholder" style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', fontFamily:'Montserrat' }}>
-          Empty Div – Drop items here
+        <div
+          className="empty-placeholder"
+          style={{
+            color: '#888',
+            fontStyle: 'italic',
+            textAlign: 'center',
+            fontFamily: 'Montserrat',
+            padding: '10px',
+            background: isOverCurrent ? '#f0f0f0' : 'transparent',
+          }}
+        >
+          {isOverCurrent
+            ? 'Drop here – element will be dropped here and nowhere else'
+            : 'Empty Div – Drop items here'}
         </div>
       ) : Array.isArray(childrenToRender) ? (
         childrenToRender.map((child) => {

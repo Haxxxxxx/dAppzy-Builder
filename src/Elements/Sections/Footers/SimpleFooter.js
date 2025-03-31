@@ -91,7 +91,7 @@ const SimpleFooter = ({
             id={child.id}
             content={child.content}
             styles={{
-              ...SimplefooterStyles.socialButton,
+              ...SimplefooterStyles.subscribeButton,
               ...(child.styles || {}),
             }}
           />

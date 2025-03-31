@@ -28,4 +28,5 @@ export const structureConfigurations = {
   sectionOne: SectionConfiguration.sectionOne,
   sectionTwo: SectionConfiguration.sectionTwo,
   sectionThree: SectionConfiguration.sectionThree,
+  sectionFour: SectionConfiguration.sectionFour,
 };

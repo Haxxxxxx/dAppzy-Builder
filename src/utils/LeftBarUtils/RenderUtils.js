@@ -46,6 +46,7 @@ import {
   LinkBlock,
   YouTubeVideo,
   DraggableContentSections,
+  Icon,
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
@@ -283,6 +284,7 @@ export const renderElement = (
     line: <Line id={id} key={id} styles={{ ...element.styles }}></Line>,
     linkblock: <LinkBlock id={id} key={id} styles={{ ...element.styles }}></LinkBlock>,
     youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} ></YouTubeVideo>,
+    icon:<Icon id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} ></Icon>,
   };
 
   const component = componentMap[type];

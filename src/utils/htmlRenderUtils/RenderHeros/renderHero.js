@@ -1,45 +1,32 @@
-// src/utils/htmlRenderUtils/RenderHeros/renderHero.js
+// File: src/utils/htmlRenderUtils/RenderHeros/renderHero.js
 
-import {
-  CustomTemplateHeroStyles,
-  defaultHeroStyles
-  // ...others, e.g. heroTwoStyles, heroThreeStyles, etc.
-} from '../../../Elements/Sections/Heros/defaultHeroStyles';
-// Assume you have a helper that can convert a single child to raw HTML if needed
+import { CustomTemplateHeroStyles, defaultHeroStyles } from '../../../Elements/Sections/Heros/defaultHeroStyles';
 
 export function renderHero(heroElement, collectedStyles) {
-  const {
-    id,
-    configuration,
-    children = [],
-    styles = {}, // user overrides at the hero level
-  } = heroElement;
+  const { id, configuration, children = [], styles = {} } = heroElement;
 
-  // 1) Decide which base styles to use, depending on config
-  //    (maybe your config is "customTemplate" or "heroThree")
+  // Select base styles according to configuration
   let baseHeroSection = {};
   if (configuration === 'heroThree' || configuration === 'customTemplate') {
     baseHeroSection = CustomTemplateHeroStyles.heroSection;
-  } 
-  if (configuration === 'heroTwo' || configuration === 'customTemplate') {
+  } else if (configuration === 'heroTwo') {
     baseHeroSection = defaultHeroStyles.heroSection;
-  }   if (configuration === 'heroOne' || configuration === 'customTemplate') {
+  } else {
+    // Default to heroOne styles (or fallback)
     baseHeroSection = defaultHeroStyles.heroSection;
-  } 
+  }
 
-  // 2) Parse children to produce HTML (caption, heading, paragraph, multiple buttons, image)
+  // Parse children to produce HTML for caption, heading, paragraph, image and buttons
   let captionHtml = '';
   let headingHtml = '';
   let paragraphHtml = '';
   const buttonHtmls = [];
   let imageHtml = '';
 
-  // We'll store references so we can do "primary" or "secondary" for multiple buttons
   const buttonChildren = children.filter((c) => c.type === 'button');
 
-  children.forEach((child, idx) => {
+  children.forEach((child) => {
     if (child.type === 'span' && !captionHtml) {
-      // We'll treat the first <span> as a "caption"
       captionHtml = `<span class="caption">${child.content || ''}</span>`;
     } else if (child.type === 'heading' && !headingHtml) {
       headingHtml = `<h1 class="heroTitle">${child.content || ''}</h1>`;
@@ -52,10 +39,9 @@ export function renderHero(heroElement, collectedStyles) {
         </div>
       `;
     }
-    // We'll handle buttons separately below
   });
 
-  // Handle all buttons, applying "primaryButton" for the 1st, "secondaryButton" for subsequent
+  // Render buttons – first button as primary, subsequent ones as secondary.
   buttonChildren.forEach((btn, index) => {
     if (index === 0) {
       buttonHtmls.push(`<button class="primaryButton">${btn.content || ''}</button>`);
@@ -64,11 +50,10 @@ export function renderHero(heroElement, collectedStyles) {
     }
   });
 
-  // 3) Merge top-level + user-defined styles, plus sub-rules
-  //    so your final <section> can do `.heroContent`, `.caption`, etc.
+  // Merge the base styles with user-defined styles and additional sub-rule styles.
   const mergedStyles = {
     ...baseHeroSection,
-    ...styles, // user overrides for the container
+    ...styles,
     '.heroContent': { ...CustomTemplateHeroStyles.heroContent },
     '.caption': { ...CustomTemplateHeroStyles.caption },
     '.heroTitle': { ...CustomTemplateHeroStyles.heroTitle },
@@ -80,14 +65,14 @@ export function renderHero(heroElement, collectedStyles) {
     '.heroImage': { ...CustomTemplateHeroStyles.heroImage },
   };
 
-  // 4) Push into collectedStyles so your export can generate CSS
+  // Push the merged style rule into collectedStyles with a unique class name.
   const className = `${id}`;
   collectedStyles.push({
     className,
     styles: mergedStyles,
   });
 
-  // 5) Build final HTML referencing those sub-rules
+  // Build and return the final HTML for this hero element.
   return `
     <section id="${className}" class="${className}">
       <div class="heroContent">

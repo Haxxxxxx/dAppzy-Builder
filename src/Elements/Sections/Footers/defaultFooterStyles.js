@@ -92,13 +92,24 @@ export const SimplefooterStyles = {
     fontSize: '0.875rem',
     alignSelf: 'center',
   },
+  subscribeButton: {
+    backgroundColor: 'rgb(51, 65, 85)',
+    color: 'rgb(255, 255, 255)',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    border: 'none',
+    cursor: 'text',
+    borderRadius: '4px',
+    outline: 'none',
+  },
 };
 
 export const DetailedFooterStyles = {
   footer: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent : 'space-evenly',
+    alignItems:'center',
+    justifyContent: 'space-evenly',
     gap: '16px',
     padding: '24px',
     backgroundColor: '#444444',
@@ -131,6 +142,17 @@ export const DetailedFooterStyles = {
     fontSize: '0.875rem',
     textAlign: 'center',
   },
+  contactButton: {
+    backgroundColor: 'rgb(51, 65, 85)',
+    color: 'rgb(255, 255, 255)',
+    padding: '12px 24px',
+    fontWeight: 'bold',
+    border: 'none',
+    cursor: 'text',
+    borderRadius: '4px',
+    outline: 'none',
+
+  }
 };
 
 export const TemplateFooterStyles = {

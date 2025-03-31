@@ -94,7 +94,7 @@ const DetailedFooter = ({
             id={child.id}
             content={child.content}
             styles={{
-              ...DetailedFooterStyles.socialButton,
+              ...DetailedFooterStyles.contactButton,
               ...(child.styles || {}),
             }}
           />

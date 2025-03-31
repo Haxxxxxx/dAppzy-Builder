@@ -1,6 +1,8 @@
 import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
+import useReorderDrop from '../../../utils/useReorderDrop.js';
 import { defaultHeroStyles } from './defaultHeroStyles';
 import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
@@ -78,7 +80,6 @@ const HeroOne = ({
       rightContainer.children.length === 0
     ) {
       defaultContent.forEach((child) => {
-        // For instance, images go to right; everything else goes to left.
         if (child.type === 'image') {
           const newId = addNewElement(child.type, 1, null, `${uniqueId}-right`);
           setElements((prev) =>
@@ -113,7 +114,7 @@ const HeroOne = ({
     }
   }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements]);
 
-  // Generic drop handler that works for any dropped component.
+  // Generic drop handler for new items dropped onto the hero.
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     const newId = addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
     setElements((prev) =>
@@ -130,16 +131,6 @@ const HeroOne = ({
     onDropItem: (item) => handleHeroDrop(item, uniqueId),
   });
 
-  // Apply default styles to the hero element if none exist.
-  useEffect(() => {
-    if (!heroElement) return;
-    const noCustomStyles =
-      !heroElement.styles || Object.keys(heroElement.styles).length === 0;
-    if (noCustomStyles) {
-      updateStyles(heroElement.id, { ...defaultHeroStyles.heroSection });
-    }
-  }, [heroElement, updateStyles]);
-
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
     const element = findElementById(divId, elements);
@@ -150,136 +141,156 @@ const HeroOne = ({
     }
   };
 
-  // Drag and Drop Handlers for reordering child elements.
-  const onDragStart = (e, draggedId) => {
-    // Prevent drag event from propagating upward.
-    e.stopPropagation();
-    e.dataTransfer.setData('text/plain', draggedId);
-    // Create a custom drag image using the element that holds the event.
-    const dragImage = document.createElement('div');
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    dragImage.style.left = '-1000px';
-    dragImage.style.padding = '4px 8px';
-    dragImage.style.background = '#fff';
-    dragImage.style.border = '1px solid #ccc';
-    dragImage.style.fontSize = 'inherit';
-    // Use e.currentTarget so only the targeted element's content is used.
-    dragImage.innerHTML = e.currentTarget.innerHTML;
-    document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(
-      dragImage,
-      dragImage.offsetWidth / 2,
-      dragImage.offsetHeight / 2
-    );
-    setTimeout(() => {
-      document.body.removeChild(dragImage);
-    }, 0);
-  };
+  // Use our custom hook for drag and drop reordering.
+  const {
+    activeDrop,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+  } = useReorderDrop(findElementById, elements, setElements);
 
-  const onDragOver = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-  };
-
-  const onDrop = (e, dropTargetIndex, containerId) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const draggedId = e.dataTransfer.getData('text/plain');
-    const container = findElementById(containerId, elements);
-    if (!container) return;
-
-    // Create a new array with the dragged element removed and inserted at the drop target index.
-    const newChildren = container.children.filter((id) => id !== draggedId);
-    newChildren.splice(dropTargetIndex, 0, draggedId);
-
-    // Update state with the new order.
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === containerId ? { ...el, children: newChildren } : el
-      )
-    );
-  };
-
-  // Utility: render children for a given container with drag and drop capabilities.
-  // Here we wrap each child in a <span> to limit the draggable area to only the element’s content.
+  // Helper function to render children in a container and conditionally display the drop placeholder.
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-    return container.children.map((childId, index) => {
+
+    const childrenElements = container.children.map((childId, index) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
 
-      // Common props for child components.
-      const commonProps = {
-        key: child.id || `${child.type}-${index}`,
-        id: child.id || `${child.type}-${index}`,
-      };
+      const childContent =
+        child.type === 'heading' ? (
+          <Heading
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{ ...defaultHeroStyles.heroTitle, ...(child.styles || {}) }}
+          />
+        ) : child.type === 'paragraph' ? (
+          <Paragraph
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{ ...defaultHeroStyles.heroDescription, ...(child.styles || {}) }}
+          />
+        ) : child.type === 'button' ? (
+          <Button
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{ ...defaultHeroStyles.primaryButton, ...(child.styles || {}) }}
+          />
+        ) : child.type === 'image' ? (
+          <Image
+            key={child.id}
+            id={child.id}
+            src={child.content}
+            styles={{ ...defaultHeroStyles.heroImage, ...(child.styles || {}) }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={(item) => handleHeroDrop(item, child.id)}
+          />
+        ) : (
+          renderElement(
+            child,
+            elements,
+            null,
+            setSelectedElement,
+            setElements,
+            null,
+            undefined,
+            handleOpenMediaPanel
+          )
+        );
 
-      // Render the appropriate component based on its type.
-      const childContent = child.type === 'heading' ? (
-        <Heading
-          {...commonProps}
-          content={child.content}
-          styles={{ ...defaultHeroStyles.heroTitle, ...(child.styles || {}) }}
-        />
-      ) : child.type === 'paragraph' ? (
-        <Paragraph
-          {...commonProps}
-          content={child.content}
-          styles={{ ...defaultHeroStyles.heroDescription, ...(child.styles || {}) }}
-        />
-      ) : child.type === 'button' ? (
-        <Button
-          {...commonProps}
-          content={child.content}
-          styles={{ ...defaultHeroStyles.primaryButton, ...(child.styles || {}) }}
-        />
-      ) : child.type === 'image' ? (
-        <Image
-          {...commonProps}
-          src={child.content}
-          styles={{ ...defaultHeroStyles.heroImage, ...(child.styles || {}) }}
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          handleDrop={(item) => handleHeroDrop(item, child.id)}
-        />
-      ) : (
-        renderElement(
-          child,
-          elements,
-          null,
-          setSelectedElement,
-          setElements,
-          null,
-          undefined,
-          handleOpenMediaPanel
-        )
-      );
-
-      // Wrap the child content in a <span> with inline-block display.
-      // Stop propagation on drag events so the parent Section’s drop behavior isn’t triggered.
       return (
-        <span
-          key={child.id || `${child.type}-${index}`}
-          draggable
-          onDragStart={(e) => onDragStart(e, child.id)}
-          onDragOver={(e) => onDragOver(e)}
-          onDrop={(e) => onDrop(e, index, containerId)}
-          style={{ display: 'inline-block' }}
-        >
-          {childContent}
-        </span>
+        <React.Fragment key={child.id}>
+          {/*
+            Render the placeholder only if:
+              - The activeDrop container matches this container.
+              - The activeDrop index equals the current index.
+          */}
+          {activeDrop.containerId === containerId &&
+            activeDrop.index === index && (
+              <div
+                className="drop-placeholder"
+                style={{
+                  padding: '8px',
+                  border: '2px dashed #5C4EFA',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  backgroundColor: 'transparent',
+                  width: '100%',
+                  margin: '5px',
+                  fontFamily: 'Montserrat',
+                }}
+                onDragOver={(e) => onDragOver(e, containerId, index)}
+                onDrop={(e) => onDrop(e, containerId)}
+              >
+                Drop here – element will be dropped here
+              </div>
+            )}
+          <span
+            draggable
+            onDragStart={(e) => onDragStart(e, child.id)}
+            onDragOver={(e) => onDragOver(e, containerId, index)}
+            onDragEnd={onDragEnd}
+            style={{ display: 'inline-block' }}
+          >
+            {childContent}
+          </span>
+        </React.Fragment>
       );
     });
+
+    // Extra drop zone at the bottom of the container.
+    childrenElements.push(
+      <div
+        key="drop-zone-bottom"
+        style={{ height: '40px', width: '100%' }}
+        onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
+        onDrop={(e) => onDrop(e, containerId)}
+      >
+        {activeDrop.containerId === containerId &&
+          activeDrop.index === container.children.length && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
+      </div>
+    );
+
+    return childrenElements;
   };
+
+  useEffect(() => {
+    if (heroElement) {
+      const merged = merge({}, defaultHeroStyles.heroSection, heroElement.styles);
+      if (heroElement.styles.display !== merged.display) {
+        updateStyles(heroElement.id, merged);
+      }
+    }
+  }, [heroElement, updateStyles]);
+
+  const mergedHeroStyles = merge({}, defaultHeroStyles.heroSection, heroElement?.styles);
 
   return (
     <Section
       id={uniqueId}
       style={{
-        ...defaultHeroStyles.heroSection,
-        ...(heroElement?.styles || {}),
-        // Optionally, you can remove or adjust the drop-target style here if needed.
+        ...mergedHeroStyles,
         ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
       }}
       onClick={(e) => {
@@ -291,7 +302,6 @@ const HeroOne = ({
         drop(node);
       }}
     >
-      {/* Render the left and right Divs */}
       <Div
         id={`${uniqueId}-left`}
         parentId={`${uniqueId}-left`}
@@ -312,7 +322,6 @@ const HeroOne = ({
       >
         {renderContainerChildren(`${uniqueId}-right`)}
       </Div>
-      {/* Items dropped directly on the hero section become children of the Section */}
     </Section>
   );
 };

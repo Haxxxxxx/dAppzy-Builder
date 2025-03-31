@@ -1,16 +1,16 @@
-
+// File: src/Elements/Sections/Heros/defaultHeroStyles.js
 
 export const defaultHeroStyles = {
   heroSection: {
     display: 'flex',
-    position:'relative',
-    flexDirection:'row',
+    position: 'relative',
+    flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '20px',
     backgroundColor: '#ffffff',
-    gap:'1rem',
+    gap: '1rem',
   },
   heroContent: {
     flex: '1',
@@ -21,14 +21,14 @@ export const defaultHeroStyles = {
     alignItems: 'center',
     gap: '1rem',
   },
-  heroRightContent:{
+  heroRightContent: {
     backgroundColor: '#ffffff',
-  },  
-  heroLeftContent:{
-    display:'flex',
-    justifyContent:'center',
-    alignItems:'center',
-    flexDirection:'column',
+  },
+  heroLeftContent: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'column',
     backgroundColor: '#ffffff',
   },
   heroTitle: {
@@ -70,7 +70,6 @@ export const defaultHeroStyles = {
   },
 };
 
-
 export const CustomTemplateHeroStyles = {
   heroSection: {
     display: 'flex',
@@ -80,7 +79,6 @@ export const CustomTemplateHeroStyles = {
     padding: '40px',
     backgroundColor: '#ffffff',
     gap: '10vw',
-
   },
   heroContent: {
     flex: 1,
@@ -89,7 +87,6 @@ export const CustomTemplateHeroStyles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '1rem',
-
   },
   caption: {
     fontWeight: 'bold',
@@ -142,7 +139,6 @@ export const CustomTemplateHeroStyles = {
   },
 };
 
-
 export const heroTwoStyles = {
   heroSection: {
     backgroundColor: '#6B7280',
@@ -154,7 +150,6 @@ export const heroTwoStyles = {
     textAlign: 'center',
     borderRadius: '8px',
   },
-
   heroTitle: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
@@ -165,11 +160,11 @@ export const heroTwoStyles = {
     lineHeight: '1.5',
     marginBottom: '24px',
   },
-  primaryButton:{
+  primaryButton: {
     border: 'none',
     backgroundColor: 'rgb(51, 65, 85)',
     color: 'rgb(255, 255, 255)',
     cursor: 'pointer',
     padding: '10px 20px',
   },
-}
+};

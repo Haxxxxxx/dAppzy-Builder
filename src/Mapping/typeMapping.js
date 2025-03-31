@@ -50,5 +50,6 @@ export const typeToTagMap = {
   line: 'hr',
   linkblock: 'div',
   youtube: 'iframe',
+  icon:'img',
 };
 

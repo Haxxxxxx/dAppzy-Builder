@@ -1,8 +1,8 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import { customTemplateSectionStyles } from './defaultSectionStyles';
-import { Heading, Paragraph, Button, Image } from '../../SelectableElements';
+import { sectionTwoStyles } from './defaultSectionStyles.js';
+import { Heading, Paragraph, Button, Image, Span } from '../../SelectableElements';
 
 const SectionTwo = ({
   uniqueId,
@@ -14,7 +14,7 @@ const SectionTwo = ({
   const sectionRef = useRef(null);
   const { elements, updateStyles } = useContext(EditableContext);
 
-  // Enable drop functionality for this section
+  // Make this section droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
@@ -23,17 +23,18 @@ const SectionTwo = ({
 
   const sectionElement = elements.find((el) => el.id === uniqueId);
 
+  // Apply default styles if none exist
   useEffect(() => {
     if (!sectionElement) return;
     const noCustomStyles =
       !sectionElement.styles || Object.keys(sectionElement.styles).length === 0;
     if (noCustomStyles) {
-      updateStyles(sectionElement.id, { ...customTemplateSectionStyles.sectionTwoContainer });
+      updateStyles(sectionElement.id, { ...sectionTwoStyles.sectionContainer });
     }
   }, [sectionElement, updateStyles]);
 
   const containerStyles = {
-    ...customTemplateSectionStyles.sectionTwoContainer,
+    ...sectionTwoStyles.sectionContainer,
     ...(sectionElement?.styles || {}),
     ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
   };
@@ -50,21 +51,22 @@ const SectionTwo = ({
         handleSelect(e);
       }}
     >
-      <div style={customTemplateSectionStyles.imageColumn}>
+      {/* Label */}
+      <div style={sectionTwoStyles.labelContainer}>
         {children
-          .filter((child) => child.type === 'image')
+          .filter((child) => child.type === 'span')
           .map((child) => (
-            <Image
+            <Span
               key={child.id}
               id={child.id}
-              src={child.content}
-              styles={{ ...customTemplateSectionStyles.image, ...(child.styles || {}) }}
-              handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={onDropItem}
+              content={child.content}
+              styles={{ ...sectionTwoStyles.label, ...(child.styles || {}) }}
             />
           ))}
       </div>
-      <div style={customTemplateSectionStyles.textColumn}>
+
+      {/* Content Wrapper */}
+      <div style={sectionTwoStyles.contentWrapper}>
         {children
           .filter((child) => child.type === 'heading')
           .map((child) => (
@@ -72,7 +74,7 @@ const SectionTwo = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={{ ...customTemplateSectionStyles.heading, ...(child.styles || {}) }}
+              styles={{ ...sectionTwoStyles.heading, ...(child.styles || {}) }}
             />
           ))}
         {children
@@ -82,21 +84,40 @@ const SectionTwo = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={{ ...customTemplateSectionStyles.paragraph, ...(child.styles || {}) }}
+              styles={{ ...sectionTwoStyles.paragraph, ...(child.styles || {}) }}
             />
           ))}
+        {/* Button container */}
+        <div style={sectionTwoStyles.buttonContainer}>
+          {children
+            .filter((child) => child.type === 'button')
+            .map((child, index) => (
+              <Button
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={
+                  index === 0
+                    ? { ...sectionTwoStyles.primaryButton, ...(child.styles || {}) }
+                    : { ...sectionTwoStyles.secondaryButton, ...(child.styles || {}) }
+                }
+              />
+            ))}
+        </div>
+      </div>
+
+      {/* Image container */}
+      <div style={sectionTwoStyles.imageContainer}>
         {children
-          .filter((child) => child.type === 'button')
-          .map((child, index) => (
-            <Button
+          .filter((child) => child.type === 'image')
+          .map((child) => (
+            <Image
               key={child.id}
               id={child.id}
-              content={child.content}
-              styles={
-                index === 0
-                  ? { ...customTemplateSectionStyles.primaryButton, ...(child.styles || {}) }
-                  : { ...customTemplateSectionStyles.secondaryButton, ...(child.styles || {}) }
-              }
+              src={child.content}
+              styles={{ ...sectionTwoStyles.image, ...(child.styles || {}) }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={onDropItem}
             />
           ))}
       </div>

@@ -82,7 +82,8 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
     if (
       (selectedElement?.type === 'anchor' ||
         selectedElement?.type === 'span' ||
-        selectedElement?.type === 'button') &&
+        selectedElement?.type === 'button' ||
+        selectedElement?.type === 'icon') &&
       selectedElement.label !== 'title'
     ) {
       return (

@@ -43,7 +43,7 @@ import VFlexLayout from './Structure/VFlex';
 import LinkBlock from './Basic/LinkBlock';
 import Line from './Basic/Line';
 import YouTubeVideo from './Media/YoutubeVideo';
-
+import Icon from './Media/Icon';
 
 const SelectableParagraph = withSelectable(Paragraph);
 const SelectableHeading = withSelectable(Heading);
@@ -90,11 +90,10 @@ const SelectableHFlexLayout = withSelectable(HFlexLayout);
 const SelectableVFlexLayout = withSelectable(VFlexLayout);
 const SelectableLine = withSelectable(Line);
 const SelectbleLinkBlock = withSelectable(LinkBlock);
-const SelectableYoutubeVideo = withSelectable(YouTubeVideo)
+const SelectableYoutubeVideo = withSelectable(YouTubeVideo);
+const SelectableIcon =withSelectable(Icon);
 
 export {
-
-
 
   SelectableParagraph as Paragraph,
   SelectableHeading as Heading,
@@ -145,5 +144,5 @@ export {
   SelectbleLinkBlock as LinkBlock,
 
   SelectableYoutubeVideo as YouTubeVideo,
-
+  SelectableIcon as Icon,
 };

@@ -86,7 +86,10 @@ export function renderElementToHtml(element, collectedStyles) {
     children = [],
     settings = {}
   } = element;
-
+  function cleanStyles(styles = {}) {
+    const { outline, boxShadow, ...productionStyles } = styles;
+    return productionStyles;
+  }
   // Compute the initial source.
   let finalSrc = element.src || (styles && styles.src) || '';
   console.log(`Rendering element ${id} with src:`, finalSrc);
@@ -149,8 +152,9 @@ export function renderElementToHtml(element, collectedStyles) {
   if (['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
     delete styleForCSS.src;
   }
-  collectedStyles.push({ className, styles: styleForCSS });
-
+  const cleanedStyles = cleanStyles(styleForCSS);
+  collectedStyles.push({ className, styles: cleanedStyles });
+  
   let attributesString = `id="${id}" class="${className}"`;
   attributesString += buildAttributesString(type, attributes, finalSrc, settings);
 
