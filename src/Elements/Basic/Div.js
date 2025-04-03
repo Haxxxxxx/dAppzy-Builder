@@ -17,8 +17,9 @@ const Div = ({
   const contextStyles = (divElement && divElement.styles) || {};
   const contextChildren = (divElement && divElement.children) || [];
 
-  const styles = { ...passedStyles, ...contextStyles };
+  // Merge passed children (if provided) or fallback to context children.
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
+  const styles = { ...passedStyles, ...contextStyles };
   const divRef = useRef(null);
 
   const { isOverCurrent, drop } = useElementDrop({
@@ -87,6 +88,14 @@ const Div = ({
       />
     ) : null;
 
+  // Filter out any children that are drop placeholders.
+  const nonPlaceholderChildren =
+    Array.isArray(childrenToRender) &&
+    childrenToRender.filter(
+      (child) =>
+        !(child && child.props && child.props.className && child.props.className.includes('drop-placeholder'))
+    );
+
   return (
     <div
       id={id}
@@ -105,7 +114,7 @@ const Div = ({
     >
       {backgroundStyle}
       {(!childrenToRender ||
-        (Array.isArray(childrenToRender) && childrenToRender.length === 0)) ? (
+        (Array.isArray(childrenToRender) && nonPlaceholderChildren.length === 0)) ? (
         <div
           className="empty-placeholder"
           style={{

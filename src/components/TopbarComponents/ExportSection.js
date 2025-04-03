@@ -86,13 +86,39 @@ export function exportProject(elements, websiteSettings) {
     stylesHtml += '}';
   }
   collectedStyles.forEach(({ className, styles }) => {
-    let cssString = `.${className} {`;
+    let cssString = '';
+    let baseStyles = {};
+    let nestedStyles = {};
+  
+    // Separate base styles from nested selectors.
     for (let key in styles) {
-      cssString += `${toKebabCase(key)}: ${styles[key]};`;
+      if (typeof styles[key] === 'object') {
+        nestedStyles[key] = styles[key];
+      } else {
+        baseStyles[key] = styles[key];
+      }
+    }
+  
+    // Generate CSS for the base styles of the element.
+    cssString += `.${className} {`;
+    for (let key in baseStyles) {
+      cssString += `${toKebabCase(key)}: ${baseStyles[key]};`;
     }
     cssString += '}';
+  
+    // Generate CSS for each nested selector (e.g., .primaryButton, .secondaryButton).
+    for (let nestedSelector in nestedStyles) {
+      // The nested selector is assumed to be something like ".primaryButton"
+      cssString += `.${className} ${nestedSelector} {`;
+      for (let key in nestedStyles[nestedSelector]) {
+        cssString += `${toKebabCase(key)}: ${nestedStyles[nestedSelector][key]};`;
+      }
+      cssString += '}';
+    }
+  
     stylesHtml += cssString;
   });
+  
   stylesHtml += '</style>';
 
   const title = websiteSettings.siteTitle || 'Exported Website';

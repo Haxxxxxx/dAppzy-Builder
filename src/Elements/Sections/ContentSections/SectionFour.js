@@ -1,8 +1,12 @@
-import React, { useContext, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
 import { sectionFourStyles } from './defaultSectionStyles';
-import { Heading, Paragraph, Button, Image, Span, Icon } from '../../SelectableElements';
+import { Heading, Paragraph, Button, Image, Span, Icon, Section, Div } from '../../SelectableElements';
+import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
+import { registerContainer, injectDefaultContent, mergeStyles } from '../../../utils/htmlRenderUtils/containerHelpers';
+import useReorderDrop from '../../../utils/useReorderDrop';
 
 const SectionFour = ({
   uniqueId,
@@ -10,146 +14,236 @@ const SectionFour = ({
   onDropItem,
   handleOpenMediaPanel,
   handleSelect,
+  configuration,
 }) => {
   const sectionRef = useRef(null);
-  const { elements, updateStyles } = useContext(EditableContext);
-
-  // Enable drag-and-drop on this section
+  const defaultInjectedRef = useRef(false);
+  
+  const { elements, setElements, setSelectedElement, findElementById, updateStyles, addNewElement } = useContext(EditableContext);
+  
+  const sectionElement = useMemo(() => elements.find(el => el.id === uniqueId), [elements, uniqueId]);
+  
+  // Register containers: caption, heading, features, and button.
+  useEffect(() => {
+    registerContainer(uniqueId, 'caption', sectionFourStyles.captionContainer || {}, elements, setElements, findElementById);
+    registerContainer(uniqueId, 'heading', sectionFourStyles.headingContainer || {}, elements, setElements, findElementById);
+    registerContainer(uniqueId, 'features', sectionFourStyles.featuresContainer, elements, setElements, findElementById);
+    registerContainer(uniqueId, 'button', { display: 'flex', justifyContent: 'center', marginTop: '24px' }, elements, setElements, findElementById);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uniqueId, elements]);
+  
+  // Inject default content only once.
+  useEffect(() => {
+    if (defaultInjectedRef.current) return;
+    const defaultContent = (children && children.length > 0) ? children : (sectionElement && sectionElement.configuration && sectionElement.configuration.children) || [];
+    // Mapping: span -> caption, heading -> heading, featureItem -> features, button -> button, default -> features.
+    const mapping = {
+      span: 'caption',
+      heading: 'heading',
+      featureItem: 'features',
+      button: 'button',
+      default: 'features',
+    };
+    const captionContainer = findElementById(`${uniqueId}-caption`, elements);
+    const headingContainer = findElementById(`${uniqueId}-heading`, elements);
+    const featuresContainer = findElementById(`${uniqueId}-features`, elements);
+    const buttonContainer = findElementById(`${uniqueId}-button`, elements);
+    if (
+      defaultContent.length > 0 &&
+      captionContainer && headingContainer && featuresContainer && buttonContainer &&
+      captionContainer.children.length === 0 &&
+      headingContainer.children.length === 0 &&
+      featuresContainer.children.length === 0 &&
+      buttonContainer.children.length === 0
+    ) {
+      injectDefaultContent(defaultContent, mapping, uniqueId, elements, addNewElement, setElements, findElementById);
+      defaultInjectedRef.current = true;
+    }
+  }, [children, sectionElement, elements, uniqueId, addNewElement, setElements, findElementById]);
+  
+  // Drop and reorder hooks.
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
-    onDropItem,
+    onDropItem: (item) => handleSectionDrop(item, uniqueId),
   });
-
-  // Find the corresponding element in global state
-  const sectionElement = elements.find((el) => el.id === uniqueId);
-
-  // Apply default styles if none exist
+  
+  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(findElementById, elements, setElements);
+  
+  const handleSectionDrop = (droppedItem, parentId = uniqueId) => {
+    const newId = addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
+    setElements(prev => prev.map(el => el.id === parentId ? { ...el, children: [...(el.children || []), newId] } : el));
+  };
+  
+  const handleInnerDivClick = (e, divId) => {
+    e.stopPropagation();
+    const element = findElementById(divId, elements);
+    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
+  };
+  
+  const renderContainerChildren = (containerId) => {
+    const container = findElementById(containerId, elements);
+    if (!container || !container.children) return null;
+    const childrenElements = container.children.map((childId, index) => {
+      const child = findElementById(childId, elements);
+      if (!child) return null;
+      let childContent;
+      switch(child.type) {
+        case 'span':
+          childContent = <Span key={child.id} id={child.id} content={child.content} styles={{ ...sectionFourStyles.caption, ...(child.styles || {}) }} />;
+          break;
+        case 'heading':
+          childContent = <Heading key={child.id} id={child.id} content={child.content} styles={{ ...sectionFourStyles.heading, ...(child.styles || {}) }} />;
+          break;
+        case 'featureItem':
+          childContent = (
+            <div key={child.id} style={sectionFourStyles.featureItem}>
+              {child.children?.map(sub => {
+                if (sub.type === 'icon') {
+                  return <Icon key={sub.id} id={sub.id} styles={{ ...sectionFourStyles.featureIcon, ...(sub.styles || {}) }} />;
+                } else if (sub.type === 'image') {
+                  return <Image key={sub.id} id={sub.id} src={sub.content} styles={{ ...sectionFourStyles.featureIcon, ...(sub.styles || {}) }} handleOpenMediaPanel={handleOpenMediaPanel} handleDrop={onDropItem} />;
+                } else if (sub.type === 'heading') {
+                  return <Heading key={sub.id} id={sub.id} content={sub.content} styles={{ ...sectionFourStyles.featureHeading, ...(sub.styles || {}) }} />;
+                } else if (sub.type === 'paragraph') {
+                  return <Paragraph key={sub.id} id={sub.id} content={sub.content} styles={{ ...sectionFourStyles.featureText, ...(sub.styles || {}) }} />;
+                }
+                return null;
+              })}
+            </div>
+          );
+          break;
+        case 'button':
+          childContent = <Button key={child.id} id={child.id} content={child.content} styles={{ ...sectionFourStyles.primaryButton, ...(child.styles || {}) }} />;
+          break;
+        default:
+          childContent = renderElement(child, elements, null, setSelectedElement, setElements, null, undefined, handleOpenMediaPanel);
+      }
+      return (
+        <React.Fragment key={child.id}>
+          {activeDrop.containerId === containerId && activeDrop.index === index && (
+            <div className="drop-placeholder" style={{
+              padding: '8px',
+              border: '2px dashed #5C4EFA',
+              textAlign: 'center',
+              fontStyle: 'italic',
+              backgroundColor: 'transparent',
+              width: '100%',
+              margin: '5px',
+              fontFamily: 'Montserrat',
+            }}
+            onDragOver={(e) => onDragOver(e, containerId, index)}
+            onDrop={(e) => onDrop(e, containerId)}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
+          <span draggable onDragStart={(e) => onDragStart(e, child.id)} onDragOver={(e) => onDragOver(e, containerId, index)} onDragEnd={onDragEnd} style={{ display: 'inline-block' }}>
+            {childContent}
+          </span>
+        </React.Fragment>
+      );
+    });
+    if (activeDrop.containerId === containerId && activeDrop.index === container.children.length) {
+      childrenElements.push(
+        <div key="drop-zone-bottom" style={{ height: '40px', width: '100%' }} onDragOver={(e) => onDragOver(e, containerId, container.children.length)} onDrop={(e) => onDrop(e, containerId)}>
+          <div className="drop-placeholder" style={{
+            padding: '8px',
+            border: '2px dashed #5C4EFA',
+            textAlign: 'center',
+            fontStyle: 'italic',
+            backgroundColor: 'transparent',
+            width: '100%',
+            margin: '5px',
+            fontFamily: 'Montserrat',
+          }}>
+            Drop here – element will be dropped here
+          </div>
+        </div>
+      );
+    }
+    return childrenElements;
+  };
+  
   useEffect(() => {
-    if (!sectionElement) return;
-    const noCustomStyles =
-      !sectionElement.styles || Object.keys(sectionElement.styles).length === 0;
-    if (noCustomStyles) {
-      updateStyles(sectionElement.id, { ...sectionFourStyles.sectionContainer });
+    if (sectionElement) {
+      const merged = mergeStyles(sectionFourStyles.sectionContainer, sectionElement.styles);
+      if (sectionElement.styles.display !== merged.display) {
+        updateStyles(sectionElement.id, merged);
+      }
     }
   }, [sectionElement, updateStyles]);
-
-  // Merge default container style with any custom style and highlight when dragging over
-  const containerStyles = {
-    ...sectionFourStyles.sectionContainer,
-    ...(sectionElement?.styles || {}),
-    ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
-  };
-
-  // Filter out "featureItem" children for the 4-icon row
-  const featureItems = children.filter((child) => child.type === 'featureItem');
-
+  
+  const mergedSectionStyles = mergeStyles(sectionFourStyles.sectionContainer, sectionElement?.styles);
+  
+  // Only render container Divs if they exist and have children.
+  const captionContainer = findElementById(`${uniqueId}-caption`, elements);
+  const headingContainer = findElementById(`${uniqueId}-heading`, elements);
+  const featuresContainer = findElementById(`${uniqueId}-features`, elements);
+  const buttonContainer = findElementById(`${uniqueId}-button`, elements);
+  
   return (
-    <section
+    <Section
+      id={uniqueId}
+      style={{ ...mergedSectionStyles }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e, uniqueId);
+      }}
       ref={(node) => {
         sectionRef.current = node;
         drop(node);
       }}
-      style={containerStyles}
-      onClick={(e) => {
-        e.stopPropagation();
-        handleSelect(e); // Mark this section as selected
-      }}
     >
-      {/* Caption (span) */}
-      {children
-        .filter((child) => child.type === 'span')
-        .map((child) => (
-          <Span
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...sectionFourStyles.caption, ...(child.styles || {}) }}
-          />
-        ))}
-
-      {/* Main Heading */}
-      {children
-        .filter((child) => child.type === 'heading')
-        .map((child) => (
-          <Heading
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...sectionFourStyles.heading, ...(child.styles || {}) }}
-          />
-        ))}
-
-      {/* Feature Items Row (icons/images + text) */}
-      <div style={sectionFourStyles.featuresContainer}>
-        {featureItems.map((item) => (
-          <div key={item.id} style={sectionFourStyles.featureItem}>
-            {/* Render each sub-child inside this feature item */}
-            {item.children?.map((sub) => {
-              if (sub.type === 'icon') {
-                // For a custom Icon element
-                return (
-                  <Icon
-                    key={sub.id}
-                    id={sub.id}
-                    styles={{ ...sectionFourStyles.featureIcon, ...(sub.styles || {}) }}
-                  />
-                );
-              } else if (sub.type === 'image') {
-                // For an image-based icon
-                return (
-                  <Image
-                    key={sub.id}
-                    id={sub.id}
-                    src={sub.content}
-                    styles={{ ...sectionFourStyles.featureIcon, ...(sub.styles || {}) }}
-                    handleOpenMediaPanel={handleOpenMediaPanel}
-                    handleDrop={onDropItem}
-                  />
-                );
-              } else if (sub.type === 'heading') {
-                // Optional sub-heading for the feature
-                return (
-                  <Heading
-                    key={sub.id}
-                    id={sub.id}
-                    content={sub.content}
-                    styles={{ ...sectionFourStyles.featureHeading, ...(sub.styles || {}) }}
-                  />
-                );
-              } else if (sub.type === 'paragraph') {
-                // Description text
-                return (
-                  <Paragraph
-                    key={sub.id}
-                    id={sub.id}
-                    content={sub.content}
-                    styles={{ ...sectionFourStyles.featureText, ...(sub.styles || {}) }}
-                  />
-                );
-              }
-              return null;
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* Primary Button (if any) */}
-      {children.filter((child) => child.type === 'button').length > 0 && (
-        <div style={{ marginTop: '24px' }}>
-          {children
-            .filter((child) => child.type === 'button')
-            .map((child) => (
-              <Button
-                key={child.id}
-                id={child.id}
-                content={child.content}
-                styles={{ ...sectionFourStyles.primaryButton, ...(child.styles || {}) }}
-              />
-            ))}
-        </div>
+      {captionContainer && captionContainer.children && captionContainer.children.length > 0 && (
+        <Div
+          id={`${uniqueId}-caption`}
+          parentId={`${uniqueId}-caption`}
+          styles={{ ...sectionFourStyles.caption }}
+          handleOpenMediaPanel={handleOpenMediaPanel}
+          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-caption`)}
+          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-caption`)}
+        >
+          {renderContainerChildren(`${uniqueId}-caption`)}
+        </Div>
       )}
-    </section>
+      {headingContainer && headingContainer.children && headingContainer.children.length > 0 && (
+        <Div
+          id={`${uniqueId}-heading`}
+          parentId={`${uniqueId}-heading`}
+          styles={{ ...sectionFourStyles.heading }}
+          handleOpenMediaPanel={handleOpenMediaPanel}
+          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-heading`)}
+          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-heading`)}
+        >
+          {renderContainerChildren(`${uniqueId}-heading`)}
+        </Div>
+      )}
+      {featuresContainer && featuresContainer.children && featuresContainer.children.length > 0 && (
+        <Div
+          id={`${uniqueId}-features`}
+          parentId={`${uniqueId}-features`}
+          styles={{ ...sectionFourStyles.featuresContainer }}
+          handleOpenMediaPanel={handleOpenMediaPanel}
+          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-features`)}
+          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-features`)}
+        >
+          {renderContainerChildren(`${uniqueId}-features`)}
+        </Div>
+      )}
+      {buttonContainer && buttonContainer.children && buttonContainer.children.length > 0 && (
+        <Div
+          id={`${uniqueId}-button`}
+          parentId={`${uniqueId}-button`}
+          styles={{ ...({ display: 'flex', justifyContent: 'center', marginTop: '24px' }) }}
+          handleOpenMediaPanel={handleOpenMediaPanel}
+          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-button`)}
+          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-button`)}
+        >
+          {renderContainerChildren(`${uniqueId}-button`)}
+        </Div>
+      )}
+    </Section>
   );
 };
 

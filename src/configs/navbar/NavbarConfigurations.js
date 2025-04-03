@@ -14,7 +14,7 @@ export const NavbarConfigurations = {
     children: [
       {
         type: 'image',
-        content: 'https://via.placeholder.com/150?text=Logo',
+        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
         styles: {
           width: '40px',
           height: '40px',
@@ -72,7 +72,7 @@ export const NavbarConfigurations = {
   },
   twoColumn: {
     children: [
-      { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' },
+      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
       { type: 'span', content: 'Home' },
       { type: 'span', content: 'About' },
       { type: 'span', content: 'Contact' },
@@ -80,7 +80,7 @@ export const NavbarConfigurations = {
   },
   threeColumn: {
     children: [
-      { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' },
+      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
       { type: 'span', content: 'Home' },
       { type: 'span', content: 'Services' },
       { type: 'span', content: 'Contact' },

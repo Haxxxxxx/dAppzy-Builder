@@ -2,7 +2,7 @@ import React, { useContext, useMemo, useRef, useEffect } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import useReorderDrop from '../../../utils/useReorderDrop.js';
+import useReorderDrop from '../../../utils/useReorderDrop';
 import { defaultHeroStyles } from './defaultHeroStyles';
 import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
@@ -10,8 +10,8 @@ import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
 const HeroOne = ({
   handleSelect,
   uniqueId,
-  children, // default content from parent mapping
-  onDropItem, // optional external callback (if needed)
+  children,            // default content from parent mapping
+  onDropItem,          // optional external callback (if needed)
   handleOpenMediaPanel,
 }) => {
   const heroRef = useRef(null);
@@ -25,13 +25,13 @@ const HeroOne = ({
     addNewElement,
   } = useContext(EditableContext);
 
-  // Get the hero element (Section) from state.
+  // Get the hero element (Section) from state:
   const heroElement = useMemo(
     () => elements.find((el) => el.id === uniqueId),
     [elements, uniqueId]
   );
 
-  // Pre-register left and right containers if they don’t exist.
+  // 1) Create the left & right container divs if missing
   useEffect(() => {
     if (!findElementById(`${uniqueId}-left`, elements)) {
       setElements((prev) => [
@@ -60,14 +60,20 @@ const HeroOne = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Inject default content into left/right containers (if they are empty) only once.
+  /**
+   * 2) Inject default content only once if the left & right containers are empty.
+   *    You already have an approach for default injection in `CTAOne`, etc.
+   */
   useEffect(() => {
     if (defaultInjectedRef.current) return; // run only once
 
     const defaultContent =
-      (children && children.length > 0)
+      children && children.length > 0
         ? children
-        : (heroElement && heroElement.configuration && heroElement.configuration.children) || [];
+        : (heroElement &&
+            heroElement.configuration &&
+            heroElement.configuration.children) ||
+          [];
 
     const leftContainer = findElementById(`${uniqueId}-left`, elements);
     const rightContainer = findElementById(`${uniqueId}-right`, elements);
@@ -112,25 +118,55 @@ const HeroOne = ({
       });
       defaultInjectedRef.current = true;
     }
-  }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements]);
+  }, [
+    children,
+    heroElement,
+    elements,
+    findElementById,
+    uniqueId,
+    addNewElement,
+    setElements,
+  ]);
 
-  // Generic drop handler for new items dropped onto the hero.
+  /**
+   * 3) The hero's onDrop logic: check if item has an ID (existing) or not (brand-new).
+   *    If brand-new => create a new element & add to hero. If existing => do nothing here
+   *    because the reordering logic is handled by useReorderDrop below.
+   */
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
-    const newId = addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
+    // If it's an existing element (already has an id), do nothing here,
+    // because useReorderDrop will reorder/move it. 
+    if (droppedItem.id) {
+      return;
+    }
+
+    // Otherwise, brand-new => create
+    const newId = addNewElement(
+      droppedItem.type,
+      droppedItem.level || 1,
+      null,
+      parentId
+    );
     setElements((prev) =>
       prev.map((el) =>
-        el.id === parentId ? { ...el, children: [...el.children, newId] } : el
+        el.id === parentId
+          ? { ...el, children: [...el.children, newId] }
+          : el
       )
     );
   };
 
-  // Enable drop functionality on the whole hero section.
+  /**
+   * 4) Enable the hero itself to receive dropped elements
+   *    via our custom useElementDrop hook.
+   */
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: heroRef,
     onDropItem: (item) => handleHeroDrop(item, uniqueId),
   });
 
+  // For clicking on the left or right container
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
     const element = findElementById(divId, elements);
@@ -141,7 +177,9 @@ const HeroOne = ({
     }
   };
 
-  // Use our custom hook for drag and drop reordering.
+  /**
+   * 5) The reorder logic is handled by useReorderDrop
+   */
   const {
     activeDrop,
     onDragStart,
@@ -150,7 +188,10 @@ const HeroOne = ({
     onDragEnd,
   } = useReorderDrop(findElementById, elements, setElements);
 
-  // Helper function to render children in a container and conditionally display the drop placeholder.
+  /**
+   * 6) For each container (left/right), we render its children
+   *    and show placeholders as needed.
+   */
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
@@ -159,57 +200,75 @@ const HeroOne = ({
       const child = findElementById(childId, elements);
       if (!child) return null;
 
-      const childContent =
-        child.type === 'heading' ? (
+      // For certain known types, apply default styles:
+      let childContent;
+      if (child.type === 'heading') {
+        childContent = (
           <Heading
             key={child.id}
             id={child.id}
             content={child.content}
-            styles={{ ...defaultHeroStyles.heroTitle, ...(child.styles || {}) }}
+            styles={{
+              ...defaultHeroStyles.heroTitle,
+              ...(child.styles || {}),
+            }}
           />
-        ) : child.type === 'paragraph' ? (
+        );
+      } else if (child.type === 'paragraph') {
+        childContent = (
           <Paragraph
             key={child.id}
             id={child.id}
             content={child.content}
-            styles={{ ...defaultHeroStyles.heroDescription, ...(child.styles || {}) }}
+            styles={{
+              ...defaultHeroStyles.heroDescription,
+              ...(child.styles || {}),
+            }}
           />
-        ) : child.type === 'button' ? (
+        );
+      } else if (child.type === 'button') {
+        childContent = (
           <Button
             key={child.id}
             id={child.id}
             content={child.content}
-            styles={{ ...defaultHeroStyles.primaryButton, ...(child.styles || {}) }}
+            styles={{
+              ...defaultHeroStyles.primaryButton,
+              ...(child.styles || {}),
+            }}
           />
-        ) : child.type === 'image' ? (
+        );
+      } else if (child.type === 'image') {
+        childContent = (
           <Image
             key={child.id}
             id={child.id}
             src={child.content}
-            styles={{ ...defaultHeroStyles.heroImage, ...(child.styles || {}) }}
+            styles={{
+              ...defaultHeroStyles.heroImage,
+              ...(child.styles || {}),
+            }}
             handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={(item) => handleHeroDrop(item, child.id)}
+            handleDrop={(dragItem) => handleHeroDrop(dragItem, child.id)}
           />
-        ) : (
-          renderElement(
-            child,
-            elements,
-            null,
-            setSelectedElement,
-            setElements,
-            null,
-            undefined,
-            handleOpenMediaPanel
-          )
         );
+      } else {
+        // Fallback: render via the generic function
+        childContent = renderElement(
+          child,
+          elements,
+          null,
+          setSelectedElement,
+          setElements,
+          null,
+          undefined,
+          handleOpenMediaPanel
+        );
+      }
 
       return (
         <React.Fragment key={child.id}>
-          {/*
-            Render the placeholder only if:
-              - The activeDrop container matches this container.
-              - The activeDrop index equals the current index.
-          */}
+          {/* Show drop placeholder BEFORE this child if needed */}
           {activeDrop.containerId === containerId &&
             activeDrop.index === index && (
               <div
@@ -243,7 +302,7 @@ const HeroOne = ({
       );
     });
 
-    // Extra drop zone at the bottom of the container.
+    // Add a drop zone at the bottom
     childrenElements.push(
       <div
         key="drop-zone-bottom"
@@ -275,17 +334,27 @@ const HeroOne = ({
     return childrenElements;
   };
 
+  // 7) Merge default hero styles with any custom styles
   useEffect(() => {
     if (heroElement) {
-      const merged = merge({}, defaultHeroStyles.heroSection, heroElement.styles);
+      const merged = merge(
+        {},
+        defaultHeroStyles.heroSection,
+        heroElement.styles
+      );
       if (heroElement.styles.display !== merged.display) {
         updateStyles(heroElement.id, merged);
       }
     }
   }, [heroElement, updateStyles]);
 
-  const mergedHeroStyles = merge({}, defaultHeroStyles.heroSection, heroElement?.styles);
+  const mergedHeroStyles = merge(
+    {},
+    defaultHeroStyles.heroSection,
+    heroElement?.styles
+  );
 
+  // 8) Render the final hero section
   return (
     <Section
       id={uniqueId}
@@ -295,11 +364,12 @@ const HeroOne = ({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        handleSelect(e, uniqueId);
+        // Call your external handleSelect if desired
+        handleSelect?.(e, uniqueId);
       }}
       ref={(node) => {
         heroRef.current = node;
-        drop(node);
+        drop(node); // Let the hero section accept new drops
       }}
     >
       <Div
@@ -312,6 +382,7 @@ const HeroOne = ({
       >
         {renderContainerChildren(`${uniqueId}-left`)}
       </Div>
+
       <Div
         id={`${uniqueId}-right`}
         parentId={`${uniqueId}-right`}

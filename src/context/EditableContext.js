@@ -179,7 +179,7 @@ export const EditableProvider = ({ children, userId }) => {
     };
   
     if (type === 'image') {
-      baseElement.src = 'https://picsum.photos/150';
+      baseElement.src = 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7';
     }
   
     // If a structure was provided and exists in structureConfigurations, create children accordingly.

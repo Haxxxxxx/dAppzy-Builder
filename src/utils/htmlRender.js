@@ -4,6 +4,7 @@ import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
 import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
 import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
 import { renderCta } from './htmlRenderUtils/RenderCtas/renderCta';
+import { renderSection } from './htmlRenderUtils/RenderSection/renderSection.js';
 import { renderMintingSection } from './htmlRenderUtils/RenderWeb3/renderMintingSection';
 import { DropdownStyles } from '../Elements/DefaultStyles/DropdownStyles';
 
@@ -137,6 +138,10 @@ export function renderElementToHtml(element, collectedStyles) {
   if (type === 'cta') {
     return renderCta(element, collectedStyles);
   }
+  if (type === 'section') {
+    return renderSection(element, collectedStyles);
+  }
+
   if (type === 'mintingSection') {
     return renderMintingSection(element, collectedStyles);
   }

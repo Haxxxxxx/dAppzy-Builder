@@ -1,7 +1,7 @@
 export const Web3Configs = {
     mintingSection: {
         children: [
-          { type: 'image', content: 'https://via.placeholder.com/150?text=Logo' }, // Logo
+          { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Logo
           { type: 'title', content: 'Mint {Collection Name}', label: 'title' }, // Title
           { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
           { type: 'timer', label: 'Time before minting', content: '17d 5h 38m 34s' }, // Timer
@@ -13,13 +13,13 @@ export const Web3Configs = {
           { type: 'button', content: 'Mint', label: 'mintButton' }, // Mint Button
           { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items
           { type: 'docItemsTitle', content: 'Document Items' }, // Document Items
-          { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' }, // Rare Items
-          { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' },
-          { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' },
-          { type: 'rare-item', content: 'https://via.placeholder.com/80?text=Rare+Item' },
-          { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' }, // Document Items
-          { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' },
-          { type: 'document-item', content: 'https://via.placeholder.com/80?text=Document+Item' },
+          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Rare Items
+          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+          { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Document Items
+          { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+          { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
         ],
       },
       connectWalletButton: {

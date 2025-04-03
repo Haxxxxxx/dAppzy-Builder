@@ -1,19 +1,24 @@
 // File: src/utils/htmlRenderUtils/RenderHeros/renderHero.js
 
-import { CustomTemplateHeroStyles, defaultHeroStyles } from '../../../Elements/Sections/Heros/defaultHeroStyles';
+import { CustomTemplateHeroStyles, defaultHeroStyles, heroTwoStyles } from '../../../Elements/Sections/Heros/defaultHeroStyles';
 
 export function renderHero(heroElement, collectedStyles) {
   const { id, configuration, children = [], styles = {} } = heroElement;
 
-  // Select base styles according to configuration
+  // 1. Pick base styles
   let baseHeroSection = {};
+  let subStyles = {};
+
   if (configuration === 'heroThree' || configuration === 'customTemplate') {
     baseHeroSection = CustomTemplateHeroStyles.heroSection;
+    subStyles = CustomTemplateHeroStyles;
   } else if (configuration === 'heroTwo') {
-    baseHeroSection = defaultHeroStyles.heroSection;
+    baseHeroSection = heroTwoStyles.heroSection;
+    subStyles = heroTwoStyles; // <--- now use heroTwo sub‐styles
   } else {
-    // Default to heroOne styles (or fallback)
+    // fallback: heroOne
     baseHeroSection = defaultHeroStyles.heroSection;
+    subStyles = defaultHeroStyles;
   }
 
   // Parse children to produce HTML for caption, heading, paragraph, image and buttons
@@ -50,21 +55,20 @@ export function renderHero(heroElement, collectedStyles) {
     }
   });
 
-  // Merge the base styles with user-defined styles and additional sub-rule styles.
+  // 3. Merge sub‐styles
   const mergedStyles = {
     ...baseHeroSection,
     ...styles,
-    '.heroContent': { ...CustomTemplateHeroStyles.heroContent },
-    '.caption': { ...CustomTemplateHeroStyles.caption },
-    '.heroTitle': { ...CustomTemplateHeroStyles.heroTitle },
-    '.heroDescription': { ...CustomTemplateHeroStyles.heroDescription },
-    '.buttonContainer': { ...CustomTemplateHeroStyles.buttonContainer },
-    '.primaryButton': { ...CustomTemplateHeroStyles.primaryButton },
-    '.secondaryButton': { ...CustomTemplateHeroStyles.secondaryButton },
-    '.heroImageContainer': { ...CustomTemplateHeroStyles.heroImageContainer },
-    '.heroImage': { ...CustomTemplateHeroStyles.heroImage },
+    '.heroContent': { ...subStyles.heroContent },
+    '.caption': { ...subStyles.caption },
+    '.heroTitle': { ...subStyles.heroTitle },
+    '.heroDescription': { ...subStyles.heroDescription },
+    '.buttonContainer': { ...subStyles.buttonContainer },
+    '.primaryButton': { ...subStyles.primaryButton },
+    '.secondaryButton': { ...subStyles.secondaryButton },
+    '.heroImageContainer': { ...subStyles.heroImageContainer },
+    '.heroImage': { ...subStyles.heroImage },
   };
-
   // Push the merged style rule into collectedStyles with a unique class name.
   const className = `${id}`;
   collectedStyles.push({

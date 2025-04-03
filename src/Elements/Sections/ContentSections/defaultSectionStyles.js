@@ -1,8 +1,7 @@
 // defaultSectionStyles.js
-
 export const defaultSectionStyles = {
   sectionContainer: {
-    position: 'relative', // enables absolute positioning relative to this container
+    position: 'relative',
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -10,6 +9,11 @@ export const defaultSectionStyles = {
     padding: '40px',
     backgroundColor: '#f9f9f9',
     flexDirection: 'column',
+  },
+  labelContainer: {
+    alignSelf: 'flex-start',
+    marginBottom: '1rem',
+    // or position absolutely if you prefer top-left corner
   },
   contentWrapper: {
     flex: '1',
@@ -24,13 +28,14 @@ export const defaultSectionStyles = {
     fontSize: '2rem',
     fontWeight: 'bold',
     marginBottom: '0',
-    marginTop:'0',
+    marginTop: '0',
   },
   paragraph: {
     fontSize: '1rem',
     lineHeight: '1.5',
     marginBottom: '24px',
     textAlign: 'center',
+    maxWidth:'800px',
   },
   primaryButton: {
     backgroundColor: '#0F62FE',
@@ -39,9 +44,7 @@ export const defaultSectionStyles = {
     fontWeight: 'bold',
     border: 'none',
     cursor: 'pointer',
-    FontFace: 'Roboto',
     border: '2px solid #0F62FE',
-
   },
   secondaryButton: {
     backgroundColor: 'transparent',
@@ -51,22 +54,18 @@ export const defaultSectionStyles = {
     fontWeight: 'bold',
     cursor: 'pointer',
   },
-
   buttonContainer: {
     display: 'flex',
     flexDirection: 'row',
     gap: '12px',
     marginTop: '10px',
   },
-  // Label style for the top left
   label: {
     color: '#001D6C',
     borderRadius: '4px',
     fontSize: '20px',
-    FontFace: 'Roboto',
     fontWeight: '700',
     textTransform: 'uppercase',
-
   },
   imageContainer: {
     flex: '1',

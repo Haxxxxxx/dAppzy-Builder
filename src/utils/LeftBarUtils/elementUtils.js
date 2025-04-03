@@ -10,24 +10,38 @@ export const generateUniqueId = (type) => {
 };
 
 export const buildHierarchy = (elements) => {
+  // Create a map of element id to element and prepare an empty children array.
   const elementMap = elements.reduce((map, element) => {
     map[element.id] = { ...element, children: [] };
     return map;
   }, {});
 
+  // Populate children arrays for each parent.
   elements.forEach((element) => {
     if (element.parentId && elementMap[element.parentId]) {
       elementMap[element.parentId].children.push(elementMap[element.id]);
     }
   });
 
+  // Sort each parent's children to match the order in the flat state's children array.
+  elements.forEach((element) => {
+    if (element.children && element.children.length > 0 && elementMap[element.id]) {
+      elementMap[element.id].children.sort((a, b) => {
+        return element.children.indexOf(a.id) - element.children.indexOf(b.id);
+      });
+    }
+  });
+
+  // Return only the root elements (elements without a parent) that are not empty.
   const hierarchy = Object.values(elementMap)
-    .filter((el) => !el.parentId) // Root only
-    .filter((el) => el.children.length > 0 || el.content || el.structure); // Exclude empty
+    .filter((el) => !el.parentId)
+    .filter((el) => el.children.length > 0 || el.content || el.structure);
 
   console.log('Generated hierarchy:', hierarchy);
   return hierarchy;
 };
+
+
 
 export const findElementById = (id, elements) => {
   return elements.find((el) => el.id === id) || null;

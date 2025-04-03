@@ -3,7 +3,7 @@ export const HeroConfiguration = {
     heroOne: {
     type: 'hero',
     children: [
-      { type: 'image', content: 'https://via.placeholder.com/1200x600?text=Background' },
+      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
       { type: 'heading', content: 'Welcome to Our Website' },
       { type: 'paragraph', content: 'Building a better future together.' },
       { type: 'button', content: 'Get Started' },
@@ -25,6 +25,6 @@ export const HeroConfiguration = {
       { type: 'paragraph', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.' },
       { type: 'button', content: 'Primary Action'},
       { type: 'button', content: 'Secondary Action'},
-      { type: 'image', content: 'https://via.placeholder.com/600x400?text=Hero+Image'},
+      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7'},
     ],
   },}

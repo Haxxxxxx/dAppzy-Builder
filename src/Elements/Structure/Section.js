@@ -42,7 +42,7 @@ const Section = ({
       } else {
         const newId = addNewElement(item.type, item.level || 1, null, id);
         setElements((prev) =>
-          prev.map((el) => (el.id === id ? { ...el, children: [...el.children, newId] } : el))
+          prev.map((el) => (el.id === id ? { ...el, children: [...el.children, id] } : el))
         );
       }
     },

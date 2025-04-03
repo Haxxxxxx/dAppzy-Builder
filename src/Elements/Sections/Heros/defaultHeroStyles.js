@@ -44,6 +44,8 @@ export const defaultHeroStyles = {
   buttonContainer: {
     display: 'flex',
     gap: '12px',
+    width: '100%',
+    justifyContent: 'center',
   },
   primaryButton: {
     backgroundColor: '#334155',
@@ -53,6 +55,12 @@ export const defaultHeroStyles = {
     border: 'none',
     cursor: 'pointer',
     borderRadius: '4px',
+    transition: 'all 0.2s ease',
+    fontSize: '1rem',
+    '&:hover': {
+      backgroundColor: '#1e293b',
+      transform: 'translateY(-1px)',
+    },
   },
   heroImageContainer: {
     flex: '1',
@@ -73,7 +81,6 @@ export const defaultHeroStyles = {
 export const CustomTemplateHeroStyles = {
   heroSection: {
     display: 'flex',
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-around',
     padding: '40px',
@@ -106,6 +113,9 @@ export const CustomTemplateHeroStyles = {
   buttonContainer: {
     display: 'flex',
     gap: '12px',
+    width: '100%',
+    justifyContent: 'flex-start',
+    marginBottom: '1rem',
   },
   primaryButton: {
     backgroundColor: '#334155',
@@ -114,6 +124,16 @@ export const CustomTemplateHeroStyles = {
     fontWeight: 'bold',
     border: 'none',
     cursor: 'pointer',
+    borderRadius: '4px',
+    transition: 'all 0.2s ease',
+    fontSize: '1rem',
+    minWidth: '120px',
+    textAlign: 'center',
+    '&:hover': {
+      backgroundColor: '#1e293b',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    },
   },
   secondaryButton: {
     backgroundColor: 'transparent',
@@ -122,6 +142,17 @@ export const CustomTemplateHeroStyles = {
     border: '2px solid #334155',
     fontWeight: 'bold',
     cursor: 'pointer',
+    borderRadius: '4px',
+    transition: 'all 0.2s ease',
+    fontSize: '1rem',
+    minWidth: '120px',
+    textAlign: 'center',
+    '&:hover': {
+      backgroundColor: '#334155',
+      color: '#ffffff',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    },
   },
   heroImageContainer: {
     flex: 1,
@@ -150,21 +181,62 @@ export const heroTwoStyles = {
     textAlign: 'center',
     borderRadius: '8px',
   },
+  heroLeftContent: {
+    flex: 1,
+    minWidth: '300px',
+    maxWidth: '600px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1.5rem',
+  },
+  heroRightContent: {
+    flex: 1,
+    minWidth: '300px',
+    maxWidth: '600px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   heroTitle: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
     marginBottom: '16px',
+    width: '100%',
   },
   heroDescription: {
-    fontSize: '1rem',
-    lineHeight: '1.5',
+    fontSize: '1.125rem',
+    lineHeight: '1.6',
     marginBottom: '24px',
+    width: '100%',
+  },
+  buttonContainer: {
+    display: 'flex',
+    gap: '12px',
+    width: '100%',
+    justifyContent: 'center',
   },
   primaryButton: {
+    backgroundColor: '#334155',
+    color: '#ffffff',
+    padding: '12px 24px',
+    fontWeight: 'bold',
     border: 'none',
-    backgroundColor: 'rgb(51, 65, 85)',
-    color: 'rgb(255, 255, 255)',
     cursor: 'pointer',
-    padding: '10px 20px',
+    borderRadius: '4px',
+    transition: 'all 0.2s ease',
+    fontSize: '1rem',
+    '&:hover': {
+      backgroundColor: '#1e293b',
+      transform: 'translateY(-1px)',
+    },
+  },
+  heroImage: {
+    maxWidth: '100%',
+    height: '400px',
+    backgroundColor: '#334155',
+    objectFit: 'cover',
+    borderRadius: '8px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
   },
 };
