@@ -82,13 +82,9 @@ const HeroTwo = ({
   }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
-    const newId = addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === parentId ? { ...el, children: [...el.children, newId] } : el
-      )
-    );
-  };
+    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
+};
+
 
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,

@@ -1,4 +1,3 @@
-// src/utils/RenderUtils.js
 import React from 'react';
 import {
   Paragraph,
@@ -63,7 +62,7 @@ export const renderElement = (
   selectedElement,
   selectedStyle,
   isPreviewMode = true, // Default to true for static rendering
-  handleOpenMediaPanel = () => { },
+  handleOpenMediaPanel = () => {}
 ) => {
 
   if (!element || !element.id || !element.type) {
@@ -71,13 +70,12 @@ export const renderElement = (
   }
   const { id, type, children, configuration } = element;
 
-
   const renderChildren = (resolvedChildren) => {
     if (!resolvedChildren || resolvedChildren.length === 0) {
       return null;
     }
-    return resolvedChildren   
-      .filter((child) => child) // Filter out undefined children
+    return resolvedChildren
+      .filter((child) => child)
       .map((child) =>
         renderElement(
           child,
@@ -93,14 +91,13 @@ export const renderElement = (
       );
   };
 
-
   const renderConfiguredChildren = (configKey) => {
     const config = structureConfigurations[configKey];
     if (!config) {
       return null;
     }
     return config.children
-      .filter((childConfig) => childConfig && childConfig.type) // Ensure valid children
+      .filter((childConfig) => childConfig && childConfig.type)
       .map((childConfig, index) => {
         const childElement = {
           id: `${id}-child-${index}`,
@@ -121,18 +118,13 @@ export const renderElement = (
         );
       });
   };
-  
 
-
-
-  // Warn for missing configurations in structured elements
   if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' || type === 'cta' || type === 'footer'|| type === 'ContentSection') && !configuration) {
     if (!warnedElements.has(id)) {
       warnedElements.add(id);
     }
     return null;
   }
-  // Define component mappings
   const componentMap = {
     paragraph: <Paragraph id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
     heading: <Heading id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
@@ -191,7 +183,6 @@ export const renderElement = (
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
-
       />
     ),
     cta: (
@@ -203,19 +194,18 @@ export const renderElement = (
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
-
       />
     ),
     ContentSection: (
       <DraggableContentSections
-      id={id}
-      key={id}
-      configuration={configuration}
-      children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
-      contentListWidth={contentListWidth}
-      handlePanelToggle={handlePanelToggle}
-      handleOpenMediaPanel={handleOpenMediaPanel}
-/>
+        id={id}
+        key={id}
+        configuration={configuration}
+        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+        contentListWidth={contentListWidth}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+      />
     ),
     table: <Table id={id} key={id} styles={{ ...element.styles }} />,
     tableRow: <TableRow id={id} key={id} styles={{ ...element.styles }} />,
@@ -261,37 +251,44 @@ export const renderElement = (
         handlePanelToggle={handlePanelToggle}
       />
     ),
-    bgVideo: <BGVideo
-      id={id}
-      key={id}
-      type={'connectWalletButton'}
-      content={element.content}
-      styles={{ ...element.styles }}
-      handlePanelToggle={handlePanelToggle}
-    />,
-    container: <Container id={id} key={id} styles={{ ...element.styles }}>
-      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
-    </Container>,
-    grid: <GridLayout id={id} key={id} styles={{ ...element.styles }}>
-      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
-    </GridLayout>,
-    hflex: <HFlexLayout id={id} key={id} styles={{ ...element.styles }}>
-      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
-    </HFlexLayout>,
-    vflex: <VFlexLayout id={id} key={id} styles={{ ...element.styles }}>
-      {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
-    </VFlexLayout>,
-    line: <Line id={id} key={id} styles={{ ...element.styles }}></Line>,
-    linkblock: <LinkBlock id={id} key={id} styles={{ ...element.styles }}></LinkBlock>,
-    youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} ></YouTubeVideo>,
-    icon:<Icon id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} ></Icon>,
+    bgVideo: (
+      <BGVideo
+        id={id}
+        key={id}
+        type={'connectWalletButton'}
+        content={element.content}
+        styles={{ ...element.styles }}
+        handlePanelToggle={handlePanelToggle}
+      />
+    ),
+    container: (
+      <Container id={id} key={id} styles={{ ...element.styles }}>
+        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      </Container>
+    ),
+    grid: (
+      <GridLayout id={id} key={id} styles={{ ...element.styles }}>
+        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      </GridLayout>
+    ),
+    hflex: (
+      <HFlexLayout id={id} key={id} styles={{ ...element.styles }}>
+        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      </HFlexLayout>
+    ),
+    vflex: (
+      <VFlexLayout id={id} key={id} styles={{ ...element.styles }}>
+        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      </VFlexLayout>
+    ),
+    line: <Line id={id} key={id} styles={{ ...element.styles }} />,
+    linkblock: <LinkBlock id={id} key={id} styles={{ ...element.styles }} />,
+    youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} />,
+    icon: <Icon id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
   };
 
-  const component = componentMap[type];
-
-  if (!component) {
-    return null;
-  }
+  // Fallback: render a simple div if type is not found in the map
+  const component = componentMap[type] || <div key={id}>Unsupported element type: {type}</div>;
 
   return <React.Fragment key={id}>{component}</React.Fragment>;
 };

@@ -1,4 +1,5 @@
 import React, { useContext, useRef } from 'react';
+import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
@@ -11,46 +12,37 @@ const Div = ({
   children: passedChildren,
   onDropItem,
 }) => {
-  const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
-
+  const { selectedElement, setSelectedElement, elements, addNewElement } = useContext(EditableContext);
   let divElement = elements.find((el) => el.id === id);
   const contextStyles = (divElement && divElement.styles) || {};
   const contextChildren = (divElement && divElement.children) || [];
-
-  // Merge passed children (if provided) or fallback to context children.
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
   const styles = { ...passedStyles, ...contextStyles };
   const divRef = useRef(null);
 
+  // Set up drop target.
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: divRef,
     onDropItem: (item) => {
-      let currentDivElement = elements.find((el) => el.id === id);
-      if (!currentDivElement) {
-        const newDivElement = { id, type: 'div', styles: passedStyles, children: [], parentId };
-        setElements((prev) => [...prev, newDivElement]);
-        currentDivElement = newDivElement;
-      }
+      console.log('Div drop triggered for id:', id, 'with item:', item);
       if (onDropItem) {
         onDropItem(item, id);
       } else {
-        const newId = addNewElement(item.type, item.level || 1, null, id);
-        setElements((prev) =>
-          prev.map((el) => (el.id === id ? { ...el, children: [...el.children, newId] } : el))
-        );
+        addNewElement(item.type, item.level || 1, null, id);
       }
     },
   });
 
+  // Use drag layer to check if the currently dragged item is new.
+  const { item, isDragging } = useDragLayer((monitor) => ({
+    item: monitor.getItem(),
+    isDragging: monitor.isDragging(),
+  }));
+
   const handleSelect = (e) => {
     e.stopPropagation();
-    if (!divElement) {
-      const newDivElement = { id, type: 'div', styles: passedStyles, children: [], parentId };
-      setElements((prev) => [...prev, newDivElement]);
-      setSelectedElement(newDivElement);
-      divElement = newDivElement;
-    } else {
+    if (divElement) {
       setSelectedElement(divElement);
     }
   };
@@ -88,12 +80,11 @@ const Div = ({
       />
     ) : null;
 
-  // Filter out any children that are drop placeholders.
+  // Filter out any drop placeholders from children.
   const nonPlaceholderChildren =
     Array.isArray(childrenToRender) &&
-    childrenToRender.filter(
-      (child) =>
-        !(child && child.props && child.props.className && child.props.className.includes('drop-placeholder'))
+    childrenToRender.filter(child =>
+      !(child && child.props && child.props.className && child.props.className.includes('drop-placeholder'))
     );
 
   return (
@@ -104,6 +95,7 @@ const Div = ({
         drop(node);
       }}
       onClick={handleSelect}
+      onDrop={(e) => e.stopPropagation()}
       style={{
         ...styles,
         padding: styles.padding || '10px',
@@ -126,21 +118,47 @@ const Div = ({
             background: isOverCurrent ? '#f0f0f0' : 'transparent',
           }}
         >
-          {isOverCurrent
-            ? 'Drop here – element will be dropped here and nowhere else'
-            : 'Empty Div – Drop items here'}
+          {isOverCurrent ? 'Drop here – element will be dropped here and nowhere else' : 'Empty Div – Drop items here'}
         </div>
       ) : Array.isArray(childrenToRender) ? (
-        childrenToRender.map((child) => {
+        childrenToRender.map(child => {
           if (React.isValidElement(child)) {
             return child;
           } else {
-            const childEl = elements.find((el) => el === child || el.id === child);
+            const childEl = elements.find(el => el === child || el.id === child);
             return renderElement({ handleOpenMediaPanel }, childEl, elements, selectedElement);
           }
         })
       ) : (
         childrenToRender
+      )}
+
+      {/* Overlay drop zone for new elements: show only if a new item (no id) is being dragged */}
+      {isDragging && item && !item.id && (
+        <div
+          style={{
+            ...styles,
+            padding: styles.padding || '10px',
+            margin: styles.margin || '10px 0',
+            position: 'relative',
+            ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (onDropItem) {
+              onDropItem(item, id);
+            }
+          }}
+        >
+          <span style={{ display: 'block', textAlign: 'center', color: '#4D70FF' }}>
+            Drop your new element here
+          </span>
+        </div>
       )}
     </div>
   );

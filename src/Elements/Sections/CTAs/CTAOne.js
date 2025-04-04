@@ -5,11 +5,8 @@ import useReorderDrop from '../../../utils/useReorderDrop';
 import { ctaOneStyles } from './defaultCtaStyles';
 import { Button, Span, Section, Div, Image } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import {
-  registerContainer,
-  injectDefaultContent,
-  mergeStyles,
-} from '../../../utils/htmlRenderUtils/containerHelpers';
+import { registerContainer, injectDefaultContent, mergeStyles } from '../../../utils/htmlRenderUtils/containerHelpers';
+import { CtaConfigurations } from '../../../configs/ctasections/CtaConfigurations';
 
 const CTAOne = ({
   handleSelect,
@@ -20,7 +17,6 @@ const CTAOne = ({
 }) => {
   const ctaRef = useRef(null);
   const defaultInjectedRef = useRef(false);
-
   const {
     elements,
     setElements,
@@ -30,13 +26,13 @@ const CTAOne = ({
     addNewElement,
   } = useContext(EditableContext);
 
-  // Locate the CTAOne element from state.
+  // Locate the CTA element in state.
   const ctaElement = useMemo(
     () => elements.find((el) => el.id === uniqueId),
     [elements, uniqueId]
   );
 
-  // Register three containers: text, buttons, and image.
+  // Register three containers: "text", "buttons", and "image".
   useEffect(() => {
     registerContainer(
       uniqueId,
@@ -62,35 +58,17 @@ const CTAOne = ({
       setElements,
       findElementById
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uniqueId, elements]);
+  }, [uniqueId, elements, setElements, findElementById]);
 
-  // Inject default content only once.
+  // Inject default custom content only once.
   useEffect(() => {
     if (defaultInjectedRef.current) return;
-
-    const defaultContent =
-      (children && children.length > 0)
-        ? children
-        : (ctaElement &&
-            ctaElement.configuration &&
-            ctaElement.configuration.children) ||
-          [];
-
-    // Mapping: 
-    // - "image" elements go to the "image" container
-    // - "button" elements go to the "buttons" container
-    // - All other types go to the "text" container.
-    const mapping = {
-      image: 'image',
-      button: 'buttons',
-      default: 'text',
-    };
-
+    // Use fallback key "ctaOne" if configuration isn't set on the CTA element.
+    const configKey = (ctaElement && ctaElement.configuration) || 'ctaOne';
+    const defaultContent = CtaConfigurations[configKey]?.children || [];
     const textContainer = findElementById(`${uniqueId}-text`, elements);
     const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
     const imageContainer = findElementById(`${uniqueId}-image`, elements);
-
     if (
       defaultContent.length > 0 &&
       textContainer &&
@@ -100,6 +78,12 @@ const CTAOne = ({
       buttonsContainer.children.length === 0 &&
       imageContainer.children.length === 0
     ) {
+      // Define a mapping for which container each type goes to.
+      const mapping = {
+        image: 'image',
+        button: 'buttons',
+        default: 'text',
+      };
       injectDefaultContent(
         defaultContent,
         mapping,
@@ -111,31 +95,21 @@ const CTAOne = ({
       );
       defaultInjectedRef.current = true;
     }
-  }, [children, ctaElement, elements, uniqueId, addNewElement, setElements, findElementById]);
+  }, [ctaElement, elements, uniqueId, addNewElement, setElements, findElementById, children]);
 
-  // Generic drop handler for new items dropped onto the CTA.
+  // Generic drop handler – rely on addNewElement updating parent's children.
   const handleCTADrop = (droppedItem, parentId = uniqueId) => {
-    const newId = addNewElement(
-      droppedItem.type,
-      droppedItem.level || 1,
-      null,
-      parentId
-    );
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === parentId ? { ...el, children: [...el.children, newId] } : el
-      )
-    );
+    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
-  // Enable drop functionality on the whole CTA section.
+  // Enable drop functionality on the entire CTA section.
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: ctaRef,
     onDropItem: (item) => handleCTADrop(item, uniqueId),
   });
 
-  // Use our custom hook for drag and drop reordering.
+  // Use the reorder hook.
   const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } =
     useReorderDrop(findElementById, elements, setElements);
 
@@ -145,15 +119,13 @@ const CTAOne = ({
     setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
-  // Helper function to render children within a container and include drop placeholders.
+  // Helper function to render children within a container.
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-
     const childrenElements = container.children.map((childId, index) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-
       let childContent;
       if (child.type === 'heading' || child.type === 'title') {
         childContent = (
@@ -205,29 +177,27 @@ const CTAOne = ({
           handleOpenMediaPanel
         );
       }
-
       return (
         <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === index && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-                onDragOver={(e) => onDragOver(e, containerId, index)}
-                onDrop={(e) => onDrop(e, containerId)}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
+          {activeDrop.containerId === containerId && activeDrop.index === index && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+              onDragOver={(e) => onDragOver(e, containerId, index)}
+              onDrop={(e) => onDrop(e, containerId)}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
           <span
             draggable
             onDragStart={(e) => onDragStart(e, child.id)}
@@ -240,44 +210,35 @@ const CTAOne = ({
         </React.Fragment>
       );
     });
-
-    // Conditionally render an extra drop zone only if the container is empty
-    // or an active drop is happening for the bottom of this container.
-    if (container.children.length === 0 || activeDrop.containerId === containerId) {
+    // Render the bottom drop zone only if there’s an active drop on this container.
+    if (activeDrop && activeDrop.containerId === containerId) {
       childrenElements.push(
         <div
           key="drop-zone-bottom"
-          style={{
-            height: container.children.length === 0 ? '40px' : 'auto',
-            width: '100%',
-          }}
-          onDragOver={(e) =>
-            onDragOver(e, containerId, container.children.length)
-          }
+          style={{ height: '40px', width: '100%' }}
+          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
           onDrop={(e) => onDrop(e, containerId)}
         >
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === container.children.length && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
+          {activeDrop.index === container.children.length && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
         </div>
       );
     }
-
     return childrenElements;
   };
 
@@ -296,10 +257,7 @@ const CTAOne = ({
   return (
     <Section
       id={uniqueId}
-      style={{
-        ...mergedCtaStyles,
-        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
-      }}
+      style={{ ...mergedCtaStyles, ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}) }}
       onClick={(e) => {
         e.stopPropagation();
         handleSelect(e, uniqueId);

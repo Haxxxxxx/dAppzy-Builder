@@ -14,19 +14,14 @@ const Section = ({
 }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
 
-  // Look up this Section's element in state.
   let sectionElement = elements.find((el) => el.id === id);
   const contextStyles = (sectionElement && sectionElement.styles) || {};
   const contextChildren = (sectionElement && sectionElement.children) || [];
 
-  // Merge passed styles with state styles (passedStyles takes precedence).
   const styles = { ...contextStyles, ...passedStyles };
-
-  // Determine children to render: use passedChildren if provided; otherwise use children from state.
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
   const sectionRef = useRef(null);
 
-  // Set up drop handling for this Section.
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: sectionRef,
@@ -40,15 +35,17 @@ const Section = ({
       if (onDropItem) {
         onDropItem(item, id);
       } else {
+        // Create new element and update section's children with its new id
         const newId = addNewElement(item.type, item.level || 1, null, id);
         setElements((prev) =>
-          prev.map((el) => (el.id === id ? { ...el, children: [...el.children, id] } : el))
+          prev.map((el) =>
+            el.id === id ? { ...el, children: [...el.children, newId] } : el
+          )
         );
       }
     },
   });
 
-  // When the Section is clicked, select it (or create it if missing).
   const handleSelect = (e) => {
     e.stopPropagation();
     if (!sectionElement) {
@@ -64,7 +61,6 @@ const Section = ({
     }
   };
 
-  // Optional background rendering if a video or image background is provided.
   const backgroundContent =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
