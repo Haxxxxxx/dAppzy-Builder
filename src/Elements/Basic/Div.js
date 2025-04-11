@@ -134,7 +134,7 @@ const Div = ({
       )}
 
       {/* Overlay drop zone for new elements: show only if a new item (no id) is being dragged */}
-      {isDragging && item && !item.id && (
+      {isDragging && !item?.id && (
         <div
           style={{
             ...styles,

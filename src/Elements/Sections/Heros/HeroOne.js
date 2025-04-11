@@ -10,12 +10,12 @@ import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
 const HeroOne = ({
   handleSelect,
   uniqueId,
-  children,            // default content from parent mapping
-  onDropItem,          // optional external callback (if needed)
+  children,
+  onDropItem,
   handleOpenMediaPanel,
 }) => {
   const heroRef = useRef(null);
-  const defaultInjectedRef = useRef(false); // Guard for default injection
+  const defaultInjectedRef = useRef(false);
   const {
     elements,
     setElements,
@@ -25,13 +25,11 @@ const HeroOne = ({
     addNewElement,
   } = useContext(EditableContext);
 
-  // Get the hero element (Section) from state:
   const heroElement = useMemo(
     () => elements.find((el) => el.id === uniqueId),
     [elements, uniqueId]
   );
 
-  // 1) Create the left & right container divs if missing
   useEffect(() => {
     if (!findElementById(`${uniqueId}-left`, elements)) {
       setElements((prev) => [
@@ -57,15 +55,10 @@ const HeroOne = ({
         },
       ]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * 2) Inject default content only once if the left & right containers are empty.
-   *    You already have an approach for default injection in `CTAOne`, etc.
-   */
   useEffect(() => {
-    if (defaultInjectedRef.current) return; // run only once
+    if (defaultInjectedRef.current) return;
 
     const defaultContent =
       children && children.length > 0
@@ -86,35 +79,20 @@ const HeroOne = ({
       rightContainer.children.length === 0
     ) {
       defaultContent.forEach((child) => {
-        if (child.type === 'image') {
-          const newId = addNewElement(child.type, 1, null, `${uniqueId}-right`);
-          setElements((prev) =>
-            prev.map((el) =>
-              el.id === newId ? { ...el, content: child.content } : el
-            )
-          );
-          setElements((prev) =>
-            prev.map((el) =>
-              el.id === `${uniqueId}-right`
-                ? { ...el, children: [...el.children, newId] }
-                : el
-            )
-          );
-        } else {
-          const newId = addNewElement(child.type, 1, null, `${uniqueId}-left`);
-          setElements((prev) =>
-            prev.map((el) =>
-              el.id === newId ? { ...el, content: child.content } : el
-            )
-          );
-          setElements((prev) =>
-            prev.map((el) =>
-              el.id === `${uniqueId}-left`
-                ? { ...el, children: [...el.children, newId] }
-                : el
-            )
-          );
-        }
+        const containerId = child.type === 'image' ? `${uniqueId}-right` : `${uniqueId}-left`;
+        const newId = addNewElement(child.type, 1, null, containerId);
+        setElements((prev) =>
+          prev.map((el) =>
+            el.id === newId ? { ...el, content: child.content } : el
+          )
+        );
+        setElements((prev) =>
+          prev.map((el) =>
+            el.id === containerId
+              ? { ...el, children: [...el.children, newId] }
+              : el
+          )
+        );
       });
       defaultInjectedRef.current = true;
     }
@@ -128,19 +106,11 @@ const HeroOne = ({
     setElements,
   ]);
 
-  /**
-   * 3) The hero's onDrop logic: check if item has an ID (existing) or not (brand-new).
-   *    If brand-new => create a new element & add to hero. If existing => do nothing here
-   *    because the reordering logic is handled by useReorderDrop below.
-   */
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
-    // If it's an existing element (already has an id), do nothing here,
-    // because useReorderDrop will reorder/move it. 
     if (droppedItem.id) {
       return;
     }
 
-    // Otherwise, brand-new => create
     const newId = addNewElement(
       droppedItem.type,
       droppedItem.level || 1,
@@ -156,17 +126,12 @@ const HeroOne = ({
     );
   };
 
-  /**
-   * 4) Enable the hero itself to receive dropped elements
-   *    via our custom useElementDrop hook.
-   */
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: heroRef,
     onDropItem: (item) => handleHeroDrop(item, uniqueId),
   });
 
-  // For clicking on the left or right container
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
     const element = findElementById(divId, elements);
@@ -177,21 +142,15 @@ const HeroOne = ({
     }
   };
 
-  /**
-   * 5) The reorder logic is handled by useReorderDrop
-   */
   const {
     activeDrop,
     onDragStart,
     onDragOver,
     onDrop,
     onDragEnd,
+    draggedId,
   } = useReorderDrop(findElementById, elements, setElements);
 
-  /**
-   * 6) For each container (left/right), we render its children
-   *    and show placeholders as needed.
-   */
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
@@ -200,7 +159,6 @@ const HeroOne = ({
       const child = findElementById(childId, elements);
       if (!child) return null;
 
-      // For certain known types, apply default styles:
       let childContent;
       if (child.type === 'heading') {
         childContent = (
@@ -253,7 +211,6 @@ const HeroOne = ({
           />
         );
       } else {
-        // Fallback: render via the generic function
         childContent = renderElement(
           child,
           elements,
@@ -268,7 +225,6 @@ const HeroOne = ({
 
       return (
         <React.Fragment key={child.id}>
-          {/* Show drop placeholder BEFORE this child if needed */}
           {activeDrop.containerId === containerId &&
             activeDrop.index === index && (
               <div
@@ -302,7 +258,6 @@ const HeroOne = ({
       );
     });
 
-    // Add a drop zone at the bottom
     childrenElements.push(
       <div
         key="drop-zone-bottom"
@@ -334,7 +289,6 @@ const HeroOne = ({
     return childrenElements;
   };
 
-  // 7) Merge default hero styles with any custom styles
   useEffect(() => {
     if (heroElement) {
       const merged = merge(
@@ -354,7 +308,6 @@ const HeroOne = ({
     heroElement?.styles
   );
 
-  // 8) Render the final hero section
   return (
     <Section
       id={uniqueId}
@@ -364,12 +317,11 @@ const HeroOne = ({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        // Call your external handleSelect if desired
         handleSelect?.(e, uniqueId);
       }}
       ref={(node) => {
         heroRef.current = node;
-        drop(node); // Let the hero section accept new drops
+        drop(node);
       }}
     >
       <Div
