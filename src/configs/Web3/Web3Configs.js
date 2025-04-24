@@ -1,5 +1,7 @@
 export const Web3Configs = {
     mintingSection: {
+        id: 'minting-section',
+        type: 'mintingSection',
         children: [
           { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Logo
           { type: 'title', content: 'Mint {Collection Name}', label: 'title' }, // Title
@@ -22,8 +24,61 @@ export const Web3Configs = {
           { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
         ],
       },
+    defiSection: {
+        id: 'defi-dashboard',
+        type: 'defiSection',
+        children: [
+          { 
+            type: 'image', 
+            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7', 
+            label: 'logo' 
+          },
+          { 
+            type: 'title', 
+            content: 'DeFi Dashboard', 
+            label: 'title' 
+          },
+          { 
+            type: 'description', 
+            content: 'Swap, stake, and lend your assets with ease' 
+          },
+          { 
+            type: 'defiModule',
+            moduleType: 'swap',
+            title: 'Token Swap',
+            stats: [
+              { label: '24h Volume', value: '$1.2M' },
+              { label: 'Available Pairs', value: '24' },
+              { label: 'Swap Fee', value: '0.3%' }
+            ],
+            enabled: true
+          },
+          { 
+            type: 'defiModule',
+            moduleType: 'stake',
+            title: 'Staking',
+            stats: [
+              { label: 'Total Value Locked', value: '$890K' },
+              { label: 'APY', value: '12.5%' },
+              { label: 'Lock Period', value: '30 days' }
+            ],
+            enabled: true
+          },
+          { 
+            type: 'defiModule',
+            moduleType: 'lend',
+            title: 'Lending',
+            stats: [
+              { label: 'Total Supplied', value: '$450K' },
+              { label: 'Borrow APR', value: '3.2%' },
+              { label: 'Utilization', value: '65%' }
+            ],
+            enabled: true
+          }
+        ],
+    },
       connectWalletButton: {
-        content: 'Connect Wallet', // Default button text
+        content: 'Connect Wallet',
         settings: {
           wallets: [
             { name: 'Phantom', enabled: true },

@@ -5,9 +5,6 @@ import { MediaItem } from './MediaItem';
 import { PinataSDK } from '@pinata/sdk';
 import { pinata_api_key, pinata_secret_api_key, pinata, pinataJwt } from '../../utils/configPinata';
 
-// Log the pinata object to verify its structure.
-console.log("Pinata instance:", pinata);
-
 function getMediaTypeFromFile(file) {
   const mime = file.type.toLowerCase();
   if (mime.startsWith("image/")) return "image";

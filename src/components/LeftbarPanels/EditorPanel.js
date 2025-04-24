@@ -13,6 +13,7 @@ import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
+import DeFiSectionSettings from './SettingsPanels/DeFiSectionSettings';
 import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 import BackgroundSettings from './SettingsPanels/BackgroundSettings';
@@ -76,6 +77,13 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
       return (
         <CandyMachineSettings
           settings={selectedElement.settings || {}}
+        />
+      );
+    }
+    if (selectedElement?.type === 'defiSection') {
+      return (
+        <DeFiSectionSettings
+          selectedElement={selectedElement}
         />
       );
     }

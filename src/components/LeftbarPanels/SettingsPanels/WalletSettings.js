@@ -13,9 +13,13 @@ const WalletSettingsPanel = () => {
     if (selectedElement) {
       setElementId(selectedElement.id || '');
       setWallets(selectedElement.settings?.wallets || [
-        { name: 'Phantom', enabled: true },
-        { name: 'MetaMask', enabled: false },
-        { name: 'Freighter', enabled: false },
+        { name: 'Phantom', enabled: true, type: 'solana' },
+        { name: 'Solflare', enabled: true, type: 'solana' },
+        { name: 'Backpack', enabled: true, type: 'solana' },
+        { name: 'Glow', enabled: true, type: 'solana' },
+        { name: 'Slope', enabled: true, type: 'solana' },
+        { name: 'MetaMask', enabled: false, type: 'ethereum' },
+        { name: 'Freighter', enabled: false, type: 'stellar' },
       ]);
     }
   }, [selectedElement]);
@@ -74,7 +78,7 @@ const WalletSettingsPanel = () => {
           </div>
         ))}
         <p className="upvote-message">
-          Can’t find your wallet?{' '}
+          Can't find your wallet?{' '}
           <a
             href="https://your-feature-request-page.com"
             target="_blank"

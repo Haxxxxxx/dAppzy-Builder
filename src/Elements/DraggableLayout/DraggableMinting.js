@@ -28,7 +28,11 @@ const DraggableMinting = ({
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        const newId = addNewElement('mintingSection', 1, null, null, configuration);
+        // Get the current number of elements to determine the index
+        const currentElements = elements.filter(el => !el.parentId);
+        const index = currentElements.length;
+        
+        const newId = addNewElement('mintingSection', 1, index, null, configuration);
         setElements((prevElements) =>
           prevElements.map((el) =>
             el.id === newId ? { ...el, configuration } : el

@@ -95,7 +95,6 @@ function WalletConnection({ onUserLogin }) {
           signature
         );
         const userCredential = await signInWithCustomToken(auth, customToken);
-        console.log("Firebase Auth user:", userCredential.user);
         await saveWalletToFirestore(publicKey);
         processLogin(publicKey, "Solana");
       } else {

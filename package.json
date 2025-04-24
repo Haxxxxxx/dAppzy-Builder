@@ -9,17 +9,23 @@
     "@ledgerhq/hw-transport-webusb": "^6.29.4",
     "@metaplex-foundation/js": "^0.20.1",
     "@pinata/sdk": "^2.1.0",
-    "@solana/web3.js": "^1.98.0",
+    "@solana/wallet-adapter-base": "^0.9.26",
+    "@solana/wallet-adapter-react": "^0.15.38",
+    "@solana/wallet-adapter-wallets": "^0.19.36",
+    "@solana/web3.js": "^1.98.1",
     "@stellar/freighter-api": "^4.1.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@uauth/js": "^3.0.1",
+    "@web3-react/core": "^8.2.3",
+    "antd": "^5.24.8",
     "assert": "^2.1.0",
     "axios": "^1.8.1",
     "buffer": "^6.0.3",
     "cors": "^2.8.5",
     "crypto-browserify": "^3.12.1",
+    "ethers": "^6.13.5",
     "events": "^3.3.0",
     "firebase": "^11.2.0",
     "firebase-tools": "^13.33.0",
@@ -66,7 +72,12 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "array-callback-return": "warn",
+      "no-unused-vars": "warn",
+      "no-console": "warn"
+    }
   },
   "browserslist": {
     "production": [
