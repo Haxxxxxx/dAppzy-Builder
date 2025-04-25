@@ -2,6 +2,10 @@
 
 Dappzy is an open-source platform for building and managing decentralized applications (dApps) with a focus on security and user experience.
 
+## Whitepaper
+
+For a detailed technical overview of Dappzy, please read our [Whitepaper](WHITEPAPER.md).
+
 ## Features
 
 - 🔒 Secure token management
