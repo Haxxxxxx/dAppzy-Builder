@@ -8,12 +8,12 @@ For a detailed technical overview of Dappzy, please read our [Whitepaper](WHITEP
 
 ## Features
 
+- 🔍 dApp no code builder
 - 🔒 Secure token management
 - 📦 IPFS integration via Pinata
 - 🔗 Web3 wallet integration
 - 🎨 Customizable UI components
 - 🔄 Real-time updates
-- 🔍 Security audit tools
 
 ## Getting Started
 
