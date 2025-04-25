@@ -44,6 +44,8 @@ import LinkBlock from './Basic/LinkBlock';
 import Line from './Basic/Line';
 import YouTubeVideo from './Media/YoutubeVideo';
 import Icon from './Media/Icon';
+import DraggableDeFi from './DraggableLayout/DraggableDeFi';
+import DeFiModule from './Sections/Web3Related/DeFiModule';
 
 const SelectableParagraph = withSelectable(Paragraph);
 const SelectableHeading = withSelectable(Heading);
@@ -91,7 +93,9 @@ const SelectableVFlexLayout = withSelectable(VFlexLayout);
 const SelectableLine = withSelectable(Line);
 const SelectbleLinkBlock = withSelectable(LinkBlock);
 const SelectableYoutubeVideo = withSelectable(YouTubeVideo);
-const SelectableIcon =withSelectable(Icon);
+const SelectableIcon = withSelectable(Icon);
+const SelectableDeFiSection = withSelectable(DraggableDeFi);
+const SelectableDeFiModule = withSelectable(DeFiModule);
 
 export {
 
@@ -145,4 +149,8 @@ export {
 
   SelectableYoutubeVideo as YouTubeVideo,
   SelectableIcon as Icon,
+
+
+  SelectableDeFiSection as DraggableDeFi,
+  SelectableDeFiModule as DeFiModule,
 };

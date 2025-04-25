@@ -1,0 +1,7 @@
+﻿D:\GitHub\FolderTestCode\libraryelements\src\configs\contentSections\SectionConfiguration.js
+D:\GitHub\FolderTestCode\libraryelements\src\configs\ctasections\CtaConfigurations.js
+D:\GitHub\FolderTestCode\libraryelements\src\configs\footers\FooterConfigurations.js
+D:\GitHub\FolderTestCode\libraryelements\src\configs\heros\HeroConfigurations.js
+D:\GitHub\FolderTestCode\libraryelements\src\configs\navbar\NavbarConfigurations.js
+D:\GitHub\FolderTestCode\libraryelements\src\configs\Web3\Web3Configs.js
+D:\GitHub\FolderTestCode\libraryelements\src\configs\structureConfigurations.js

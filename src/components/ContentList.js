@@ -46,33 +46,31 @@ const ContentList = forwardRef(
       calculateScale();
     }, [contentListWidth, canvasWidth]);
 
-    const handleDrop = (item, index, parentId = null) => {
-      const safeIndex = index ?? 0;
+    const handleDrop = (item, index) => {
+      if (!item) return;
 
-      // If the dropped item has an id, it is an existing element to be moved.
-      if (item && item.id) {
-        moveElement(item.id, safeIndex);
+      if (item.id) {
+        // If the item has an id, it's an existing element being moved
+        moveElement(item.id, index);
         setSelectedElement({ id: item.id, type: item.type });
-        return;
-      }
-
-      // Otherwise, add a new element.
-      if (item.type === 'button' || item.type === 'image') {
-        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-        setSelectedElement({ id: newElementId, type: item.type });
-      } else if (
-        item.type === 'hero' ||
-        item.type === 'navbar' ||
-        item.type === 'cta' ||
-        item.type === 'mintingSection' ||
-        item.type === 'ContentSection' ||
-        item.type === 'footer'
-      ) {
-        const newElementId = addNewElement(item.type, 1, safeIndex, null, item.structure);
-        setSelectedElement({ id: newElementId, type: item.type, structure: item.structure });
-      } else {
-        const newElementId = addNewElement(item.type, 1, safeIndex, parentId);
-        setSelectedElement({ id: newElementId, type: item.type });
+      } else if (item.type) {
+        // If it's a new element being added
+        let newId;
+        if (item.type === 'button' || item.type === 'image') {
+          newId = addNewElement(item.type, 1, index);
+        } else if (
+          item.type === 'hero' ||
+          item.type === 'navbar' ||
+          item.type === 'cta' ||
+          item.type === 'mintingSection' ||
+          item.type === 'ContentSection' ||
+          item.type === 'footer'
+        ) {
+          newId = addNewElement(item.type, 1, index, null, item.structure);
+        } else {
+          newId = addNewElement(item.type, 1, index);
+        }
+        setSelectedElement({ id: newId, type: item.type, structure: item.structure });
       }
     };
 
@@ -86,7 +84,9 @@ const ContentList = forwardRef(
           transform: `scale(${scale})`,
           transition: 'transform 0.3s ease',
           margin: scale < 1 ? '0 auto' : '0',
-          marginBottom:'30px',
+          marginBottom: '30px',
+          position: 'relative',
+          minHeight: '100vh',
         }}
         onClick={(e) => {
           if (e.target === ref.current) {
@@ -94,61 +94,66 @@ const ContentList = forwardRef(
           }
         }}
       >
-        {/* Render drop zone only when dragging and no elements exist */}
-        {!isPreviewMode && elements.length === 0 && (
+        {!isPreviewMode && elements.length === 0 ? (
           <DropZone
             index={0}
             onDrop={(item) => handleDrop(item, 0)}
             text="Add layout"
             className="first-dropzone"
             scale={scale}
+            isDragging={isDragging}
             onClick={(e) => {
               e.stopPropagation();
             }}
+            onPanelToggle={handlePanelToggle}
           />
-        )}
+        ) : (
+          <>
+            {elements
+              .filter((element) => !element.parentId)
+              .map((element, index) => (
+                <React.Fragment key={element.id}>
+                  {!isPreviewMode && (
+                    <DropZone
+                      index={index}
+                      onDrop={(item) => handleDrop(item, index)}
+                      text=""
+                      className="between-dropzone"
+                      isDragging={isDragging}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    />
+                  )}
+                  {renderElement(
+                    element,
+                    elements,
+                    contentListWidth,
+                    setSelectedElement,
+                    setElements,
+                    handlePanelToggle,
+                    selectedElement,
+                    selectedStyle,
+                    isPreviewMode,
+                    handleOpenMediaPanel
+                  )}
+                </React.Fragment>
+              ))}
 
-        {elements
-          .filter((element) => !element.parentId)
-          .map((element, index) => (
-            <React.Fragment key={element.id}>
-              {/* Render drop zone before each element only during dragging */}
-
-              {renderElement(
-                element,
-                elements,
-                contentListWidth,
-                setSelectedElement,
-                setElements,
-                handlePanelToggle,
-                selectedElement,
-                selectedStyle,
-                isPreviewMode,
-                handleOpenMediaPanel
-              )}
-              {/* {isDragging && (
-                <DropZone
-                  index={index}
-                  onDrop={(item) => handleDrop(item, index)}
-                  text=""
-                  className="default-dropzone"
-                />
-              )} */}
-            </React.Fragment>
-          ))}
-
-        {/* Render drop zone after the last element only during dragging */}
-        {!isPreviewMode && isDragging && elements.length > 0  && (
-          <DropZone
-            index={elements.length}
-            onDrop={(item) => handleDrop(item, elements.length)}
-            text="Click or Drop items here to add to the page"
-            className="default-dropzone"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedElement('');
-            }}
-          />
+            {!isPreviewMode && (
+              <DropZone
+                index={elements.length}
+                onDrop={(item) => handleDrop(item, elements.length)}
+                text="Click or Drop items here to add to the page"
+                className="default-dropzone"
+                isDragging={isDragging}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedElement('');
+                }}
+              />
+            )}
+          </>
         )}
       </div>
     );

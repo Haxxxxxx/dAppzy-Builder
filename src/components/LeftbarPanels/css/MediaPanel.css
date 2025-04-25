@@ -299,3 +299,18 @@
   width: 100%;
   background-color: transparent;
 }
+
+.media-panel-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  color: #856404;
+  padding: 12px;
+  margin: 12px;
+  text-align: center;
+}
+
+.media-panel-warning p {
+  margin: 0;
+  font-size: 14px;
+}

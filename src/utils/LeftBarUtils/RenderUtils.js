@@ -46,9 +46,12 @@ import {
   YouTubeVideo,
   DraggableContentSections,
   Icon,
+  DeFiModule,
+  DraggableDeFi
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
+
 
 const warnedElements = new Set();
 
@@ -285,6 +288,27 @@ export const renderElement = (
     linkblock: <LinkBlock id={id} key={id} styles={{ ...element.styles }} />,
     youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} />,
     icon: <Icon id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
+    defiSection: (
+      <DraggableDeFi
+        id={id}
+        key={id}
+        configuration={configuration}
+        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+        contentListWidth={contentListWidth}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        isEditing={false}
+      />
+    ),
+    defiModule: (
+      <DeFiModule
+        id={id}
+        key={id}
+        content={typeof element.content === 'string' ? element.content : JSON.stringify(element.content)}
+        styles={{ ...element.styles }}
+        configuration={element.configuration || configuration}
+      />
+    ),
   };
 
   // Fallback: render a simple div if type is not found in the map

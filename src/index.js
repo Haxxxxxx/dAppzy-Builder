@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { EditableProvider } from './context/EditableContext';
+import { WalletProvider } from './context/WalletContext';
 
 const RootComponent = () => {
   const [userId, setUserId] = useState(null);
@@ -32,7 +33,9 @@ const RootComponent = () => {
   return (
     <React.StrictMode>
       <EditableProvider userId={userId}>
-        <App userId={userId} setUserId={setUserId} projectId={projectId} />
+        <WalletProvider>
+          <App userId={userId} setUserId={setUserId} projectId={projectId} />
+        </WalletProvider>
       </EditableProvider>
     </React.StrictMode>
   );

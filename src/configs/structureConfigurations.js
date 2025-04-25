@@ -22,6 +22,7 @@ export const structureConfigurations = {
   template: FooterConfigurations.template,
 
   mintingSection: Web3Configs.mintingSection,
+  defiSection: Web3Configs.defiSection,
   connectWalletButton: Web3Configs.connectWalletButton,
 
   // Add your new section configurations here:

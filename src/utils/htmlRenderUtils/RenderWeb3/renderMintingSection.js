@@ -3,6 +3,9 @@
 import { mintingSectionStyles } from '../../../Elements/Sections/Web3Related/DefaultWeb3Styles';
 // Firestore imports – adjust the import path as needed.
 import { db, doc, setDoc } from '../../../firebase';
+import React from 'react';
+import { sanitizeInput, validateEthAddress } from '../../../utils/securityUtils';
+import { ethers } from 'ethers';
 
 // ------------------ 1) HELPER to compute progress from "remaining" ------------------ //
 function calculateProgress(remainingContent) {
@@ -32,7 +35,7 @@ function renderCircularProgressImage(logo, remainingContent) {
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (progress / 100) * circumference;
 
-  // For the black dot at arc’s end:
+  // For the black dot at arc's end:
   const dotRadius = strokeWidth / 2;
   const angleDeg = progress * 3.6;
   const angleRad = (Math.PI / 180) * angleDeg;
@@ -460,3 +463,42 @@ export function initMintingSection(sectionId) {
     }
   };
 }
+
+const handleTransaction = async (transaction, signer) => {
+  try {
+    // Validate transaction parameters
+    if (!transaction.to || !validateEthAddress(transaction.to)) {
+      throw new Error('Invalid recipient address');
+    }
+
+    if (!transaction.value) {
+      throw new Error('Transaction value is required');
+    }
+
+    // Estimate gas
+    const gasEstimate = await signer.estimateGas(transaction);
+    transaction.gasLimit = gasEstimate.mul(120).div(100); // Add 20% buffer
+
+    // Get current nonce
+    const nonce = await signer.getTransactionCount();
+    transaction.nonce = nonce;
+
+    // Sign and send transaction
+    const signedTx = await signer.signTransaction(transaction);
+    const txResponse = await signer.sendTransaction(transaction);
+
+    // Wait for confirmation
+    const receipt = await txResponse.wait();
+    
+    if (receipt.status === 0) {
+      throw new Error('Transaction failed');
+    }
+
+    return receipt;
+  } catch (error) {
+    console.error('Transaction failed:', error);
+    throw error;
+  }
+};
+
+export default renderMintingSection;

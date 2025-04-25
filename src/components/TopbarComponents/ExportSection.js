@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { pinataJwt } from '../../utils/configPinata';
+import { pinata, pinataSDK } from '../../utils/configPinata';
 import { renderElementToHtml } from '../../utils/htmlRender'; // Your render method
 import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../../Elements/Sections/Heros/defaultHeroStyles';
 // Import your hierarchy builder – this should nest elements with a valid parentId.
@@ -150,15 +150,14 @@ export function exportProject(elements, websiteSettings) {
  */
 async function pinDirectoryToPinata(files, metadata) {
   const formData = new FormData();
-  files.forEach(({ file, fileName }) => {
-    formData.append('file', file, fileName);
+  files.forEach((file, index) => {
+    formData.append(`file${index}`, file);
   });
-  formData.append('pinataOptions', JSON.stringify({ wrapWithDirectory: true }));
   formData.append('pinataMetadata', JSON.stringify(metadata));
 
-  const response = await fetch(PINATA_PIN_FILE_URL, {
+  const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${pinataJwt}` },
+    headers: { Authorization: `Bearer ${pinata.pinata_jwt}` },
     body: formData,
   });
   if (!response.ok) {

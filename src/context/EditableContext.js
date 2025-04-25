@@ -1,6 +1,6 @@
 // src/context/EditableContext.js
 
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   generateUniqueId,
   buildHierarchy,
@@ -14,20 +14,10 @@ import {
 import { structureConfigurations } from '../configs/structureConfigurations';
 
 export const EditableContext = createContext();
-
-const ELEMENTS_VERSION = '1.0';
+export const ELEMENTS_VERSION = '1.0.0'; // Define the version constant
 
 export const EditableProvider = ({ children, userId }) => {
-  console.log('EditableProvider received userId:', userId);
-
-  // ---------------------------------------------
-  // Selected element (for highlight, etc.)
-  // ---------------------------------------------
-  const [selectedElement, setSelectedElement] = useState(null);
-
-  // ---------------------------------------------
-  // Main elements state
-  // ---------------------------------------------
+  // Initialize state first
   const [elements, setElements] = useState(() => {
     const savedVersion = localStorage.getItem('elementsVersion');
     const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
@@ -36,98 +26,35 @@ export const EditableProvider = ({ children, userId }) => {
       : [];
   });
 
-  // ---------------------------------------------
-  // Undo/Redo History
-  // ---------------------------------------------
+  const [selectedElement, setSelectedElement] = useState(null);
   const [history, setHistory] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [forceBorder, setForceBorder] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState(null);
 
-  /**
-   * Push a new state of elements to the history,
-   * discarding any future states if we've undone.
-   */
-  const pushToHistory = (newElements) => {
-    // If user made a new change after undo, remove "future" states
+  // Define findElementById function
+  const findElementById = useCallback((id, elementsList = elements) => {
+    return elementsList.find(el => el.id === id);
+  }, [elements]);
+
+  // Initialize functions after state
+  const pushToHistory = useCallback((newElements) => {
     const truncatedHistory = history.slice(0, currentIndex + 1);
-    // Push new state
     const updatedHistory = [...truncatedHistory, newElements];
     setHistory(updatedHistory);
-    // Advance pointer
     setCurrentIndex(updatedHistory.length - 1);
-  };
+  }, [history, currentIndex]);
 
-  /**
-   * Wrap setElements so we automatically:
-   *   1) Save to localStorage
-   *   2) Push to history
-   */
-  const recordElementsUpdate = (updater) => {
+  const recordElementsUpdate = useCallback((updater) => {
     setElements((prev) => {
-      const newElements =
-        typeof updater === 'function' ? updater(prev) : updater;
-
-      // Save to local storage
+      const newElements = typeof updater === 'function' ? updater(prev) : updater;
       saveToLocalStorage('editableElements', newElements);
-      // Also push to history for undo/redo
       pushToHistory(newElements);
-
       return newElements;
     });
-  };
+  }, [pushToHistory]);
 
-  // ---------------------------------------------
-  // Undo/Redo
-  // ---------------------------------------------
-  const undo = () => {
-    if (currentIndex > 0) {
-      const newIndex = currentIndex - 1;
-      setCurrentIndex(newIndex);
-      setElements(history[newIndex]);
-      // Also save that version to localStorage
-      saveToLocalStorage('editableElements', history[newIndex]);
-    }
-  };
-
-  const redo = () => {
-    if (currentIndex < history.length - 1) {
-      const newIndex = currentIndex + 1;
-      setCurrentIndex(newIndex);
-      setElements(history[newIndex]);
-      // Also save that version to localStorage
-      saveToLocalStorage('editableElements', history[newIndex]);
-    }
-  };
-
-  // On mount, push the initial state (from localStorage) to the history
-  useEffect(() => {
-    pushToHistory(elements);
-    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
-    // eslint-disable-next-line
-  }, []);
-
-  // ---------------------------------------------
-  // Forced border style for selected elements
-  // ---------------------------------------------
-  const forcedBorderStyle = {
-    outline: '1px solid #4D70FF',
-    boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
-  };
-
-  const forceBorder = selectedElement !== null;
-  const selectedStyle = {
-    outline: '1px solid #4D70FF',
-    boxShadow: '0 0 5px rgba(0, 123, 255, 0.5)',
-  };
-
-  // ---------------------------------------------
-  // CRUD-Like Functions
-  // ---------------------------------------------
-
-  /**
-   * Add a new element (with optional children if using a structure).
-   * Insert at `index` if top-level, or append if it has a parent.
-   */
-  const addNewElement = (type, level = 1, index = 0, parentId = null, config = null) => {
+  const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
@@ -219,12 +146,9 @@ export const EditableProvider = ({ children, userId }) => {
   
     console.log('Added new element:', baseElement);
     return newId;
-  };
-  
-  /**
-   * Move an existing element to a new index (top-level reorder).
-   */
-  const moveElement = (id, newIndex) => {
+  }, [recordElementsUpdate]);
+
+  const moveElement = useCallback((id, newIndex) => {
     recordElementsUpdate((prevElements) => {
       const index = prevElements.findIndex((el) => el.id === id);
       if (index === -1) return prevElements;
@@ -234,30 +158,20 @@ export const EditableProvider = ({ children, userId }) => {
       newElements.splice(newIndex, 0, element);
       return newElements;
     });
-  };
+  }, [recordElementsUpdate]);
 
-  /**
-   * Remove element (and its children).
-   */
-  const handleRemoveElement = (id) => {
+  const handleRemoveElement = useCallback((id) => {
     setSelectedElement(null);
     recordElementsUpdate((prevElements) => removeElementRecursively(id, prevElements));
-  };
+  }, [recordElementsUpdate]);
 
-  /**
-   * Update textual content.
-   */
-  const updateContent = (id, content) => {
+  const updateContent = useCallback((id, content) => {
     recordElementsUpdate((prev) =>
       prev.map((el) => (el.id === id ? { ...el, content } : el))
     );
-  };
+  }, [recordElementsUpdate]);
 
-
-  /**
-   * Update inline styles (merge with existing).
-   */
-  const updateStyles = (id, newStyles) => {
+  const updateStyles = useCallback((id, newStyles) => {
     console.log(`Updating styles for ${id}:`, newStyles);
     recordElementsUpdate((prev) =>
       prev.map((el) =>
@@ -271,22 +185,15 @@ export const EditableProvider = ({ children, userId }) => {
         styles: { ...prevSelected.styles, ...newStyles },
       }));
     }
-  };
+  }, [recordElementsUpdate]);
 
-
-  /**
-   * Update entire element (merge in newProperties).
-   */
-  const updateElementProperties = (id, newProperties) => {
+  const updateElementProperties = useCallback((id, newProperties) => {
     recordElementsUpdate((prev) =>
       prev.map((el) => (el.id === id ? { ...el, ...newProperties } : el))
     );
-  };
+  }, [recordElementsUpdate]);
 
-  /**
-   * Save a nested section to local storage (by ID).
-   */
-  const saveSectionToLocalStorage = (sectionId) => {
+  const saveSectionToLocalStorage = useCallback((sectionId) => {
     const section = findElementById(sectionId, elements);
     if (section) {
       const buildNestedStructure = (parentId) => {
@@ -304,13 +211,9 @@ export const EditableProvider = ({ children, userId }) => {
       const navbarHierarchy = buildNestedStructure(sectionId);
       saveToLocalStorage(`section-${sectionId}`, navbarHierarchy);
     }
-  };
+  }, [elements]);
 
-  /**
-   * Load a nested section from local storage (by ID).
-   * This replaces the entire `elements`.
-   */
-  const loadSectionFromLocalStorage = (sectionId) => {
+  const loadSectionFromLocalStorage = useCallback((sectionId) => {
     const savedSection = loadFromLocalStorage(`section-${sectionId}`);
     if (savedSection) {
       const flattenNestedStructure = (node, accumulator = []) => {
@@ -323,12 +226,9 @@ export const EditableProvider = ({ children, userId }) => {
       const flattenedElements = flattenNestedStructure(savedSection);
       recordElementsUpdate(flattenedElements);
     }
-  };
+  }, [recordElementsUpdate]);
 
-  /**
-   * Update "configuration" and "settings" for an element.
-   */
-  const updateConfiguration = (id, key, value) => {
+  const updateConfiguration = useCallback((id, key, value) => {
     recordElementsUpdate((prev) =>
       prev.map((el) =>
         el.id === id
@@ -346,49 +246,74 @@ export const EditableProvider = ({ children, userId }) => {
           : el
       )
     );
-  };
+  }, [recordElementsUpdate]);
 
-  // ---------------------------------------------
-  // Return context
-  // ---------------------------------------------
+  const undo = useCallback(() => {
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      setCurrentIndex(newIndex);
+      setElements(history[newIndex]);
+      saveToLocalStorage('editableElements', history[newIndex]);
+    }
+  }, [currentIndex, history]);
+
+  const redo = useCallback(() => {
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1;
+      setCurrentIndex(newIndex);
+      setElements(history[newIndex]);
+      saveToLocalStorage('editableElements', history[newIndex]);
+    }
+  }, [currentIndex, history]);
+
+  // Memoize context value after all state and functions are defined
+  const contextValue = useMemo(() => ({
+    elements,
+    setElements: recordElementsUpdate,
+    selectedElement,
+    setSelectedElement,
+    addNewElement,
+    updateContent,
+    updateStyles,
+    updateElementProperties,
+    updateConfiguration,
+    handleRemoveElement,
+    moveElement,
+    undo,
+    redo,
+    forceBorder,
+    selectedStyle,
+    saveSectionToLocalStorage,
+    loadSectionFromLocalStorage,
+    findElementById
+  }), [
+    elements,
+    selectedElement,
+    forceBorder,
+    selectedStyle,
+    recordElementsUpdate,
+    addNewElement,
+    updateContent,
+    updateStyles,
+    updateElementProperties,
+    updateConfiguration,
+    handleRemoveElement,
+    moveElement,
+    undo,
+    redo,
+    saveSectionToLocalStorage,
+    loadSectionFromLocalStorage,
+    findElementById
+  ]);
+
+  // Initialize history on mount
+  useEffect(() => {
+    pushToHistory(elements);
+    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
+  }, []);
+
   return (
-    <EditableContext.Provider
-      value={{
-        selectedElement,
-        setSelectedElement,
-        elements,
-        setElements,
-        // CRUD
-        addNewElement,
-        moveElement,
-        handleRemoveElement,
-        updateContent,
-        updateStyles,
-        updateElementProperties,
-        updateConfiguration,
-
-        // Sections
-        saveSectionToLocalStorage,
-        loadSectionFromLocalStorage,
-
-        // Utilities
-        findElementById,
-        buildHierarchy,
-        saveToLocalStorage,
-
-        // Undo/Redo
-        undo,
-        redo,
-
-        // UI States
-        selectedStyle,
-        forcedBorderStyle,
-        forceBorder,
-
-        // Possibly useful to pass userId
-        userId,
-      }}
-    >
+    <EditableContext.Provider value={contextValue}>
       {children}
     </EditableContext.Provider>
   );
