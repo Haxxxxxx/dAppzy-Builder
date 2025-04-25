@@ -9,7 +9,7 @@
 
 ## Reporting a Vulnerability
 
-Please report security vulnerabilities to security@dappzy.io. We will respond within 48 hours.
+Please report security vulnerabilities to contact@dappzy.io. We will respond within 48 hours.
 
 ## Security Measures
 
@@ -58,7 +58,7 @@ FIREBASE_PROJECT_ID=your_project_id
 - Regular security audits
 
 ### Reporting Process
-1. Email security@dappzy.io
+1. Email contact@dappzy.io
 2. Include vulnerability details
 3. Provide reproduction steps
 4. Wait for response
