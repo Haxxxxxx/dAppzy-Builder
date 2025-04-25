@@ -1,4 +1,4 @@
-### White Paper
+# White Paper
 
 ### 1. **Title Page**
 
