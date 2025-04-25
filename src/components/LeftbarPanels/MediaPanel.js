@@ -1,123 +1,38 @@
-// src/components/LeftbarPanels/MediaPanel.js
 import React, { useState, useEffect, useRef } from 'react';
 import './css/MediaPanel.css';
 import { MediaItem } from './MediaItem';
-import { PinataSDK } from '@pinata/sdk';
-import { pinata_api_key, pinata_secret_api_key, pinata, pinataJwt } from '../../utils/configPinata';
+import { pinataConfig } from '../../utils/configPinata';
 
+// Helpers to determine media type
 function getMediaTypeFromFile(file) {
   const mime = file.type.toLowerCase();
-  if (mime.startsWith("image/")) return "image";
-  if (mime.startsWith("video/")) return "video";
-  if (mime === "application/pdf") return "file";
-  return "file";
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/')) return 'video';
+  if (mime === 'application/pdf') return 'file';
+  return 'file';
 }
 
 function guessTypeFromExtension(filename) {
-  const ext = filename.toLowerCase().split(".").pop();
-  const images = ["png", "jpg", "jpeg", "webp", "gif", "svg", "bmp", "ico", "tiff"];
-  const videos = ["mp4", "mov", "avi", "wmv", "mkv", "webm"];
-  if (images.includes(ext)) return "image";
-  if (videos.includes(ext)) return "video";
-  if (ext === "pdf") return "file";
-  return "file";
+  const ext = filename.toLowerCase().split('.').pop();
+  const images = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'ico', 'tiff'];
+  const videos = ['mp4', 'mov', 'avi', 'wmv', 'mkv', 'webm'];
+  if (images.includes(ext)) return 'image';
+  if (videos.includes(ext)) return 'video';
+  if (ext === 'pdf') return 'file';
+  return 'file';
 }
 
-/**
- * Retrieves (or creates) a group for the given wallet ID.
- * (Note: We call the methods directly on pinata.groups.)
- */
-async function getOrCreateGroup(walletId) {
-  try {
-    if (!pinata.groups) {
-      throw new Error("Pinata groups is undefined. Check your SDK version and configuration.");
-    }
-    // List groups filtering by name using the chainable .name() method.
-    const groupsResponse = await pinata.groups.list().name(walletId);
-    if (groupsResponse.groups && groupsResponse.groups.length > 0) {
-      console.log("Found group:", groupsResponse.groups[0]);
-      return groupsResponse.groups[0];
-    } else {
-      // Create a new group if none exists.
-      const newGroup = await pinata.groups.create({ name: walletId });
-      console.log("Created new group:", newGroup);
-      return newGroup;
-    }
-  } catch (error) {
-    console.error("Error fetching or creating group:", error);
-    throw error;
+// Pinata API base and auth helper
+const PINATA_BASE_URL = 'https://api.pinata.cloud';
+const getAuthHeaders = () => {
+  if (pinataConfig.pinata_jwt) {
+    return { Authorization: `Bearer ${pinataConfig.pinata_jwt}` };
   }
-}
-
-/**
- * Uploads a file to Pinata and assigns it to the group.
- */
-async function uploadFileToPinata(file, walletId, projectName) {
-  try {
-    // Get or create the group.
-    const group = await getOrCreateGroup(walletId);
-
-    const url = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // Preserve the file's original metadata.
-    const metadata = {
-      name: `${walletId}/${file.name}`, // Simulate folder structure in the name
-      keyvalues: {
-        walletId: walletId,
-        projectName: projectName,
-      },
-    };
-    formData.append('pinataMetadata', JSON.stringify(metadata));
-
-    // Pass the group id as a query parameter.
-    const response = await fetch(`${url}?group=${group.id}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${pinataJwt}`, // Make sure pinataJwt is correct
-      },
-      body: formData,
-    });
-    const data = await response.json();
-    console.log("Upload response:", data);
-    return data;
-  } catch (error) {
-    console.error("Error uploading file to Pinata:", error);
-    throw error;
-  }
-}
-
-async function listFilesFromPinata() {
-  const url = 'https://api.pinata.cloud/data/pinList?status=pinned';
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${pinataJwt}`,
-    },
-  });
-  const data = await response.json();
-  return data;
-}
-
-async function deleteFileFromPinata(ipfsHash) {
-  const url = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${pinataJwt}`,
-    },
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to unpin: ${response.status} - ${response.statusText}`);
-  }
-  
-  // We expect a plain text or empty response, so use .text()
-  const resultText = await response.text();
-  return resultText; // e.g. "OK"
-}
-
+  return {
+    pinata_api_key: pinataConfig.pinata_api_key,
+    pinata_secret_api_key: pinataConfig.pinata_secret_api_key,
+  };
+};
 
 const MediaPanel = ({ projectName, isOpen, userId }) => {
   const [mediaItems, setMediaItems] = useState([]);
@@ -127,180 +42,190 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
   const [editingName, setEditingName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [previewEditingName, setPreviewEditingName] = useState('');
+  const [previewHasChanges, setPreviewHasChanges] = useState(false);
+
   const fileInputRef = useRef(null);
 
-  const fetchMedia = async () => {
-    if (!userId || !projectName.trim()) {
-      setMediaItems([]);
-      return;
+// Fetch pinned media from Pinata by project & user metadata
+const fetchMedia = async () => {
+  if (!userId || !projectName.trim()) {
+    setMediaItems([]);
+    return;
+  }
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    const params = new URLSearchParams();
+    params.append('status', 'pinned');
+
+    // build keyvalues filters with explicit op "eq"
+    // either of these two approaches works; I prefer separate entries:
+    params.append(
+      'metadata[keyvalues][userId]',
+      JSON.stringify({ value: userId, op: 'eq' })
+    );
+    params.append(
+      'metadata[keyvalues][projectName]',
+      JSON.stringify({ value: projectName, op: 'eq' })
+    );
+
+    const res = await fetch(
+      `${PINATA_BASE_URL}/data/pinList?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!res.ok) {
+      throw new Error(`Pinata list failed: ${res.status} ${res.statusText}`);
     }
-    setIsLoading(true);
-    try {
-      const result = await listFilesFromPinata();
-      // Filter files by metadata matching walletId and projectName.
-      const filtered = result.rows.filter(item => {
-        const keyvalues = item.metadata?.keyvalues || {};
-        return keyvalues.walletId === userId && keyvalues.projectName === projectName;
-      });
-      const files = filtered.map(item => {
-        const fileName = item.metadata?.name || item.ipfs_pin_hash;
-        return {
-          id: item.ipfs_pin_hash,
-          type: guessTypeFromExtension(fileName),
-          name: fileName,
-          src: `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`,
-          ipfsHash: item.ipfs_pin_hash,
-        };
-      });
-      setMediaItems(files);
-    } catch (error) {
-      console.error("Error listing files from Pinata:", error);
-    } finally {
-      setIsLoading(false);
+
+    const { rows } = await res.json();
+    const files = rows.map(item => ({
+      id: item.ipfs_pin_hash,
+      type: guessTypeFromExtension(item.metadata.name),
+      name: item.metadata.name,
+      src: `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`,
+      ipfsHash: item.ipfs_pin_hash,
+    }));
+    setMediaItems(files);
+  } catch (err) {
+    console.error('Error listing files from Pinata:', err);
+    setError('Failed to load media files. Please try again later.');
+    setMediaItems([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+  // Upload a single file to Pinata via REST API
+  const uploadFileToPinata = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append(
+      'pinataMetadata',
+      JSON.stringify({ name: file.name, keyvalues: { userId, projectName } })
+    );
+
+    const res = await fetch(
+      `${PINATA_BASE_URL}/pinning/pinFileToIPFS`,
+      { method: 'POST', headers: getAuthHeaders(), body: formData }
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Pinata upload failed: ${text}`);
     }
+    return await res.json();
   };
 
+  // Handle file input or drop uploads
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
-    const newMediaItems = [];
+    const newItems = [];
     for (const file of files) {
       try {
-        const response = await uploadFileToPinata(file, userId, projectName);
-        const ipfsHash = response.IpfsHash;
-        const fileType = getMediaTypeFromFile(file);
-        newMediaItems.push({
-          id: ipfsHash + Date.now(), // Local unique id
-          type: fileType,
-          name: `${userId}/${file.name}`,
-          src: `https://gateway.pinata.cloud/ipfs/${ipfsHash}`,
-          ipfsHash: ipfsHash,
+        const response = await uploadFileToPinata(file);
+        newItems.push({
+          id: response.IpfsHash,
+          type: getMediaTypeFromFile(file),
+          name: file.name,
+          src: `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`,
+          ipfsHash: response.IpfsHash,
         });
-      } catch (error) {
-        console.error("Error uploading file to Pinata:", error);
+      } catch (err) {
+        console.error('Error uploading file to Pinata:', err);
+        setError(`Failed to upload file: ${err.message}`);
       }
     }
-    setMediaItems(prevItems => [...newMediaItems, ...prevItems]);
+    setMediaItems(prev => [...newItems, ...prev]);
   };
 
   const handleDrop = async (event) => {
     event.preventDefault();
-    const files = Array.from(event.dataTransfer.files);
-    await handleFileUpload({ target: { files } });
+    await handleFileUpload({ target: { files: event.dataTransfer.files } });
   };
   const handleDragOver = (event) => event.preventDefault();
 
+  // Unpin (delete) a file
   const handleRemoveClick = async (itemId) => {
-    const itemToRemove = mediaItems.find(item => item.id === itemId);
-    if (!itemToRemove) return;
+    const item = mediaItems.find(i => i.id === itemId);
+    if (!item) return;
     try {
-      const result = await deleteFileFromPinata(itemToRemove.ipfsHash);
-      console.log('Delete file response:', result); // Should log "OK"
-      setMediaItems(prev => prev.filter(item => item.id !== itemId));
-    } catch (error) {
-      console.error("Error deleting file from Pinata:", error);
+      const res = await fetch(
+        `${PINATA_BASE_URL}/pinning/unpin/${item.ipfsHash}`,
+        { method: 'DELETE', headers: getAuthHeaders() }
+      );
+      if (!res.ok) throw new Error(res.statusText);
+      setMediaItems(prev => prev.filter(i => i.id !== itemId));
+    } catch (err) {
+      console.error('Error deleting file from Pinata:', err);
+      setError('Failed to delete file. Please try again.');
     }
-    
   };
 
-  const handlePreviewClick = (item) => setPreviewItem(item);
+  // Preview and editing handlers
+  const handlePreviewClick = (item) => {
+    setPreviewItem(item);
+    setPreviewEditingName(item.name || '');
+    setPreviewHasChanges(false);
+  };
   const closePreviewModal = () => setPreviewItem(null);
 
+  const handlePreviewSave = () => {
+    if (!previewItem) return;
+    setMediaItems(prev =>
+      prev.map(m =>
+        m.id === previewItem.id ? { ...m, name: previewEditingName } : m
+      )
+    );
+    setPreviewItem(prev => ({ ...prev, name: previewEditingName }));
+    setPreviewHasChanges(false);
+  };
+
+  // Inline renaming in grid
   const handleNameDoubleClick = (item) => {
     setEditingItemId(item.id);
-    setEditingName(item.name || "");
+    setEditingName(item.name || '');
   };
   const handleNameChange = (e) => setEditingName(e.target.value);
   const handleNameBlur = () => {
     setMediaItems(prev =>
-      prev.map(item =>
-        item.id === editingItemId ? { ...item, name: editingName } : item
-      )
+      prev.map(m => m.id === editingItemId ? { ...m, name: editingName } : m)
     );
     setEditingItemId(null);
     setEditingName('');
   };
-  const handleNameKeyDown = (e) => {
-    if (e.key === 'Enter') handleNameBlur();
-  };
+  const handleNameKeyDown = (e) => e.key === 'Enter' && handleNameBlur();
 
-  const handleSetFilterType = (type) => setFilterType(type);
+  // Filtering and searching
   const filteredItems = mediaItems.filter(item => {
-    let typeMatch = false;
-    if (filterType === 'all') {
-      typeMatch = true;
-    } else if (filterType === 'media') {
-      typeMatch = (item.type === 'image' || item.type === 'video');
-    } else if (filterType === 'documents') {
-      typeMatch = (item.type === 'file');
-    }
-    const nameMatch = (item.name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const typeMatch = filterType === 'all' ||
+      (filterType === 'media' && (item.type === 'image' || item.type === 'video')) ||
+      (filterType === 'documents' && item.type === 'file');
+    const nameMatch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     return typeMatch && nameMatch;
   });
 
   useEffect(() => {
-    if (isOpen) {
-      fetchMedia();
-    }
-  }, [isOpen]);
+    if (isOpen) fetchMedia();
+  }, [isOpen, projectName, userId]);
 
   useEffect(() => {
     window.addToMediaPanel = (newItem) => setMediaItems(prev => [newItem, ...prev]);
     return () => { window.addToMediaPanel = null; };
   }, []);
-  // 1) Additional local states
-  const [previewEditingName, setPreviewEditingName] = useState('');
-  const [previewHasChanges, setPreviewHasChanges] = useState(false);
-
-
-
-  // 3) A method to save changes when user clicks "Save"
-  const handlePreviewSave = () => {
-    if (!previewItem) return;
-
-    // Update the item in mediaItems
-    setMediaItems(prev =>
-      prev.map(mItem =>
-        mItem.id === previewItem.id
-          ? { ...mItem, name: previewEditingName }
-          : mItem
-      )
-    );
-
-    // Update the previewItem so it reflects the new name if we keep the modal open
-    setPreviewItem(prev => ({ ...prev, name: previewEditingName }));
-
-    // Optionally, you could also call an API to persist the name change to Pinata here
-    // e.g. updatePinataMetadata(ipfsHash, newName);
-
-    // Reset the "has changes" flag
-    setPreviewHasChanges(false);
-  };
 
   return (
     <div className="media-panel scrollable-panel" onDrop={handleDrop} onDragOver={handleDragOver}>
+      {error && <div className="media-panel-warning"><p>{error}</p></div>}
+
       <div className="filter-buttons">
-        <button
-          className={filterType === 'media' ? 'active' : ''}
-          onClick={() => handleSetFilterType('media')}
-        >
-          Media
-        </button>
-
-        <button
-          className={filterType === 'documents' ? 'active' : ''}
-          onClick={() => handleSetFilterType('documents')}
-        >
-          Documents
-        </button>
-
-        {/* Add a custom class "all-button" */}
-        <button
-          className={`all-button ${filterType === 'all' ? 'active' : ''}`}
-          onClick={() => handleSetFilterType('all')}
-        >
-          All
-        </button>
+        <button className={filterType === 'media' ? 'active' : ''} onClick={() => setFilterType('media')}>Media</button>
+        <button className={filterType === 'documents' ? 'active' : ''} onClick={() => setFilterType('documents')}>Documents</button>
+        <button className={`all-button ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>All</button>
       </div>
+
       <div className="media-panel-search-bar">
         <span className="material-symbols-outlined">search</span>
         <input
@@ -310,26 +235,23 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
           onChange={e => setSearchQuery(e.target.value)}
         />
       </div>
+
       <hr />
+
       <div className="upload-buttons">
         <div
           className="dropzone"
-          onClick={() => fileInputRef.current.click()}    // trigger hidden input on click
+          onClick={() => fileInputRef.current.click()}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <img src='./img/UploadMediaPanel.png'></img>
-          <p>Click or Drag &amp; Drop Files Here</p>
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            style={{ display: 'none' }}
-          />
+          <img src="./img/UploadMediaPanel.png" alt="Upload icon" />
+          <p>Click or Drag & Drop Files Here</p>
+          <input id="file-upload" type="file" multiple ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
+
         </div>
       </div>
+
       <hr />
 
       {isLoading ? (
@@ -356,51 +278,34 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
       ) : (
         <p className="no-media-message">No media found for this project.</p>
       )}
+
       {previewItem && (
         <div className="preview-modal" onClick={closePreviewModal}>
           <div className="preview-content" onClick={e => e.stopPropagation()}>
-
-            {/* Title editing section */}
             {previewItem.type === 'image' && (
               <div className="preview-title-edit">
-                <p>Default Name : {previewItem.id}</p>
+                <p>Default Name: {previewItem.id}</p>
                 <input
                   type="text"
                   value={previewEditingName}
-                  onChange={(e) => {
-                    setPreviewEditingName(e.target.value);
-                    setPreviewHasChanges(e.target.value !== previewItem.name);
-                  }}
+                  onChange={e => { setPreviewEditingName(e.target.value); setPreviewHasChanges(e.target.value !== previewItem.name); }}
                 />
-                {previewHasChanges && (
-                  <button onClick={handlePreviewSave} className="save-changes-btn">
-                    Save
-                  </button>
-                )}
+                {previewHasChanges && <button onClick={handlePreviewSave} className="save-changes-btn">Save</button>}
               </div>
             )}
-
-            {/* The rest of your preview */}
-            {previewItem.type === 'image' && (
-              <img src={previewItem.src} alt={previewItem.name || "Preview"} />
-            )}
+            {previewItem.type === 'image' && <img src={previewItem.src} alt={previewItem.name} />}
             {previewItem.type === 'video' && (
               <video controls autoPlay>
                 <source src={previewItem.src} type="video/mp4" />
               </video>
             )}
             {previewItem.type === 'file' && (
-              <div className="file-preview">
-                <div className="file-icon">📄</div>
-                <div className="file-label">File Preview</div>
-              </div>
+              <div className="file-preview"><div className="file-icon">📄</div><div className="file-label">File Preview</div></div>
             )}
-
             <button className="close-button" onClick={closePreviewModal}>Close</button>
           </div>
         </div>
       )}
-
     </div>
   );
 };

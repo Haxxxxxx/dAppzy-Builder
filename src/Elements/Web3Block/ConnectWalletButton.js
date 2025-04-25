@@ -3,6 +3,8 @@ import { EditableContext } from '../../context/EditableContext';
 import { useWalletContext } from '../../context/WalletContext';
 import { structureConfigurations } from '../../configs/structureConfigurations';
 import { db, doc, getDoc, setDoc } from '../../firebase';
+import { useWeb3React } from '@web3-react/core';
+import { validateEthAddress } from '../../utils/securityUtils';
 
 const ConnectWalletButton = ({
   id,
@@ -20,6 +22,7 @@ const ConnectWalletButton = ({
   const [isEditing, setIsEditing] = useState(false);
   const [showWalletPopup, setShowWalletPopup] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState(null);
+  const { account, library, activate } = useWeb3React();
 
   // Default settings for wallets
   const defaultSettings = {
@@ -316,6 +319,43 @@ const ConnectWalletButton = ({
     outline: isEditing ? '2px solid #3b82f6' : 'none', // Add visual feedback when editing
   };
 
+  const handleSignMessage = async (message) => {
+    try {
+      if (!account) {
+        throw new Error('No account connected');
+      }
+
+      if (!validateEthAddress(account)) {
+        throw new Error('Invalid wallet address');
+      }
+
+      const signer = library.getSigner();
+      const signature = await signer.signMessage(message);
+      
+      // Verify the signature
+      const recoveredAddress = await library.verifyMessage(message, signature);
+      
+      if (recoveredAddress.toLowerCase() !== account.toLowerCase()) {
+        throw new Error('Signature verification failed');
+      }
+
+      return signature;
+    } catch (error) {
+      setErrorMessage(error.message);
+      console.error('Message signing failed:', error);
+      return null;
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      await activate();
+    } catch (error) {
+      setErrorMessage(error.message);
+      console.error('Wallet connection failed:', error);
+    }
+  };
+
   return (
     <>
       <div style={{ position: 'relative' }}>
@@ -421,6 +461,16 @@ const ConnectWalletButton = ({
       {!showWalletPopup && errorMessage && (
         <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
           {errorMessage}
+        </div>
+      )}
+      {!account ? (
+        <button onClick={handleConnect}>Connect Wallet</button>
+      ) : (
+        <div>
+          <p>Connected: {account}</p>
+          <button onClick={() => handleSignMessage('Sign in to Dappzy')}>
+            Sign Message
+          </button>
         </div>
       )}
     </>

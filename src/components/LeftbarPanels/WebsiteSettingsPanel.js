@@ -3,7 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../css/SettingsPanel.css';
 import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
 import { storage } from '../../firebase';
-import { pinata, pinataJwt } from '../../utils/configPinata';
+import { pinata, pinataSDK } from '../../utils/configPinata';
+
+// Replace pinataJwt with pinata.jwt
+const jwt = pinata.pinata_jwt;
 
 // 1) Helper: get or create Pinata group
 async function getOrCreateGroup(walletId) {
@@ -11,12 +14,13 @@ async function getOrCreateGroup(walletId) {
     if (!pinata.groups) {
       throw new Error("Pinata groups is undefined. Check your SDK version and configuration.");
     }
-    const groupsResponse = await pinata.groups.list().name(walletId);
-    if (groupsResponse.groups && groupsResponse.groups.length > 0) {
-      console.log("Found group:", groupsResponse.groups[0]);
-      return groupsResponse.groups[0];
+    const groupsResponse = await pinata.groups.list();
+    const existingGroup = groupsResponse.find(group => group.name === walletId);
+    if (existingGroup) {
+      console.log("Found group:", existingGroup);
+      return existingGroup;
     } else {
-      const newGroup = await pinata.groups.create({ name: walletId });
+      const newGroup = await pinata.groups.create(walletId);
       console.log("Created new group:", newGroup);
       return newGroup;
     }
@@ -47,7 +51,7 @@ async function uploadFileToPinata(file, walletId, projectName) {
     const response = await fetch(`${url}?group=${group.id}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${pinataJwt}`,
+        'Authorization': `Bearer ${jwt}`,
       },
       body: formData,
     });

@@ -3,7 +3,7 @@ import { useDrop } from 'react-dnd';
 import '../components/css/Sidebar.css';
 import '../components/css/dropzone.css';
 
-const DropZone = ({ onDrop, parentId, onClick, text, className, scale, isDragging, index }) => {
+const DropZone = ({ onDrop, parentId, onClick, text, className, scale, isDragging, index, onPanelToggle }) => {
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
@@ -70,9 +70,14 @@ const DropZone = ({ onDrop, parentId, onClick, text, className, scale, isDraggin
     if (onClick) {
       onClick(e);
     }
+    // Only toggle panel if it's the first dropzone
+    if (className === 'first-dropzone' && onPanelToggle) {
+      onPanelToggle('sidebar');
+    }
   };
 
-  const isDefaultDropzone = className === 'default-dropzone' || className === 'first-dropzone';
+  const isFirstDropzone = className === 'first-dropzone';
+  const isDefaultDropzone = className === 'default-dropzone';
 
   return (
     <div
@@ -80,23 +85,22 @@ const DropZone = ({ onDrop, parentId, onClick, text, className, scale, isDraggin
       className={`${className} ${isOver ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
       onClick={handleClick}
       style={{
-        position: isDefaultDropzone ? 'static' : 'absolute',
-        left: isDefaultDropzone ? 'auto' : position.x,
-        top: isDefaultDropzone ? 'auto' : position.y,
-        opacity: isDefaultDropzone ? (isDragging ? 1 : 0.5) : (isVisible ? 1 : 0),
-        transition: 'opacity 0.2s ease-in-out',
+        position: isFirstDropzone ? 'absolute' : (isDefaultDropzone ? 'static' : 'absolute'),
+        left: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.x),
+        top: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.y),
+        right: isFirstDropzone ? '0' : 'auto',
+        bottom: isFirstDropzone ? '0' : 'auto',
+        opacity: isFirstDropzone || isDefaultDropzone ? 1 : (isVisible ? 1 : 0),
+        transition: 'all 0.3s ease',
         pointerEvents: isDragging ? 'auto' : 'none',
-        transform: isDefaultDropzone ? 'none' : 'translate(-50%, -50%)',
+        transform: isFirstDropzone ? 'none' : (isDefaultDropzone ? 'none' : 'translate(-50%, -50%)'),
         zIndex: 1000,
-        width: isDefaultDropzone ? '100%' : '200px',
-        height: isDefaultDropzone ? '60px' : '20px',
-        backgroundColor: isOver ? 'rgba(0, 123, 255, 0.2)' : 'transparent',
-        border: isOver ? '2px dashed #007bff' : 'none',
-        borderRadius: '4px',
+        width: isFirstDropzone ? '100%' : (isDefaultDropzone ? '100%' : '200px'),
+        height: isFirstDropzone ? '100%' : (isDefaultDropzone ? 'auto' : '20px'),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        margin: isDefaultDropzone ? '10px 0' : '0',
+        margin: isFirstDropzone || isDefaultDropzone ? '0' : '0',
       }}
     >
       <div className="dropzone-text">

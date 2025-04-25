@@ -86,6 +86,7 @@ const ContentList = forwardRef(
           margin: scale < 1 ? '0 auto' : '0',
           marginBottom: '30px',
           position: 'relative',
+          minHeight: '100vh',
         }}
         onClick={(e) => {
           if (e.target === ref.current) {
@@ -93,7 +94,7 @@ const ContentList = forwardRef(
           }
         }}
       >
-        {!isPreviewMode && elements.length === 0 && (
+        {!isPreviewMode && elements.length === 0 ? (
           <DropZone
             index={0}
             onDrop={(item) => handleDrop(item, 0)}
@@ -104,52 +105,55 @@ const ContentList = forwardRef(
             onClick={(e) => {
               e.stopPropagation();
             }}
+            onPanelToggle={handlePanelToggle}
           />
-        )}
+        ) : (
+          <>
+            {elements
+              .filter((element) => !element.parentId)
+              .map((element, index) => (
+                <React.Fragment key={element.id}>
+                  {!isPreviewMode && (
+                    <DropZone
+                      index={index}
+                      onDrop={(item) => handleDrop(item, index)}
+                      text=""
+                      className="between-dropzone"
+                      isDragging={isDragging}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    />
+                  )}
+                  {renderElement(
+                    element,
+                    elements,
+                    contentListWidth,
+                    setSelectedElement,
+                    setElements,
+                    handlePanelToggle,
+                    selectedElement,
+                    selectedStyle,
+                    isPreviewMode,
+                    handleOpenMediaPanel
+                  )}
+                </React.Fragment>
+              ))}
 
-        {elements
-          .filter((element) => !element.parentId)
-          .map((element, index) => (
-            <React.Fragment key={element.id}>
-              {!isPreviewMode && (
-                <DropZone
-                  index={index}
-                  onDrop={(item) => handleDrop(item, index)}
-                  text=""
-                  className="between-dropzone"
-                  isDragging={isDragging}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                />
-              )}
-              {renderElement(
-                element,
-                elements,
-                contentListWidth,
-                setSelectedElement,
-                setElements,
-                handlePanelToggle,
-                selectedElement,
-                selectedStyle,
-                isPreviewMode,
-                handleOpenMediaPanel
-              )}
-            </React.Fragment>
-          ))}
-
-        {!isPreviewMode && (
-          <DropZone
-            index={elements.length}
-            onDrop={(item) => handleDrop(item, elements.length)}
-            text="Click or Drop items here to add to the page"
-            className="default-dropzone"
-            isDragging={isDragging}
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedElement('');
-            }}
-          />
+            {!isPreviewMode && (
+              <DropZone
+                index={elements.length}
+                onDrop={(item) => handleDrop(item, elements.length)}
+                text="Click or Drop items here to add to the page"
+                className="default-dropzone"
+                isDragging={isDragging}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedElement('');
+                }}
+              />
+            )}
+          </>
         )}
       </div>
     );
