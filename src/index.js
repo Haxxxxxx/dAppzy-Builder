@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { EditableProvider } from './context/EditableContext';
-import { WalletProvider } from './context/WalletContext';
+import Web3Provider from './context/Web3Provider';
 
 const RootComponent = () => {
   const [userId, setUserId] = useState(null);
@@ -33,9 +33,9 @@ const RootComponent = () => {
   return (
     <React.StrictMode>
       <EditableProvider userId={userId}>
-        <WalletProvider>
+        <Web3Provider>
           <App userId={userId} setUserId={setUserId} projectId={projectId} />
-        </WalletProvider>
+        </Web3Provider>
       </EditableProvider>
     </React.StrictMode>
   );

@@ -1,5 +1,5 @@
 // BuilderPageCore.js
-import React, { useRef, useEffect, useContext } from "react";
+import React, { useRef, useEffect, useContext, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import "./BuilderPage.css";
@@ -11,6 +11,8 @@ import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
 import Topbar from "./components/TopBar";
 import SideBar from './components/SideBar'
+import AIAgentPanel from "./components/LeftbarPanels/AIAgentPanel";
+import AIFloatingButton from "./components/AIFloatingButton";
 
 const BuilderPageCore = ({
   userId,
@@ -36,6 +38,9 @@ const BuilderPageCore = ({
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
   const { setSelectedElement } = useContext(EditableContext);
+  const [showAIInputBar, setShowAIInputBar] = useState(false);
+  const [initialAIMessages, setInitialAIMessages] = useState(null);
+  const [aiChatStarted, setAIChatStarted] = useState(false);
 
   const handlePanelToggle = (panelName) => {
     setOpenPanel((prevPanel) => (prevPanel === panelName ? "" : panelName));
@@ -49,6 +54,21 @@ const BuilderPageCore = ({
     if (contentRef.current && !contentRef.current.contains(e.target)) {
       setSelectedElement(null);
     }
+  };
+
+  const handleAIFloatingButtonClick = () => {
+    setShowAIInputBar(true);
+  };
+
+  const handleFirstPrompt = (userMessage) => {
+    setShowAIInputBar(false);
+    setInitialAIMessages([userMessage]);
+    setOpenPanel("ai");
+    setAIChatStarted(true);
+  };
+
+  const handleShowAIPanel = () => {
+    setOpenPanel("ai");
   };
 
   useEffect(() => {
@@ -72,6 +92,8 @@ const BuilderPageCore = ({
           onShowStructurePanel={() => handlePanelToggle("structure")}
           onShowMediaPanel={() => handlePanelToggle("media")}
           onShowSettingsPanel={() => handlePanelToggle("settings")}
+          aiChatStarted={aiChatStarted}
+          onShowAIPanel={handleShowAIPanel}
         />
         <div className="app">
           <Topbar
@@ -129,8 +151,19 @@ const BuilderPageCore = ({
                 handleOpenMediaPanel={handleOpenMediaPanel}
               />
             </div>
+            {openPanel === "ai" && (
+              <div className="right-panel" id="ai-panel">
+                <AIAgentPanel initialMessages={initialAIMessages} />
+              </div>
+            )}
+            {showAIInputBar && openPanel !== "ai" && (
+              <AIAgentPanel onFirstPrompt={handleFirstPrompt} />
+            )}
           </div>
         </div>
+        {!(showAIInputBar || openPanel === "ai") && (
+          <AIFloatingButton onClick={handleAIFloatingButtonClick} />
+        )}
       </div>
     </DndProvider>
   );

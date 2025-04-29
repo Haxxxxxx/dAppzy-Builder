@@ -6,6 +6,8 @@ import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
 import { renderCta } from './htmlRenderUtils/RenderCtas/renderCta';
 import { renderSection } from './htmlRenderUtils/RenderSection/renderSection.js';
 import { renderMintingSection } from './htmlRenderUtils/RenderWeb3/renderMintingSection';
+import { renderDefiSection } from './htmlRenderUtils/RenderWeb3/renderDefiSection';
+import { renderDefiModule } from './htmlRenderUtils/RenderWeb3/renderDefiModule';
 import { DropdownStyles } from '../Elements/DefaultStyles/DropdownStyles';
 
 export function buildAttributesString(type, attributes, src, settings = {}) {
@@ -87,31 +89,35 @@ export function renderElementToHtml(element, collectedStyles) {
     children = [],
     settings = {}
   } = element;
-  function cleanStyles(styles = {}) {
-    const { outline, boxShadow, ...productionStyles } = styles;
-    return productionStyles;
+
+  // Handle DeFi module rendering
+  if (type === 'defiModule') {
+    return renderDefiModule(element, collectedStyles);
   }
-  // Compute the initial source.
+
+  const tag = typeToTagMap[type];
+  if (!tag) {
+    console.warn(`No HTML tag mapping found for type: ${type}`);
+    return '';
+  }
+
+  // Compute the initial source
   let finalSrc = element.src || (styles && styles.src) || '';
   console.log(`Rendering element ${id} with src:`, finalSrc);
-  
-  // If the element is a media type, update the URL if the project folder name is outdated.
+
+  // If the element is a media type, update the URL if the project folder name is outdated
   if (finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
-    // We assume the URL contains a segment like: .../projects/{oldProjectName}/{fileName}...
     const parts = finalSrc.split('/o/');
     if (parts.length > 1) {
       const [basePart, pathAndQuery] = parts;
       const [encodedPath, query] = pathAndQuery.split('?');
       const decodedPath = decodeURIComponent(encodedPath);
-      // Look for the segment "projects" – the next segment is the old project name.
       const segments = decodedPath.split('/');
       const projIndex = segments.indexOf('projects');
       if (projIndex !== -1 && segments.length > projIndex + 1) {
         const oldProjectName = segments[projIndex + 1];
-        // Use the current project name from settings.siteTitle.
         const currentProjectName = (settings.siteTitle || '').trim();
         if (currentProjectName && oldProjectName !== currentProjectName) {
-          // Replace old project name with the current one.
           const newDecodedPath = decodedPath.replace(`/projects/${oldProjectName}/`, `/projects/${currentProjectName}/`);
           const newEncodedPath = encodeURIComponent(newDecodedPath);
           finalSrc = `${basePart}/o/${newEncodedPath}${query ? '?' + query : ''}`;
@@ -120,36 +126,9 @@ export function renderElementToHtml(element, collectedStyles) {
       }
     }
   }
-  
+
   if (!finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
     console.warn(`No valid source found for element ${id} of type ${type}.`);
-  }
-
-  // Handle custom renderers.
-  if (type === 'navbar') {
-    return renderNavbar(element, collectedStyles);
-  }
-  if (type === 'hero') {
-    return renderHero(element, collectedStyles);
-  }
-  if (type === 'footer') {
-    return renderFooter(element, collectedStyles);
-  }
-  if (type === 'cta') {
-    return renderCta(element, collectedStyles);
-  }
-  if (type === 'section') {
-    return renderSection(element, collectedStyles);
-  }
-
-  if (type === 'mintingSection') {
-    return renderMintingSection(element, collectedStyles);
-  }
-
-  const tag = typeToTagMap[type];
-  if (!tag) {
-    console.warn(`No HTML tag mapping found for type: ${type}`);
-    return '';
   }
 
   const className = `element-${id}`;
@@ -193,4 +172,9 @@ export function renderElementToHtml(element, collectedStyles) {
   } else {
     return `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
   }
+}
+
+function cleanStyles(styles = {}) {
+  const { outline, boxShadow, ...productionStyles } = styles;
+  return productionStyles;
 }

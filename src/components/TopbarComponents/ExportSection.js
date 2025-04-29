@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { pinata, pinataSDK } from '../../utils/configPinata';
+import { pinata, pinataSDK, pinataConfig } from '../../utils/configPinata';
 import { renderElementToHtml } from '../../utils/htmlRender'; // Your render method
 import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../../Elements/Sections/Heros/defaultHeroStyles';
 // Import your hierarchy builder – this should nest elements with a valid parentId.
@@ -149,21 +149,55 @@ export function exportProject(elements, websiteSettings) {
  * Uses the Pinata API to pin the exported HTML file to IPFS.
  */
 async function pinDirectoryToPinata(files, metadata) {
-  const formData = new FormData();
-  files.forEach((file, index) => {
-    formData.append(`file${index}`, file);
-  });
-  formData.append('pinataMetadata', JSON.stringify(metadata));
+  try {
+    console.log('Starting Pinata upload...');
+    
+    const formData = new FormData();
+    
+    // Create a File object from the Blob
+    const file = new File([files[0].file], files[0].fileName, {
+      type: files[0].type || 'text/html'
+    });
+    
+    // Append the file
+    formData.append('file', file);
+    
+    // Add metadata if provided
+    if (metadata) {
+      formData.append('pinataMetadata', JSON.stringify(metadata));
+    }
 
-  const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${pinata.pinata_jwt}` },
-    body: formData,
-  });
-  if (!response.ok) {
-    throw new Error(`Pinata pinFileToIPFS failed: ${response.statusText}`);
+    console.log('Uploading to Pinata:', {
+      fileName: file.name,
+      fileSize: file.size,
+      metadata: metadata
+    });
+
+    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${pinataConfig.pinata_jwt}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Pinata API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Pinata upload failed: ${response.statusText} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('Pinata upload successful:', result);
+    return result;
+  } catch (error) {
+    console.error('Error uploading to Pinata:', error);
+    throw new Error(`Pinata upload failed: ${error.message}`);
   }
-  return response.json();
 }
 
 /**
@@ -183,10 +217,18 @@ async function saveProjectToFirestore(
   const projectName = websiteSettings.siteTitle || 'MyWebsite';
   const localProjectId = projectId || (isLocal ? `local-test-${new Date().getTime()}` : null);
   if (!localProjectId) throw new Error("No valid projectId provided.");
-  const testUrl =
-    deployType === 'web2'
-      ? `${baseUrl}/${userId}/ProjectRef/${localProjectId}/${projectName}`
-      : deployUrl;
+
+  // Store both the IPFS URL and CID separately
+  const ipfsData = deployType === 'ipfs' ? {
+    ipfsUrl: deployUrl,
+    ipfsCid: deployUrl.split('/ipfs/')[1].split('/')[0],
+    ipfsGateway: 'https://ipfs.io'
+  } : null;
+
+  const testUrl = deployType === 'web2'
+    ? `${baseUrl}/${userId}/ProjectRef/${localProjectId}/${projectName}`
+    : deployUrl;
+
   const projectRef = doc(db, 'projects', userId, 'ProjectRef', localProjectId);
   await setDoc(
     projectRef,
@@ -198,6 +240,7 @@ async function saveProjectToFirestore(
       testUrl,
       websiteSettings,
       deployType,
+      ...(ipfsData && { ipfsData }), // Only add ipfsData if it exists
     },
     { merge: true }
   );
@@ -220,22 +263,56 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         setAutoSaveStatus('Error: No valid user ID found!');
         return null;
       }
+
+      // Generate HTML
       const fullHtml = exportProject(elements, websiteSettings);
-      const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
-      const files = [{ file: htmlBlob, fileName: `${userId}/index.html` }];
+      console.log('Generated HTML length:', fullHtml.length);
+      
+      // Create Blob with explicit type
+      const htmlBlob = new Blob([fullHtml], { 
+        type: 'text/html;charset=utf-8'
+      });
+      console.log('Blob size:', htmlBlob.size);
+      
+      // Prepare file for upload
+      const files = [{ 
+        file: htmlBlob, 
+        fileName: 'index.html',
+        type: 'text/html'
+      }];
+      
+      // Prepare metadata
       const metadata = {
         name: websiteSettings.siteTitle || 'MyWebsite',
-        keyvalues: { userId },
+        keyvalues: { 
+          userId,
+          timestamp: new Date().toISOString(),
+          size: htmlBlob.size
+        },
       };
+      
+      console.log('Starting IPFS upload process...');
+      
+      // Upload to Pinata
       const result = await pinDirectoryToPinata(files, metadata);
+      
+      if (!result.IpfsHash) {
+        throw new Error('No IPFS hash returned from Pinata');
+      }
+      
       const cid = result.IpfsHash;
-      const ipfsUrl = `https://ipfs.io/ipfs/${cid}/${userId}`;
+      // Use the CID directly without appending index.html
+      const ipfsUrl = `https://ipfs.io/ipfs/${cid}`;
+      console.log('Generated IPFS URL:', ipfsUrl);
+      
+      // Save to Firestore with both URL and CID
       await saveProjectToFirestore(userId, fullHtml, 'ipfs', ipfsUrl, websiteSettings, elements, projectId);
+      
       setAutoSaveStatus('IPFS deploy complete!');
       return ipfsUrl;
     } catch (error) {
+      console.error('IPFS deployment failed:', error);
       setAutoSaveStatus(`Error publishing to IPFS: ${error.message}`);
-      console.error('IPFS error:', error);
       return null;
     }
   };

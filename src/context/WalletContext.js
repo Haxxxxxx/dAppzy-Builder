@@ -5,14 +5,31 @@ import { ConnectionProvider, WalletProvider as WalletProviderBase } from '@solan
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
-const WalletContext = createContext();
+const WalletContext = createContext({
+  walletAddress: '',
+  balance: 0,
+  isConnected: false,
+  isLoading: false,
+  walletId: '',
+  disconnect: () => {},
+  setIsConnected: () => {},
+  setWalletAddress: () => {}
+});
 
-export const useWalletContext = () => useContext(WalletContext);
+export const useWalletContext = () => {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWalletContext must be used within a WalletProvider');
+  }
+  return context;
+};
+
+// Create a single instance of the wallet adapter
+const wallets = [new PhantomWalletAdapter()];
 
 export const WalletProvider = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = clusterApiUrl(network);
-  const wallets = [new PhantomWalletAdapter()];
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -32,31 +49,8 @@ const WalletContextProvider = ({ children }) => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
 
   useEffect(() => {
-    const handleWalletConnected = (event) => {
-      console.log('Wallet connected event received:', event.detail);
-      const { publicKey, walletType, walletName } = event.detail;
-      setWalletAddress(publicKey);
-      setWalletId(publicKey);
-      setIsWalletConnected(true);
-      setIsLoading(true);
-      setTimeout(() => {
-        setBalance(100); // Mock balance
-        setIsLoading(false);
-      }, 1000);
-    };
-
-    window.addEventListener('walletConnected', handleWalletConnected);
-
-    return () => {
-      window.removeEventListener('walletConnected', handleWalletConnected);
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log('Wallet connection state changed:', { connected, publicKey });
     if (connected && publicKey) {
       const address = publicKey.toString();
-      console.log('Setting wallet address:', address);
       setWalletAddress(address);
       setWalletId(address);
       setIsWalletConnected(true);
@@ -68,7 +62,6 @@ const WalletContextProvider = ({ children }) => {
         setIsLoading(false);
       }, 1000);
     } else {
-      console.log('Resetting wallet state');
       setWalletAddress('');
       setBalance(0);
       setWalletId('');
@@ -82,7 +75,9 @@ const WalletContextProvider = ({ children }) => {
     isConnected: isWalletConnected || connected,
     isLoading,
     walletId,
-    disconnect
+    disconnect,
+    setIsConnected: setIsWalletConnected,
+    setWalletAddress
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
