@@ -55,6 +55,7 @@ export const EditableProvider = ({ children, userId }) => {
   }, [pushToHistory]);
 
   const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
+    console.log('[addNewElement] type:', type, 'config:', config);
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
@@ -66,21 +67,21 @@ export const EditableProvider = ({ children, userId }) => {
     let structure = null;
     if (typeof config === 'string' && structureConfigurations[config]) {
       structure = config;
-      configuration = config; // (or you might want to leave configuration null in this case)
-    } else if (config && typeof config === 'object') {
       configuration = config;
+    } else if (config && typeof config === 'object') {
+      configuration = config.configuration || config;
+      structure = config.configuration || config;
     }
   
     const baseElement = {
       id: newId,
       type,
-      styles: {},
+      styles: config?.styles || {},
       level,
       children: [],
-      // Optional label property (could be redundant if in configuration)
       label: '',
       parentId: parentId || null,
-      content: (() => {
+      content: config?.content || (() => {
         switch (type) {
           case 'paragraph':
             return 'New Paragraph';
@@ -102,16 +103,16 @@ export const EditableProvider = ({ children, userId }) => {
       })(),
       structure: structure || null,
       configuration: configuration || null,
-      settings: {},
+      settings: config?.settings || {},
     };
   
     if (type === 'image') {
-      baseElement.src = 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7';
+      baseElement.src = config?.src || 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7';
     }
   
     // If a structure was provided and exists in structureConfigurations, create children accordingly.
     if (structure && structureConfigurations[structure]) {
-      baseElement.styles = structureConfigurations[structure].styles || {};
+      baseElement.styles = { ...baseElement.styles, ...(structureConfigurations[structure].styles || {}) };
       const childrenElements = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
@@ -131,8 +132,30 @@ export const EditableProvider = ({ children, userId }) => {
       } else {
         recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
       }
+    } else if (config && typeof config === 'object' && config.children) {
+      // Handle custom configuration with children
+      baseElement.styles = { ...baseElement.styles, ...(config.styles || {}) };
+      const childrenElements = config.children.map((child) => ({
+        id: generateUniqueId(child.type),
+        type: child.type,
+        content: child.content || '',
+        styles: child.styles || {},
+        label: child.label || '',
+        parentId: newId,
+      }));
+      baseElement.children = childrenElements.map((child) => child.id);
+  
+      if (!parentId) {
+        recordElementsUpdate((prev) => {
+          const newElements = [...prev];
+          newElements.splice(index, 0, baseElement, ...childrenElements);
+          return newElements;
+        });
+      } else {
+        recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
+      }
     } else {
-      // No structure configuration provided, so just add the base element.
+      // No structure or custom configuration provided, so just add the base element.
       if (!parentId) {
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
@@ -266,6 +289,91 @@ export const EditableProvider = ({ children, userId }) => {
     }
   }, [currentIndex, history]);
 
+  const handleAICommand = useCallback((command) => {
+    console.log('[handleAICommand] action:', command.action, 'elementType:', command.elementType, 'properties:', command.properties);
+    switch (command.action) {
+      case 'add': {
+        // If adding a navbar, use the structure argument for default children
+        if (command.elementType === 'navbar' && command.properties?.configuration) {
+          const newId = addNewElement(
+            command.elementType,
+            1,
+            command.position?.index || 0,
+            command.position?.parentId || null,
+            command.properties.configuration // Pass as structure!
+          );
+          if (command.properties?.styles) {
+            updateStyles(newId, command.properties.styles);
+          }
+          return newId;
+        } else if (command.properties?.configuration) {
+          // For hero, cta, defiSection, etc.
+          const newId = addNewElement(
+            command.elementType,
+            1,
+            command.position?.index || 0,
+            command.position?.parentId || null,
+            command.properties // Pass the entire properties object!
+          );
+          if (command.properties?.styles) {
+            updateStyles(newId, command.properties.styles);
+          }
+          return newId;
+        } else {
+          return addNewElement(
+            command.elementType,
+            1,
+            command.position?.index || 0,
+            command.position?.parentId || null,
+            command.properties || {}
+          );
+        }
+      }
+      case 'edit': {
+        // Only update other properties, NOT children
+        const { children, styles, ...otherProps } = command.properties || {};
+        if (Object.keys(otherProps).length > 0) {
+          updateElementProperties(command.targetId, otherProps);
+        }
+        // If styles are provided, update the navbar's styles
+        if (styles) {
+          updateStyles(command.targetId, styles);
+        }
+        // If children edits are provided, update each child element
+        if (children) {
+          const parent = findElementById(command.targetId, elements);
+          if (parent && parent.children && parent.children.length) {
+            children.forEach((childEdit, idx) => {
+              const childId = parent.children[idx];
+              if (!childId || !childEdit) return; // skip nulls
+              if (childEdit.content !== undefined) {
+                updateContent(childId, childEdit.content);
+              }
+              if (childEdit.styles) {
+                updateStyles(childId, childEdit.styles);
+              }
+            });
+          }
+        }
+        break;
+      }
+      case 'updateContent':
+        updateContent(command.targetId, command.content);
+        break;
+      case 'updateStyles':
+        updateStyles(command.targetId, command.styles || {});
+        break;
+      case 'delete':
+        handleRemoveElement(command.targetId);
+        break;
+      case 'move':
+        moveElement(command.targetId, command.newIndex);
+        break;
+      default:
+        console.warn('Unknown AI command:', command);
+    }
+  }, [addNewElement, updateElementProperties, updateContent, updateStyles, handleRemoveElement, moveElement]);
+
   // Memoize context value after all state and functions are defined
   const contextValue = useMemo(() => ({
     elements,
@@ -282,7 +390,10 @@ export const EditableProvider = ({ children, userId }) => {
     undo,
     redo,
     forceBorder,
+    setForceBorder,
     selectedStyle,
+    setSelectedStyle,
+    handleAICommand,
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
     findElementById
@@ -301,6 +412,7 @@ export const EditableProvider = ({ children, userId }) => {
     moveElement,
     undo,
     redo,
+    handleAICommand,
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
     findElementById

@@ -37,10 +37,11 @@ const BuilderPageCore = ({
 }) => {
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
-  const { setSelectedElement } = useContext(EditableContext);
+  const { setSelectedElement, handleAICommand } = useContext(EditableContext);
   const [showAIInputBar, setShowAIInputBar] = useState(false);
   const [initialAIMessages, setInitialAIMessages] = useState(null);
   const [aiChatStarted, setAIChatStarted] = useState(false);
+  const [lastNavbarId, setLastNavbarId] = useState(null);
 
   const handlePanelToggle = (panelName) => {
     setOpenPanel((prevPanel) => (prevPanel === panelName ? "" : panelName));
@@ -61,8 +62,28 @@ const BuilderPageCore = ({
   };
 
   const handleFirstPrompt = (userMessage) => {
+    const aiAnswer = {
+      role: 'assistant',
+      content: `I'm adding a navbar with a dark background (#232323), white text, rounded corners, and a custom template structure. You can further customize its links, logo, and buttons!`
+    };
+    const navbarCommand = {
+      action: 'add',
+      elementType: 'navbar',
+      properties: {
+        configuration: 'customTemplate',
+        styles: {
+          backgroundColor: '#232323',
+          borderRadius: '12px',
+          color: '#fff',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.12)'
+        }
+      },
+      position: { index: 0 }
+    };
+    const newNavbarId = handleAICommand(navbarCommand);
+    setLastNavbarId(newNavbarId);
     setShowAIInputBar(false);
-    setInitialAIMessages([userMessage]);
+    setInitialAIMessages([userMessage, aiAnswer]);
     setOpenPanel("ai");
     setAIChatStarted(true);
   };
@@ -153,7 +174,7 @@ const BuilderPageCore = ({
             </div>
             {openPanel === "ai" && (
               <div className="right-panel" id="ai-panel">
-                <AIAgentPanel initialMessages={initialAIMessages} />
+                <AIAgentPanel initialMessages={initialAIMessages} lastNavbarId={lastNavbarId} />
               </div>
             )}
             {showAIInputBar && openPanel !== "ai" && (

@@ -72,36 +72,32 @@ const CustomTemplateNavbar = ({
     >
       {/* Logo and Title */}
       <div style={{ ...CustomTemplateNavbarStyles.logoContainer }}>
-        {children
-          .filter((child) => child?.type === 'image')
-          .map((child) => (
-            <Image
-              key={child.id}
-              id={child.id}
-              src={child.content || 'Default Logo'}
-              styles={{
-                ...child.styles,
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-              }}
-              handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={handleImageDrop}
-            />
-          ))}
-        {children
-          .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
-          .map((child) => (
-            <Span
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{
-                ...child.styles,
-                cursor: 'pointer',
-              }}
-            />
-          ))}
+        {children[0] && children[0].type === 'image' && (
+          <Image
+            key={children[0].id}
+            id={children[0].id}
+            src={children[0].content || 'Default Logo'}
+            styles={{
+              ...children[0].styles,
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+            }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+          />
+        )}
+        {children[1] && children[1].type === 'span' && (
+          <Span
+            key={children[1].id}
+            id={children[1].id}
+            content={children[1].content}
+            styles={{
+              ...children[1].styles,
+              cursor: 'pointer',
+            }}
+          />
+        )}
       </div>
 
       {/* Compact Menu */}
@@ -121,8 +117,8 @@ const CustomTemplateNavbar = ({
                 ...CustomTemplateNavbarStyles.compactMenu,
               }}
             >
-              {children
-                .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+              {children.slice(2)
+                .filter((child) => child?.type === 'span')
                 .map((child) => (
                   <Span
                     key={child.id}
@@ -134,7 +130,7 @@ const CustomTemplateNavbar = ({
                     }}
                   />
                 ))}
-              {children
+              {children.slice(2)
                 .filter(
                   (child) =>
                     child?.type === 'button' || child?.type === 'connectWalletButton'
@@ -171,8 +167,8 @@ const CustomTemplateNavbar = ({
       {!isCompact && (
         <>
           <div style={{ ...CustomTemplateNavbarStyles.standardMenuContainer }}>
-            {children
-              .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+            {children.slice(2)
+              .filter((child) => child?.type === 'span')
               .map((child) => (
                 <Span
                   key={child.id}
@@ -187,7 +183,7 @@ const CustomTemplateNavbar = ({
           </div>
 
           <div style={{ ...CustomTemplateNavbarStyles.buttonContainer }}>
-            {children
+            {children.slice(2)
               .filter(
                 (child) => child?.type === 'button' || child?.type === 'connectWalletButton'
               )

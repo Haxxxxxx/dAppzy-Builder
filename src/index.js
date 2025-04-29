@@ -7,28 +7,60 @@ import { EditableProvider } from './context/EditableContext';
 import Web3Provider from './context/Web3Provider';
 
 const RootComponent = () => {
-  const [userId, setUserId] = useState(null);
-  const [projectId, setProjectId] = useState(null);
+  const [userId, setUserId] = useState(() => {
+    // Initialize from URL params first, then sessionStorage
+    const params = new URLSearchParams(window.location.search);
+    const urlUserId = params.get("userId");
+    if (urlUserId) {
+      sessionStorage.setItem("userAccount", urlUserId);
+      return urlUserId;
+    }
+    return sessionStorage.getItem("userAccount") || null;
+  });
+  
+  const [projectId, setProjectId] = useState(() => {
+    // Initialize from URL params
+    const params = new URLSearchParams(window.location.search);
+    return params.get("projectId") || null;
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const queryUserId = params.get("userId");
-    const queryProjectId = params.get("projectId");
+    const initializeUserData = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const queryUserId = params.get("userId");
+        const queryProjectId = params.get("projectId");
 
-    if (queryUserId) {
-      setUserId(queryUserId);
-      setProjectId(queryProjectId); // Set projectId from query params
-      sessionStorage.setItem("userAccount", queryUserId);
-    } else {
-      const storedUserId = sessionStorage.getItem("userAccount");
-      if (storedUserId) {
-        setUserId(storedUserId);
-        // Optionally, you can retrieve a stored projectId if needed.
+        if (queryUserId) {
+          setUserId(queryUserId);
+          setProjectId(queryProjectId);
+          sessionStorage.setItem("userAccount", queryUserId);
+        } else {
+          const storedUserId = sessionStorage.getItem("userAccount");
+          if (storedUserId) {
+            setUserId(storedUserId);
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing user data:", error);
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+
+    initializeUserData();
   }, []);
 
-  console.log(projectId);
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Initializing application...</p>
+      </div>
+    );
+  }
 
   return (
     <React.StrictMode>
