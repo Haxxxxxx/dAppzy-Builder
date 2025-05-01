@@ -10,7 +10,6 @@ const Web3SectionPanel = ({ searchQuery }) => {
       type: 'mintingSection',
       id: 'minting-section',
       label: 'Minting Section',
-      description: 'A complete NFT minting section with collection details and preview'
     },
     { 
       imgSrc: './img/previewcomponent.png', 
@@ -18,7 +17,6 @@ const Web3SectionPanel = ({ searchQuery }) => {
       type: 'defiSection',
       id: 'defi-dashboard',
       label: 'DeFi Section',
-      description: 'A complete DeFi dashboard with swap, stake, and lending capabilities'
     }
   ];
 

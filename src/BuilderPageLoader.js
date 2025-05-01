@@ -1,6 +1,6 @@
 // BuilderPageLoader.js
 import React, { useState, useEffect, useRef, useContext } from "react";
-import { doc, getDoc, collection, query, where, getDocs, addDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 import BuilderPageCore from "./BuilderPageCore"; // Core builder rendering component
@@ -156,8 +156,29 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // (5) Update an existing project document.
   const saveUserProject = async (projId, projectData) => {
     try {
+      if (!projId) {
+        console.error("No project ID provided for saving");
+        return;
+      }
+      
       const projectRef = doc(db, "projects", userId, "ProjectRef", projId);
-      await updateDoc(projectRef, projectData);
+      const projectSnap = await getDoc(projectRef);
+      
+      if (!projectSnap.exists()) {
+        console.error("Project not found:", projId);
+        return;
+      }
+      
+      // Ensure we're not duplicating data
+      const existingData = projectSnap.data();
+      const updatedData = {
+        ...existingData,
+        ...projectData,
+        lastUpdated: serverTimestamp(),
+        userId: userId // Ensure userId is always set correctly
+      };
+      
+      await setDoc(projectRef, updatedData, { merge: true });
       console.log("Project updated:", projId);
       loadUserProjects(userId);
     } catch (error) {
