@@ -101,9 +101,9 @@ const DraggableFooter = ({
   }, [isModalOpen]);
 
   const titles = {
-    simple: 'Simple Footer',
-    detailed: 'Detailed Footer',
-    template: 'Template Footer',
+    customTemplate: 'Custom Footer',
+    detailedFooter: 'Detailed Footer',
+    templateFooter: 'Template Footer',
     defiFooter: 'DeFi Footer',
   };
 
@@ -111,6 +111,25 @@ const DraggableFooter = ({
     e.stopPropagation();
     setSelectedElement({ id, type: 'footer', styles: footer?.styles });
   };
+
+  // Handle preview display
+  if (showDescription) {
+    return (
+      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+        <img
+          src={imgSrc}
+          alt={label}
+          style={{
+            width: '100%',
+            height: 'auto',
+            marginBottom: '8px',
+            borderRadius: '4px',
+          }}
+        />
+        <strong className='element-name'>{titles[configuration]}</strong>
+      </div>
+    );
+  }
 
   if (configuration === 'defiFooter') {
     return (
@@ -126,7 +145,7 @@ const DraggableFooter = ({
   }
 
   let FooterComponent;
-  if (configuration === 'simple') {
+  if (configuration === 'customTemplate') {
     FooterComponent = (
       <SimpleFooter
         uniqueId={id}
@@ -137,7 +156,7 @@ const DraggableFooter = ({
         handleSelect={handleSelect}
       />
     );
-  } else if (configuration === 'detailed') {
+  } else if (configuration === 'detailedFooter') {
     FooterComponent = (
       <DetailedFooter
         uniqueId={id}
@@ -148,7 +167,7 @@ const DraggableFooter = ({
         handleSelect={handleSelect}
       />
     );
-  } else if (configuration === 'template') {
+  } else if (configuration === 'templateFooter') {
     FooterComponent = (
       <TemplateFooter
         uniqueId={id}

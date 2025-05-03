@@ -18,13 +18,7 @@ export const ELEMENTS_VERSION = '1.0.0'; // Define the version constant
 
 export const EditableProvider = ({ children, userId }) => {
   // Initialize state first
-  const [elements, setElements] = useState(() => {
-    const savedVersion = localStorage.getItem('elementsVersion');
-    const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
-    return savedVersion === ELEMENTS_VERSION && Array.isArray(savedElements)
-      ? savedElements
-      : [];
-  });
+  const [elements, setElements] = useState([]); // Start with empty array instead of loading from localStorage
 
   const [selectedElement, setSelectedElement] = useState(null);
   const [history, setHistory] = useState([]);

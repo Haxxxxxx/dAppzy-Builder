@@ -14,7 +14,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [projects, setProjects] = useState([]); // State for multiple projects
   const [activeProjectId, setActiveProjectId] = useState(null); // Track active project
   const [internProjectId, setInternProjectId] = useState(null);
-  const { setSelectedElement, setElements } = useContext(EditableContext);
+  const { setSelectedElement, setElements, elements } = useContext(EditableContext);
   const [scale, setScale] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [availableCanvasWidth, setAvailableCanvasWidth] = useState(0);
@@ -43,16 +43,22 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // (1) Load project data from URL query parameters and Firestore.
   useEffect(() => {
     if (!userId) return;
+    
+    // Clear any existing local storage data
+    localStorage.removeItem('editableElements');
+    localStorage.removeItem('elementsVersion');
+    localStorage.removeItem('websiteSettings');
+    
     const params = new URLSearchParams(window.location.search);
     const qProjectId = params.get("projectId");
     setInternProjectId(qProjectId);
+    
     if (qProjectId) {
       if (qProjectId === "new") {
         // Before creating a new project, check the project limit.
         checkProjectLimit(userId).then((count) => {
           if (count >= 3) {
             alert("You have reached the maximum number of projects (3).");
-            // Optionally, you could redirect to the dashboard or load existing projects.
           } else {
             createUserProject({
               elements: [],
@@ -89,18 +95,9 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         fetchedProjects.push({ id: docSnap.id, ...docSnap.data() });
       });
       setProjects(fetchedProjects);
+      // Don't automatically load the first project's content
       if (fetchedProjects.length > 0) {
-        const firstProject = fetchedProjects[0];
-        if (firstProject?.elements) {
-          setElements(firstProject.elements);
-        }
-        if (firstProject?.websiteSettings) {
-          setPageSettings(firstProject.websiteSettings);
-          localStorage.setItem("websiteSettings", JSON.stringify(firstProject.websiteSettings));
-        } else {
-          localStorage.setItem("websiteSettings", JSON.stringify(pageSettings));
-        }
-        setActiveProjectId(firstProject.id);
+        setActiveProjectId(fetchedProjects[0].id);
       } else {
         alert("No projects found for user: " + uid);
       }
@@ -119,6 +116,9 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
       const projectSnap = await getDoc(projectRef);
       if (projectSnap.exists()) {
         const projectData = projectSnap.data();
+        // Clear existing elements first
+        setElements([]);
+        // Then set the new project's elements
         if (projectData?.elements) {
           setElements(projectData.elements);
         }
@@ -142,9 +142,29 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // (4) Create a new project document.
   const createUserProject = async (projectData) => {
     try {
+      // Clear localStorage before creating new project
+      localStorage.removeItem('editableElements');
+      localStorage.removeItem('elementsVersion');
+      localStorage.removeItem('websiteSettings');
+      
       const projectsRef = collection(db, "projects", userId, "ProjectRef");
-      const docRef = await addDoc(projectsRef, { userId, ...projectData });
+      // Initialize with empty elements array and default settings
+      const newProjectData = {
+        userId,
+        elements: [], // Initialize with empty elements array
+        websiteSettings: {
+          siteTitle: "Untitled Project",
+          faviconUrl: "",
+          description: "",
+          author: "",
+        },
+        thumbnailUrl: "",
+        ...projectData
+      };
+      const docRef = await addDoc(projectsRef, newProjectData);
       console.log("Project created with ID:", docRef.id);
+      // Set empty elements in the context
+      setElements([]);
       loadUserProjects(userId);
       setActiveProjectId(docRef.id);
       return docRef.id;
@@ -169,17 +189,29 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         return;
       }
       
+      // Get current elements from context
+      const currentElements = elements;
+      
       // Ensure we're not duplicating data
       const existingData = projectSnap.data();
       const updatedData = {
         ...existingData,
         ...projectData,
+        elements: currentElements, // Always include current elements
         lastUpdated: serverTimestamp(),
-        userId: userId // Ensure userId is always set correctly
+        userId: userId, // Ensure userId is always set correctly
+        websiteSettings: pageSettings // Include current page settings
       };
       
+      // Save to Firestore
       await setDoc(projectRef, updatedData, { merge: true });
       console.log("Project updated:", projId);
+      
+      // Also save to local storage for backup
+      localStorage.setItem('editableElements', JSON.stringify(currentElements));
+      localStorage.setItem('websiteSettings', JSON.stringify(pageSettings));
+      
+      // Reload projects to ensure UI is up to date
       loadUserProjects(userId);
     } catch (error) {
       console.error("Error updating project:", error);
@@ -206,6 +238,53 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
       <div className="loading-container">
         <div className="spinner"></div>
         <p>Loading your projects, please wait...</p>
+      </div>
+    );
+  }
+
+  // If no specific project is selected but user has projects, show project selection
+  if (!internProjectId && projects.length > 0) {
+    return (
+      <div className="project-selection-container">
+        <h2>Select a Project to Edit</h2>
+        <div className="projects-grid">
+          {projects.map((project) => (
+            <div 
+              key={project.id} 
+              className="project-card"
+              onClick={() => {
+                const newUrl = `${window.location.origin}${window.location.pathname}?userId=${userId}&projectId=${project.id}`;
+                window.history.replaceState(null, "", newUrl);
+                loadProjectById(project.id);
+                setInternProjectId(project.id);
+              }}
+            >
+              <div className="project-thumbnail">
+                {project.thumbnailUrl ? (
+                  <img src={project.thumbnailUrl} alt={project.websiteSettings?.siteTitle || 'Project'} />
+                ) : (
+                  <div className="placeholder-thumbnail">
+                    <span>{project.websiteSettings?.siteTitle?.charAt(0) || 'P'}</span>
+                  </div>
+                )}
+              </div>
+              <div className="project-info">
+                <h3>{project.websiteSettings?.siteTitle || 'Untitled Project'}</h3>
+                <p>Last updated: {project.lastUpdated ? new Date(project.lastUpdated.toDate()).toLocaleDateString() : 'Never'}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button 
+          className="create-new-project"
+          onClick={() => {
+            const newUrl = `${window.location.origin}${window.location.pathname}?userId=${userId}&projectId=new`;
+            window.history.replaceState(null, "", newUrl);
+            setInternProjectId("new");
+          }}
+        >
+          Create New Project
+        </button>
       </div>
     );
   }

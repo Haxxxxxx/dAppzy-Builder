@@ -468,6 +468,15 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         return null;
       }
 
+      // First, save the current project state to Firestore
+      const projectRef = doc(db, "projects", userId, "ProjectRef", projectId);
+      await setDoc(projectRef, {
+        elements,
+        websiteSettings,
+        lastUpdated: serverTimestamp(),
+        userId,
+      }, { merge: true });
+
       // Generate HTML
       const fullHtml = exportProject(elements, websiteSettings);
       console.log('Generated HTML length:', fullHtml.length);
@@ -506,14 +515,19 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       
       const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
       console.log('Generated IPFS URL:', ipfsUrl);
-      // Save to Firestore with both URL and CID
-      // (Uncomment and implement saveProjectToFirestore if needed)
-      // await saveProjectToFirestore(userId, fullHtml, 'ipfs', ipfsUrl, websiteSettings, elements, projectId);
+      
+      // Update Firestore with IPFS URL
+      await setDoc(projectRef, {
+        ipfsUrl,
+        ipfsHash,
+        lastDeployed: serverTimestamp(),
+      }, { merge: true });
+
       setAutoSaveStatus('IPFS deploy complete!');
       return ipfsUrl;
     } catch (error) {
-      console.error('IPFS deployment failed:', error);
-      setAutoSaveStatus(`Error publishing to IPFS: ${error.message}`);
+      console.error('Error during deployment:', error);
+      setAutoSaveStatus('Error during deployment: ' + error.message);
       return null;
     }
   };
