@@ -50,12 +50,19 @@ export function renderDefiModule(element, collectedStyles) {
     </div>
   ` : '';
 
+  // Add connected message placeholder after the title
+  const connectedMessageHtml = `<div class="defi-connected-message" style="display:none; margin-top:0.5rem; padding:0.5rem; background-color:rgba(0,255,0,0.1); border-radius:4px; font-size:0.9rem; color:#52c41a;"></div>`;
+
+  // Add error message with a class for JS toggling
+  const errorMessageHtml = `<div class="defi-error-message" style="margin-top:0.5rem; padding:0.5rem; background-color:rgba(255,0,0,0.1); border-radius:4px; font-size:0.9rem; color:rgb(255,77,79);">Connect your wallet to view DeFi data</div>`;
+
   return `
     <div style="position: relative; box-sizing: border-box;">
       <div class="${className}">
         <div style="margin-bottom: 1rem;">
           <h3 style="margin: 0; font-size: 1.2rem; font-weight: bold; color: rgb(255, 255, 255);">${title}</h3>
-          <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: rgba(255, 0, 0, 0.1); border-radius: 4px; font-size: 0.9rem; color: rgb(255, 77, 79);">Connect your wallet to view DeFi data</div>
+          ${connectedMessageHtml}
+          ${errorMessageHtml}
         </div>
         ${statsHtml}
       </div>

@@ -180,12 +180,12 @@ export function renderDefiSection(element, collectedStyles) {
   const modulesHtml = mergedModules.map((c) => renderElementToHtml(c, collectedStyles)).join('\n');
   
   return `
-    <section style="${sectionStyle}">
+    <section id="defi-section" style="${sectionStyle}">
       <div style="text-align: center; margin-bottom: 2rem;">
         ${headingsHtml}
         ${paragraphsHtml}
       </div>
-      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.1); padding: 1.5rem; text-align: center; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); max-width: 80%; z-index: 10;">
+      <div id="defi-not-connected-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.1); padding: 1.5rem; text-align: center; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); max-width: 80%; z-index: 10;">
         <div style="font-size: 1.2rem; font-weight: bold; color: rgb(255, 255, 255); margin-bottom: 0.5rem;">Wallet Not Connected</div>
         <div style="font-size: 0.9rem; color: rgb(204, 204, 204); margin-bottom: 1rem;">Please connect your wallet to view DeFi data and interact with this section</div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: rgb(76, 175, 80); font-size: 0.9rem;">
@@ -193,7 +193,7 @@ export function renderDefiSection(element, collectedStyles) {
           <span>Add a Connect Wallet button to your page / Navbar to enable this section</span>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; opacity: 0.3; pointer-events: none; transition: opacity 0.3s; max-width: 1100px; width: 100%; margin: 0 auto;">
+      <div id="defi-dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; opacity: 0.3; pointer-events: none; transition: opacity 0.3s; max-width: 1100px; width: 100%; margin: 0 auto;">
         ${modulesHtml}
       </div>
     </section>

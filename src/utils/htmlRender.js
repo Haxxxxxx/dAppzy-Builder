@@ -179,7 +179,9 @@ export function renderElementToHtml(element, collectedStyles) {
     if (!merged.boxSizing) merged.boxSizing = 'border-box';
     if (!merged.marginLeft) merged.marginLeft = '16px';
     const styleAttr = ` style="${Object.entries(merged).map(([k, v]) => `${camelToKebab(k)}: ${v}`).join('; ')}"`;
-    return `<button id="${id}" class="${className}"${styleAttr}>${content || ''}</button>`;
+    // Always use the static id for connect wallet button in export
+    const buttonId = type === 'connectWalletButton' ? 'connect-wallet-button' : id;
+    return `<button id="${buttonId}" class="${className}"${styleAttr}>${content || ''}</button>`;
   }
 
   let styleForCSS = { ...styles };

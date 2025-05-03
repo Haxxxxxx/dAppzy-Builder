@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { useWalletContext } from '../../../context/WalletContext';
 import { mintingSectionStyles } from './DefaultWeb3Styles';
 import { Span, Button } from '../../SelectableElements';
 
@@ -11,10 +10,12 @@ const DeFiModule = React.memo(({
   configuration,
   handleSelect,
   handleOpenMediaPanel,
-  type = 'defiModule'
+  type = 'defiModule',
+  isConnected = false,
+  isSigned = false,
+  requireSignature = true
 }) => {
   const { setSelectedElement } = useContext(EditableContext);
-  const { isConnected, walletAddress } = useWalletContext();
 
   if (!configuration?.enabled) {
     return null;
@@ -34,6 +35,9 @@ const DeFiModule = React.memo(({
   const strategies = content?.strategies || [];
   const recentTransfers = content?.recentTransfers || [];
 
+  const showConnected = isConnected && (!requireSignature || isSigned);
+  const showError = !isConnected || (requireSignature && !isSigned);
+
   const renderModuleContent = () => {
     switch (moduleType) {
       case 'aggregator':
@@ -43,7 +47,7 @@ const DeFiModule = React.memo(({
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                 {content?.title || 'DeFi Aggregator'}
               </h3>
-              {!isConnected && (
+              {showError && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -52,10 +56,10 @@ const DeFiModule = React.memo(({
                   fontSize: '0.9rem',
                   color: '#ff4d4f'
                 }}>
-                  Connect your wallet to view DeFi data
+                  {(!isConnected) ? 'Connect your wallet to view DeFi data' : 'Sign the message to unlock DeFi data'}
                 </div>
               )}
-              {isConnected && walletAddress && (
+              {showConnected && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -64,7 +68,7 @@ const DeFiModule = React.memo(({
                   fontSize: '0.9rem',
                   color: '#52c41a'
                 }}>
-                  Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  Connected
                 </div>
               )}
             </div>
@@ -76,7 +80,7 @@ const DeFiModule = React.memo(({
                 </div>
               ))}
             </div>
-            {isConnected && topPools.length > 0 && (
+            {showConnected && topPools.length > 0 && (
               <div style={{ marginTop: '1.5rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Top Performing Pools</h4>
                 <div style={{ display: 'grid', gap: '0.5rem' }}>
@@ -109,7 +113,7 @@ const DeFiModule = React.memo(({
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                 {content?.title || 'Investment Simulator'}
               </h3>
-              {!isConnected && (
+              {showError && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -118,7 +122,7 @@ const DeFiModule = React.memo(({
                   fontSize: '0.9rem',
                   color: '#ff4d4f'
                 }}>
-                  Connect your wallet to simulate investments
+                  {(!isConnected) ? 'Connect your wallet to simulate investments' : 'Sign the message to unlock simulation'}
                 </div>
               )}
             </div>
@@ -136,7 +140,7 @@ const DeFiModule = React.memo(({
                 </div>
               ))}
             </div>
-            {isConnected && strategies.length > 0 && (
+            {showConnected && strategies.length > 0 && (
               <div style={{ marginTop: '1.5rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Recommended Strategies</h4>
                 <div style={{ display: 'grid', gap: '0.5rem' }}>
@@ -169,7 +173,7 @@ const DeFiModule = React.memo(({
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                 {content?.title || 'Cross-Chain Bridge'}
               </h3>
-              {!isConnected && (
+              {showError && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -178,7 +182,7 @@ const DeFiModule = React.memo(({
                   fontSize: '0.9rem',
                   color: '#ff4d4f'
                 }}>
-                  Connect your wallet to use the bridge
+                  {(!isConnected) ? 'Connect your wallet to use the bridge' : 'Sign the message to unlock bridge features'}
                 </div>
               )}
             </div>
@@ -190,7 +194,7 @@ const DeFiModule = React.memo(({
                 </div>
               ))}
             </div>
-            {isConnected && recentTransfers.length > 0 && (
+            {showConnected && recentTransfers.length > 0 && (
               <div style={{ marginTop: '1.5rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Recent Transfers</h4>
                 <div style={{ display: 'grid', gap: '0.5rem' }}>

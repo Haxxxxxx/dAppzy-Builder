@@ -114,3 +114,11 @@ export function renderFooter(footerElement, collectedStyles) {
     </footer>
   `;
 }
+
+window.addEventListener('load', function() {
+  if (typeof Web3 === 'undefined') {
+    alert('Web3 is not loaded!');
+    return;
+  }
+  // ...rest of your wallet connect code...
+});

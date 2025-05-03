@@ -230,15 +230,151 @@ export function exportProject(elements, websiteSettings) {
   });
 
   // 5. Add user scripts
+  const walletConnectScript = `
+    <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      const button = document.getElementById('connect-wallet-button');
+      const addressDiv = document.getElementById('wallet-address');
+      const overlay = document.getElementById('defi-not-connected-overlay');
+      const dashboard = document.getElementById('defi-dashboard-grid');
+      let walletAddress = '';
+      let isConnected = false;
+      let isSigned = false;
+
+      function updateUI() {
+        if (button) button.textContent = isConnected && isSigned ? 'Disconnect' : 'Connect Wallet';
+        if (addressDiv) {
+          addressDiv.textContent = isConnected && walletAddress
+            ? walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4)
+            : '';
+          addressDiv.style.display = isConnected ? 'block' : 'none';
+        }
+        if (overlay && dashboard) {
+          overlay.style.display = isConnected && isSigned ? 'none' : 'block';
+          dashboard.style.opacity = isConnected && isSigned ? '1' : '0.3';
+          dashboard.style.pointerEvents = isConnected && isSigned ? 'auto' : 'none';
+        }
+        // Show/hide connected message in DeFi modules
+        document.querySelectorAll('.defi-connected-message').forEach(function(el) {
+          if (isConnected && isSigned && walletAddress) {
+            el.style.display = 'block';
+            el.textContent = 'Connected: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+          } else {
+            el.style.display = 'none';
+            el.textContent = '';
+          }
+        });
+        // Show/hide error message in DeFi modules
+        document.querySelectorAll('.defi-error-message').forEach(function(el) {
+          el.style.display = (isConnected && isSigned && walletAddress) ? 'none' : 'block';
+        });
+      }
+
+      async function requestSignature(address, type) {
+        if (type === 'ethereum' && window.ethereum) {
+          try {
+            const message = 'Please sign this message to unlock the DeFi dashboard.';
+            await window.ethereum.request({
+              method: 'personal_sign',
+              params: [message, address]
+            });
+            isSigned = true;
+            updateUI();
+            return true;
+          } catch (e) {
+            alert('Signature rejected.');
+            return false;
+          }
+        }
+        if (type === 'solana' && window.solana) {
+          try {
+            const message = new TextEncoder().encode('Please sign this message to unlock the DeFi dashboard.');
+            await window.solana.signMessage(message, 'utf8');
+            isSigned = true;
+            updateUI();
+            return true;
+          } catch (e) {
+            alert('Signature rejected.');
+            return false;
+          }
+        }
+        return false;
+      }
+
+      async function connectMetaMask() {
+        if (!window.ethereum) {
+          alert('MetaMask is not installed');
+          return false;
+        }
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            walletAddress = accounts[0];
+            isConnected = true;
+            // Request signature after connection
+            const signed = await requestSignature(walletAddress, 'ethereum');
+            if (!signed) {
+              isConnected = false;
+              walletAddress = '';
+            }
+            updateUI();
+            return signed;
+          }
+        } catch (e) {
+          alert('MetaMask connection failed');
+        }
+        return false;
+      }
+
+      async function connectPhantom() {
+        if (!window.solana) {
+          alert('Phantom wallet is not installed');
+          return false;
+        }
+        try {
+          const { publicKey } = await window.solana.connect();
+          if (publicKey) {
+            walletAddress = publicKey.toString();
+            isConnected = true;
+            // Request signature after connection
+            const signed = await requestSignature(walletAddress, 'solana');
+            if (!signed) {
+              isConnected = false;
+              walletAddress = '';
+            }
+            updateUI();
+            return signed;
+          }
+        } catch (e) {
+          alert('Phantom connection failed');
+        }
+        return false;
+      }
+
+      if (button) {
+        button.addEventListener('click', async function() {
+          if (isConnected && isSigned) {
+            walletAddress = '';
+            isConnected = false;
+            isSigned = false;
+            updateUI();
+          } else {
+            const mm = await connectMetaMask();
+            if (!mm) await connectPhantom();
+          }
+        });
+      }
+      updateUI();
+    });
+    </script>
+  `;
+
   const scriptsHtml = `
     <script>
-      // Initialize Web3 if needed
-      if (typeof window.ethereum !== 'undefined') {
-        window.web3 = new Web3(window.ethereum);
-      }
       // Execute user scripts
       ${Array.from(userScripts).join('\n')}
     </script>
+    ${walletConnectScript}
   `;
 
   const title = websiteSettings.siteTitle || 'Exported Website';
@@ -370,11 +506,9 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       
       const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
       console.log('Generated IPFS URL:', ipfsUrl);
-      
       // Save to Firestore with both URL and CID
       // (Uncomment and implement saveProjectToFirestore if needed)
       // await saveProjectToFirestore(userId, fullHtml, 'ipfs', ipfsUrl, websiteSettings, elements, projectId);
-      
       setAutoSaveStatus('IPFS deploy complete!');
       return ipfsUrl;
     } catch (error) {
@@ -407,4 +541,3 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
 };
 
 export default ExportSection;
-  
