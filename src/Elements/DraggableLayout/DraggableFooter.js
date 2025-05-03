@@ -4,6 +4,9 @@ import { EditableContext } from '../../context/EditableContext';
 import SimpleFooter from '../Sections/Footers/SimpleFooter';
 import DetailedFooter from '../Sections/Footers/DetailedFooter';
 import TemplateFooter from '../Sections/Footers/TemplateFooter';
+import { Image, Span, Link } from '../SelectableElements';
+import useElementDrop from '../../utils/useElementDrop';
+import DeFiFooter from '../Sections/Footers/DeFiFooter';
 
 const DraggableFooter = ({
   id,
@@ -21,32 +24,11 @@ const DraggableFooter = ({
     elements,
     findElementById,
     setSelectedElement,
+    updateStyles,
   } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
-
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'ELEMENT',
-    item: { id, type: 'footer', configuration },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-    end: (item, monitor) => {
-      if (monitor.didDrop() && !isEditing) {
-        // Calculate the index at which the footer should be placed:
-        // Count the number of top-level elements (elements with no parentId)
-        const topLevelElements = elements.filter(el => !el.parentId) + 1;
-        const index = topLevelElements.length; // Append at the end
-
-        const newId = addNewElement('footer', 1, index, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === newId ? { ...el, configuration } : el
-          )
-        );
-      }
-    },
-  }), [configuration, isEditing, addNewElement, setElements, elements]);
+  const navRef = useRef(null);
 
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
@@ -66,6 +48,33 @@ const DraggableFooter = ({
       );
     }
   };
+
+  const { isOverCurrent, drop } = useElementDrop({
+    id: id,
+    elementRef: navRef,
+    onDropItem,
+  });
+
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'ELEMENT',
+    item: { id, type: 'footer', configuration },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+    end: (item, monitor) => {
+      if (monitor.didDrop() && !isEditing) {
+        const topLevelElements = elements.filter(el => !el.parentId) + 1;
+        const index = topLevelElements.length;
+
+        const newId = addNewElement('footer', 1, index, null, configuration);
+        setElements((prevElements) =>
+          prevElements.map((el) =>
+            el.id === newId ? { ...el, configuration } : el
+          )
+        );
+      }
+    },
+  }), [configuration, isEditing, addNewElement, setElements, elements]);
 
   const footer = findElementById(id, elements);
   const resolvedChildren =
@@ -95,6 +104,7 @@ const DraggableFooter = ({
     simple: 'Simple Footer',
     detailed: 'Detailed Footer',
     template: 'Template Footer',
+    defiFooter: 'DeFi Footer',
   };
 
   const handleSelect = (e) => {
@@ -102,26 +112,16 @@ const DraggableFooter = ({
     setSelectedElement({ id, type: 'footer', styles: footer?.styles });
   };
 
-  if (showDescription) {
+  if (configuration === 'defiFooter') {
     return (
-      <div
-        className='bento-extract-display'
-        onClick={toggleModal}
-        ref={drag}
-        style={{ opacity: isDragging ? 0.5 : 1 }}
-      >
-        <img
-          src={imgSrc}
-          alt={label}
-          style={{
-            width: '100%',
-            height: 'auto',
-            marginBottom: '8px',
-            borderRadius: '4px',
-          }}
-        />
-        <strong className='element-name'>{label}</strong>
-      </div>
+      <DeFiFooter
+        handleSelect={handleSelect}
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={resolvedChildren}
+        onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+      />
     );
   }
 
@@ -161,26 +161,28 @@ const DraggableFooter = ({
     );
   }
 
-  return (
-    <div
-      ref={drag}
-      style={{
-        position: 'relative',
-        cursor: 'pointer',
-        border: isDragging ? '1px dashed #000' : 'none',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onClick={(e) => {
-        toggleModal(); // Show/hide your modal
-      }}
-    >
-      <strong>{label}</strong>
-      {FooterComponent}
-    </div>
-  );
+  if (isEditing) {
+    return (
+      <div
+        ref={drag}
+        style={{
+          position: 'relative',
+          cursor: 'pointer',
+          border: isDragging ? '1px dashed #000' : 'none',
+          backgroundColor: '#f9f9f9',
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={toggleModal}
+      >
+        <strong>{label}</strong>
+        {FooterComponent}
+      </div>
+    );
+  }
+
+  return FooterComponent;
 };
 
 export default DraggableFooter;

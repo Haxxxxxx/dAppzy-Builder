@@ -14,150 +14,85 @@ export function renderNavbar(navbarElement, collectedStyles) {
     configuration,
     children = [],
     styles = {},
+    inlineStyles = {},
   } = navbarElement;
 
-  // 1) Convert each child to HTML and categorize them
-  //    (logo = images, brand = special spans, links = normal spans, buttons = button/connectWallet)
-  let logoHtml = '';
-  let brandHtml = '';
-  let linkHtmls = [];
-  let buttonHtmls = [];
+  // Group children
+  const logo = children.find((c) => c.type === 'image');
+  const spans = children.filter((c) => c.type === 'span');
+  const brand = spans[0];
+  const links = spans.slice(1);
+  const buttons = children.filter((c) => c.type === 'button' || c.type === 'connectWalletButton');
 
-  children.forEach((child) => {
-    const childHtml = renderElementToHtml(child, collectedStyles);
-
-    // The type of the child is usually 'image', 'span', 'button', 'connectWalletButton', etc.
-    if (child.type === 'image') {
-      logoHtml += childHtml;
-    } else if (child.type === 'span') {
-      // For the customTemplate, you might treat a special "3S.Template" span as a brand
-      if (configuration === 'customTemplate' && child.content === '3S.Template') {
-        brandHtml += childHtml;
-      } else {
-        linkHtmls.push(childHtml);
-      }
-    } else if (child.type === 'button' || child.type === 'connectWalletButton') {
-      buttonHtmls.push(childHtml);
+  // Helper to convert camelCase to kebab-case
+  function camelToKebab(str) {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
+  // Helper to merge and generate style string from styles and inlineStyles, with fallbacks
+  function getStyleString(styles, inlineStyles, type) {
+    let merged = { ...(styles || {}), ...(inlineStyles || {}) };
+    // Fallbacks for logo image
+    if (type === 'image') {
+      if (!merged.width) merged.width = 'auto';
+      if (!merged.height) merged.height = '40px';
+      if (!merged.maxHeight) merged.maxHeight = '50px';
+      if (!merged.objectFit) merged.objectFit = 'cover';
+      if (!merged.borderRadius) merged.borderRadius = '8px';
     }
-  });
-
-  // 2) Merge default styles with user's custom styles,
-  //    plus sub-rules for .logoContainer, .standardMenuContainer, etc.
-  const className = `${id}`;
-
-  // We'll define "base" as the main nav defaults.
-  // For "customTemplate" we might use `CustomTemplateNavbarStyles.nav` as the base instead.
-  let baseNavStyles = defaultNavbarStyles.nav; 
-  if (configuration === 'customTemplate') {
-    baseNavStyles = CustomTemplateNavbarStyles.nav;
+    // Fallbacks for brand text
+    if (type === 'span' && merged.isBrand) {
+      if (!merged.fontFamily) merged.fontFamily = 'Roboto, sans-serif';
+      if (!merged.fontWeight) merged.fontWeight = 500;
+      if (!merged.fontSize) merged.fontSize = '1.1rem';
+      if (!merged.color) merged.color = '#fff';
+    }
+    return Object.entries(merged)
+      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+      .join('; ');
   }
 
-  // We do the same for sub-rules: if 'customTemplate', fallback to the custom style set:
-  const mergedStyles = {
-    ...baseNavStyles, // top-level nav
-    ...styles,
+  // HTML for each part (pass down merged styles for children)
+  const logoHtml = logo ? renderElementToHtml({ ...logo, style: getStyleString(logo.styles, logo.inlineStyles, 'image') }, collectedStyles) : '';
+  // Mark brand span for fallback font styles
+  const brandHtml = brand ? renderElementToHtml({ ...brand, style: getStyleString(brand.styles, brand.inlineStyles, 'span'), isBrand: true }, collectedStyles) : '';
+  const linksHtml = links.map((c) => renderElementToHtml({ ...c, style: getStyleString(c.styles, c.inlineStyles, c.type) }, collectedStyles)).join('\n');
+  const buttonsHtml = buttons.map((c) => renderElementToHtml({ ...c, style: getStyleString(c.styles, c.inlineStyles, c.type) }, collectedStyles)).join('\n');
 
-    '.logoContainer': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.logoContainer
-        : defaultNavbarStyles.logoContainer),
-    },
-    // For convenience, let's define a "linksContainer" (or "navList") sub-rule
-    '.linksContainer': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.standardMenuContainer
-        : defaultNavbarStyles.standardMenuContainer),
-    },
-    '.buttonContainer': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.buttonContainer
-        : defaultNavbarStyles.buttonContainer),
-    },
-    '.compactMenuIcon': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.compactMenuIcon
-        : defaultNavbarStyles.compactMenuIcon),
-    },
-    '.compactMenu': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.compactMenu
-        : defaultNavbarStyles.compactMenu),
-    },
-  };
-
-  // 3) Depending on the layout (twoColumn / threeColumn / customTemplate),
-  //    produce slightly different HTML groupings
-  let navbarHtml = '';
-  
-  if (configuration === 'twoColumn') {
-    // - Left = logoHtml
-    // - Right = (links + brandHtml + buttons) or brand can also be combined with links
-    navbarHtml = `
-      <nav id="${className}" class="${className}">
-        <div class="logoContainer">
-          ${logoHtml}
-        </div>
-        <div class="linksContainer">
-          <!-- If you have a brandHtml, you could place it before links -->
-          ${brandHtml ? brandHtml : ''}
-          ${linkHtmls.join('\n')}
-          <div class="buttonContainer">
-            ${buttonHtmls.join('\n')}
-          </div>
-        </div>
-      </nav>
-    `.trim();
-  } else if (configuration === 'threeColumn') {
-    // - Left = logo
-    // - Middle = links
-    // - Right = brand + buttons (or brand could be middle, etc.)
-    navbarHtml = `
-      <nav id="${className}" class="${className}">
-        <div class="logoContainer">
-          ${logoHtml}
-        </div>
-        <div class="linksContainer">
-          ${linkHtmls.join('\n')}
-        </div>
-        <div class="buttonContainer">
-          ${brandHtml}
-          ${buttonHtmls.join('\n')}
-        </div>
-      </nav>
-    `.trim();
-  } else if (configuration === 'customTemplate') {
-    // The "classic" left/logo + brand, center=links, right=buttons approach
-    navbarHtml = `
-      <nav id="${className}" class="${className}">
-        <div class="logoContainer">
-          ${logoHtml}
-          ${brandHtml}
-        </div>
-        <div class="linksContainer">
-          ${linkHtmls.join('\n')}
-        </div>
-        <div class="buttonContainer">
-          ${buttonHtmls.join('\n')}
-        </div>
-      </nav>
-    `.trim();
-  } else {
-    // fallback if unknown
-    navbarHtml = `
-      <nav class="${className}">
-        ${logoHtml}
-        ${brandHtml}
-        ${linkHtmls.join('\n')}
-        ${buttonHtmls.join('\n')}
-      </nav>
-    `.trim();
+  // Use all merged styles for the navbar itself, with sensible defaults
+  function getNavbarFallbackStyles(styles, inlineStyles) {
+    let merged = { ...(styles || {}), ...(inlineStyles || {}) };
+    if (!merged.display) merged.display = 'flex';
+    if (!merged.alignItems) merged.alignItems = 'center';
+    if (!merged.justifyContent) merged.justifyContent = 'space-between';
+    if (!merged.width) merged.width = '100%';
+    if (!merged.padding) merged.padding = '1rem 2rem';
+    if (!merged.background) merged.background = '#18181b';
+    if (!merged.boxShadow) merged.boxShadow = 'rgba(0,0,0,0.12) 0px 2px 12px';
+    if (!merged.position) merged.position = 'relative';
+    if (!merged.zIndex) merged.zIndex = 1000;
+    return merged;
   }
+  const className = `navbar-${id}`;
+  const navbarStyleString = Object.entries(getNavbarFallbackStyles(styles, inlineStyles))
+    .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+    .join('; ');
 
-  // 4) Push the final merged styles
-  collectedStyles.push({
-    className,
-    styles: mergedStyles,
-  });
+  // If you have container-specific styles, you can extract them from children or use defaults
+  const logoContainerStyles = logo && logo.parentStyles ? getStyleString(logo.parentStyles) : 'display: flex; align-items: center; gap: 1rem;';
+  const linksContainerStyles = 'display: flex; gap: 16px; align-items: center;';
+  const buttonContainerStyles = 'display: flex; gap: 16px; font-family: Roboto, sans-serif;';
 
-  return navbarHtml;
+  return `
+    <nav id="${className}" class="${className}" style="${navbarStyleString}">
+      <div class="logoContainer" style="${logoContainerStyles}">
+        ${logoHtml}${brandHtml}
+      </div>
+      <div class="linksContainer" style="${linksContainerStyles}">
+        ${linksHtml}
+      </div>
+      <div class="buttonContainer" style="${buttonContainerStyles}">
+        ${buttonsHtml}
+      </div>
+    </nav>
+  `;
 }

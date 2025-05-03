@@ -9,6 +9,7 @@ export const structureConfigurations = {
   customTemplate: NavbarConfigurations.customTemplate,
   twoColumn: NavbarConfigurations.twoColumn,
   threeColumn: NavbarConfigurations.threeColumn,
+  defiNavbar: NavbarConfigurations.defiNavbar,
 
   heroOne: HeroConfiguration.heroOne,
   heroTwo: HeroConfiguration.heroTwo,

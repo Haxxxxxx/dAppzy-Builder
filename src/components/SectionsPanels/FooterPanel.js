@@ -5,9 +5,10 @@ const FooterPanel = ({ contentListWidth, searchQuery }) => {
   const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand
 
   const footerConfigurations = [
-    { imgSrc: './img/previewcomponent.png', configuration: 'template', label: 'Template Footer' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'simple', label: 'Simple Footer' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'detailed', label: 'Detailed Footer' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'customTemplate', label: 'Custom Footer' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'detailedFooter', label: 'Detailed Footer' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'templateFooter', label: 'Template Footer' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'defiFooter', label: 'DeFi Footer' },
   ];
 
   // Filter footer configurations based on search query

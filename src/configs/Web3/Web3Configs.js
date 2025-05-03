@@ -77,14 +77,33 @@ export const Web3Configs = {
           }
         ],
     },
-      connectWalletButton: {
+    connectWalletButton: {
+        type: 'connectWalletButton',
         content: 'Connect Wallet',
-        settings: {
-          wallets: [
-            { name: 'Phantom', enabled: true },
-            { name: 'MetaMask', enabled: true },
-            { name: 'Freighter', enabled: true },
-          ],
+        styles: {
+            backgroundColor: '#334155',
+            color: '#ffffff',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'all 0.2s ease',
+            ':hover': {
+                opacity: '0.9'
+            }
         },
-      },
+        settings: {
+            wallets: [
+                { name: 'Phantom', enabled: true, type: 'solana' },
+                { name: 'Solflare', enabled: true, type: 'solana' },
+                { name: 'Backpack', enabled: true, type: 'solana' },
+                { name: 'Glow', enabled: true, type: 'solana' },
+                { name: 'Slope', enabled: true, type: 'solana' },
+                { name: 'MetaMask', enabled: true, type: 'ethereum' },
+                { name: 'Freighter', enabled: true, type: 'stellar' }
+            ]
+        }
+    }
 }

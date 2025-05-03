@@ -53,7 +53,6 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
             style={{
               ...styles,
               fontSize: '1rem',
-              color: '#fff',
               border: 'none',
               cursor: 'text',
               wordWrap: 'break-word',

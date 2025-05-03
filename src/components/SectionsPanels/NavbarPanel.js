@@ -7,6 +7,7 @@ const NavbarPanel = ({ contentListWidth, searchQuery }) => {
     { imgSrc: './img/previewcomponent.png', configuration: 'customTemplate', label: 'Custom Navbar' },
     { imgSrc: './img/previewcomponent.png', configuration: 'twoColumn', label: 'Two Column Navbar' },
     { imgSrc: './img/previewcomponent.png', configuration: 'threeColumn', label: 'Three Column Navbar' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'defiNavbar', label: 'DeFi Navbar' },
   ];
 
   // Filter navbar configurations based on search query

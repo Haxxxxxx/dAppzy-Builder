@@ -16,124 +16,101 @@ export function renderFooter(footerElement, collectedStyles) {
     configuration = 'simple', // fallback
     children = [],
     styles = {},
+    inlineStyles = {},
   } = footerElement;
 
-  // Depending on the config, we’ll group or position children in different ways:
-  let footerHtml = '';
-  
-  // Decide how to build the DOM structure for each config:
-  if (configuration === 'simple') {
-    // 1) "Simple" config: single <footer> with all children inline (like your SimpleFooter)
-    const childrenHtml = children
-      .map((child) => renderElementToHtml(child, collectedStyles))
-      .join('\n');
-    footerHtml = `
-      <footer id="${id}" class="${id}">
-        ${childrenHtml}
-      </footer>
-    `.trim();
-    
-    // Merge style objects
-    collectedStyles.push({
-      className: `${id}`,
-      styles: {
-        ...SimplefooterStyles.simpleFooter, // top-level
-        ...styles, // user overrides
-      },
-    });
-
-  } else if (configuration === 'detailed') {
-    // 2) "Detailed" config: single <footer> but you might want to place children
-    // in certain sub-divs if needed. If your React code doesn't do sub-divs, you
-    // can keep them all at the footer root.
-    const childrenHtml = children
-      .map((child) => renderElementToHtml(child, collectedStyles))
-      .join('\n');
-    footerHtml = `
-      <footer id="${id}" class="${id}">
-        ${childrenHtml}
-      </footer>
-    `.trim();
-
-    collectedStyles.push({
-      className: `${id}`,
-      styles: {
-        ...DetailedFooterStyles.footer, // or DetailedFooterStyles.footer
-        ...styles,
-      },
-    });
-
-  } else if (configuration === 'template') {
-    // 3) "Template" config: replicate the *three sections* (navigationLinks, branding, socialIcons)
-    // plus optional “copyright” or other sections as you do in your TemplateFooter component.
-
-    // Based on your TemplateFooter code, you typically do something like:
-    // - First 3 spans = nav links
-    // - 4th span = brand
-    // - 5th span = copyright
-    // - images = social icons
-    // (Adjust if you want more robust grouping logic!)
-    const spanChildren = children.filter((c) => c.type === 'span');
-    const imageChildren = children.filter((c) => c.type === 'image');
-    const navigationLinks = spanChildren.slice(0, 3);
-    const branding = spanChildren[3];
-    const copyright = spanChildren[4];
-    const socialIcons = imageChildren; // everything else is images
-
-    const navHtml = navigationLinks
-      .map((child) => renderElementToHtml(child, collectedStyles))
-      .join('\n');
-    const brandingHtml = branding
-      ? renderElementToHtml(branding, collectedStyles)
-      : '';
-    const copyrightHtml = copyright
-      ? renderElementToHtml(copyright, collectedStyles)
-      : '';
-    const socialIconsHtml = socialIcons
-      .map((child) => renderElementToHtml(child, collectedStyles))
-      .join('\n');
-
-    // Build final HTML with sub-divs:
-    footerHtml = `
-      <footer id="${id}" class="element-${id} templateFooter">
-        <!-- left: navigation links -->
-        <div class="navigationLinks">
-          ${navHtml}
-        </div>
-        
-        <!-- center: branding -->
-        <div class="branding">
-          ${brandingHtml}
-        </div>
-        
-        <!-- right: social icons -->
-        <div class="socialIcons">
-          ${socialIconsHtml}
-        </div>
-      </footer>
-    `.trim();
-
-    // Merge styles from TemplateFooterStyles
-    collectedStyles.push({
-      className: `element-${id}`,
-      styles: {
-        ...TemplateFooterStyles.footer,
-        ...styles, // user overrides
-
-        // sub-rules
-        '.navigationLinks': {
-          ...TemplateFooterStyles.navigationLinks,
-        },
-        '.branding': {
-          ...TemplateFooterStyles.branding,
-        },
-        '.socialIcons': {
-          ...TemplateFooterStyles.socialIcons,
-        },
-        // etc...
-      },
-    });
+  // Helper to convert camelCase to kebab-case
+  function camelToKebab(str) {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
+  // Helper to merge and generate style string from styles and inlineStyles, with fallbacks
+  function getStyleString(styles, inlineStyles, type) {
+    let merged = { ...(styles || {}), ...(inlineStyles || {}) };
+    // Remove maxWidth if present
+    delete merged.maxWidth;
+    // Fallbacks for images
+    if (type === 'image') {
+      if (!merged.width) merged.width = '32px';
+      if (!merged.height) merged.height = '32px';
+      if (!merged.maxHeight) merged.maxHeight = '50px';
+      if (!merged.objectFit) merged.objectFit = 'cover';
+      if (!merged.borderRadius) merged.borderRadius = '8px';
+      if (!merged.display) merged.display = 'inline-flex';
+      if (!merged.position) merged.position = 'relative';
+    }
+    // Fallbacks for text
+    if (type === 'span') {
+      if (!merged.fontFamily) merged.fontFamily = 'Roboto, sans-serif';
+      if (!merged.fontWeight) merged.fontWeight = 500;
+      if (!merged.fontSize) merged.fontSize = '1rem';
+      if (!merged.color) merged.color = '#fff';
+      if (!merged.cursor) merged.cursor = 'text';
+      if (!merged.border) merged.border = 'none';
+      if (!merged.outline) merged.outline = 'none';
+    }
+    // Fallbacks for links
+    if (type === 'link') {
+      if (!merged.color) merged.color = '#bbb';
+      if (!merged.textDecoration) merged.textDecoration = 'none';
+      if (!merged.fontSize) merged.fontSize = '0.9rem';
+      if (!merged.display) merged.display = 'block';
+      if (!merged.cursor) merged.cursor = 'text';
+    }
+    return Object.entries(merged)
+      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+      .join('; ');
   }
 
-  return footerHtml;
+  // Group children by type and order
+  const logoImage = children.find((c) => c.type === 'image');
+  const titleSpan = children.find((c) => c.type === 'span');
+  const policyLinks = children.filter((c) => c.type === 'link' && (c.content?.toLowerCase().includes('privacy') || c.content?.toLowerCase().includes('terms')));
+  const socialLinks = children.filter((c) => c.type === 'link' && !(c.content?.toLowerCase().includes('privacy') || c.content?.toLowerCase().includes('terms')));
+
+  // HTML for logo + title group
+  const logoHtml = logoImage ? `<div style="position: relative; box-sizing: border-box;"><div id="${logoImage.id}" aria-label="Editable image" style="${getStyleString(logoImage.styles, logoImage.inlineStyles, 'image')}"><img src="${logoImage.content}" alt="Editable element" style="width: 32px; height: 32px; object-fit: cover; border-radius: 8px; max-width: 100%; max-height: 100%;"></div></div>` : '';
+  const titleHtml = titleSpan ? `<div style="position: relative; box-sizing: border-box;"><span id="${titleSpan.id}" style="${getStyleString(titleSpan.styles, titleSpan.inlineStyles, 'span')}" contenteditable="false">${titleSpan.content}</span></div>` : '';
+
+  // HTML for policy links
+  const policyLinksHtml = policyLinks.map(link => `<div style="position: relative; box-sizing: border-box;"><a id="${link.id}" href="${link.href || '#'}" style="${getStyleString(link.styles, link.inlineStyles, 'link')}" contenteditable="false">${link.content}</a></div>`).join('');
+
+  // HTML for social links
+  const socialLinksHtml = socialLinks.map(link => `<div style="position: relative; box-sizing: border-box;"><a id="${link.id}" href="${link.href || '#'}" style="${getStyleString(link.styles, link.inlineStyles, 'link')}" contenteditable="false">${link.content}</a></div>`).join('');
+
+  // Outer footer style
+  function getFooterFallbackStyles(styles, inlineStyles) {
+    let merged = { ...(styles || {}), ...(inlineStyles || {}) };
+    if (!merged.backgroundColor) merged.backgroundColor = '#1a1a1a';
+    if (!merged.color) merged.color = '#fff';
+    if (!merged.borderTop) merged.borderTop = '1px solid #333';
+    if (!merged.padding) merged.padding = '0';
+    return merged;
+  }
+  const className = `footer-${id}`;
+  const footerStyleString = Object.entries(getFooterFallbackStyles(styles, inlineStyles))
+    .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+    .join('; ');
+
+  // Inner row style
+  const innerRowStyle = 'display: flex; justify-content: space-between; padding: 24px; align-items: center; margin: 0px auto;';
+  const logoTitleGroupStyle = 'display: flex; align-items: center; gap: 12px;';
+  const policyLinksGroupStyle = 'display: flex; gap: 24px;';
+  const socialLinksGroupStyle = 'display: flex; gap: 16px;';
+
+  return `
+    <footer id="${className}" class="${className} templateFooter" style="${footerStyleString}">
+      <div style="${innerRowStyle}">
+        <div style="${logoTitleGroupStyle}">
+          ${logoHtml}
+          ${titleHtml}
+        </div>
+        <div style="${policyLinksGroupStyle}">
+          ${policyLinksHtml}
+        </div>
+        <div style="${socialLinksGroupStyle}">
+          ${socialLinksHtml}
+        </div>
+      </div>
+    </footer>
+  `;
 }

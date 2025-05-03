@@ -1,78 +1,64 @@
+import { renderElementToHtml } from '../../htmlRender';
+
 export function renderDefiModule(element, collectedStyles) {
-  const { id, moduleType, title, stats = [], settings = {}, functionality = {}, topPools = [], strategies = [], recentTransfers = [] } = element;
+  console.log('renderDefiModule element:', element);
   
-  // Create module data object
-  const moduleData = {
-    id,
-    moduleType,
-    title,
-    stats,
-    settings,
-    functionality,
-    topPools,
-    strategies,
-    recentTransfers
-  };
-
-  // Create stats HTML
-  const statsHtml = stats.map(stat => `
-    <div class="stat-item">
-      <div class="stat-label">${stat.label}</div>
-      <div class="stat-value">${stat.value}</div>
-    </div>
-  `).join('');
-
-  // Create module specific content
-  let moduleContent = '';
-  if (moduleType === 'aggregator' && topPools.length > 0) {
-    moduleContent = `
-      <div class="top-pools">
-        <h4>Top Pools</h4>
-        ${topPools.map(pool => `
-          <div class="pool-item">
-            <span>${pool.name}</span>
-            <span>APY: ${pool.apy}</span>
-            <span>TVL: ${pool.tvl}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else if (moduleType === 'simulation' && strategies.length > 0) {
-    moduleContent = `
-      <div class="strategies">
-        <h4>Investment Strategies</h4>
-        ${strategies.map(strategy => `
-          <div class="strategy-item">
-            <span>${strategy.name}</span>
-            <span>APY: ${strategy.apy}</span>
-            <span>Risk: ${strategy.risk}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  } else if (moduleType === 'bridge' && recentTransfers.length > 0) {
-    moduleContent = `
-      <div class="recent-transfers">
-        <h4>Recent Transfers</h4>
-        ${recentTransfers.map(transfer => `
-          <div class="transfer-item">
-            <span>${transfer.fromChain} → ${transfer.toChain}</span>
-            <span>${transfer.amount}</span>
-            <span>${transfer.status}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
+  // Extract content from element
+  let moduleContent = element.content;
+  if (typeof moduleContent === 'string') {
+    try {
+      moduleContent = JSON.parse(moduleContent);
+    } catch (e) {
+      console.log('Module content is string but not JSON:', moduleContent);
+      moduleContent = {};
+    }
   }
 
+  const { id, styles = {} } = element;
+  const className = `defi-module-${id}`;
+  
+  // Add module styles
+  collectedStyles.push({
+    className,
+    styles: {
+      backgroundColor: 'rgb(42, 42, 60)',
+      padding: '1.5rem',
+      borderRadius: '12px',
+      color: 'rgb(255, 255, 255)',
+      cursor: 'pointer',
+      position: 'relative',
+      ...styles,
+    },
+  });
+
+  // Extract module information
+  const {
+    title = 'DeFi Aggregator',
+    description = '',
+    stats = [],
+  } = moduleContent;
+
+  // Generate stats HTML
+  const statsHtml = stats && stats.length > 0 ? `
+    <div style="display: grid; gap: 1rem;">
+      ${stats.map(stat => `
+        <div style="display: flex; justify-content: space-between;">
+          <span style="opacity: 0.8;">${stat.label}</span>
+          <span style="font-weight: bold;">${stat.value}</span>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
   return `
-    <div class="defi-module" data-module='${JSON.stringify(moduleData)}'>
-      <h3>${title}</h3>
-      <div class="defi-stats">
+    <div style="position: relative; box-sizing: border-box;">
+      <div class="${className}">
+        <div style="margin-bottom: 1rem;">
+          <h3 style="margin: 0; font-size: 1.2rem; font-weight: bold; color: rgb(255, 255, 255);">${title}</h3>
+          <div style="margin-top: 0.5rem; padding: 0.5rem; background-color: rgba(255, 0, 0, 0.1); border-radius: 4px; font-size: 0.9rem; color: rgb(255, 77, 79);">Connect your wallet to view DeFi data</div>
+        </div>
         ${statsHtml}
       </div>
-      ${moduleContent}
-      ${settings.showButton ? `<button class="defi-button">View Details</button>` : ''}
     </div>
   `;
 } 

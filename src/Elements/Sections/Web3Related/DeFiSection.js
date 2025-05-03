@@ -4,6 +4,7 @@ import { useWalletContext } from '../../../context/WalletContext';
 import { Image, Span, Button, DeFiModule } from '../../SelectableElements';
 import { mintingSectionStyles } from './DefaultWeb3Styles';
 import useElementDrop from '../../../utils/useElementDrop';
+import merge from 'lodash/merge';
 
 // Default modules with specific functionality
 const defaultModules = [
@@ -183,14 +184,48 @@ const fallbackBridgeData = {
   }
 };
 
+export const defaultDeFiStyles = {
+  section: {
+    backgroundColor: '#1A1A1A',
+    backgroundImage: 'none',
+    padding: '40px 20px',
+    borderRadius: '0',
+    margin: '0',
+    color: '#FFFFFF',
+    backgroundType: 'dark'
+  },
+  logo: {
+    width: '40px',
+    height: '40px',
+    marginRight: '12px'
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: '600',
+    marginBottom: '12px'
+  },
+  description: {
+    fontSize: '16px',
+    lineHeight: '1.5',
+    marginBottom: '24px'
+  },
+  module: {
+    backgroundColor: '#2A2A2A',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '16px'
+  }
+};
+
 const DeFiSection = React.memo(({
   handleSelect,
   uniqueId,
   onDropItem,
   handleOpenMediaPanel,
-  type = 'defiSection'
+  type = 'defiSection',
+  styles
 }) => {
-  const { elements, setSelectedElement, updateContent, addNewElement } = useContext(EditableContext);
+  const { elements, setSelectedElement, updateContent, addNewElement, updateStyles } = useContext(EditableContext);
   const { walletAddress, balance, isConnected, isLoading, walletId } = useWalletContext();
   const [defiData, setDefiData] = useState({
     totalPools: 'Loading...',
@@ -209,6 +244,46 @@ const DeFiSection = React.memo(({
     elementRef: sectionRef,
     onDropItem,
   });
+
+  // Get the current element from context
+  const defiElement = elements?.find(el => el.id === uniqueId);
+
+  // Initialize styles only once when the component mounts
+  React.useEffect(() => {
+    if (defiElement && (!defiElement.styles || Object.keys(defiElement.styles).length === 0)) {
+      updateStyles(uniqueId, defaultDeFiStyles.section);
+    }
+  }, [defiElement, uniqueId, updateStyles]);
+
+  // Get current styles with proper fallbacks
+  const currentStyles = React.useMemo(() => {
+    if (!defiElement?.styles) return defaultDeFiStyles.section;
+    
+    return {
+      backgroundColor: defiElement.styles.backgroundColor || defaultDeFiStyles.section.backgroundColor,
+      backgroundImage: defiElement.styles.backgroundImage || defaultDeFiStyles.section.backgroundImage,
+      padding: defiElement.styles.padding || defaultDeFiStyles.section.padding,
+      borderRadius: defiElement.styles.borderRadius || defaultDeFiStyles.section.borderRadius,
+      margin: defiElement.styles.margin || defaultDeFiStyles.section.margin,
+      color: defiElement.styles.color || defaultDeFiStyles.section.color,
+      backgroundType: defiElement.styles.backgroundType || defaultDeFiStyles.section.backgroundType
+    };
+  }, [defiElement?.styles]);
+
+  // Handle style updates
+  const handleStyleUpdate = React.useCallback((newStyles) => {
+    if (!defiElement) return;
+
+    // Ensure color values are in correct format
+    const processedStyles = {
+      ...newStyles,
+      backgroundColor: newStyles.backgroundColor || defaultDeFiStyles.section.backgroundColor,
+      color: newStyles.color || defaultDeFiStyles.section.color,
+      backgroundType: newStyles.backgroundType || defaultDeFiStyles.section.backgroundType
+    };
+
+    updateStyles(uniqueId, processedStyles);
+  }, [defiElement, uniqueId, updateStyles]);
 
   // Memoize child elements
   const childElements = React.useMemo(() => {
@@ -1100,131 +1175,134 @@ const DeFiSection = React.memo(({
   }, [handleSelect, setSelectedElement, uniqueId, elements]);
 
   return (
-    <section
-      ref={(node) => {
-        sectionRef.current = node;
-        drop(node);
-      }}
-      style={{
-        ...mintingSectionStyles.section,
-        border: isOverCurrent ? '2px dashed blue' : 'none',
-        gridTemplateColumns: '1fr',
-        backgroundColor: '#1D1C2B',
-        padding: '2rem',
-        borderRadius: '16px',
-        position: 'relative',
-      }}
-      onClick={handleSectionSelect}
-    >
-      {/* Header Section */}
-      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        {logo && (
-          <Image
-            id={logo.id}
-            src={logo.content}
-            styles={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              marginBottom: '1rem'
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-          />
-        )}
-        {title && (
-          <Span
-            id={title.id}
-            content={title.content}
-            styles={{
-              fontSize: '2rem',
-              fontWeight: 'bold',
-              color: '#fff',
-              display: 'block',
-              marginBottom: '1rem'
-            }}
-          />
-        )}
-        {description && (
-          <Span
-            id={description.id}
-            content={description.content}
-            styles={{
-              fontSize: '1rem',
-              color: '#ccc',
-              display: 'block',
-              marginBottom: '2rem'
-            }}
-          />
-        )}
-      </div>
-
-      {/* Wallet Connection Notification */}
-      {!isConnected && (
+    <div style={{ border: 'none', outline: 'none', boxShadow: 'none', backgroundColor: 'transparent' }}>
+      <section
+        ref={(node) => {
+          sectionRef.current = node;
+          drop(node);
+        }}
+        style={{
+          backgroundColor: currentStyles.backgroundColor,
+          backgroundImage: currentStyles.backgroundImage,
+          padding: currentStyles.padding,
+          position: 'relative',
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '2rem',
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none'
+        }}
+        onClick={handleSectionSelect}
+      >
+        {/* Header Section */}
         <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          padding: '1.5rem',
-          borderRadius: '12px',
           textAlign: 'center',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          maxWidth: '80%',
-          zIndex: 10
+          marginBottom: '2rem',
+          color: currentStyles.color
         }}>
-          <div style={{
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            color: '#fff',
-            marginBottom: '0.5rem'
-          }}>
-            Wallet Not Connected
-          </div>
-          <div style={{
-            fontSize: '0.9rem',
-            color: '#ccc',
-            marginBottom: '1rem'
-          }}>
-            Please connect your wallet to view DeFi data and interact with this section
-          </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            color: '#4CAF50',
-            fontSize: '0.9rem'
-          }}>
-            <span>Tip:</span>
-            <span>Add a Connect Wallet button to your page / Navbar to enable this section</span>
-          </div>
+          {logo && (
+            <Image
+              id={logo.id}
+              src={logo.content}
+              styles={defaultDeFiStyles.logo}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+            />
+          )}
+          {title && (
+            <Span
+              id={title.id}
+              content={title.content}
+              styles={{
+                ...defaultDeFiStyles.title,
+                color: currentStyles.color
+              }}
+            />
+          )}
+          {description && (
+            <Span
+              id={description.id}
+              content={description.content}
+              styles={{
+                ...defaultDeFiStyles.description,
+                color: `${currentStyles.color}99`
+              }}
+            />
+          )}
         </div>
-      )}
 
-      {/* DeFi Modules Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '2rem',
-        opacity: !isConnected ? 0.3 : 1,
-        pointerEvents: !isConnected ? 'none' : 'auto',
-        transition: 'opacity 0.3s ease'
-      }}>
-        {modulesToRender.map(module => (
-          <DeFiModule
-            key={module.id}
-            id={module.id}
-            content={module.content}
-            styles={module.styles}
-            configuration={module.configuration}
-            handleSelect={handleSectionSelect}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-          />
-        ))}
-      </div>
-    </section>
+        {/* Wallet Connection Notification */}
+        {!isConnected && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            padding: '1.5rem',
+            borderRadius: '12px',
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            maxWidth: '80%',
+            zIndex: 10
+          }}>
+            <div style={{
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              color: currentStyles.color,
+              marginBottom: '0.5rem'
+            }}>
+              Wallet Not Connected
+            </div>
+            <div style={{
+              fontSize: '0.9rem',
+              color: `${currentStyles.color}99`,
+              marginBottom: '1rem'
+            }}>
+              Please connect your wallet to view DeFi data and interact with this section
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              color: '#4CAF50',
+              fontSize: '0.9rem'
+            }}>
+              <span>Tip:</span>
+              <span>Add a Connect Wallet button to your page / Navbar to enable this section</span>
+            </div>
+          </div>
+        )}
+
+        {/* DeFi Modules Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '2rem',
+          opacity: !isConnected ? 0.3 : 1,
+          pointerEvents: !isConnected ? 'none' : 'auto',
+          transition: 'opacity 0.3s ease'
+        }}>
+          {modulesToRender.map(module => (
+            <DeFiModule
+              key={module.id}
+              id={module.id}
+              content={module.content}
+              styles={{
+                ...defaultDeFiStyles.module,
+                backgroundColor: `${currentStyles.backgroundColor}80`,
+                color: currentStyles.color
+              }}
+              configuration={module.configuration}
+              handleSelect={handleSectionSelect}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 });
 

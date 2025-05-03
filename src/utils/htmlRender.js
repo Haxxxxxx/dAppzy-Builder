@@ -90,9 +90,29 @@ export function renderElementToHtml(element, collectedStyles) {
     settings = {}
   } = element;
 
-  // Handle DeFi module rendering
+  const className = `element-${id}`;
+
+  // Delegate to specialized renderers for complex sections
+  if (type === 'navbar') {
+    return require('./htmlRenderUtils/RenderNavbars/renderNavbar').renderNavbar(element, collectedStyles);
+  }
+  if (type === 'hero') {
+    return require('./htmlRenderUtils/RenderHeros/renderHero').renderHero(element, collectedStyles);
+  }
+  if (type === 'footer') {
+    return require('./htmlRenderUtils/RenderFooters/renderFooter').renderFooter(element, collectedStyles);
+  }
+  if (type === 'defiSection') {
+    return require('./htmlRenderUtils/RenderWeb3/renderDefiSection').renderDefiSection(element, collectedStyles);
+  }
   if (type === 'defiModule') {
-    return renderDefiModule(element, collectedStyles);
+    return require('./htmlRenderUtils/RenderWeb3/renderDefiModule').renderDefiModule(element, collectedStyles);
+  }
+  if (type === 'cta') {
+    return require('./htmlRenderUtils/RenderCtas/renderCta').renderCta(element, collectedStyles);
+  }
+  if (type === 'section') {
+    return require('./htmlRenderUtils/RenderSection/renderSection').renderSection(element, collectedStyles);
   }
 
   const tag = typeToTagMap[type];
@@ -103,7 +123,9 @@ export function renderElementToHtml(element, collectedStyles) {
 
   // Compute the initial source
   let finalSrc = element.src || (styles && styles.src) || '';
-  console.log(`Rendering element ${id} with src:`, finalSrc);
+  if (type === 'image' && !finalSrc && content) {
+    finalSrc = content;
+  }
 
   // If the element is a media type, update the URL if the project folder name is outdated
   if (finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
@@ -121,24 +143,54 @@ export function renderElementToHtml(element, collectedStyles) {
           const newDecodedPath = decodedPath.replace(`/projects/${oldProjectName}/`, `/projects/${currentProjectName}/`);
           const newEncodedPath = encodeURIComponent(newDecodedPath);
           finalSrc = `${basePart}/o/${newEncodedPath}${query ? '?' + query : ''}`;
-          console.log(`Updated src for element ${id}:`, finalSrc);
         }
       }
     }
   }
 
-  if (!finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
-    console.warn(`No valid source found for element ${id} of type ${type}.`);
+  // Fix: Always output <img src="..."> for image elements
+  if (type === 'image') {
+    const cleanedStyles = cleanStyles(styles);
+    collectedStyles.push({ className, styles: cleanedStyles });
+    // Use the style property if present, otherwise fallback to default sizing
+    const styleAttr = element.style && element.style.length > 0
+      ? ` style="${element.style}"`
+      : ' style="max-height:50px;height:40px;width:auto;object-fit:cover;border-radius:8px;"';
+    return `<img id="${id}" class="${className}" src="${finalSrc || ''}"${styleAttr} />`;
   }
 
-  const className = `element-${id}`;
+  // Fix: Always output <button ...> for button elements with merged styles and fallbacks
+  if (type === 'button' || type === 'connectWalletButton') {
+    function camelToKebab(str) {
+      return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    }
+    let merged = { ...(styles || {}), ...((element.inlineStyles) || {}) };
+    if (!merged.backgroundColor) merged.backgroundColor = '#334155';
+    if (!merged.color) merged.color = '#fff';
+    if (!merged.padding) merged.padding = '10px 20px';
+    if (!merged.cursor) merged.cursor = 'pointer';
+    if (!merged.border) merged.border = 'none';
+    if (!merged.outline) merged.outline = 'none';
+    if (!merged.borderRadius) merged.borderRadius = '4px';
+    if (!merged.fontSize) merged.fontSize = '14px';
+    if (!merged.fontWeight) merged.fontWeight = 500;
+    if (!merged.transition) merged.transition = '0.2s';
+    if (!merged.position) merged.position = 'relative';
+    if (!merged.boxSizing) merged.boxSizing = 'border-box';
+    if (!merged.marginLeft) merged.marginLeft = '16px';
+    const styleAttr = ` style="${Object.entries(merged).map(([k, v]) => `${camelToKebab(k)}: ${v}`).join('; ')}"`;
+    return `<button id="${id}" class="${className}"${styleAttr}>${content || ''}</button>`;
+  }
+
   let styleForCSS = { ...styles };
-  if (['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
+  if ([
+    'img', 'video', 'audio', 'iframe', 'source'
+  ].includes(type)) {
     delete styleForCSS.src;
   }
   const cleanedStyles = cleanStyles(styleForCSS);
   collectedStyles.push({ className, styles: cleanedStyles });
-  
+
   let attributesString = `id="${id}" class="${className}"`;
   attributesString += buildAttributesString(type, attributes, finalSrc, settings);
 

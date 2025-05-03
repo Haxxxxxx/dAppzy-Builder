@@ -4,6 +4,7 @@ import { EditableContext } from '../../context/EditableContext';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
+import DeFiNavbar from '../Sections/Navbars/DeFiNavbar';
 
 const DraggableNavbar = ({
   id,
@@ -83,6 +84,7 @@ const DraggableNavbar = ({
     twoColumn: 'Two Columns',
     threeColumn: 'Three Columns',
     customTemplate: '3S Navbar',
+    defiNavbar: 'DeFi Navbar',
   };
 
   // Inside DraggableNavbar.js
@@ -123,7 +125,6 @@ const DraggableNavbar = ({
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
-
       />
     );
   } else if (configuration === 'twoColumn') {
@@ -135,12 +136,23 @@ const DraggableNavbar = ({
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
-
       />
     );
   } else if (configuration === 'threeColumn') {
     NavbarComponent = (
       <ThreeColumnNavbar
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={children}
+        onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+      />
+    );
+  } else if (configuration === 'defiNavbar') {
+    NavbarComponent = (
+      <DeFiNavbar
         uniqueId={id}
         contentListWidth={contentListWidth}
         children={children}

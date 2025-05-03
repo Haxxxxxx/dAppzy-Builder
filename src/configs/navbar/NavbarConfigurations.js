@@ -87,4 +87,67 @@ export const NavbarConfigurations = {
       { type: 'button', content: 'Call to Action' },
     ],
   },
+  defiNavbar: {
+    styles: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '16px 24px',
+      backgroundColor: '#1a1a1a',
+      color: '#fff',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+      borderBottom: '1px solid transparent'
+    },
+    children: [
+      {
+        type: 'image',
+        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        styles: {
+          width: '32px',
+          height: '32px',
+          borderRadius: '8px',
+          objectFit: 'cover',
+        }
+      },
+      { 
+        type: 'span', 
+        content: 'DeFi Dashboard', 
+        styles: { 
+          color: '#fff', 
+          fontWeight: 'bold', 
+          fontSize: '1.2rem' 
+        } 
+      },
+      { 
+        type: 'connectWalletButton',
+        content: 'Connect Wallet',
+        styles: {
+          backgroundColor: '#334155',
+          color: '#ffffff',
+          padding: '10px 20px',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontWeight: '500',
+          transition: 'all 0.2s ease',
+          marginLeft: '16px',
+          ':hover': {
+            opacity: '0.9'
+          }
+        },
+        settings: {
+          wallets: [
+            { name: 'Phantom', enabled: true, type: 'solana' },
+            { name: 'Solflare', enabled: true, type: 'solana' },
+            { name: 'Backpack', enabled: true, type: 'solana' },
+            { name: 'Glow', enabled: true, type: 'solana' },
+            { name: 'Slope', enabled: true, type: 'solana' },
+            { name: 'MetaMask', enabled: true, type: 'ethereum' },
+            { name: 'Freighter', enabled: true, type: 'stellar' }
+          ]
+        }
+      }
+    ]
+  }
 };

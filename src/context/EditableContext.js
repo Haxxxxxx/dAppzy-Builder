@@ -132,7 +132,7 @@ export const EditableProvider = ({ children, userId }) => {
       } else {
         recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
       }
-    } else if (config && typeof config === 'object' && config.children) {
+    } else if (config && config.children) {
       // Handle custom configuration with children
       baseElement.styles = { ...baseElement.styles, ...(config.styles || {}) };
       const childrenElements = config.children.map((child) => ({
@@ -300,7 +300,7 @@ export const EditableProvider = ({ children, userId }) => {
             1,
             command.position?.index || 0,
             command.position?.parentId || null,
-            command.properties.configuration // Pass as structure!
+            command.properties // Pass the entire properties object
           );
           if (command.properties?.styles) {
             updateStyles(newId, command.properties.styles);
@@ -313,7 +313,7 @@ export const EditableProvider = ({ children, userId }) => {
             1,
             command.position?.index || 0,
             command.position?.parentId || null,
-            command.properties // Pass the entire properties object!
+            command.properties // Pass the entire properties object
           );
           if (command.properties?.styles) {
             updateStyles(newId, command.properties.styles);
@@ -330,27 +330,88 @@ export const EditableProvider = ({ children, userId }) => {
         }
       }
       case 'edit': {
-        // Only update other properties, NOT children
         const { children, styles, ...otherProps } = command.properties || {};
+        
+        // First update the parent element's properties and styles
         if (Object.keys(otherProps).length > 0) {
           updateElementProperties(command.targetId, otherProps);
         }
-        // If styles are provided, update the navbar's styles
         if (styles) {
           updateStyles(command.targetId, styles);
         }
-        // If children edits are provided, update each child element
+
+        // Then handle children updates if provided
         if (children) {
           const parent = findElementById(command.targetId, elements);
           if (parent && parent.children && parent.children.length) {
-            children.forEach((childEdit, idx) => {
-              const childId = parent.children[idx];
-              if (!childId || !childEdit) return; // skip nulls
-              if (childEdit.content !== undefined) {
-                updateContent(childId, childEdit.content);
+            // Create a map of child elements by type and index for more precise matching
+            const childrenByTypeAndIndex = parent.children.reduce((acc, childId, index) => {
+              const child = elements.find(el => el.id === childId);
+              if (child) {
+                const key = `${child.type}-${index}`;
+                if (!acc[key]) acc[key] = [];
+                acc[key].push({ id: childId, element: child, index });
               }
-              if (childEdit.styles) {
-                updateStyles(childId, childEdit.styles);
+              return acc;
+            }, {});
+
+            // Update each child based on type and index matching
+            children.forEach((childEdit, idx) => {
+              if (!childEdit || !childEdit.type) return;
+              
+              // Try to find a matching child by type and index
+              const key = `${childEdit.type}-${idx}`;
+              const matchingChildren = childrenByTypeAndIndex[key] || [];
+              const targetChild = matchingChildren[0]; // Get the first matching child
+              
+              if (targetChild) {
+                // Update content if provided
+                if (childEdit.content !== undefined) {
+                  updateContent(targetChild.id, childEdit.content);
+                }
+                
+                // Update styles if provided
+                if (childEdit.styles) {
+                  // Handle hover styles separately
+                  const { hover, ...baseStyles } = childEdit.styles;
+                  updateStyles(targetChild.id, baseStyles);
+                  
+                  // If hover styles are provided, update them as well
+                  if (hover) {
+                    const currentStyles = elements.find(el => el.id === targetChild.id)?.styles || {};
+                    updateStyles(targetChild.id, {
+                      ...currentStyles,
+                      hover: hover
+                    });
+                  }
+                }
+                
+                // Remove the used child from the map
+                childrenByTypeAndIndex[key] = matchingChildren.slice(1);
+              } else {
+                // If no exact match found, try to find any child of the same type
+                const fallbackKey = childEdit.type;
+                const fallbackChildren = Object.entries(childrenByTypeAndIndex)
+                  .filter(([k]) => k.startsWith(fallbackKey))
+                  .flatMap(([_, children]) => children);
+                
+                if (fallbackChildren.length > 0) {
+                  const fallbackChild = fallbackChildren[0];
+                  if (childEdit.content !== undefined) {
+                    updateContent(fallbackChild.id, childEdit.content);
+                  }
+                  if (childEdit.styles) {
+                    const { hover, ...baseStyles } = childEdit.styles;
+                    updateStyles(fallbackChild.id, baseStyles);
+                    if (hover) {
+                      const currentStyles = elements.find(el => el.id === fallbackChild.id)?.styles || {};
+                      updateStyles(fallbackChild.id, {
+                        ...currentStyles,
+                        hover: hover
+                      });
+                    }
+                  }
+                }
               }
             });
           }
@@ -372,7 +433,7 @@ export const EditableProvider = ({ children, userId }) => {
       default:
         console.warn('Unknown AI command:', command);
     }
-  }, [addNewElement, updateElementProperties, updateContent, updateStyles, handleRemoveElement, moveElement]);
+  }, [addNewElement, updateElementProperties, updateContent, updateStyles, handleRemoveElement, moveElement, elements]);
 
   // Memoize context value after all state and functions are defined
   const contextValue = useMemo(() => ({

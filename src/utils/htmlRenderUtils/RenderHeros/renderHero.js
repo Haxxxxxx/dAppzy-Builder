@@ -14,7 +14,7 @@ export function renderHero(heroElement, collectedStyles) {
     subStyles = CustomTemplateHeroStyles;
   } else if (configuration === 'heroTwo') {
     baseHeroSection = heroTwoStyles.heroSection;
-    subStyles = heroTwoStyles; // <--- now use heroTwo sub‐styles
+    subStyles = heroTwoStyles;
   } else {
     // fallback: heroOne
     baseHeroSection = defaultHeroStyles.heroSection;
@@ -38,24 +38,26 @@ export function renderHero(heroElement, collectedStyles) {
     } else if (child.type === 'paragraph' && !paragraphHtml) {
       paragraphHtml = `<p class="heroDescription">${child.content || ''}</p>`;
     } else if (child.type === 'image' && !imageHtml) {
-      imageHtml = `
+      const src = child.src || child.content?.src || (typeof child.content === 'string' ? child.content : '');
+      imageHtml = src ? `
         <div class="heroImageContainer">
-          <img class="heroImage" src="${child.content || ''}" alt="">
+          <img class="heroImage" src="${src}" alt="${child.alt || ''}">
         </div>
-      `;
+      ` : '';
     }
   });
 
   // Render buttons – first button as primary, subsequent ones as secondary.
   buttonChildren.forEach((btn, index) => {
+    const buttonContent = typeof btn.content === 'object' ? btn.content.text : btn.content;
     if (index === 0) {
-      buttonHtmls.push(`<button class="primaryButton">${btn.content || ''}</button>`);
+      buttonHtmls.push(`<button class="primaryButton">${buttonContent || ''}</button>`);
     } else {
-      buttonHtmls.push(`<button class="secondaryButton">${btn.content || ''}</button>`);
+      buttonHtmls.push(`<button class="secondaryButton">${buttonContent || ''}</button>`);
     }
   });
 
-  // 3. Merge sub‐styles
+  // 3. Merge sub-styles
   const mergedStyles = {
     ...baseHeroSection,
     ...styles,
@@ -69,6 +71,7 @@ export function renderHero(heroElement, collectedStyles) {
     '.heroImageContainer': { ...subStyles.heroImageContainer },
     '.heroImage': { ...subStyles.heroImage },
   };
+
   // Push the merged style rule into collectedStyles with a unique class name.
   const className = `${id}`;
   collectedStyles.push({
