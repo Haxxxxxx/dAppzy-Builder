@@ -2,7 +2,7 @@
 import { typeToTagMap } from '../Mapping/typeMapping';
 import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
 import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
-import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
+import { renderFooter as builderRenderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
 import { renderCta } from './htmlRenderUtils/RenderCtas/renderCta';
 import { renderSection } from './htmlRenderUtils/RenderSection/renderSection.js';
 import { renderMintingSection } from './htmlRenderUtils/RenderWeb3/renderMintingSection';
@@ -79,153 +79,72 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
   return attributesString;
 }
 
-export function renderElementToHtml(element, collectedStyles) {
+export function renderElementToHtml(element, collectedStyles = []) {
   const {
-    id,
     type,
-    styles = {},
     content,
-    attributes = {},
     children = [],
-    settings = {}
+    style = '',
+    className = '',
+    attributes = {},
+    dataAttributes = {},
+    events = {},
+    configuration = {},
+    styles = {},
+    inlineStyles = {},
+    id
   } = element;
 
-  const className = `element-${id}`;
+  // Helper to convert camelCase to kebab-case
+  function camelToKebab(str) {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
 
-  // Delegate to specialized renderers for complex sections
-  if (type === 'navbar') {
-    return require('./htmlRenderUtils/RenderNavbars/renderNavbar').renderNavbar(element, collectedStyles);
+  // Helper to generate attributes string
+  function getAttributesString(attrs) {
+    return Object.entries(attrs)
+      .map(([k, v]) => `${camelToKebab(k)}="${v}"`)
+      .join(' ');
   }
-  if (type === 'hero') {
-    return require('./htmlRenderUtils/RenderHeros/renderHero').renderHero(element, collectedStyles);
+
+  // Helper to generate data attributes string
+  function getDataAttributesString(attrs) {
+    return Object.entries(attrs)
+      .map(([k, v]) => `data-${camelToKebab(k)}="${v}"`)
+      .join(' ');
   }
+
+  // Use the builder's renderFooter for footers
   if (type === 'footer') {
-    return require('./htmlRenderUtils/RenderFooters/renderFooter').renderFooter(element, collectedStyles);
-  }
-  if (type === 'defiSection') {
-    return require('./htmlRenderUtils/RenderWeb3/renderDefiSection').renderDefiSection(element, collectedStyles);
-  }
-  if (type === 'defiModule') {
-    return require('./htmlRenderUtils/RenderWeb3/renderDefiModule').renderDefiModule(element, collectedStyles);
-  }
-  if (type === 'cta') {
-    return require('./htmlRenderUtils/RenderCtas/renderCta').renderCta(element, collectedStyles);
-  }
-  if (type === 'section') {
-    return require('./htmlRenderUtils/RenderSection/renderSection').renderSection(element, collectedStyles);
+    return builderRenderFooter({
+      ...element,
+      styles,
+      inlineStyles,
+      children
+    }, collectedStyles);
   }
 
-  const tag = typeToTagMap[type];
-  if (!tag) {
-    console.warn(`No HTML tag mapping found for type: ${type}`);
-    return '';
-  }
-
-  // Compute the initial source
-  let finalSrc = element.src || (styles && styles.src) || '';
-  if (type === 'image' && !finalSrc && content) {
-    finalSrc = content;
-  }
-
-  // If the element is a media type, update the URL if the project folder name is outdated
-  if (finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
-    const parts = finalSrc.split('/o/');
-    if (parts.length > 1) {
-      const [basePart, pathAndQuery] = parts;
-      const [encodedPath, query] = pathAndQuery.split('?');
-      const decodedPath = decodeURIComponent(encodedPath);
-      const segments = decodedPath.split('/');
-      const projIndex = segments.indexOf('projects');
-      if (projIndex !== -1 && segments.length > projIndex + 1) {
-        const oldProjectName = segments[projIndex + 1];
-        const currentProjectName = (settings.siteTitle || '').trim();
-        if (currentProjectName && oldProjectName !== currentProjectName) {
-          const newDecodedPath = decodedPath.replace(`/projects/${oldProjectName}/`, `/projects/${currentProjectName}/`);
-          const newEncodedPath = encodeURIComponent(newDecodedPath);
-          finalSrc = `${basePart}/o/${newEncodedPath}${query ? '?' + query : ''}`;
-        }
-      }
-    }
-  }
-
-  // Fix: Always output <img src="..."> for image elements
-  if (type === 'image') {
-    const cleanedStyles = cleanStyles(styles);
-    collectedStyles.push({ className, styles: cleanedStyles });
-    // Use the style property if present, otherwise fallback to default sizing
-    const styleAttr = element.style && element.style.length > 0
-      ? ` style="${element.style}"`
-      : ' style="max-height:50px;height:40px;width:auto;object-fit:cover;border-radius:8px;"';
-    return `<img id="${id}" class="${className}" src="${finalSrc || ''}"${styleAttr} />`;
-  }
-
-  // Fix: Always output <button ...> for button elements with merged styles and fallbacks
-  if (type === 'button' || type === 'connectWalletButton') {
-    function camelToKebab(str) {
-      return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-    }
-    let merged = { ...(styles || {}), ...((element.inlineStyles) || {}) };
-    if (!merged.backgroundColor) merged.backgroundColor = '#334155';
-    if (!merged.color) merged.color = '#fff';
-    if (!merged.padding) merged.padding = '10px 20px';
-    if (!merged.cursor) merged.cursor = 'pointer';
-    if (!merged.border) merged.border = 'none';
-    if (!merged.outline) merged.outline = 'none';
-    if (!merged.borderRadius) merged.borderRadius = '4px';
-    if (!merged.fontSize) merged.fontSize = '14px';
-    if (!merged.fontWeight) merged.fontWeight = 500;
-    if (!merged.transition) merged.transition = '0.2s';
-    if (!merged.position) merged.position = 'relative';
-    if (!merged.boxSizing) merged.boxSizing = 'border-box';
-    if (!merged.marginLeft) merged.marginLeft = '16px';
-    const styleAttr = ` style="${Object.entries(merged).map(([k, v]) => `${camelToKebab(k)}: ${v}`).join('; ')}"`;
-    // Always use the static id for connect wallet button in export
-    const buttonId = type === 'connectWalletButton' ? 'connect-wallet-button' : id;
-    return `<button id="${buttonId}" class="${className}"${styleAttr}>${content || ''}</button>`;
-  }
-
-  let styleForCSS = { ...styles };
-  if ([
-    'img', 'video', 'audio', 'iframe', 'source'
-  ].includes(type)) {
-    delete styleForCSS.src;
-  }
-  const cleanedStyles = cleanStyles(styleForCSS);
-  collectedStyles.push({ className, styles: cleanedStyles });
-
-  let attributesString = `id="${id}" class="${className}"`;
-  attributesString += buildAttributesString(type, attributes, finalSrc, settings);
-
-  const selfClosingTags = ['img', 'input', 'hr', 'br', 'meta', 'link', 'source'];
+  // Default rendering for other elements
   const childrenHtml = children
-    .map(childElement => renderElementToHtml(childElement, collectedStyles))
+    .map(child => renderElementToHtml(child, collectedStyles))
     .join('');
 
-  if (
-    type === 'button' &&
-    settings.actionType === 'Dropdown' &&
-    Array.isArray(settings.dropdownLinks) &&
-    settings.dropdownLinks.length > 0
-  ) {
-    const toggleOnClick = "var dropdown = this.nextElementSibling; dropdown.style.display = (dropdown.style.display==='block' ? 'none' : 'block');";
-    attributesString += ` onclick="${toggleOnClick}"`;
-    const buttonHtml = `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
-    let dropdownHtml = `<div class="dropdown-menu" style="${DropdownStyles.dropdownMenu}; display: none;">`;
-    dropdownHtml += settings.dropdownLinks.map(link => {
-      const linkOnClick = link.openInNewTab
-        ? `window.open('${link.targetValue}', '_blank')`
-        : `window.location.href='${link.targetValue}'`;
-      return `<a href="#" style="${DropdownStyles.dropdownItem}" onclick="${linkOnClick}">${link.content || link.targetValue}</a>`;
-    }).join('');
-    dropdownHtml += `</div>`;
-    return buttonHtml + dropdownHtml;
-  }
+  const tag = type || 'div';
+  const attributesString = getAttributesString(attributes);
+  const dataAttributesString = getDataAttributesString(dataAttributes);
 
-  if (selfClosingTags.includes(tag)) {
-    return `<${tag} ${attributesString} />`;
-  } else {
-    return `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
-  }
+  return `
+    <${tag} 
+      id="${element.id}" 
+      class="${className}" 
+      style="${style}" 
+      ${attributesString} 
+      ${dataAttributesString}
+    >
+      ${content || ''}
+      ${childrenHtml}
+    </${tag}>
+  `;
 }
 
 function cleanStyles(styles = {}) {

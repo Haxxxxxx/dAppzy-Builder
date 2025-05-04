@@ -186,3 +186,46 @@ export const TemplateFooterStyles = {
   },
 };
 
+export const DeFiFooterStyles = {
+  footer: {
+    backgroundColor: '#1a1a1a',
+    color: '#ffffff',
+    padding: '24px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    borderTop: '1px solid #333',
+  },
+  logoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  logo: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '8px',
+    objectFit: 'cover',
+  },
+  copyright: {
+    color: '#ffffff',
+    fontSize: '0.9rem',
+  },
+  linksContainer: {
+    display: 'flex',
+    gap: '24px',
+  },
+  rightLinksContainer: {
+    display: 'flex',
+    gap: '16px',
+  },
+  link: {
+    color: '#ffffff',
+    textDecoration: 'none',
+    fontSize: '0.9rem',
+    cursor: 'text',
+  },
+};
+

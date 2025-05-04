@@ -8,6 +8,7 @@ import { ctaOneStyles, ctaTwoStyles } from '../../Elements/Sections/CTAs/default
 import { defaultDeFiStyles } from '../../Elements/Sections/Web3Related/DeFiSection';
 // Import your hierarchy builder – this should nest elements with a valid parentId.
 import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
+import { SimplefooterStyles, TemplateFooterStyles } from '../../Elements/Sections/Footers/defaultFooterStyles';
 
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
@@ -138,6 +139,41 @@ function processStylesForExport(styles) {
   return processedStyles;
 }
 
+function processElementStyles(element) {
+  // Special handling for footer elements
+  if (element.type === 'footer') {
+    let defaultStyles = {};
+    if (element.configuration === 'customTemplate') {
+      defaultStyles = SimplefooterStyles.footer;
+    } else if (element.configuration === 'templateFooter') {
+      defaultStyles = TemplateFooterStyles.footer;
+    }
+    
+    // Merge default styles with custom styles
+    return {
+      ...defaultStyles,
+      ...element.styles,
+      ...element.inlineStyles
+    };
+  }
+  
+  // For non-footer elements, return original styles
+  return {
+    ...element.styles,
+    ...element.inlineStyles
+  };
+}
+
+function cleanEmptyDivs(html) {
+  // Remove empty divs with only style attributes
+  return html.replace(/<div style="[^"]*"><\/div>/g, '');
+}
+
+function fixClassName(html) {
+  // Replace classname with class
+  return html.replace(/classname=/g, 'class=');
+}
+
 /**
  * exportProject
  * • Builds a hierarchy from the flat element tree.
@@ -152,24 +188,71 @@ export function exportProject(elements, websiteSettings) {
 
   // Helper to convert camelCase to kebab-case
   function camelToKebab(str) {
+    if (!str || typeof str !== 'string') return '';
     return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
   }
 
+  // Helper to validate and format color values
+  function formatColorValue(value) {
+    if (!value || typeof value !== 'string') return '';
+    // If it's already a valid hex color
+    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) {
+      return value;
+    }
+    // If it's a named color, return as is
+    if (/^[a-zA-Z]+$/.test(value)) {
+      return value;
+    }
+    // If it's rgb/rgba/hsl/hsla, return as is
+    if (/^(rgb|rgba|hsl|hsla)/.test(value)) {
+      return value;
+    }
+    // If it's a hex color without #, add it
+    if (/^[A-Fa-f0-9]{6}$/.test(value)) {
+      return `#${value}`;
+    }
+    // Default fallback
+    return value;
+  }
+
   // Helper to generate style string from inlineStyles
-  function getStyleString(styles) {
-    if (!styles) return '';
-    return Object.entries(styles)
-      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+  function getStyleString(element) {
+    const processedStyles = processElementStyles(element);
+    if (!processedStyles || typeof processedStyles !== 'object') return '';
+    
+    return Object.entries(processedStyles)
+      .filter(([k, v]) => k != null && v != null)
+      .map(([k, v]) => {
+        const key = camelToKebab(k);
+        let value = v;
+        if (key.includes('color') || key.includes('background')) {
+          value = formatColorValue(v);
+        }
+        return `${key}: ${value}`;
+      })
       .join('; ');
+  }
+
+  // Helper to sanitize class names
+  function sanitizeClassName(className) {
+    if (!className) return '';
+    return className.replace(/class=/g, 'className=');
   }
 
   // 1. Build hierarchy and process styles
   const hierarchicalElements = buildHierarchy(elements).map(element => {
-    // Preserve all user modifications exactly
-    const processedElement = {
+    const processedStyles = processElementStyles(element);
+    console.log('Processing element styles:', {
+      id: element.id,
+      type: element.type,
+      configuration: element.configuration,
+      originalStyles: element.styles,
+      processedStyles
+    });
+    
+    return {
       ...element,
-      styles: element.styles || {},
-      inlineStyles: element.inlineStyles || {},
+      styles: processedStyles,
       content: element.content || '',
       children: element.children || [],
       attributes: element.attributes || {},
@@ -180,24 +263,26 @@ export function exportProject(elements, websiteSettings) {
       configuration: element.configuration || {},
       properties: element.properties || {}
     };
-    return processedElement;
   });
 
   // 2. Render all elements using renderElementToHtml
   hierarchicalElements.forEach(element => {
     if (!processedElements.has(element.id)) {
       // Always use inlineStyles as the style attribute
-      const styleString = getStyleString(element.inlineStyles);
+      const styleString = getStyleString(element);
       const renderedContent = renderElementToHtml({
         ...element,
         style: styleString,
-        className: element.className ? `${element.className} ${element.id}` : element.id,
+        className: element.className ? `${sanitizeClassName(element.className)} ${element.id}` : element.id,
         ...(element.attributes || {}),
         ...(element.dataAttributes || {}),
         ...(element.events || {})
-      }, collectedStyles); // <-- Always pass collectedStyles
+      }, collectedStyles);
       if (renderedContent) {
-        bodyHtml += renderedContent;
+        // Clean up the rendered HTML
+        let cleanedContent = cleanEmptyDivs(renderedContent);
+        cleanedContent = fixClassName(cleanedContent);
+        bodyHtml += cleanedContent;
         processedElements.add(element.id);
       }
     }
@@ -461,23 +546,51 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const [shareableUrl, setShareableUrl] = useState('');
 
   const handleDeployToIPFS = async () => {
+    console.log('Starting deployment process...');
+    console.log('Initial props:', { userId, projectId, elementsCount: elements?.length });
+    
     setAutoSaveStatus('Publishing to IPFS...');
     try {
-      if (!userId) {
-        setAutoSaveStatus('Error: No valid user ID found!');
+      if (!userId || !projectId) {
+        const errorMsg = !userId ? 'No valid user ID found!' : 'No valid project ID found!';
+        console.error('Validation failed:', { userId, projectId });
+        setAutoSaveStatus(`Error: ${errorMsg}`);
+        return null;
+      }
+
+      // Sanitize the path segments to ensure they're valid strings
+      const sanitizedUserId = userId.toString().trim();
+      const sanitizedProjectId = projectId.toString().trim();
+      console.log('Sanitized IDs:', { sanitizedUserId, sanitizedProjectId });
+
+      if (!sanitizedUserId || !sanitizedProjectId) {
+        console.error('Invalid ID format after sanitization:', { sanitizedUserId, sanitizedProjectId });
+        setAutoSaveStatus('Error: Invalid user ID or project ID format');
         return null;
       }
 
       // First, save the current project state to Firestore
-      const projectRef = doc(db, "projects", userId, "ProjectRef", projectId);
+      console.log('Creating Firestore reference with path:', `projects/${sanitizedUserId}/ProjectRef/${sanitizedProjectId}`);
+      const projectRef = doc(db, 'projects', sanitizedUserId, 'ProjectRef', sanitizedProjectId);
+      
+      // Validate the elements before saving
+      if (!Array.isArray(elements)) {
+        console.error('Invalid elements data:', elements);
+        setAutoSaveStatus('Error: Invalid elements data');
+        return null;
+      }
+
+      console.log('Saving project state to Firestore...');
       await setDoc(projectRef, {
         elements,
-        websiteSettings,
+        websiteSettings: websiteSettings || {},
         lastUpdated: serverTimestamp(),
-        userId,
+        userId: sanitizedUserId,
       }, { merge: true });
+      console.log('Project state saved successfully');
 
       // Generate HTML
+      console.log('Generating HTML from elements...');
       const fullHtml = exportProject(elements, websiteSettings);
       console.log('Generated HTML length:', fullHtml.length);
       
@@ -485,7 +598,10 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       const htmlBlob = new Blob([fullHtml], { 
         type: 'text/html;charset=utf-8'
       });
-      console.log('Blob size:', htmlBlob.size);
+      console.log('Created HTML Blob:', {
+        size: htmlBlob.size,
+        type: htmlBlob.type
+      });
       
       // Prepare file for upload
       const files = [{ 
@@ -496,20 +612,24 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       
       // Prepare metadata
       const metadata = {
-        name: websiteSettings.siteTitle || 'MyWebsite',
+        name: (websiteSettings?.siteTitle || 'MyWebsite').toString(),
         keyvalues: { 
-          userId,
+          userId: sanitizedUserId,
           timestamp: new Date().toISOString(),
           size: htmlBlob.size
         },
       };
+      console.log('Prepared metadata:', metadata);
       
       console.log('Starting IPFS upload process...');
       
       // Upload to Pinata
+      console.log('Calling pinDirectoryToPinata...');
       const ipfsHash = await pinDirectoryToPinata(files, metadata);
+      console.log('Received IPFS hash:', ipfsHash);
       
       if (!ipfsHash) {
+        console.error('No IPFS hash returned from Pinata');
         throw new Error('No IPFS hash returned from Pinata');
       }
       
@@ -517,27 +637,46 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       console.log('Generated IPFS URL:', ipfsUrl);
       
       // Update Firestore with IPFS URL
+      console.log('Updating Firestore with IPFS information...');
       await setDoc(projectRef, {
         ipfsUrl,
         ipfsHash,
         lastDeployed: serverTimestamp(),
       }, { merge: true });
+      console.log('Firestore updated with IPFS information');
 
       setAutoSaveStatus('IPFS deploy complete!');
+      console.log('Deployment completed successfully');
       return ipfsUrl;
     } catch (error) {
-      console.error('Error during deployment:', error);
+      console.error('Deployment error details:', {
+        error,
+        message: error.message,
+        stack: error.stack,
+        userId,
+        projectId,
+        elementsCount: elements?.length
+      });
       setAutoSaveStatus('Error during deployment: ' + error.message);
       return null;
     }
   };
 
   const handlePublish = async () => {
+    console.log('Starting publish process...');
     const ipfsUrl = await handleDeployToIPFS();
+    console.log('Deployment result:', { ipfsUrl });
+    
     if (ipfsUrl) {
+      console.log('Setting shareable URL and opening new tab...');
       setShareableUrl(ipfsUrl);
-      if (onProjectPublished) onProjectPublished(ipfsUrl);
+      if (onProjectPublished) {
+        console.log('Calling onProjectPublished callback...');
+        onProjectPublished(ipfsUrl);
+      }
       window.open(ipfsUrl, '_blank');
+    } else {
+      console.error('Deployment failed - no IPFS URL returned');
     }
   };
 

@@ -24,11 +24,9 @@ export function renderFooter(footerElement, collectedStyles) {
     return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
   }
   // Helper to merge and generate style string from styles and inlineStyles, with fallbacks
-  function getStyleString(styles, inlineStyles, type) {
+  function getStyleString(styles, inlineStyles, type, config) {
     let merged = { ...(styles || {}), ...(inlineStyles || {}) };
-    // Remove maxWidth if present
     delete merged.maxWidth;
-    // Fallbacks for images
     if (type === 'image') {
       if (!merged.width) merged.width = '32px';
       if (!merged.height) merged.height = '32px';
@@ -38,7 +36,6 @@ export function renderFooter(footerElement, collectedStyles) {
       if (!merged.display) merged.display = 'inline-flex';
       if (!merged.position) merged.position = 'relative';
     }
-    // Fallbacks for text
     if (type === 'span') {
       if (!merged.fontFamily) merged.fontFamily = 'Roboto, sans-serif';
       if (!merged.fontWeight) merged.fontWeight = 500;
@@ -48,7 +45,6 @@ export function renderFooter(footerElement, collectedStyles) {
       if (!merged.border) merged.border = 'none';
       if (!merged.outline) merged.outline = 'none';
     }
-    // Fallbacks for links
     if (type === 'link') {
       if (!merged.color) merged.color = '#bbb';
       if (!merged.textDecoration) merged.textDecoration = 'none';
@@ -56,26 +52,16 @@ export function renderFooter(footerElement, collectedStyles) {
       if (!merged.display) merged.display = 'block';
       if (!merged.cursor) merged.cursor = 'text';
     }
+    if (type === 'button') {
+      // Merge in default button styles for customTemplate
+      if (config === 'customTemplate' && SimplefooterStyles.subscribeButton) {
+        merged = { ...SimplefooterStyles.subscribeButton, ...merged };
+      }
+    }
     return Object.entries(merged)
       .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
       .join('; ');
   }
-
-  // Group children by type and order
-  const logoImage = children.find((c) => c.type === 'image');
-  const titleSpan = children.find((c) => c.type === 'span');
-  const policyLinks = children.filter((c) => c.type === 'link' && (c.content?.toLowerCase().includes('privacy') || c.content?.toLowerCase().includes('terms')));
-  const socialLinks = children.filter((c) => c.type === 'link' && !(c.content?.toLowerCase().includes('privacy') || c.content?.toLowerCase().includes('terms')));
-
-  // HTML for logo + title group
-  const logoHtml = logoImage ? `<div style="position: relative; box-sizing: border-box;"><div id="${logoImage.id}" aria-label="Editable image" style="${getStyleString(logoImage.styles, logoImage.inlineStyles, 'image')}"><img src="${logoImage.content}" alt="Editable element" style="width: 32px; height: 32px; object-fit: cover; border-radius: 8px; max-width: 100%; max-height: 100%;"></div></div>` : '';
-  const titleHtml = titleSpan ? `<div style="position: relative; box-sizing: border-box;"><span id="${titleSpan.id}" style="${getStyleString(titleSpan.styles, titleSpan.inlineStyles, 'span')}" contenteditable="false">${titleSpan.content}</span></div>` : '';
-
-  // HTML for policy links
-  const policyLinksHtml = policyLinks.map(link => `<div style="position: relative; box-sizing: border-box;"><a id="${link.id}" href="${link.href || '#'}" style="${getStyleString(link.styles, link.inlineStyles, 'link')}" contenteditable="false">${link.content}</a></div>`).join('');
-
-  // HTML for social links
-  const socialLinksHtml = socialLinks.map(link => `<div style="position: relative; box-sizing: border-box;"><a id="${link.id}" href="${link.href || '#'}" style="${getStyleString(link.styles, link.inlineStyles, 'link')}" contenteditable="false">${link.content}</a></div>`).join('');
 
   // Outer footer style
   function getFooterFallbackStyles(styles, inlineStyles) {
@@ -91,26 +77,23 @@ export function renderFooter(footerElement, collectedStyles) {
     .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
     .join('; ');
 
-  // Inner row style
-  const innerRowStyle = 'display: flex; justify-content: space-between; padding: 24px; align-items: center; margin: 0px auto;';
-  const logoTitleGroupStyle = 'display: flex; align-items: center; gap: 12px;';
-  const policyLinksGroupStyle = 'display: flex; gap: 24px;';
-  const socialLinksGroupStyle = 'display: flex; gap: 16px;';
+  // Render all children in order, directly inside <footer>
+  const childrenHtml = children.map(child => {
+    if (child.type === 'span') {
+      return `<span id="${child.id}" style="${getStyleString(child.styles, child.inlineStyles, 'span', configuration)}" contenteditable="false">${child.content}</span>`;
+    } else if (child.type === 'button') {
+      return `<button id="${child.id}" style="${getStyleString(child.styles, child.inlineStyles, 'button', configuration)}">${child.content}</button>`;
+    } else if (child.type === 'image') {
+      return `<img id="${child.id}" src="${child.content}" style="${getStyleString(child.styles, child.inlineStyles, 'image', configuration)}" alt="Footer image" />`;
+    } else if (child.type === 'link') {
+      return `<a id="${child.id}" href="${child.href || '#'}" style="${getStyleString(child.styles, child.inlineStyles, 'link', configuration)}" contenteditable="false">${child.content}</a>`;
+    }
+    return '';
+  }).join('');
 
   return `
     <footer id="${className}" class="${className} templateFooter" style="${footerStyleString}">
-      <div style="${innerRowStyle}">
-        <div style="${logoTitleGroupStyle}">
-          ${logoHtml}
-          ${titleHtml}
-        </div>
-        <div style="${policyLinksGroupStyle}">
-          ${policyLinksHtml}
-        </div>
-        <div style="${socialLinksGroupStyle}">
-          ${socialLinksHtml}
-        </div>
-      </div>
+      ${childrenHtml}
     </footer>
   `;
 }

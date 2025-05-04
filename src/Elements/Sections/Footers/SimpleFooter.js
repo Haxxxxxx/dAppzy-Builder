@@ -1,6 +1,6 @@
 import React, { useRef, useContext, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { Span, Button } from '../../SelectableElements';
+import { Span, Button, Image, LinkBlock } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 
 const SimpleFooter = ({
@@ -12,7 +12,7 @@ const SimpleFooter = ({
   handleOpenMediaPanel,
 }) => {
   const navRef = useRef(null);
-  const { elements, updateStyles } = useContext(EditableContext);
+  const { elements, updateStyles, findElementById } = useContext(EditableContext);
 
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
@@ -20,12 +20,11 @@ const SimpleFooter = ({
     onDropItem,
   });
 
-  const footerElement = elements.find((el) => el.id === uniqueId);
+  const footerElement = findElementById(uniqueId, elements);
 
   useEffect(() => {
     if (!footerElement) return;
     const noCustomStyles = !footerElement.styles || Object.keys(footerElement.styles).length === 0;
-
     if (noCustomStyles) {
       updateStyles(footerElement.id, {
         backgroundColor: '#1a1a1a',
@@ -39,6 +38,11 @@ const SimpleFooter = ({
     }
   }, [footerElement, updateStyles]);
 
+  // Always resolve children from state
+  const resolvedChildren = (footerElement?.children || [])
+    .map(childId => findElementById(childId, elements))
+    .filter(Boolean);
+
   return (
     <footer
       ref={(node) => {
@@ -48,44 +52,85 @@ const SimpleFooter = ({
       style={{
         ...(footerElement?.styles || {}),
         borderTop: isOverCurrent ? '2px solid blue' : '1px solid #333',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
       }}
       onClick={(e) => handleSelect(e)}
     >
-      <div style={{ position: 'relative', boxSizing: 'border-box' }}>
-        {children[0] && children[0].type === 'span' && (
-          <Span
-            key={children[0].id}
-            id={children[0].id}
-            content={children[0].content}
-            styles={{
-              ...children[0].styles,
-              cursor: 'text',
-              border: 'none',
-              outline: 'none',
-            }}
-          />
-        )}
-      </div>
-      <div style={{ position: 'relative', boxSizing: 'border-box' }}>
-        {children[1] && children[1].type === 'button' && (
-          <Button
-            key={children[1].id}
-            id={children[1].id}
-            content={children[1].content}
-            styles={{
-              ...children[1].styles,
-              backgroundColor: '#334155',
-              color: '#ffffff',
-              padding: '12px 24px',
-              fontWeight: 'bold',
-              border: 'none',
-              cursor: 'text',
-              borderRadius: '4px',
-              outline: 'none',
-            }}
-          />
-        )}
-      </div>
+      {resolvedChildren.map((child) => {
+        if (!child) return null;
+        if (child.type === 'span') {
+          return (
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...child.styles,
+                cursor: 'text',
+                border: 'none',
+                outline: 'none',
+              }}
+            />
+          );
+        }
+        if (child.type === 'button') {
+          return (
+            <Button
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...child.styles,
+                backgroundColor: '#334155',
+                color: '#ffffff',
+                padding: '12px 24px',
+                fontWeight: 'bold',
+                border: 'none',
+                cursor: 'text',
+                borderRadius: '4px',
+                outline: 'none',
+              }}
+            />
+          );
+        }
+        if (child.type === 'image') {
+          return (
+            <Image
+              key={child.id}
+              id={child.id}
+              src={child.content}
+              styles={{
+                ...child.styles,
+                objectFit: 'cover',
+                borderRadius: '8px',
+                maxWidth: '100%',
+                maxHeight: '100%',
+              }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+            />
+          );
+        }
+        if (child.type === 'link') {
+          return (
+            <LinkBlock
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{
+                ...child.styles,
+                color: '#ffffff',
+                textDecoration: 'none',
+                fontSize: '0.9rem',
+                cursor: 'text',
+              }}
+            />
+          );
+        }
+        return null;
+      })}
     </footer>
   );
 };

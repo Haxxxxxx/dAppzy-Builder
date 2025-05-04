@@ -66,7 +66,9 @@ const ContentList = forwardRef(
           item.type === 'ContentSection' ||
           item.type === 'footer'
         ) {
-          newId = addNewElement(item.type, 1, index, null, item.structure);
+          const config = item.configuration || item.structure;
+          newId = addNewElement(item.type, 1, index, null, config);
+          // No defaultContent logic here; footer children and styles are handled by DraggableFooter.js
         } else {
           newId = addNewElement(item.type, 1, index);
         }

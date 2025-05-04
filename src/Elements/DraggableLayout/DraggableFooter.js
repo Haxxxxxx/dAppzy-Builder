@@ -4,9 +4,11 @@ import { EditableContext } from '../../context/EditableContext';
 import SimpleFooter from '../Sections/Footers/SimpleFooter';
 import DetailedFooter from '../Sections/Footers/DetailedFooter';
 import TemplateFooter from '../Sections/Footers/TemplateFooter';
-import { Image, Span, Link } from '../SelectableElements';
+import { Image, Span, LinkBlock } from '../SelectableElements';
 import useElementDrop from '../../utils/useElementDrop';
 import DeFiFooter from '../Sections/Footers/DeFiFooter';
+import { FooterConfigurations } from '../../configs/footers/FooterConfigurations';
+import { SimplefooterStyles, DetailedFooterStyles, TemplateFooterStyles, DeFiFooterStyles } from '../Sections/Footers/defaultFooterStyles';
 
 const DraggableFooter = ({
   id,
@@ -63,22 +65,23 @@ const DraggableFooter = ({
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        const topLevelElements = elements.filter(el => !el.parentId) + 1;
-        const index = topLevelElements.length;
-
-        const newId = addNewElement('footer', 1, index, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === newId ? { ...el, configuration } : el
-          )
-        );
+        const footerConfig = FooterConfigurations[item.configuration];
+        if (footerConfig) {
+          // Only create the footer with its config; let addNewElement handle children
+          addNewElement('footer', 1, null, null, footerConfig);
+        }
+        setSelectedElement({ id: item.id, type: 'footer', configuration: item.configuration });
       }
     },
-  }), [configuration, isEditing, addNewElement, setElements, elements]);
+  }), [configuration, isEditing]);
 
   const footer = findElementById(id, elements);
-  const resolvedChildren =
-    footer?.children?.map((childId) => findElementById(childId, elements)) || [];
+  // Robustly resolve children: from state, fallback to config if needed
+  const configChildren = FooterConfigurations[configuration]?.children || [];
+  const resolvedChildren = (footer?.children || [])
+    .map((childId) => findElementById(childId, elements))
+    .filter(Boolean);
+  const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
   const toggleModal = () => setModalOpen((prev) => !prev);
 
@@ -137,7 +140,7 @@ const DraggableFooter = ({
         handleSelect={handleSelect}
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
       />
@@ -150,7 +153,7 @@ const DraggableFooter = ({
       <SimpleFooter
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
@@ -161,7 +164,7 @@ const DraggableFooter = ({
       <DetailedFooter
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
@@ -172,7 +175,7 @@ const DraggableFooter = ({
       <TemplateFooter
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}

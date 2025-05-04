@@ -50,6 +50,13 @@ export const EditableProvider = ({ children, userId }) => {
 
   const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
     console.log('[addNewElement] type:', type, 'config:', config);
+    
+    // If this is a second call for the same element type with children config, skip it
+    if (config && config.children && typeof config !== 'string') {
+      console.log('Skipping duplicate element creation');
+      return null;
+    }
+
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
@@ -120,7 +127,7 @@ export const EditableProvider = ({ children, userId }) => {
       if (!parentId) {
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
-          newElements.splice(index, 0, baseElement, ...childrenElements);
+          newElements.splice(index || 0, 0, baseElement, ...childrenElements);
           return newElements;
         });
       } else {
@@ -142,7 +149,7 @@ export const EditableProvider = ({ children, userId }) => {
       if (!parentId) {
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
-          newElements.splice(index, 0, baseElement, ...childrenElements);
+          newElements.splice(index || 0, 0, baseElement, ...childrenElements);
           return newElements;
         });
       } else {
@@ -153,7 +160,7 @@ export const EditableProvider = ({ children, userId }) => {
       if (!parentId) {
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
-          newElements.splice(index, 0, baseElement);
+          newElements.splice(index || 0, 0, baseElement);
           return newElements;
         });
       } else {

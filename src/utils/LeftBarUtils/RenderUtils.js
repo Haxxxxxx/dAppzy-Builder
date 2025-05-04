@@ -182,7 +182,6 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
@@ -285,7 +284,7 @@ export const renderElement = (
       </VFlexLayout>
     ),
     line: <Line id={id} key={id} styles={{ ...element.styles }} />,
-    linkblock: <LinkBlock id={id} key={id} styles={{ ...element.styles }} />,
+    linkblock: <LinkBlock id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
     youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} />,
     icon: <Icon id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
     defiSection: (
