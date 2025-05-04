@@ -145,7 +145,7 @@ exports.reverseLookup = onRequest(
 );
 
 // 6) Existing Phantom verification endpoint (unchanged)
-exports.verifyPhantom = onRequest(
+exports.verifyPhantomV2 = onRequest(
   {
     region: "us-central1",
     cors: true,
@@ -188,7 +188,7 @@ exports.verifyPhantom = onRequest(
 
       return res.json({ customToken });
     } catch (error) {
-      console.error("Error in verifyPhantom:", error);
+      console.error("Error in verifyPhantomV2:", error);
       return res.status(500).json({ error: error.message });
     }
   }
