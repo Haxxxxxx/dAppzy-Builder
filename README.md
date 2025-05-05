@@ -28,7 +28,7 @@ For a detailed technical overview of Dappzy, please read our [Whitepaper](WHITEP
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/Dappzy.git
+git clone https://github.com/Haxxxxxx/Dappzy.git
 cd Dappzy
 ```
 
