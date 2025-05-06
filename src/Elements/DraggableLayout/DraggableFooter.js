@@ -28,6 +28,7 @@ const DraggableFooter = ({
     setSelectedElement,
     updateStyles,
   } = useContext(EditableContext);
+  
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
   const navRef = useRef(null);
@@ -37,7 +38,13 @@ const DraggableFooter = ({
 
     const parentElement = findElementById(parentId, elements);
     if (parentElement) {
-      const newId = addNewElement(item.type, 1, null, parentId);
+      const newId = addNewElement(item.type, 1, null, parentId, {
+        content: item.content || '',
+        styles: item.styles || {},
+        configuration: item.configuration,
+        settings: item.settings || {}
+      });
+
       setElements((prevElements) =>
         prevElements.map((el) =>
           el.id === parentId
@@ -48,6 +55,8 @@ const DraggableFooter = ({
             : el
         )
       );
+
+      setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
     }
   };
 
@@ -103,12 +112,12 @@ const DraggableFooter = ({
     };
   }, [isModalOpen]);
 
-  const titles = {
-    customTemplate: 'Custom Footer',
-    detailedFooter: 'Detailed Footer',
-    templateFooter: 'Template Footer',
-    defiFooter: 'DeFi Footer',
-  };
+  //  const titles = {
+  //   customTemplateFooter: 'Custom Footer',
+  //   detailedFooter: 'Detailed Footer',
+  //   templateFooter: 'Template Footer',
+  //   defiFooter: 'DeFi Footer',
+  // };
 
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -129,7 +138,7 @@ const DraggableFooter = ({
             borderRadius: '4px',
           }}
         />
-        <strong className='element-name'>{titles[configuration]}</strong>
+        <strong className='element-name'>{label}</strong>
       </div>
     );
   }
@@ -148,7 +157,7 @@ const DraggableFooter = ({
   }
 
   let FooterComponent;
-  if (configuration === 'customTemplate') {
+  if (configuration === 'customTemplateFooter') {
     FooterComponent = (
       <SimpleFooter
         uniqueId={id}

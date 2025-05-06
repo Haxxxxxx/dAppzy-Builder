@@ -21,8 +21,8 @@ export const structureConfigurations = {
   ctaOne: CtaConfigurations.ctaOne,
   ctaTwo: CtaConfigurations.ctaTwo,
 
-  // Footer configs (corrected)
-  customTemplate: FooterConfigurations.customTemplate,
+  // Footer configs
+  customTemplateFooter: FooterConfigurations.customTemplate,
   detailedFooter: FooterConfigurations.detailedFooter,
   templateFooter: FooterConfigurations.templateFooter,
   defiFooter: FooterConfigurations.defiFooter,

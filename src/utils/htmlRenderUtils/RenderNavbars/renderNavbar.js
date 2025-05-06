@@ -36,8 +36,11 @@ export function renderNavbar(navbarElement, collectedStyles) {
       if (!merged.width) merged.width = 'auto';
       if (!merged.height) merged.height = '40px';
       if (!merged.maxHeight) merged.maxHeight = '50px';
-      if (!merged.objectFit) merged.objectFit = 'cover';
+      if (!merged.objectFit) merged.objectFit = 'contain';
       if (!merged.borderRadius) merged.borderRadius = '8px';
+      // Ensure the image doesn't exceed the navbar height
+      merged.maxHeight = '100%';
+      merged.height = 'auto';
     }
     // Fallbacks for brand text
     if (type === 'span' && merged.isBrand) {
@@ -70,6 +73,8 @@ export function renderNavbar(navbarElement, collectedStyles) {
     if (!merged.boxShadow) merged.boxShadow = 'rgba(0,0,0,0.12) 0px 2px 12px';
     if (!merged.position) merged.position = 'relative';
     if (!merged.zIndex) merged.zIndex = 1000;
+    // Add max-height constraint for the navbar
+    if (!merged.maxHeight) merged.maxHeight = '80px';
     return merged;
   }
   const className = `navbar-${id}`;

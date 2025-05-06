@@ -77,12 +77,6 @@ const DraggableHero = ({
     };
   }, [isModalOpen]);
 
-  const titles = {
-    heroOne: 'Hero one',
-    heroTwo: 'Hero two',
-    heroThree: 'Hero three',
-  };
-
   // Inside DraggableNavbar.js
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
@@ -103,7 +97,7 @@ const DraggableHero = ({
             borderRadius: '4px',
           }}
         />
-        <strong className='element-name'>{titles[configuration]}</strong>
+        <strong className='element-name'>{label}</strong>
         {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );

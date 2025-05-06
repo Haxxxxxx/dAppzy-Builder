@@ -7,8 +7,8 @@ const FooterPanel = ({ contentListWidth, searchQuery }) => {
   const footerConfigurations = [
     { 
       imgSrc: './img/previewcomponent.png', 
-      configuration: 'customTemplate', 
-      label: 'Custom Footer',
+      configuration: 'customTemplateFooter', 
+      label: 'Simple Footer',
     },
     { 
       imgSrc: './img/previewcomponent.png', 
@@ -18,7 +18,7 @@ const FooterPanel = ({ contentListWidth, searchQuery }) => {
     { 
       imgSrc: './img/previewcomponent.png', 
       configuration: 'templateFooter', 
-      label: 'Template Footer',
+      label: 'Advanced Footer',
     },
     { 
       imgSrc: './img/previewcomponent.png', 

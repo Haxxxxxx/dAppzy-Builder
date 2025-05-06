@@ -78,10 +78,6 @@ const DraggableCTA = ({
     e.stopPropagation(); // Prevent parent selections
     setSelectedElement({ id, type: 'cta', styles: ctaElement?.styles });
   };
-  const titles = {
-    ctaOne: 'CTA one',
-    ctaTwo: 'CTA two',
-  };
 
   // Render description if requested
   if (showDescription) {
@@ -97,7 +93,7 @@ const DraggableCTA = ({
             borderRadius: '4px',
           }}
         />
-        <strong className='element-name'>{titles[configuration]}</strong>
+        <strong className='element-name'>{label}</strong>
         {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );

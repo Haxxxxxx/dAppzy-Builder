@@ -198,16 +198,40 @@ export const EditableProvider = ({ children, userId }) => {
   const updateStyles = useCallback((id, newStyles) => {
     console.log(`Updating styles for ${id}:`, newStyles);
     recordElementsUpdate((prev) =>
-      prev.map((el) =>
-        el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el
-      )
+      prev.map((el) => {
+        if (el.id === id) {
+          // Create a new styles object to avoid reference issues
+          const updatedStyles = { ...newStyles };
+          // If the element has existing styles, merge them carefully
+          if (el.styles) {
+            Object.keys(el.styles).forEach(key => {
+              // Only keep existing styles if they're not being updated
+              if (!(key in newStyles)) {
+                updatedStyles[key] = el.styles[key];
+              }
+            });
+          }
+          return { ...el, styles: updatedStyles };
+        }
+        return el;
+      })
     );
-    // Also update the selected element if it's the one being updated.
+    // Also update the selected element if it's the one being updated
     if (selectedElement && selectedElement.id === id) {
-      setSelectedElement((prevSelected) => ({
-        ...prevSelected,
-        styles: { ...prevSelected.styles, ...newStyles },
-      }));
+      setSelectedElement((prevSelected) => {
+        const updatedStyles = { ...newStyles };
+        if (prevSelected.styles) {
+          Object.keys(prevSelected.styles).forEach(key => {
+            if (!(key in newStyles)) {
+              updatedStyles[key] = prevSelected.styles[key];
+            }
+          });
+        }
+        return {
+          ...prevSelected,
+          styles: updatedStyles
+        };
+      });
     }
   }, [recordElementsUpdate]);
 

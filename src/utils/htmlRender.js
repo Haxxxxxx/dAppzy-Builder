@@ -133,6 +133,22 @@ export function renderElementToHtml(element, collectedStyles = []) {
   const attributesString = getAttributesString(attributes);
   const dataAttributesString = getDataAttributesString(dataAttributes);
 
+  // Special handling for image elements
+  if (type === 'image') {
+    const src = element.src || (element.content?.src || (typeof element.content === 'string' ? element.content : ''));
+    return `
+      <${tag} 
+        id="${element.id}" 
+        class="${className}" 
+        style="${style}" 
+        src="${src}"
+        alt="${element.alt || ''}"
+        ${attributesString} 
+        ${dataAttributesString}
+      />
+    `;
+  }
+
   return `
     <${tag} 
       id="${element.id}" 

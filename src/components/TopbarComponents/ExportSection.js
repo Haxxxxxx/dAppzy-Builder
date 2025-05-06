@@ -143,7 +143,7 @@ function processElementStyles(element) {
   // Special handling for footer elements
   if (element.type === 'footer') {
     let defaultStyles = {};
-    if (element.configuration === 'customTemplate') {
+    if (element.configuration === 'customTemplateFooter') {
       defaultStyles = SimplefooterStyles.footer;
     } else if (element.configuration === 'templateFooter') {
       defaultStyles = TemplateFooterStyles.footer;
@@ -543,74 +543,50 @@ async function pinDirectoryToPinata(files, metadata) {
 
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
-  const [shareableUrl, setShareableUrl] = useState('');
 
   const handleDeployToIPFS = async () => {
-    console.log('Starting deployment process...');
-    console.log('Initial props:', { userId, projectId, elementsCount: elements?.length });
-    
     setAutoSaveStatus('Publishing to IPFS...');
     try {
       if (!userId || !projectId) {
         const errorMsg = !userId ? 'No valid user ID found!' : 'No valid project ID found!';
-        console.error('Validation failed:', { userId, projectId });
         setAutoSaveStatus(`Error: ${errorMsg}`);
         return null;
       }
 
-      // Sanitize the path segments to ensure they're valid strings
       const sanitizedUserId = userId.toString().trim();
       const sanitizedProjectId = projectId.toString().trim();
-      console.log('Sanitized IDs:', { sanitizedUserId, sanitizedProjectId });
 
       if (!sanitizedUserId || !sanitizedProjectId) {
-        console.error('Invalid ID format after sanitization:', { sanitizedUserId, sanitizedProjectId });
         setAutoSaveStatus('Error: Invalid user ID or project ID format');
         return null;
       }
 
-      // First, save the current project state to Firestore
-      console.log('Creating Firestore reference with path:', `projects/${sanitizedUserId}/ProjectRef/${sanitizedProjectId}`);
       const projectRef = doc(db, 'projects', sanitizedUserId, 'ProjectRef', sanitizedProjectId);
       
-      // Validate the elements before saving
       if (!Array.isArray(elements)) {
-        console.error('Invalid elements data:', elements);
         setAutoSaveStatus('Error: Invalid elements data');
         return null;
       }
 
-      console.log('Saving project state to Firestore...');
       await setDoc(projectRef, {
         elements,
         websiteSettings: websiteSettings || {},
         lastUpdated: serverTimestamp(),
         userId: sanitizedUserId,
       }, { merge: true });
-      console.log('Project state saved successfully');
 
-      // Generate HTML
-      console.log('Generating HTML from elements...');
       const fullHtml = exportProject(elements, websiteSettings);
-      console.log('Generated HTML length:', fullHtml.length);
       
-      // Create Blob with explicit type
       const htmlBlob = new Blob([fullHtml], { 
         type: 'text/html;charset=utf-8'
       });
-      console.log('Created HTML Blob:', {
-        size: htmlBlob.size,
-        type: htmlBlob.type
-      });
       
-      // Prepare file for upload
       const files = [{ 
         file: htmlBlob, 
         fileName: 'index.html',
         type: 'text/html'
       }];
       
-      // Prepare metadata
       const metadata = {
         name: (websiteSettings?.siteTitle || 'MyWebsite').toString(),
         keyvalues: { 
@@ -619,64 +595,37 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
           size: htmlBlob.size
         },
       };
-      console.log('Prepared metadata:', metadata);
       
-      console.log('Starting IPFS upload process...');
-      
-      // Upload to Pinata
-      console.log('Calling pinDirectoryToPinata...');
       const ipfsHash = await pinDirectoryToPinata(files, metadata);
-      console.log('Received IPFS hash:', ipfsHash);
       
       if (!ipfsHash) {
-        console.error('No IPFS hash returned from Pinata');
         throw new Error('No IPFS hash returned from Pinata');
       }
       
       const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
-      console.log('Generated IPFS URL:', ipfsUrl);
       
-      // Update Firestore with IPFS URL
-      console.log('Updating Firestore with IPFS information...');
       await setDoc(projectRef, {
         ipfsUrl,
         ipfsHash,
         lastDeployed: serverTimestamp(),
       }, { merge: true });
-      console.log('Firestore updated with IPFS information');
 
       setAutoSaveStatus('IPFS deploy complete!');
-      console.log('Deployment completed successfully');
       return ipfsUrl;
     } catch (error) {
-      console.error('Deployment error details:', {
-        error,
-        message: error.message,
-        stack: error.stack,
-        userId,
-        projectId,
-        elementsCount: elements?.length
-      });
       setAutoSaveStatus('Error during deployment: ' + error.message);
       return null;
     }
   };
 
   const handlePublish = async () => {
-    console.log('Starting publish process...');
     const ipfsUrl = await handleDeployToIPFS();
-    console.log('Deployment result:', { ipfsUrl });
     
     if (ipfsUrl) {
-      console.log('Setting shareable URL and opening new tab...');
-      setShareableUrl(ipfsUrl);
       if (onProjectPublished) {
-        console.log('Calling onProjectPublished callback...');
         onProjectPublished(ipfsUrl);
       }
       window.open(ipfsUrl, '_blank');
-    } else {
-      console.error('Deployment failed - no IPFS URL returned');
     }
   };
 

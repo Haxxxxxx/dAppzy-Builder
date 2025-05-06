@@ -77,15 +77,6 @@ const DraggableContentSections = ({
     };
   }, [isModalOpen]);
 
-  const titles = {
-    sectionOne: 'Section One',
-    sectionTwo: 'Section Two',
-    sectionThree: 'Section Three',
-    sectionFour: 'Section Four',
-  };
-
-
-
   // Set the current element as selected on click
   const handleSelect = (e) => {
     e.stopPropagation();
@@ -101,7 +92,7 @@ const DraggableContentSections = ({
           alt={label}
           style={{ width: '100%', height: 'auto', marginBottom: '8px', borderRadius: '4px' }}
         />
-        <strong className="element-name">{titles[configuration]}</strong>
+        <strong className="element-name">{label}</strong>
       </div>
     );
   }

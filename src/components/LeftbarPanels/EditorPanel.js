@@ -31,95 +31,48 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
     }
   }, [selectedElement, setViewMode]);
   const renderSettingsView = () => {
-    if (
-      selectedElement?.type === 'title' ||
-      selectedElement?.type === 'paragraph' ||
-      selectedElement?.type === 'blockquote' ||
-      selectedElement?.type === 'code' ||
-      selectedElement?.type === 'pre' ||
-      selectedElement?.type === 'caption'
-    ) {
-      return (
-        <TextualSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
+    if (!selectedElement) return <p>Select an element to edit its settings.</p>;
+
+    switch (selectedElement.type) {
+      case 'title':
+      case 'paragraph':
+      case 'blockquote':
+      case 'code':
+      case 'pre':
+      case 'caption':
+        return <TextualSettings settings={selectedElement.settings || {}} />;
+      case 'connectWalletButton':
+        return <WalletSettings settings={selectedElement.settings || {}} />;
+      case 'div':
+      case 'section':
+      case 'nav':
+      case 'footer':
+      case 'header':
+        return <BackgroundSettings settings={selectedElement.settings || {}} />;
+      case 'image':
+        return <ImageSettings settings={selectedElement.settings || {}} />;
+      case 'video':
+        return <VideoSettings settings={selectedElement.settings || {}} />;
+      case 'mintingSection':
+        return <CandyMachineSettings settings={selectedElement.settings || {}} />;
+      case 'defiSection':
+        return <DeFiSectionSettings selectedElement={selectedElement} />;
+      case 'anchor':
+      case 'span':
+      case 'button':
+      case 'icon':
+        if (selectedElement.label !== 'title') {
+          return <LinkSettings settings={selectedElement.settings || {}} />;
+        }
+        break;
+      case 'list':
+      case 'list-item':
+        return <ListSettings settings={selectedElement.settings || {}} />;
+      case 'form':
+        return <FormSettings settings={selectedElement.settings || {}} />;
+      default:
+        return <BackgroundSettings settings={selectedElement.settings || {}} />;
     }
-    if (selectedElement?.type === 'connectWalletButton') {
-      return (
-        <WalletSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }    
-    if (selectedElement?.type === 'div' || selectedElement?.type === 'section') {
-      return (
-        <BackgroundSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (selectedElement?.type === 'image') {
-      return (
-        <ImageSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (selectedElement?.type === 'video') {
-      return (
-        <VideoSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (selectedElement?.type === 'mintingSection') {
-      return (
-        <CandyMachineSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (selectedElement?.type === 'defiSection') {
-      return (
-        <DeFiSectionSettings
-          selectedElement={selectedElement}
-        />
-      );
-    }
-    if (
-      (selectedElement?.type === 'anchor' ||
-        selectedElement?.type === 'span' ||
-        selectedElement?.type === 'button' ||
-        selectedElement?.type === 'icon') &&
-      selectedElement.label !== 'title'
-    ) {
-      return (
-        <LinkSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (
-      selectedElement?.type === 'list' ||
-      selectedElement?.type === 'list-item'
-    ) {
-      return (
-        <ListSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (
-      selectedElement?.type === 'form' 
-    ) {
-      return (
-        <FormSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    return <p>No settings available for this element yet.</p>;
   };
 
   return (
@@ -141,6 +94,9 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
       <div className="editor-panel">
         {viewMode === 'style' ? (
           <div className="style-editor">
+            <CollapsibleSection title="Display">
+              <DisplayEditor />
+            </CollapsibleSection>
             <CollapsibleSection title="Typography">
               <TypographyEditor />
             </CollapsibleSection>
@@ -156,9 +112,6 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
             <CollapsibleSection title="Spacing">
               <SpacingEditor />
             </CollapsibleSection>
-            {/* <CollapsibleSection title="Display">
-              <DisplayEditor />
-            </CollapsibleSection> */}
           </div>
         ) : (
           <div className="settings-view">

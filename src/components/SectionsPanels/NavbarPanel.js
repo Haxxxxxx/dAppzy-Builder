@@ -4,9 +4,9 @@ import DraggableNavbar from '../../Elements/DraggableLayout/DraggableNavbar';
 const NavbarPanel = ({ contentListWidth, searchQuery }) => {
 
   const navbarConfigurations = [
-    { imgSrc: './img/previewcomponent.png', configuration: 'customTemplate', label: 'Custom Navbar' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'twoColumn', label: 'Two Column Navbar' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'threeColumn', label: 'Three Column Navbar' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'customTemplateNavbar', label: 'Custom Navbar' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'twoColumn', label: 'Two Columns' },
+    { imgSrc: './img/previewcomponent.png', configuration: 'threeColumn', label: 'Three Column' },
     { imgSrc: './img/previewcomponent.png', configuration: 'defiNavbar', label: 'DeFi Navbar' },
   ];
 

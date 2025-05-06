@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, forwardRef } from 'react';
 import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../context/EditableContext';
-import DropZone from '../utils/DropZone';
+import UnifiedDropZone from '../utils/UnifiedDropZone';
+import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 
 const ContentList = forwardRef(
@@ -97,18 +98,20 @@ const ContentList = forwardRef(
         }}
       >
         {!isPreviewMode && elements.length === 0 ? (
-          <DropZone
-            index={0}
-            onDrop={(item) => handleDrop(item, 0)}
-            text="Add layout"
-            className="first-dropzone"
-            scale={scale}
-            isDragging={isDragging}
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            onPanelToggle={handlePanelToggle}
-          />
+          <DropZoneErrorBoundary>
+            <UnifiedDropZone
+              index={0}
+              onDrop={(item) => handleDrop(item, 0)}
+              text="Add layout"
+              className="first-dropzone"
+              scale={scale}
+              isDragging={isDragging}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onPanelToggle={handlePanelToggle}
+            />
+          </DropZoneErrorBoundary>
         ) : (
           <>
             {elements
@@ -116,16 +119,18 @@ const ContentList = forwardRef(
               .map((element, index) => (
                 <React.Fragment key={element.id}>
                   {!isPreviewMode && (
-                    <DropZone
-                      index={index}
-                      onDrop={(item) => handleDrop(item, index)}
-                      text=""
-                      className="between-dropzone"
-                      isDragging={isDragging}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    />
+                    <DropZoneErrorBoundary>
+                      <UnifiedDropZone
+                        index={index}
+                        onDrop={(item) => handleDrop(item, index)}
+                        text=""
+                        className="between-dropzone"
+                        isDragging={isDragging}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      />
+                    </DropZoneErrorBoundary>
                   )}
                   {renderElement(
                     element,
@@ -143,17 +148,19 @@ const ContentList = forwardRef(
               ))}
 
             {!isPreviewMode && (
-              <DropZone
-                index={elements.length}
-                onDrop={(item) => handleDrop(item, elements.length)}
-                text="Click or Drop items here to add to the page"
-                className="default-dropzone"
-                isDragging={isDragging}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedElement('');
-                }}
-              />
+              <DropZoneErrorBoundary>
+                <UnifiedDropZone
+                  index={elements.length}
+                  onDrop={(item) => handleDrop(item, elements.length)}
+                  text="Click or Drop items here to add to the page"
+                  className="default-dropzone"
+                  isDragging={isDragging}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedElement('');
+                  }}
+                />
+              </DropZoneErrorBoundary>
             )}
           </>
         )}

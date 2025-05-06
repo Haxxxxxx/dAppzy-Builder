@@ -4,13 +4,13 @@ import DraggableDeFi from '../../Elements/DraggableLayout/DraggableDeFi';
 
 const Web3SectionPanel = ({ searchQuery }) => {
   const web3Configurations = [
-    { 
-      imgSrc: './img/previewcomponent.png', 
-      configuration: 'mintingSection',
-      type: 'mintingSection',
-      id: 'minting-section',
-      label: 'Minting Section',
-    },
+ //   { 
+ //     imgSrc: './img/previewcomponent.png', 
+ //     configuration: 'mintingSection',
+ //     type: 'mintingSection',
+ //     id: 'minting-section',
+ //     label: 'Minting Section',
+ //   },
     { 
       imgSrc: './img/previewcomponent.png', 
       configuration: 'defiSection',

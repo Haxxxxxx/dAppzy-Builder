@@ -16,10 +16,20 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
     setSelectedElement(elementData);
   };
 
+  // Handle keydown events to allow spaces
+  const handleKeyDown = (e) => {
+    if (e.key === ' ' && selectedElement?.id === id) {
+      e.preventDefault();
+      document.execCommand('insertText', false, ' ');
+    }
+  };
+
   // Update content on blur
   const handleBlur = (e) => {
     if (selectedElement?.id === id) {
-      updateContent(id, e.target.innerText.trim() || 'Editable Button'); // Default text if empty
+      // Only trim leading and trailing whitespace, preserve spaces between words
+      const newContent = e.target.innerText.replace(/^\s+|\s+$/g, '') || 'Editable Button';
+      updateContent(id, newContent);
     }
   };
 
@@ -37,13 +47,13 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
       onClick={handleSelect}
       contentEditable={selectedElement?.id === id}
       onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
       suppressContentEditableWarning={true}
       style={{
         ...customStyles, // Override with custom styles
         cursor: 'text',
         border: 'none',     // Remove any border
         outline: 'none'     // Remove focus outline
-
       }}
     >
       {content || 'Editable Button'}

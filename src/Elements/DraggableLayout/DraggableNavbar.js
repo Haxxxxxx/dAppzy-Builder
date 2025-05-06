@@ -5,6 +5,7 @@ import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 import DeFiNavbar from '../Sections/Navbars/DeFiNavbar';
+import { structureConfigurations } from '../../configs/structureConfigurations.js';
 
 const DraggableNavbar = ({
   id,
@@ -24,12 +25,29 @@ const DraggableNavbar = ({
   // DraggableNavbar.js
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    // rename config -> structure so handleDrop sees item.structure
-    item: {id, type: 'navbar', structure: configuration },
+    item: { 
+      id, 
+      type: 'navbar', 
+      configuration,
+      structure: configuration
+    },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-  }));
+    end: (item, monitor) => {
+      if (monitor.didDrop() && !isEditing) {
+        const navbarConfig = structureConfigurations[item.configuration];
+        if (navbarConfig) {
+          addNewElement('navbar', 1, null, null, {
+            ...navbarConfig,
+            configuration: item.configuration,
+            structure: item.configuration
+          });
+        }
+        setSelectedElement({ id: item.id, type: 'navbar', configuration: item.configuration });
+      }
+    },
+  }), [configuration, isEditing]);
 
   // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
@@ -38,8 +56,15 @@ const DraggableNavbar = ({
     const parentElement = findElementById(parentId, elements);
 
     if (parentElement) {
-      const newId = addNewElement(item.type, 1, null, parentId);
+      // Create a new element with the same type and configuration as the dropped item
+      const newId = addNewElement(item.type, 1, null, parentId, {
+        content: item.content || '',
+        styles: item.styles || {},
+        configuration: item.configuration,
+        settings: item.settings || {}
+      });
 
+      // Update the parent element's children
       setElements((prevElements) =>
         prevElements.map((el) =>
           el.id === parentId
@@ -50,12 +75,19 @@ const DraggableNavbar = ({
             : el
         )
       );
+
+      // Select the newly created element
+      setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
     }
   };
 
   // Find the current navbar and its children
   const navbar = findElementById(id, elements);
-  const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || [];
+  const configChildren = structureConfigurations[configuration]?.children || [];
+  const resolvedChildren = (navbar?.children || [])
+    .map((childId) => findElementById(childId, elements))
+    .filter(Boolean);
+  const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
@@ -80,12 +112,12 @@ const DraggableNavbar = ({
   }, [isModalOpen]);
 
 
-  const titles = {
-    twoColumn: 'Two Columns',
-    threeColumn: 'Three Columns',
-    customTemplate: '3S Navbar',
-    defiNavbar: 'DeFi Navbar',
-  };
+  //const titles = {
+  //  twoColumn: 'Two Columns',
+  //  threeColumn: 'Three Columns',
+  //  customTemplate: '3S Navbar',
+  //  defiNavbar: 'DeFi Navbar',
+  //};
 
   // Inside DraggableNavbar.js
   const handleSelect = (e) => {
@@ -107,7 +139,7 @@ const DraggableNavbar = ({
             borderRadius: '4px',
           }}
         />
-        <strong className='element-name'>{titles[configuration]}</strong>
+        <strong className='element-name'>{label}</strong>
         {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );
@@ -115,12 +147,12 @@ const DraggableNavbar = ({
 
   // Assign the correct navbar component
   let NavbarComponent;
-  if (configuration === 'customTemplate') {
+  if (configuration === 'customTemplateNavbar') {
     NavbarComponent = (
       <CustomTemplateNavbar
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={children}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
@@ -131,7 +163,7 @@ const DraggableNavbar = ({
     NavbarComponent = (
       <TwoColumnNavbar
         uniqueId={id}
-        children={children}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
@@ -143,7 +175,7 @@ const DraggableNavbar = ({
       <ThreeColumnNavbar
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={children}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
@@ -155,7 +187,7 @@ const DraggableNavbar = ({
       <DeFiNavbar
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={children}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}

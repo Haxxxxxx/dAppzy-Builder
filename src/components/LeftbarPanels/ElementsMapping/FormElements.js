@@ -1,12 +1,12 @@
 import elementIconPaths from '../../../Mapping/elementIconPaths';
 
 const FormElements = [
-  {
-    type: 'input',
-    label: 'Input',
-    description: 'A basic input field.',
-    icon: elementIconPaths.input,
-  },
+ // {
+ //   type: 'input',
+ //   label: 'Input',
+ //   description: 'A basic input field.',
+ //   icon: elementIconPaths.input,
+ // },
   {
     type: 'form',
     label: 'Form',

@@ -1,13 +1,22 @@
 // craco.config.js
 const webpack = require('webpack');
 const NodePolyfillWebpackPlugin = require('node-polyfill-webpack-plugin');
-const DotenvWebpackPlugin = require('dotenv-webpack');
 
 module.exports = {
   webpack: {
     configure: (webpackConfig) => {
-      // Add dotenv-webpack to load your .env file explicitly.
-      webpackConfig.plugins.push(new DotenvWebpackPlugin());
+      // Add source map warning suppression
+      webpackConfig.ignoreWarnings = [
+        ...(webpackConfig.ignoreWarnings || []),
+        {
+          module: /node_modules/,
+          message: /Failed to parse source map/,
+        },
+        {
+          module: /node_modules/,
+          message: /formatAbiParameters\.ts/,
+        }
+      ];
 
       // 1) Add NodePolyfillWebpackPlugin to automatically add polyfills
       webpackConfig.plugins.push(new NodePolyfillWebpackPlugin());
