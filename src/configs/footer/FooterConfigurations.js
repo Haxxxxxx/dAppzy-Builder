@@ -8,6 +8,10 @@ export const FooterConfigurations = {
       width: '100%',
       position: 'relative',
       bottom: 0,
+      padding: '16px 24px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
     },
     children: [
       {
@@ -29,70 +33,33 @@ export const FooterConfigurations = {
           fontSize: '1rem' 
         } 
       },
-      { 
-        type: 'link',
-        href: '/terms',
-        content: 'Terms of Service',
+      {
+        type: 'image',
+        content: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg',
         styles: {
-          color: '#bbb',
-          textDecoration: 'none',
-          fontSize: '0.9rem',
+          width: '24px',
+          height: '24px',
+          cursor: 'pointer',
+          transition: 'opacity 0.3s',
           ':hover': {
-            color: '#fff'
+            opacity: 0.7
           }
-        }
+        },
+        link: 'https://twitter.com/yourprofile'
       },
-      { 
-        type: 'link',
-        href: '/privacy',
-        content: 'Privacy Policy',
+      {
+        type: 'image',
+        content: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/github.svg',
         styles: {
-          color: '#bbb',
-          textDecoration: 'none',
-          fontSize: '0.9rem',
+          width: '24px',
+          height: '24px',
+          cursor: 'pointer',
+          transition: 'opacity 0.3s',
           ':hover': {
-            color: '#fff'
+            opacity: 0.7
           }
-        }
-      },
-      { 
-        type: 'link',
-        href: 'https://twitter.com',
-        content: '𝕏',
-        styles: {
-          color: '#bbb',
-          textDecoration: 'none',
-          fontSize: '1.2rem',
-          ':hover': {
-            color: '#fff'
-          }
-        }
-      },
-      { 
-        type: 'link',
-        href: 'https://discord.com',
-        content: 'Discord',
-        styles: {
-          color: '#bbb',
-          textDecoration: 'none',
-          fontSize: '1.2rem',
-          ':hover': {
-            color: '#fff'
-          }
-        }
-      },
-      { 
-        type: 'link',
-        href: 'https://github.com',
-        content: 'GitHub',
-        styles: {
-          color: '#bbb',
-          textDecoration: 'none',
-          fontSize: '1.2rem',
-          ':hover': {
-            color: '#fff'
-          }
-        }
+        },
+        link: 'https://github.com/yourrepo'
       }
     ]
   }

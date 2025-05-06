@@ -48,16 +48,14 @@ const LeftBar = ({
           <span className="material-symbols-outlined">settings</span>
         </button>
 
-        {/* AI Agent Chat Button */}
-        {aiChatStarted && (
-          <button
-            onClick={onShowAIPanel}
-            className={`icon-button ${openPanel === 'ai' ? 'active' : ''}`}
-            title="AI Agent Chat"
-          >
-            <span className="material-symbols-outlined">smart_toy</span>
-          </button>
-        )}
+        {/* AI Agent Button */}
+        <button
+          onClick={onShowAIPanel}
+          className={`icon-button ${openPanel === 'ai' ? 'active' : ''}`}
+          title="AI Assistant"
+        >
+          <span className="material-symbols-outlined">smart_toy</span>
+        </button>
       </div>
 
       <div className="help-center">

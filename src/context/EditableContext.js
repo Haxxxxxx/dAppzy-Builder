@@ -12,9 +12,21 @@ import {
   loadFromLocalStorage,
 } from '../utils/LeftBarUtils/storageUtils';
 import { structureConfigurations } from '../configs/structureConfigurations';
+import { NavbarConfigurations } from '../configs/navbar/NavbarConfigurations';
 
 export const EditableContext = createContext();
 export const ELEMENTS_VERSION = '1.0.0'; // Define the version constant
+
+function getConfigForElementType(type, configuration) {
+  if (type === 'navbar' && NavbarConfigurations[configuration]) {
+    return NavbarConfigurations[configuration];
+  }
+  if (structureConfigurations[configuration]) {
+    return structureConfigurations[configuration];
+  }
+  // Add more config lookups as needed
+  return null;
+}
 
 export const EditableProvider = ({ children, userId }) => {
   // Initialize state first
@@ -51,12 +63,6 @@ export const EditableProvider = ({ children, userId }) => {
   const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
     console.log('[addNewElement] type:', type, 'config:', config);
     
-    // If this is a second call for the same element type with children config, skip it
-    if (config && config.children && typeof config !== 'string') {
-      console.log('Skipping duplicate element creation');
-      return null;
-    }
-
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
       console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
@@ -111,60 +117,34 @@ export const EditableProvider = ({ children, userId }) => {
       baseElement.src = config?.src || 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7';
     }
   
-    // If a structure was provided and exists in structureConfigurations, create children accordingly.
-    if (structure && structureConfigurations[structure]) {
-      baseElement.styles = { ...baseElement.styles, ...(structureConfigurations[structure].styles || {}) };
-      const childrenElements = structureConfigurations[structure].children.map((child) => ({
-        id: generateUniqueId(child.type),
-        type: child.type,
-        content: child.content || '',
-        styles: child.styles || {},
-        label: child.label || '',
-        parentId: newId,
-      }));
-      baseElement.children = childrenElements.map((child) => child.id);
-  
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index || 0, 0, baseElement, ...childrenElements);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
-      }
-    } else if (config && config.children) {
-      // Handle custom configuration with children
-      baseElement.styles = { ...baseElement.styles, ...(config.styles || {}) };
-      const childrenElements = config.children.map((child) => ({
-        id: generateUniqueId(child.type),
-        type: child.type,
-        content: child.content || '',
-        styles: child.styles || {},
-        label: child.label || '',
-        parentId: newId,
-      }));
-      baseElement.children = childrenElements.map((child) => child.id);
-  
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index || 0, 0, baseElement, ...childrenElements);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
-      }
-    } else {
-      // No structure or custom configuration provided, so just add the base element.
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index || 0, 0, baseElement);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement]);
+    // If a configuration is specified and it has children, use only those children
+    if (config && config.configuration) {
+      const configObj = getConfigForElementType(type, config.configuration);
+      if (configObj && configObj.children) {
+        baseElement.styles = { ...baseElement.styles, ...(configObj.styles || {}) };
+        const childrenElements = configObj.children.map((child) => ({
+          ...child,
+          id: generateUniqueId(child.type),
+          parentId: newId,
+        }));
+        baseElement.children = childrenElements.map((child) => child.id);
+        if (!parentId) {
+          recordElementsUpdate((prev) => {
+            const newElements = [...prev];
+            newElements.splice(index || 0, 0, baseElement, ...childrenElements);
+            return newElements;
+          });
+        } else {
+          recordElementsUpdate((prev) => {
+            const newElements = [...prev];
+            const parentIdx = newElements.findIndex((el) => el.id === parentId);
+            if (parentIdx !== -1) {
+              newElements.splice(parentIdx + 1, 0, baseElement, ...childrenElements);
+            }
+            return newElements;
+          });
+        }
+        return newId;
       }
     }
   

@@ -179,7 +179,7 @@ const CTAOne = ({
       }
       return (
         <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId && activeDrop.index === index && (
+          {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
             <div
               className="drop-placeholder"
               style={{
@@ -210,7 +210,8 @@ const CTAOne = ({
         </React.Fragment>
       );
     });
-    // Render the bottom drop zone only if there’s an active drop on this container.
+
+    // Only add bottom drop zone if there's an active drop
     if (activeDrop && activeDrop.containerId === containerId) {
       childrenElements.push(
         <div

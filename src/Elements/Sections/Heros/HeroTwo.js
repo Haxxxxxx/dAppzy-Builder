@@ -108,6 +108,7 @@ const HeroTwo = ({
     onDragOver,
     onDrop,
     onDragEnd,
+    draggedId,
   } = useReorderDrop(findElementById, elements, setElements);
 
   const renderContainerChildren = (containerId) => {
@@ -198,33 +199,36 @@ const HeroTwo = ({
       );
     });
 
-    childrenElements.push(
-      <div
-        key="drop-zone-bottom"
-        style={{ height: '40px', width: '100%' }}
-        onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-        onDrop={(e) => onDrop(e, containerId)}
-      >
-        {activeDrop.containerId === containerId &&
-          activeDrop.index === container.children.length && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-              }}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-      </div>
-    );
+    // Only add the bottom drop zone if we're actually dragging something
+    if (draggedId) {
+      childrenElements.push(
+        <div
+          key="drop-zone-bottom"
+          style={{ height: '40px', width: '100%' }}
+          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
+          onDrop={(e) => onDrop(e, containerId)}
+        >
+          {activeDrop.containerId === containerId &&
+            activeDrop.index === container.children.length && (
+              <div
+                className="drop-placeholder"
+                style={{
+                  padding: '8px',
+                  border: '2px dashed #5C4EFA',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  backgroundColor: 'transparent',
+                  width: '100%',
+                  margin: '5px',
+                  fontFamily: 'Montserrat',
+                }}
+              >
+                Drop here – element will be dropped here
+              </div>
+            )}
+        </div>
+      );
+    }
 
     return childrenElements;
   };

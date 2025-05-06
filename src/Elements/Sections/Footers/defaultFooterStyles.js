@@ -60,6 +60,7 @@ export const SimplefooterStyles = {
   },
   templateFooter: {
     backgroundColor: '#4B5563',
+    
     color: '#D1D5DB',
     padding: '24px',
     display: 'flex',
@@ -159,30 +160,63 @@ export const TemplateFooterStyles = {
   footer: {
     backgroundColor: '#1F2937',
     color: '#D1D5DB',
-    padding: '24px',
+    padding: '32px 24px',
     display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '20px',
-    borderTop: '2px solid #374151',
+    flexDirection: 'column',
+    gap: '14px',
+    margin: '0',
   },
   navigationLinks: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: '16px',
-    justifyContent: 'flex-start',
+    gap: '14px',
+    justifyContent: 'center',
     alignItems: 'center',
+    margin: '0',
+  },
+  link: {
+    color: '#E5E7EB',
+    textDecoration: 'none',
+    fontSize: '1rem',
+    transition: 'color 0.2s ease',
+    cursor: 'pointer',
+    '&:hover': {
+      color: '#ffffff',
+    },
   },
   branding: {
-    flex: 1,
-    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+    margin: '0',
+  },
+  brandText: {
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    color: '#ffffff',
   },
   socialIcons: {
     display: 'flex',
-    gap: '12px',
-    justifyContent: 'flex-end',
+    gap: '16px',
+    justifyContent: 'center',
     alignItems: 'center',
+    margin: '0',
+  },
+  socialIcon: {
+    width: '24px',
+    height: '24px',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s ease',
+    '&:hover': {
+      opacity: 0.8,
+    },
+  },
+  copyright: {
+    fontSize: '0.9rem',
+    color: '#9CA3AF',
+    textAlign: 'center',
+    margin: '0',
   },
 };
 
@@ -196,7 +230,7 @@ export const DeFiFooterStyles = {
     alignItems: 'center',
     maxWidth: '1200px',
     margin: '0 auto',
-    borderTop: '1px solid #333',
+    padding: '12px',
   },
   logoContainer: {
     display: 'flex',

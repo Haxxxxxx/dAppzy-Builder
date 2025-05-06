@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
+  import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 
 const DeFiNavbar = ({
@@ -69,34 +69,54 @@ const DeFiNavbar = ({
     >
       {/* Logo and Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {children[0] && children[0].type === 'image' && (
-          <Image
-            key={children[0].id}
-            id={children[0].id}
-            src={children[0].content || 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7'}
-            styles={{
-              ...children[0].styles,
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              objectFit: 'cover',
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-          />
-        )}
-        {children[1] && children[1].type === 'span' && (
-          <Span
-            key={children[1].id}
-            id={children[1].id}
-            content={children[1].content}
-            styles={{
-              ...children[1].styles,
-              color: children[1].styles?.color || '#1a1a1a',
-              cursor: 'pointer',
-            }}
-          />
-        )}
+        {children.slice(0, 2).map((child) => (
+          <React.Fragment key={child.id}>
+            {child.type === 'image' && (
+              <div style={{ position: 'relative', boxSizing: 'border-box' }}>
+                <img
+                  src={child.content}
+                  alt="Logo"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    objectFit: 'cover',
+                  }}
+                />
+              </div>
+            )}
+            {child.type === 'span' && (
+              <Span
+                style={{
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  marginLeft: '12px',
+                }}
+              >
+                {child.content}
+              </Span>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* Connect Wallet Button */}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {children.slice(2).map((child) => (
+          <React.Fragment key={child.id}>
+            {child.type === 'connectWalletButton' && (
+              <ConnectWalletButton
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...child.styles,
+                  marginLeft: 'auto',
+                }}
+              />
+            )}
+          </React.Fragment>
+        ))}
       </div>
 
       {/* Compact Menu */}

@@ -5,6 +5,7 @@ import SectionOne from '../Sections/ContentSections/SectionOne';
 import SectionTwo from '../Sections/ContentSections/SectionTwo';
 import SectionThree from '../Sections/ContentSections/SectionThree';
 import SectionFour from '../Sections/ContentSections/SectionFour';
+import StructurePanel from '../../components/LeftbarPanels/StructurePanel';
 
 const DraggableContentSections = ({
   id,
@@ -37,7 +38,7 @@ const DraggableContentSections = ({
     }),
   }));
 
-  // Handle drop events within the section (if needed)
+  // Handle drop events within the section
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
     const parentElement = findElementById(parentId, elements);
@@ -78,9 +79,12 @@ const DraggableContentSections = ({
   }, [isModalOpen]);
 
   // Set the current element as selected on click
-  const handleSelect = (e) => {
+  const handleSelect = (e, elementId) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'ContentSection', styles: sectionElement?.styles });
+    const element = findElementById(elementId, elements);
+    if (element) {
+      setSelectedElement(element);
+    }
   };
 
   // Render a preview with description if required
@@ -135,7 +139,7 @@ const DraggableContentSections = ({
         handleSelect={handleSelect}
       />
     );
-  }else if (configuration === 'sectionFour') {
+  } else if (configuration === 'sectionFour') {
     SectionComponent = (
       <SectionFour
         uniqueId={id}
@@ -150,23 +154,79 @@ const DraggableContentSections = ({
   }
 
   return (
-    <div
-      ref={drag}
-      style={{
-        cursor: 'pointer',
-        border: isDragging ? '1px dashed #000' : 'none',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onClick={(e) => {
-        toggleModal();
-      }}
-    >
-      <strong>{label}</strong>
-      {SectionComponent}
-    </div>
+    <>
+      <div
+        ref={drag}
+        style={{
+          cursor: 'pointer',
+          border: isDragging ? '1px dashed #000' : 'none',
+          backgroundColor: '#f9f9f9',
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleModal();
+        }}
+      >
+        <strong>{label}</strong>
+        {SectionComponent}
+      </div>
+
+      {isModalOpen && (
+        <div
+          ref={modalRef}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+          onClick={(e) => {
+            if (e.target === modalRef.current) {
+              toggleModal();
+            }
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              width: '80%',
+              maxWidth: '800px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>Edit Structure</h2>
+            <StructurePanel />
+            <button
+              onClick={toggleModal}
+              style={{
+                marginTop: '20px',
+                padding: '8px 16px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

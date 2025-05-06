@@ -55,12 +55,12 @@ const AIAgentPanel = ({
     scrollToBottom();
   }, [localMessages]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  const handleSendMessage = async (messageContent) => {
+    if (!messageContent?.trim()) return;
 
     const userMessage = {
       role: 'user',
-      content: inputValue
+      content: messageContent
     };
 
     // Update both local and parent state
@@ -69,7 +69,6 @@ const AIAgentPanel = ({
     if (setMessagesProp) {
       setMessagesProp(newMessages);
     }
-    setInputValue('');
 
     try {
       let aiResponse;
@@ -216,6 +215,7 @@ const AIAgentPanel = ({
 
   // Only show input bar if we're in the initial state and not in the AI panel
   if (!initialMessages && !localMessages.length && !onSecondPrompt) {
+    console.log("AIAgentPanel: rendering fallback input bar");
     return (
       <div className="ai-absolute-input-bar-wrapper">
         <form className="ai-absolute-input-bar" onSubmit={handleIntermediateSubmit}>
@@ -279,125 +279,33 @@ const AIAgentPanel = ({
   return (
     <div className="ai-agent-panel ai-panel-modern">
       <div className="ai-panel-header">
-        <span className="ai-panel-pill">Structure creation</span>
+        <span className="ai-panel-pill">AI Assistant</span>
         <div className="ai-panel-header-actions">
           <span className="material-symbols-outlined ai-panel-header-icon" onClick={() => setSelectedElement(null)}>select_all</span>
           <span className="material-symbols-outlined ai-panel-header-icon" onClick={onClosePanel}>close</span>
         </div>
       </div>
-      <div className="ai-panel-wip-banner">
-        <span className="material-symbols-outlined">construction</span>
-        <span>Work in Progress</span>
-      </div>
-      <div 
-        className="ai-agent-messages ai-panel-messages-modern"
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          height: 'calc(100% - 120px)', // Adjust based on header and input height
-        }}
-      >
-        {localMessages.map((message, index) => {
-          return (
-            <div 
-              key={index} 
-              className={`message ${message.role}`}
-              style={{
-                display: 'flex',
-                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-              }}
-            >
-              {message.image && (
-                <div className="ai-image-message">
-                  <img 
-                    src={message.image} 
-                    alt={message.imageName || 'Uploaded content'} 
-                    style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: '8px', marginBottom: '8px' }} 
-                  />
-                  <div className="ai-image-message-name">{message.imageName}</div>
-                </div>
-              )}
-              <div 
-                className="message-content"
-                style={{
-                  maxWidth: '85%',
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                }}
-              >
-                {message.content}
-              </div>
-            </div>
-          );
-        })}
+      <div className="ai-agent-messages ai-panel-messages-modern">
+        {localMessages.map((message, index) => (
+          <div key={index} className={`ai-message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}>
+            {message.content}
+          </div>
+        ))}
         <div ref={messagesEndRef} />
       </div>
-      {/* Selected element chip(s) just above the input bar */}
-      {selectedElement && (
-        <div className="ai-element-chip-row">
-          {/* Image chip, if present */}
-          {(selectedElement.image || (selectedElement.styles && selectedElement.styles.backgroundImage)) && (
-            <div className="ai-element-chip">
-              <span className="material-symbols-outlined ai-element-chip-icon">image</span>
-              <span className="ai-element-chip-label">
-                {selectedElement.image ? 'Image.png' : 'Image'}
-              </span>
-              <span className="material-symbols-outlined ai-element-chip-remove" onClick={() => setSelectedElement(null)}>close</span>
-            </div>
-          )}
-          {/* Name/component chip */}
-          <div className="ai-element-chip">
-            <span className="material-symbols-outlined ai-element-chip-icon">widgets</span>
-            <span className="ai-element-chip-label">
-              {selectedElement.content || selectedElement.type || 'Component name'}
-            </span>
-            <span className="material-symbols-outlined ai-element-chip-remove" onClick={() => setSelectedElement(null)}>close</span>
-          </div>
-          {/* Info button */}
-          <div className="ai-element-info-button" onClick={() => setShowFeatures(!showFeatures)}>
-            <span className="material-symbols-outlined">info</span>
-          </div>
-        </div>
-      )}
-      {showFeatures && selectedElement && (
-        <div className="element-features-list">
-          <h4>Available Features for {selectedElement.type}</h4>
-          <ul>
-            {implementedFeatures.map((feature, index) => (
-              <li key={index}>{feature}</li>
-            ))}
-          </ul>
-        </div>
-      )}
       <div className="ai-panel-footer">
-        <div className="ai-panel-footer-actions">
-          <button className="ai-footer-action-btn">
-            <span className="material-symbols-outlined">attach_file</span> Add file
-          </button>
-          <button className="ai-footer-action-btn" onClick={handleElementSelect}>
-            <span className="material-symbols-outlined">select_all</span> Select Element
-          </button>
-        </div>
-        <form className="ai-panel-footer-inputbar" onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}>
+        <form className="ai-panel-footer-inputbar" onSubmit={(e) => {
+          e.preventDefault();
+          const input = e.target.querySelector('input');
+          if (input.value.trim()) {
+            handleSendMessage(input.value);
+            input.value = '';
+          }
+        }}>
           <input
             type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            placeholder={
-              selectedElement && selectedElement.type === 'defiSection'
-                ? 'Edit DeFi Dashboard section...'
-                : selectedElement
-                  ? `Edit ${selectedElement.type}...`
-                  : 'Ask anything'
-            }
+            placeholder="Ask anything"
+            className="ai-panel-input"
           />
           <button type="submit" className="ai-panel-footer-sendbtn">
             <span className="material-symbols-outlined">arrow_forward</span>

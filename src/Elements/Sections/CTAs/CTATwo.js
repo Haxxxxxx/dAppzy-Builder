@@ -218,26 +218,25 @@ const CTATwo = ({
 
       return (
         <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === index && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-                onDragOver={(e) => onDragOver(e, containerId, index)}
-                onDrop={(e) => onDrop(e, containerId)}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
+          {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+              onDragOver={(e) => onDragOver(e, containerId, index)}
+              onDrop={(e) => onDrop(e, containerId)}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
           <span
             draggable
             onDragStart={(e) => onDragStart(e, child.id)}
@@ -251,43 +250,32 @@ const CTATwo = ({
       );
     });
 
-    // Only render an extra drop zone if the container is empty
-    // or if a drop is active exactly at the bottom.
-    if (
-      container.children.length === 0 ||
-      (activeDrop.containerId === containerId &&
-        activeDrop.index === container.children.length)
-    ) {
+    // Only add bottom drop zone if there's an active drop
+    if (activeDrop && activeDrop.containerId === containerId) {
       childrenElements.push(
         <div
           key="drop-zone-bottom"
-          style={{
-            height: container.children.length === 0 ? '40px' : 'auto',
-            width: '100%',
-          }}
-          onDragOver={(e) =>
-            onDragOver(e, containerId, container.children.length)
-          }
+          style={{ height: '40px', width: '100%' }}
+          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
           onDrop={(e) => onDrop(e, containerId)}
         >
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === container.children.length && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
+          {activeDrop.index === container.children.length && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
         </div>
       );
     }

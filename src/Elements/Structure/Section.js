@@ -106,7 +106,7 @@ const Section = ({
         ...styles,
         position: 'relative',
         padding: styles.padding || '10px',
-        margin: styles.margin || '10px 0',
+        margin: styles.margin || '0',
         backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
       }}
     >

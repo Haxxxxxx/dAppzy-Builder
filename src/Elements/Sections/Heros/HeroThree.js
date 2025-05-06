@@ -148,6 +148,7 @@ const HeroThree = ({
     onDragOver,
     onDrop,
     onDragEnd,
+    draggedId,
   } = useReorderDrop(findElementById, elements, setElements);
 
   const renderContainerChildren = (containerId) => {
@@ -184,30 +185,17 @@ const HeroThree = ({
             styles={{ ...CustomTemplateHeroStyles.heroDescription, ...(child.styles || {}) }}
           />
         ) : child.type === 'button' ? (
-          (() => {
-            const isPrimary = buttonCount === 0;
-            buttonCount++;
-            return (
-              <span
-                key={child.id}
-                draggable
-                onDragStart={(e) => onDragStart(e, child.id)}
-                onDragOver={(e) => onDragOver(e, containerId, index)}
-                onDragEnd={onDragEnd}
-                style={{ display: 'inline-block' }}
-              >
-                <Button
-                  id={child.id}
-                  content={child.content}
-                  styles={
-                    isPrimary
-                      ? { ...CustomTemplateHeroStyles.primaryButton, ...(child.styles || {}) }
-                      : { ...CustomTemplateHeroStyles.secondaryButton, ...(child.styles || {}) }
-                  }
-                />
-              </span>
-            );
-          })()
+          <Button
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...(buttonCount === 0
+                ? CustomTemplateHeroStyles.primaryButton
+                : CustomTemplateHeroStyles.secondaryButton),
+              ...(child.styles || {}),
+            }}
+          />
         ) : child.type === 'image' ? (
           <Image
             key={child.id}
@@ -230,10 +218,8 @@ const HeroThree = ({
           )
         );
 
-      // If this is a button, add it to our buttons array
       if (child.type === 'button') {
-        buttons.push(childContent);
-        return null; // Don't render the button here
+        buttonCount++;
       }
 
       return (
@@ -271,43 +257,36 @@ const HeroThree = ({
       );
     });
 
-    // Add the button container if we have any buttons
-    if (buttons.length > 0) {
+    // Only add the bottom drop zone if we're actually dragging something
+    if (draggedId) {
       childrenElements.push(
-        <div key="button-container" style={CustomTemplateHeroStyles.buttonContainer}>
-          {buttons}
+        <div
+          key="drop-zone-bottom"
+          style={{ height: '40px', width: '100%' }}
+          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
+          onDrop={(e) => onDrop(e, containerId)}
+        >
+          {activeDrop.containerId === containerId &&
+            activeDrop.index === container.children.length && (
+              <div
+                className="drop-placeholder"
+                style={{
+                  padding: '8px',
+                  border: '2px dashed #5C4EFA',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  backgroundColor: 'transparent',
+                  width: '100%',
+                  margin: '5px',
+                  fontFamily: 'Montserrat',
+                }}
+              >
+                Drop here – element will be dropped here
+              </div>
+            )}
         </div>
       );
     }
-
-    // Add the drop zone at the bottom
-    childrenElements.push(
-      <div
-        key="drop-zone-bottom"
-        style={{ height: '40px', width: '100%' }}
-        onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-        onDrop={(e) => onDrop(e, containerId)}
-      >
-        {activeDrop.containerId === containerId &&
-          activeDrop.index === container.children.length && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-              }}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-      </div>
-    );
 
     return childrenElements;
   };

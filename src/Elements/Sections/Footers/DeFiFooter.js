@@ -104,39 +104,35 @@ const DeFiFooter = ({
         )}
       </div>
       <div style={DeFiFooterStyles.rightLinksContainer}>
-        {(children || [])[4]?.type === 'link' && (
-          <LinkBlock
-            key={children[4].id}
-            id={children[4].id}
-            content={children[4].content}
-            styles={{
-              ...DeFiFooterStyles.link,
-              ...children[4].styles,
-            }}
-          />
-        )}
-        {(children || [])[5]?.type === 'link' && (
-          <LinkBlock
-            key={children[5].id}
-            id={children[5].id}
-            content={children[5].content}
-            styles={{
-              ...DeFiFooterStyles.link,
-              ...children[5].styles,
-            }}
-          />
-        )}
-        {(children || [])[6]?.type === 'link' && (
-          <LinkBlock
-            key={children[6].id}
-            id={children[6].id}
-            content={children[6].content}
-            styles={{
-              ...DeFiFooterStyles.link,
-              ...children[6].styles,
-            }}
-          />
-        )}
+        {(children || []).slice(4).map((child) => {
+          if (child.type === 'image' && child.link) {
+            return (
+              <a
+                key={child.id}
+                href={child.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-block' }}
+              >
+                <img src={child.content} style={child.styles} alt="social icon" />
+              </a>
+            );
+          } else if (child.type === 'link') {
+            return (
+              <LinkBlock
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...DeFiFooterStyles.link,
+                  ...child.styles,
+                }}
+              />
+            );
+          } else {
+            return null;
+          }
+        })}
       </div>
     </footer>
   );

@@ -115,10 +115,11 @@ export const NavbarConfigurations = {
         styles: { 
           color: '#fff', 
           fontWeight: 'bold', 
-          fontSize: '1.2rem' 
+          fontSize: '1.2rem',
+          marginLeft: '12px'
         } 
       },
-      { 
+      {
         type: 'connectWalletButton',
         content: 'Connect Wallet',
         styles: {
@@ -131,9 +132,9 @@ export const NavbarConfigurations = {
           fontSize: '14px',
           fontWeight: '500',
           transition: 'all 0.2s ease',
-          marginLeft: '16px',
+          marginLeft: 'auto',
           ':hover': {
-            opacity: '0.9'
+            backgroundColor: '#475569'
           }
         },
         settings: {

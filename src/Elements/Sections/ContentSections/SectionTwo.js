@@ -38,7 +38,7 @@ const SectionTwo = ({
     [elements, uniqueId]
   );
 
-  // Register four containers: label, content, buttons, and image.
+  // Register containers
   useEffect(() => {
     registerContainer(
       uniqueId,
@@ -72,10 +72,9 @@ const SectionTwo = ({
       setElements,
       findElementById
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uniqueId, elements]);
+  }, [uniqueId]);
 
-  // Inject default content only once.
+  // Inject default content only once
   useEffect(() => {
     if (defaultInjectedRef.current) return;
 
@@ -87,7 +86,6 @@ const SectionTwo = ({
             sectionElement.configuration.children) ||
           [];
 
-    // Mapping: span -> label, heading & paragraph -> content, button -> buttons, image -> image.
     const mapping = {
       span: 'label',
       heading: 'content',
@@ -104,10 +102,7 @@ const SectionTwo = ({
 
     if (
       defaultContent.length > 0 &&
-      labelContainer &&
-      contentContainer &&
-      buttonsContainer &&
-      imageContainer &&
+      labelContainer && contentContainer && buttonsContainer && imageContainer &&
       labelContainer.children.length === 0 &&
       contentContainer.children.length === 0 &&
       buttonsContainer.children.length === 0 &&
@@ -124,18 +119,14 @@ const SectionTwo = ({
       );
       defaultInjectedRef.current = true;
     }
-  }, [
-    children,
-    sectionElement,
-    elements,
-    uniqueId,
-    addNewElement,
-    setElements,
-    findElementById,
-  ]);
+  }, [children, sectionElement, elements, uniqueId, addNewElement, setElements, findElementById]);
 
-  // Generic drop handler for new items dropped onto the section.
+  // Generic drop handler for new items dropped onto the section
   const handleSectionDrop = (droppedItem, parentId = uniqueId) => {
+    if (droppedItem.id) {
+      return;
+    }
+
     const newId = addNewElement(
       droppedItem.type,
       droppedItem.level || 1,
@@ -151,27 +142,27 @@ const SectionTwo = ({
     );
   };
 
-  // Enable drop functionality on the entire section.
+  // Drop and reorder hooks
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
-    onDropItem: (item) => handleSectionDrop(item, uniqueId),
+    onDropItem: handleSectionDrop,
   });
 
-  // Use our custom hook for drag and drop reordering.
   const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
     findElementById,
     elements,
     setElements
   );
 
-  const handleInnerDivClick = (e, divId) => {
+  const handleInnerDivClick = (e, containerId) => {
     e.stopPropagation();
-    const element = findElementById(divId, elements);
-    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
+    const container = findElementById(containerId, elements);
+    if (container) {
+      setSelectedElement(container);
+    }
   };
 
-  // Helper to render children within a container with drop placeholders.
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
@@ -189,6 +180,7 @@ const SectionTwo = ({
               id={child.id}
               content={child.content}
               styles={{ ...sectionTwoStyles.heading, ...(child.styles || {}) }}
+              onClick={(e) => handleSelect(e, child.id)}
             />
           );
           break;
@@ -199,6 +191,7 @@ const SectionTwo = ({
               id={child.id}
               content={child.content}
               styles={{ ...sectionTwoStyles.paragraph, ...(child.styles || {}) }}
+              onClick={(e) => handleSelect(e, child.id)}
             />
           );
           break;
@@ -208,12 +201,8 @@ const SectionTwo = ({
               key={child.id}
               id={child.id}
               content={child.content}
-              styles={
-                // For example, use primary for the first button and secondary for the rest.
-                index === 0
-                  ? { ...sectionTwoStyles.primaryButton, ...(child.styles || {}) }
-                  : { ...sectionTwoStyles.secondaryButton, ...(child.styles || {}) }
-              }
+              styles={{ ...sectionTwoStyles.primaryButton, ...(child.styles || {}) }}
+              onClick={(e) => handleSelect(e, child.id)}
             />
           );
           break;
@@ -226,6 +215,7 @@ const SectionTwo = ({
               styles={{ ...sectionTwoStyles.image, ...(child.styles || {}) }}
               handleOpenMediaPanel={handleOpenMediaPanel}
               handleDrop={(item) => handleSectionDrop(item, child.id)}
+              onClick={(e) => handleSelect(e, child.id)}
             />
           );
           break;
@@ -236,6 +226,7 @@ const SectionTwo = ({
               id={child.id}
               content={child.content}
               styles={{ ...sectionTwoStyles.label, ...(child.styles || {}) }}
+              onClick={(e) => handleSelect(e, child.id)}
             />
           );
           break;
@@ -286,18 +277,15 @@ const SectionTwo = ({
       );
     });
 
-    // Only render an extra drop zone if an active drop is present at the bottom.
-    if (
-      activeDrop.containerId === containerId &&
-      activeDrop.index === container.children.length
-    ) {
-      childrenElements.push(
-        <div
-          key="drop-zone-bottom"
-          style={{ height: '40px', width: '100%' }}
-          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-          onDrop={(e) => onDrop(e, containerId)}
-        >
+    // Add drop zone at the bottom
+    childrenElements.push(
+      <div
+        key="drop-zone-bottom"
+        style={{ height: '40px', width: '100%' }}
+        onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
+        onDrop={(e) => onDrop(e, containerId)}
+      >
+        {activeDrop.containerId === containerId && activeDrop.index === container.children.length && (
           <div
             className="drop-placeholder"
             style={{
@@ -313,35 +301,25 @@ const SectionTwo = ({
           >
             Drop here – element will be dropped here
           </div>
-        </div>
-      );
-    }
+        )}
+      </div>
+    );
 
     return childrenElements;
   };
 
-  // Merge overall Section styles.
-  useEffect(() => {
-    if (sectionElement) {
-      const merged = mergeStyles(sectionTwoStyles.sectionContainer, sectionElement.styles);
-      if (sectionElement.styles.display !== merged.display) {
-        updateStyles(sectionElement.id, merged);
-      }
-    }
-  }, [sectionElement, updateStyles]);
-
-  const mergedSectionStyles = mergeStyles(sectionTwoStyles.sectionContainer, sectionElement?.styles);
-
-  // Retrieve container elements for conditional rendering.
-  const labelContainer = findElementById(`${uniqueId}-label`, elements);
-  const contentContainer = findElementById(`${uniqueId}-content`, elements);
-  const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
-  const imageContainer = findElementById(`${uniqueId}-image`, elements);
+  const mergedSectionStyles = mergeStyles(
+    sectionTwoStyles.section,
+    sectionElement?.styles || {}
+  );
 
   return (
     <Section
       id={uniqueId}
-      style={{ ...mergedSectionStyles, ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}) }}
+      style={{
+        ...mergedSectionStyles,
+        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+      }}
       onClick={(e) => {
         e.stopPropagation();
         handleSelect(e, uniqueId);
@@ -351,54 +329,56 @@ const SectionTwo = ({
         drop(node);
       }}
     >
-      {labelContainer && labelContainer.children && labelContainer.children.length > 0 && (
-        <Div
-          id={`${uniqueId}-label`}
-          parentId={`${uniqueId}-label`}
-          styles={{ ...sectionTwoStyles.labelContainer }}
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-label`)}
-          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-label`)}
-        >
-          {renderContainerChildren(`${uniqueId}-label`)}
-        </Div>
-      )}
-      {contentContainer && contentContainer.children && contentContainer.children.length > 0 && (
-        <Div
-          id={`${uniqueId}-content`}
-          parentId={`${uniqueId}-content`}
-          styles={{ ...sectionTwoStyles.contentWrapper }}
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-content`)}
-          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
-        >
-          {renderContainerChildren(`${uniqueId}-content`)}
-        </Div>
-      )}
-      {buttonsContainer && buttonsContainer.children && buttonsContainer.children.length > 0 && (
-        <Div
-          id={`${uniqueId}-buttons`}
-          parentId={`${uniqueId}-buttons`}
-          styles={{ ...sectionTwoStyles.buttonContainer }}
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-buttons`)}
-          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-buttons`)}
-        >
-          {renderContainerChildren(`${uniqueId}-buttons`)}
-        </Div>
-      )}
-      {imageContainer && imageContainer.children && imageContainer.children.length > 0 && (
-        <Div
-          id={`${uniqueId}-image`}
-          parentId={`${uniqueId}-image`}
-          styles={{ ...sectionTwoStyles.imageContainer }}
-          handleOpenMediaPanel={handleOpenMediaPanel}
-          onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-image`)}
-          onClick={(e) => handleInnerDivClick(e, `${uniqueId}-image`)}
-        >
-          {renderContainerChildren(`${uniqueId}-image`)}
-        </Div>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {findElementById(`${uniqueId}-label`, elements) && (
+          <Div
+            id={`${uniqueId}-label`}
+            parentId={`${uniqueId}-label`}
+            styles={{ ...sectionTwoStyles.labelContainer }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-label`)}
+            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-label`)}
+          >
+            {renderContainerChildren(`${uniqueId}-label`)}
+          </Div>
+        )}
+        {findElementById(`${uniqueId}-content`, elements) && (
+          <Div
+            id={`${uniqueId}-content`}
+            parentId={`${uniqueId}-content`}
+            styles={{ ...sectionTwoStyles.contentWrapper }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-content`)}
+            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
+          >
+            {renderContainerChildren(`${uniqueId}-content`)}
+          </Div>
+        )}
+        {findElementById(`${uniqueId}-buttons`, elements) && (
+          <Div
+            id={`${uniqueId}-buttons`}
+            parentId={`${uniqueId}-buttons`}
+            styles={{ ...sectionTwoStyles.buttonContainer }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-buttons`)}
+            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-buttons`)}
+          >
+            {renderContainerChildren(`${uniqueId}-buttons`)}
+          </Div>
+        )}
+        {findElementById(`${uniqueId}-image`, elements) && (
+          <Div
+            id={`${uniqueId}-image`}
+            parentId={`${uniqueId}-image`}
+            styles={{ ...sectionTwoStyles.imageContainer }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-image`)}
+            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-image`)}
+          >
+            {renderContainerChildren(`${uniqueId}-image`)}
+          </Div>
+        )}
+      </div>
     </Section>
   );
 };
