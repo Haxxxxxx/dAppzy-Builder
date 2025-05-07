@@ -13,7 +13,10 @@ const WalletContext = createContext({
   walletId: '',
   disconnect: () => {},
   setIsConnected: () => {},
-  setWalletAddress: () => {}
+  setWalletAddress: () => {},
+  connectWallet: async () => {},
+  disconnectWallet: async () => {},
+  error: null
 });
 
 export const useWalletContext = () => {
@@ -41,12 +44,13 @@ export const WalletProvider = ({ children }) => {
 };
 
 const WalletContextProvider = ({ children }) => {
-  const { publicKey, connected, disconnect } = useWallet();
+  const { publicKey, connected, disconnect: solanaDisconnect } = useWallet();
   const [walletAddress, setWalletAddress] = useState('');
   const [balance, setBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [walletId, setWalletId] = useState('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (connected && publicKey) {
@@ -69,15 +73,79 @@ const WalletContextProvider = ({ children }) => {
     }
   }, [connected, publicKey]);
 
+  const connectWallet = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (window.ethereum) {
+        // Handle Ethereum wallet
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          setWalletId(accounts[0]);
+          setIsWalletConnected(true);
+        }
+      } else if (window.solana) {
+        // Handle Solana wallet
+        const { publicKey } = await window.solana.connect();
+        if (publicKey) {
+          const address = publicKey.toString();
+          setWalletAddress(address);
+          setWalletId(address);
+          setIsWalletConnected(true);
+        }
+      } else {
+        throw new Error('No supported wallet found');
+      }
+    } catch (err) {
+      console.error('Error connecting wallet:', err);
+      setError(err.message || 'Failed to connect wallet');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const disconnectWallet = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (window.ethereum) {
+        // Ethereum doesn't have a standard disconnect method
+        setWalletAddress('');
+        setWalletId('');
+        setIsWalletConnected(false);
+      } else if (window.solana) {
+        await solanaDisconnect();
+      }
+      
+      setWalletAddress('');
+      setWalletId('');
+      setIsWalletConnected(false);
+      setBalance(0);
+    } catch (err) {
+      console.error('Error disconnecting wallet:', err);
+      setError(err.message || 'Failed to disconnect wallet');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     walletAddress,
     balance,
     isConnected: isWalletConnected || connected,
     isLoading,
     walletId,
-    disconnect,
+    disconnect: solanaDisconnect,
     setIsConnected: setIsWalletConnected,
-    setWalletAddress
+    setWalletAddress,
+    connectWallet,
+    disconnectWallet,
+    error
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

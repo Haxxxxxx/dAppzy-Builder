@@ -38,47 +38,74 @@ const DraggableNavbar = ({
       if (monitor.didDrop() && !isEditing) {
         const navbarConfig = structureConfigurations[item.configuration];
         if (navbarConfig) {
-          addNewElement('navbar', 1, null, null, {
-            ...navbarConfig,
-            configuration: item.configuration,
-            structure: item.configuration
-          });
+          // Check if a navbar with this configuration already exists in the current section
+          const dropResult = monitor.getDropResult();
+          const targetSectionId = dropResult?.sectionId;
+          
+          if (targetSectionId) {
+            const sectionElement = findElementById(targetSectionId, elements);
+            const existingNavbar = sectionElement?.children
+              ?.map(childId => findElementById(childId, elements))
+              ?.find(el => el?.type === 'navbar' && el?.configuration === item.configuration);
+
+            if (!existingNavbar) {
+              // Only create a new navbar if one doesn't exist in the section
+              addNewElement('navbar', 1, null, targetSectionId, {
+                ...navbarConfig,
+                configuration: item.configuration,
+                structure: item.configuration
+              });
+            }
+          }
         }
         setSelectedElement({ id: item.id, type: 'navbar', configuration: item.configuration });
       }
     },
-  }), [configuration, isEditing]);
+  }), [configuration, isEditing, elements]);
 
   // Handle dropping items inside this navbar
   const onDropItem = (item, parentId) => {
     if (!item || !parentId) return;
 
     const parentElement = findElementById(parentId, elements);
+    if (!parentElement) return;
 
-    if (parentElement) {
-      // Create a new element with the same type and configuration as the dropped item
-      const newId = addNewElement(item.type, 1, null, parentId, {
-        content: item.content || '',
-        styles: item.styles || {},
-        configuration: item.configuration,
-        settings: item.settings || {}
-      });
+    // Check if the item being dropped is a navbar
+    if (item.type === 'navbar') {
+      // Check if a navbar with this configuration already exists in the parent section
+      const sectionElement = findElementById(parentElement.parentId, elements);
+      const existingNavbar = sectionElement?.children
+        ?.map(childId => findElementById(childId, elements))
+        ?.find(el => el?.type === 'navbar' && el?.configuration === item.configuration);
 
-      // Update the parent element's children
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === parentId
-            ? {
+      if (existingNavbar) {
+        // If a navbar with this configuration exists, don't create a new one
+        return;
+      }
+    }
+
+    // Create a new element with the same type and configuration as the dropped item
+    const newId = addNewElement(item.type, 1, null, parentId, {
+      content: item.content || '',
+      styles: item.styles || {},
+      configuration: item.configuration,
+      settings: item.settings || {}
+    });
+
+    // Update the parent element's children
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === parentId
+          ? {
               ...el,
               children: [...new Set([...el.children, newId])], // Ensure unique children
             }
-            : el
-        )
-      );
+          : el
+      )
+    );
 
-      // Select the newly created element
-      setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
-    }
+    // Select the newly created element
+    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
   };
 
   // Find the current navbar and its children
