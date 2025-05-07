@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
@@ -6,6 +6,12 @@ import useReorderDrop from '../../../utils/useReorderDrop';
 import { defaultHeroStyles } from './defaultHeroStyles';
 import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
+import { HeroConfiguration } from '../../../configs/heros/HeroConfigurations';
+
+// Create a forwardRef wrapper for Section
+const SectionWithRef = forwardRef((props, ref) => (
+  <Section {...props} ref={ref} />
+));
 
 const HeroOne = ({
   handleSelect,
@@ -30,81 +36,118 @@ const HeroOne = ({
     [elements, uniqueId]
   );
 
+  // Initialize the hero structure with left and right containers
   useEffect(() => {
-    if (!findElementById(`${uniqueId}-left`, elements)) {
-      setElements((prev) => [
-        ...prev,
-        {
-          id: `${uniqueId}-left`,
-          type: 'div',
-          styles: defaultHeroStyles.heroLeftContent,
-          children: [],
-          parentId: uniqueId,
-        },
-      ]);
-    }
-    if (!findElementById(`${uniqueId}-right`, elements)) {
-      setElements((prev) => [
-        ...prev,
-        {
-          id: `${uniqueId}-right`,
-          type: 'div',
-          styles: defaultHeroStyles.heroRightContent,
-          children: [],
-          parentId: uniqueId,
-        },
-      ]);
-    }
-  }, []);
+    if (!heroElement || defaultInjectedRef.current) return;
 
-  useEffect(() => {
-    if (defaultInjectedRef.current) return;
+    // First, ensure the hero has the default styles
+    const mergedHeroStyles = merge({}, defaultHeroStyles.heroSection, heroElement.styles);
+    updateStyles(heroElement.id, mergedHeroStyles);
 
-    const defaultContent =
-      children && children.length > 0
-        ? children
-        : (heroElement &&
-            heroElement.configuration &&
-            heroElement.configuration.children) ||
-          [];
+    const leftContainerId = `${uniqueId}-left`;
+    const rightContainerId = `${uniqueId}-right`;
 
-    const leftContainer = findElementById(`${uniqueId}-left`, elements);
-    const rightContainer = findElementById(`${uniqueId}-right`, elements);
+    // Create left container if it doesn't exist
+    if (!findElementById(leftContainerId, elements)) {
+      const leftContainer = {
+        id: leftContainerId,
+        type: 'div',
+        styles: defaultHeroStyles.heroLeftContent,
+        children: [],
+        parentId: uniqueId,
+      };
+      setElements(prev => [...prev, leftContainer]);
 
-    if (
-      defaultContent.length > 0 &&
-      leftContainer &&
-      rightContainer &&
-      leftContainer.children.length === 0 &&
-      rightContainer.children.length === 0
-    ) {
-      defaultContent.forEach((child) => {
-        const containerId = child.type === 'image' ? `${uniqueId}-right` : `${uniqueId}-left`;
-        const newId = addNewElement(child.type, 1, null, containerId);
-        setElements((prev) =>
-          prev.map((el) =>
-            el.id === newId ? { ...el, content: child.content } : el
-          )
-        );
-        setElements((prev) =>
-          prev.map((el) =>
-            el.id === containerId
-              ? { ...el, children: [...el.children, newId] }
-              : el
-          )
-        );
+      // Add default content to left container from configuration
+      const defaultContent = HeroConfiguration.heroOne.children;
+      const contentElements = defaultContent.filter(child => 
+        child.type !== 'image' && child.type !== 'span'
+      );
+
+      // Create all content elements first
+      const contentIds = contentElements.map(child => {
+        const newId = addNewElement(child.type, 1, null, leftContainerId);
+        // Update the element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
+            return {
+              ...el,
+              content: child.content,
+              styles: child.type === 'heading' ? defaultHeroStyles.heroTitle :
+                     child.type === 'paragraph' ? defaultHeroStyles.heroDescription :
+                     child.type === 'button' ? defaultHeroStyles.primaryButton :
+                     {}
+            };
+          }
+          return el;
+        }));
+        return newId;
       });
-      defaultInjectedRef.current = true;
+
+      // Update left container with all content IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === leftContainerId) {
+          return {
+            ...el,
+            children: contentIds
+          };
+        }
+        return el;
+      }));
     }
-  }, [
-    children,
-    heroElement,
-    elements,
-    findElementById,
-    uniqueId,
-    addNewElement,
-    setElements,
-  ]);
+
+    // Create right container if it doesn't exist
+    if (!findElementById(rightContainerId, elements)) {
+      const rightContainer = {
+        id: rightContainerId,
+        type: 'div',
+        styles: defaultHeroStyles.heroRightContent,
+        children: [],
+        parentId: uniqueId,
+      };
+      setElements(prev => [...prev, rightContainer]);
+
+      // Add default image to right container from configuration
+      const imageContent = HeroConfiguration.heroOne.children.find(child => child.type === 'image');
+      if (imageContent) {
+        const imageId = addNewElement('image', 1, null, rightContainerId);
+        // Update image element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === imageId) {
+            return {
+              ...el,
+              content: imageContent.content,
+              styles: defaultHeroStyles.heroImage
+            };
+          }
+          return el;
+        }));
+        // Update right container with image ID
+        setElements(prev => prev.map(el => {
+          if (el.id === rightContainerId) {
+            return {
+              ...el,
+              children: [imageId]
+            };
+          }
+          return el;
+        }));
+      }
+    }
+
+    // Update hero's children to only include the containers
+    setElements(prev => prev.map(el => {
+      if (el.id === uniqueId) {
+        return {
+          ...el,
+          children: [leftContainerId, rightContainerId]
+        };
+      }
+      return el;
+    }));
+
+    defaultInjectedRef.current = true;
+  }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     if (droppedItem.id) {
@@ -151,168 +194,45 @@ const HeroOne = ({
     draggedId,
   } = useReorderDrop(findElementById, elements, setElements);
 
+  const leftContainerId = `${uniqueId}-left`;
+  const rightContainerId = `${uniqueId}-right`;
+
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-
-    const childrenElements = container.children.map((childId, index) => {
+    return container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-
-      let childContent;
-      if (child.type === 'heading') {
-        childContent = (
-          <Heading
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{
-              ...defaultHeroStyles.heroTitle,
-              ...(child.styles || {}),
-            }}
-          />
-        );
-      } else if (child.type === 'paragraph') {
-        childContent = (
-          <Paragraph
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{
-              ...defaultHeroStyles.heroDescription,
-              ...(child.styles || {}),
-            }}
-          />
-        );
-      } else if (child.type === 'button') {
-        childContent = (
-          <Button
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{
-              ...defaultHeroStyles.primaryButton,
-              ...(child.styles || {}),
-            }}
-          />
-        );
-      } else if (child.type === 'image') {
-        childContent = (
-          <Image
-            key={child.id}
-            id={child.id}
-            src={child.content}
-            styles={{
-              ...defaultHeroStyles.heroImage,
-              ...(child.styles || {}),
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={(dragItem) => handleHeroDrop(dragItem, child.id)}
-          />
-        );
-      } else {
-        childContent = renderElement(
-          child,
-          elements,
-          null,
-          setSelectedElement,
-          setElements,
-          null,
-          undefined,
-          handleOpenMediaPanel
-        );
-      }
-
-      return (
-        <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === index && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-                onDragOver={(e) => onDragOver(e, containerId, index)}
-                onDrop={(e) => onDrop(e, containerId)}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragOver={(e) => onDragOver(e, containerId, index)}
-            onDragEnd={onDragEnd}
-            style={{ display: 'inline-block' }}
-          >
-            {childContent}
-          </span>
-        </React.Fragment>
+      return renderElement(
+        child,
+        elements,
+        null,
+        setSelectedElement,
+        setElements,
+        null,
+        undefined,
+        handleOpenMediaPanel
       );
     });
-
-    // Only add the bottom drop zone if we're actually dragging something
-    if (draggedId) {
-      childrenElements.push(
-        <div
-          key="drop-zone-bottom"
-          style={{ height: '40px', width: '100%' }}
-          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-          onDrop={(e) => onDrop(e, containerId)}
-        >
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === container.children.length && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
-        </div>
-      );
-    }
-
-    return childrenElements;
   };
 
-  useEffect(() => {
-    if (heroElement) {
-      const merged = merge(
-        {},
-        defaultHeroStyles.heroSection,
-        heroElement.styles
-      );
-      if (heroElement.styles.display !== merged.display) {
-        updateStyles(heroElement.id, merged);
-      }
-    }
-  }, [heroElement, updateStyles]);
+  // Get the left and right container elements
+  const leftContainer = findElementById(leftContainerId, elements);
+  const rightContainer = findElementById(rightContainerId, elements);
 
-  const mergedHeroStyles = merge(
-    {},
-    defaultHeroStyles.heroSection,
-    heroElement?.styles
-  );
+  // Merge styles for containers
+  const leftContainerStyles = merge({}, defaultHeroStyles.heroLeftContent, leftContainer?.styles || {});
+  const rightContainerStyles = merge({}, defaultHeroStyles.heroRightContent, rightContainer?.styles || {});
+
+  // Merge styles for hero section
+  const mergedHeroStyles = merge({}, defaultHeroStyles.heroSection, heroElement?.styles || {});
+
+  // Filter out any direct children that are already in containers
+  const containerIds = [leftContainerId, rightContainerId];
+  const filteredChildren = heroElement?.children?.filter(childId => !containerIds.includes(childId)) || [];
 
   return (
-    <Section
+    <SectionWithRef
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
@@ -327,28 +247,33 @@ const HeroOne = ({
         drop(node);
       }}
     >
-      <Div
-        id={`${uniqueId}-left`}
-        parentId={`${uniqueId}-left`}
-        styles={{ ...defaultHeroStyles.heroLeftContent }}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-left`)}
-        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-left`)}
+      <div
+        style={leftContainerStyles}
+        onClick={(e) => handleInnerDivClick(e, leftContainerId)}
       >
-        {renderContainerChildren(`${uniqueId}-left`)}
-      </Div>
-
-      <Div
-        id={`${uniqueId}-right`}
-        parentId={`${uniqueId}-right`}
-        styles={{ ...defaultHeroStyles.heroRightContent }}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-right`)}
-        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-right`)}
+        {renderContainerChildren(leftContainerId)}
+      </div>
+      <div
+        style={rightContainerStyles}
+        onClick={(e) => handleInnerDivClick(e, rightContainerId)}
       >
-        {renderContainerChildren(`${uniqueId}-right`)}
-      </Div>
-    </Section>
+        {renderContainerChildren(rightContainerId)}
+      </div>
+      {filteredChildren.map(childId => {
+        const child = findElementById(childId, elements);
+        if (!child) return null;
+        return renderElement(
+          child,
+          elements,
+          null,
+          setSelectedElement,
+          setElements,
+          null,
+          undefined,
+          handleOpenMediaPanel
+        );
+      })}
+    </SectionWithRef>
   );
 };
 

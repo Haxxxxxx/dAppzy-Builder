@@ -171,7 +171,6 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}

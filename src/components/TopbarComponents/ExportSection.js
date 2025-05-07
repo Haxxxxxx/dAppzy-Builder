@@ -9,7 +9,7 @@ import { defaultDeFiStyles } from '../../Elements/Sections/Web3Related/DeFiSecti
 // Import your hierarchy builder – this should nest elements with a valid parentId.
 import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import { SimplefooterStyles, TemplateFooterStyles } from '../../Elements/Sections/Footers/defaultFooterStyles';
-
+import { structureConfigurations } from '../../configs/structureConfigurations';
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 /**
@@ -184,7 +184,8 @@ function fixClassName(html) {
 export function exportProject(elements, websiteSettings) {
   let bodyHtml = '';
   const processedElements = new Set();
-  const collectedStyles = []; // <-- Always define this array for style collection
+  const collectedStyles = [];
+  const userScripts = new Set();
 
   // Helper to convert camelCase to kebab-case
   function camelToKebab(str) {
@@ -195,41 +196,45 @@ export function exportProject(elements, websiteSettings) {
   // Helper to validate and format color values
   function formatColorValue(value) {
     if (!value || typeof value !== 'string') return '';
-    // If it's already a valid hex color
-    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) {
-      return value;
-    }
-    // If it's a named color, return as is
-    if (/^[a-zA-Z]+$/.test(value)) {
-      return value;
-    }
-    // If it's rgb/rgba/hsl/hsla, return as is
-    if (/^(rgb|rgba|hsl|hsla)/.test(value)) {
-      return value;
-    }
-    // If it's a hex color without #, add it
-    if (/^[A-Fa-f0-9]{6}$/.test(value)) {
-      return `#${value}`;
-    }
-    // Default fallback
+    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) return value;
+    if (/^[a-zA-Z]+$/.test(value)) return value;
+    if (/^(rgb|rgba|hsl|hsla)/.test(value)) return value;
+    if (/^[A-Fa-f0-9]{6}$/.test(value)) return `#${value}`;
     return value;
   }
 
-  // Helper to generate style string from inlineStyles
+  // Helper to process element styles
+  function processElementStyles(element) {
+    // Get base styles from configuration
+    const structureConfig = element.configuration ? 
+      structureConfigurations[element.configuration] : null;
+    
+    // Merge styles in order: configuration defaults -> element styles -> inline styles
+    const mergedStyles = {
+      ...(structureConfig?.styles || {}),
+      ...(element.styles || {}),
+      ...(element.inlineStyles || {})
+    };
+
+    // Remove editor-specific styles
+    const { outline, boxShadow, ...productionStyles } = mergedStyles;
+
+    // Process color values
+    Object.entries(productionStyles).forEach(([key, value]) => {
+      if (key.includes('color') || key.includes('background')) {
+        productionStyles[key] = formatColorValue(value);
+      }
+    });
+
+    return productionStyles;
+  }
+
+  // Helper to generate style string
   function getStyleString(element) {
     const processedStyles = processElementStyles(element);
-    if (!processedStyles || typeof processedStyles !== 'object') return '';
-    
     return Object.entries(processedStyles)
       .filter(([k, v]) => k != null && v != null)
-      .map(([k, v]) => {
-        const key = camelToKebab(k);
-        let value = v;
-        if (key.includes('color') || key.includes('background')) {
-          value = formatColorValue(v);
-        }
-        return `${key}: ${value}`;
-      })
+      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
       .join('; ');
   }
 
@@ -239,47 +244,58 @@ export function exportProject(elements, websiteSettings) {
     return className.replace(/class=/g, 'className=');
   }
 
-  // 1. Build hierarchy and process styles
-  const hierarchicalElements = buildHierarchy(elements).map(element => {
-    const processedStyles = processElementStyles(element);
-    console.log('Processing element styles:', {
-      id: element.id,
-      type: element.type,
-      configuration: element.configuration,
-      originalStyles: element.styles,
-      processedStyles
-    });
-    
-    return {
-      ...element,
-      styles: processedStyles,
-      content: element.content || '',
-      children: element.children || [],
-      attributes: element.attributes || {},
-      className: element.className || '',
-      dataAttributes: element.dataAttributes || {},
-      events: element.events || {},
-      customScript: element.customScript || '',
-      configuration: element.configuration || {},
-      properties: element.properties || {}
-    };
-  });
+  // Helper to clean up empty divs
+  function cleanEmptyDivs(html) {
+    return html.replace(/<div[^>]*>\s*<\/div>/g, '');
+  }
 
-  // 2. Render all elements using renderElementToHtml
+  // Helper to fix class names
+  function fixClassName(html) {
+    return html.replace(/className=/g, 'class=');
+  }
+
+  // Helper to build element hierarchy
+  function buildElementHierarchy(elements) {
+    const elementMap = new Map();
+    const rootElements = [];
+
+    // First pass: create element map
+    elements.forEach(element => {
+      elementMap.set(element.id, { ...element, children: [] });
+    });
+
+    // Second pass: build hierarchy
+    elements.forEach(element => {
+      const mappedElement = elementMap.get(element.id);
+      if (element.parentId) {
+        const parent = elementMap.get(element.parentId);
+        if (parent) {
+          parent.children.push(mappedElement);
+        }
+      } else {
+        rootElements.push(mappedElement);
+      }
+    });
+
+    return rootElements;
+  }
+
+  // Process elements and build HTML
+  const hierarchicalElements = buildElementHierarchy(elements);
+  
+  // Render each root element and its children recursively
   hierarchicalElements.forEach(element => {
     if (!processedElements.has(element.id)) {
-      // Always use inlineStyles as the style attribute
-      const styleString = getStyleString(element);
       const renderedContent = renderElementToHtml({
         ...element,
-        style: styleString,
+        style: getStyleString(element),
         className: element.className ? `${sanitizeClassName(element.className)} ${element.id}` : element.id,
         ...(element.attributes || {}),
         ...(element.dataAttributes || {}),
         ...(element.events || {})
       }, collectedStyles);
+
       if (renderedContent) {
-        // Clean up the rendered HTML
         let cleanedContent = cleanEmptyDivs(renderedContent);
         cleanedContent = fixClassName(cleanedContent);
         bodyHtml += cleanedContent;
@@ -288,180 +304,173 @@ export function exportProject(elements, websiteSettings) {
     }
   });
 
-  // 3. Only minimal global CSS for layout/box-sizing
-  const globalBlock = `
-    html, body { 
+  // Generate styles HTML
+  const stylesHtml = `
+    <style>
+      /* Reset and base styles */
+      * {
       margin: 0;
       padding: 0;
-      overflow-x: hidden; 
-      width: 100%;
-      max-width: 100%;
-      font-family: sans-serif;
       box-sizing: border-box;
     }
-    *, *::before, *::after {
-      box-sizing: inherit;
-    }
-  `;
-  
-  const stylesHtml = `<style>\n${globalBlock}\n</style>`;
 
-  // 4. Collect user scripts
-  const userScripts = new Set();
-  hierarchicalElements.forEach(element => {
-    if (element?.customScript) {
-      userScripts.add(element.customScript);
-    }
-  });
-
-  // 5. Add user scripts
-  const walletConnectScript = `
-    <script>
-    window.addEventListener('DOMContentLoaded', function() {
-      const button = document.getElementById('connect-wallet-button');
-      const addressDiv = document.getElementById('wallet-address');
-      const overlay = document.getElementById('defi-not-connected-overlay');
-      const dashboard = document.getElementById('defi-dashboard-grid');
-      let walletAddress = '';
-      let isConnected = false;
-      let isSigned = false;
-
-      function updateUI() {
-        if (button) button.textContent = isConnected && isSigned ? 'Disconnect' : 'Connect Wallet';
-        if (addressDiv) {
-          addressDiv.textContent = isConnected && walletAddress
-            ? walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4)
-            : '';
-          addressDiv.style.display = isConnected ? 'block' : 'none';
-        }
-        if (overlay && dashboard) {
-          overlay.style.display = isConnected && isSigned ? 'none' : 'block';
-          dashboard.style.opacity = isConnected && isSigned ? '1' : '0.3';
-          dashboard.style.pointerEvents = isConnected && isSigned ? 'auto' : 'none';
-        }
-        // Show/hide connected message in DeFi modules
-        document.querySelectorAll('.defi-connected-message').forEach(function(el) {
-          if (isConnected && isSigned && walletAddress) {
-            el.style.display = 'block';
-            el.textContent = 'Connected: ' + walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-          } else {
-            el.style.display = 'none';
-            el.textContent = '';
-          }
-        });
-        // Show/hide error message in DeFi modules
-        document.querySelectorAll('.defi-error-message').forEach(function(el) {
-          el.style.display = (isConnected && isSigned && walletAddress) ? 'none' : 'block';
-        });
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        line-height: 1.5;
+        color: #333;
       }
 
-      async function requestSignature(address, type) {
-        if (type === 'ethereum' && window.ethereum) {
-          try {
-            const message = 'Please sign this message to unlock the DeFi dashboard.';
-            await window.ethereum.request({
-              method: 'personal_sign',
-              params: [message, address]
-            });
-            isSigned = true;
-            updateUI();
-            return true;
-          } catch (e) {
-            alert('Signature rejected.');
-            return false;
-          }
-        }
-        if (type === 'solana' && window.solana) {
-          try {
-            const message = new TextEncoder().encode('Please sign this message to unlock the DeFi dashboard.');
-            await window.solana.signMessage(message, 'utf8');
-            isSigned = true;
-            updateUI();
-            return true;
-          } catch (e) {
-            alert('Signature rejected.');
-            return false;
-          }
-        }
-        return false;
+      .main-content {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
       }
 
-      async function connectMetaMask() {
-        if (!window.ethereum) {
-          alert('MetaMask is not installed');
-          return false;
-        }
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0) {
-            walletAddress = accounts[0];
-            isConnected = true;
-            // Request signature after connection
-            const signed = await requestSignature(walletAddress, 'ethereum');
-            if (!signed) {
-              isConnected = false;
-              walletAddress = '';
-            }
-            updateUI();
-            return signed;
-          }
-        } catch (e) {
-          alert('MetaMask connection failed');
-        }
-        return false;
+      /* Element-specific styles */
+      .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        border-bottom: 1px solid #333;
       }
 
-      async function connectPhantom() {
-        if (!window.solana) {
-          alert('Phantom wallet is not installed');
-          return false;
-        }
-        try {
-          const { publicKey } = await window.solana.connect();
-          if (publicKey) {
-            walletAddress = publicKey.toString();
-            isConnected = true;
-            // Request signature after connection
-            const signed = await requestSignature(walletAddress, 'solana');
-            if (!signed) {
-              isConnected = false;
-              walletAddress = '';
-            }
-            updateUI();
-            return signed;
-          }
-        } catch (e) {
-          alert('Phantom connection failed');
-        }
-        return false;
+      .navbar .image {
+        margin-right: 12px;
       }
 
-      if (button) {
-        button.addEventListener('click', async function() {
-          if (isConnected && isSigned) {
-            walletAddress = '';
-            isConnected = false;
-            isSigned = false;
-            updateUI();
-          } else {
-            const mm = await connectMetaMask();
-            if (!mm) await connectPhantom();
-          }
-        });
+      .navbar .text {
+        font-size: 1.1rem;
+        font-weight: 500;
       }
-      updateUI();
-    });
-    </script>
-  `;
 
-  const scriptsHtml = `
-    <script>
-      // Execute user scripts
-      ${Array.from(userScripts).join('\n')}
-    </script>
-    ${walletConnectScript}
+      .defi-section {
+        flex: 1;
+        padding: 40px;
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+
+      .footer {
+        width: 100%;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 24px;
+        border-top: 1px solid #333;
+        box-sizing: border-box;
+      }
+
+      .footer .image {
+        margin-right: 12px;
+      }
+
+      .footer .link {
+        margin-left: 24px;
+      }
+
+      .footer .link:first-of-type {
+        margin-left: 0;
+      }
+
+      .module {
+        border-radius: 8px;
+        background-color: #2a2a2a;
+        padding: 20px;
+        margin-bottom: 16px;
+        color: #ffffff;
+      }
+
+      .title {
+        margin-bottom: 16px;
+        font-size: 2rem;
+        color: #fff;
+      }
+
+      .description {
+        color: #bbb;
+        margin-bottom: 32px;
+        font-size: 1.1rem;
+      }
+
+      .image {
+        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        object-fit: cover;
+      }
+
+      .link {
+        font-size: 14px;
+        text-decoration: none;
+        color: #ffffff;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .link:hover {
+        color: #5C4EFA;
+      }
+
+      .connect-wallet-button {
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 8px 16px;
+        background-color: #5C4EFA;
+        transition: all 0.2s ease;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        color: #ffffff;
+        margin-left: auto;
+      }
+
+      .connect-wallet-button:hover {
+        background-color: #4a3ed9;
+      }
+
+      .text {
+        font-size: 14px;
+        font-weight: 400;
+        color: #ffffff;
+      }
+
+      /* Footer link container */
+      .footer-links {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      /* Footer left section */
+      .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* Footer right section */
+      .footer-right {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      ${collectedStyles.map(style => `
+        .${style.className} {
+          ${Object.entries(style.styles)
+            .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+            .join(';\n          ')}
+        }
+      `).join('\n')}
+    </style>
   `;
 
+  // Generate the final HTML
   const title = websiteSettings.siteTitle || 'Exported Website';
   const favicon = websiteSettings.faviconUrl || '/favicon.ico';
 
@@ -477,11 +486,8 @@ export function exportProject(elements, websiteSettings) {
     </head>
     <body>
       <div class="main-content">
-        <div class="content-list">
           ${bodyHtml}
-        </div>
       </div>
-      ${scriptsHtml}
     </body>
     </html>
   `.trim();
@@ -629,6 +635,19 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     }
   };
 
+  const handleExport = () => {
+    const html = exportProject(elements, websiteSettings);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'website.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="export-section">
       <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
@@ -637,6 +656,9 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       <span className="autosave-status">{autoSaveStatus}</span>
       <button className="button" onClick={handlePublish}>
         Publish
+      </button>
+      <button onClick={handleExport} className="export-button">
+        Export Website
       </button>
     </div>
   );

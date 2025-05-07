@@ -106,11 +106,11 @@ const SectionFour = ({
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-
+    
     const childrenElements = container.children.map((childId, index) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-
+      
       let childContent;
       switch (child.type) {
         case 'heading':
@@ -126,7 +126,7 @@ const SectionFour = ({
           break;
         case 'paragraph':
           childContent = (
-            <Paragraph
+                    <Paragraph
               key={child.id}
               id={child.id}
               content={child.content}

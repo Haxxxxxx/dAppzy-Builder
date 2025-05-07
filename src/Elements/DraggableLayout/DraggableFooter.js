@@ -69,12 +69,37 @@ const DraggableFooter = ({
     }
 
     // Create a new element with the same type and configuration as the dropped item
-    const newId = addNewElement(item.type, 1, null, parentId, {
+    const configStyles = (FooterConfigurations[item.configuration] && FooterConfigurations[item.configuration].styles) || {};
+    
+    // Special handling for DeFi footer to include wrapper divs
+    let newElement = {
+      type: item.type,
       content: item.content || '',
-      styles: item.styles || {},
+      styles: { ...configStyles, ...(item.styles || {}) },
       configuration: item.configuration,
       settings: item.settings || {}
-    });
+    };
+
+    // If it's a DeFi footer, add the wrapper divs
+    if (item.configuration === 'defiFooter') {
+      newElement = {
+        ...newElement,
+        children: [
+          {
+            type: 'div',
+            styles: { display: 'flex', alignItems: 'center', gap: '12px' },
+            children: []
+          },
+          {
+            type: 'div',
+            styles: { display: 'flex', gap: '24px' },
+            children: []
+          }
+        ]
+      };
+    }
+
+    const newId = addNewElement(item.type, 1, null, parentId, newElement);
 
     // Update the parent element's children with unique values
     setElements((prevElements) =>
@@ -120,17 +145,42 @@ const DraggableFooter = ({
 
             if (!existingFooter) {
               // Only create a new footer if one doesn't exist in the section
-              addNewElement('footer', 1, null, targetSectionId, {
+              const configStyles = (footerConfig && footerConfig.styles) || {};
+              
+              // Special handling for DeFi footer to include wrapper divs
+              let newElement = {
                 ...footerConfig,
+                styles: { ...configStyles, ...(footerConfig.styles || {}) },
                 configuration: item.configuration,
                 structure: item.configuration
-              });
+              };
+
+              // If it's a DeFi footer, add the wrapper divs
+              if (item.configuration === 'defiFooter') {
+                newElement = {
+                  ...newElement,
+                  children: [
+                    {
+                      type: 'div',
+                      styles: { display: 'flex', alignItems: 'center', gap: '12px' },
+                      children: []
+                    },
+                    {
+                      type: 'div',
+                      styles: { display: 'flex', gap: '24px' },
+                      children: []
+                    }
+                  ]
+                };
+              }
+
+              addNewElement('footer', 1, null, targetSectionId, newElement);
             }
           }
         }
         setSelectedElement({ id: item.id, type: 'footer', configuration: item.configuration });
       }
-    },
+    }
   }), [configuration, isEditing, elements]);
 
   // Find the current footer and its children with improved error handling
@@ -204,8 +254,8 @@ const DraggableFooter = ({
   if (configuration === 'defiFooter') {
     return (
       <DeFiFooter
+        id={id}
         handleSelect={handleSelect}
-        uniqueId={id}
         contentListWidth={contentListWidth}
         children={childrenToRender}
         onDropItem={onDropItem}

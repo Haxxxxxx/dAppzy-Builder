@@ -15,86 +15,88 @@ export const FooterConfigurations = {
     },
     children: [
       {
+        type: 'div',
+        styles: { display: 'flex', alignItems: 'center', gap: '12px' },
+    children: [
+      {
         type: 'image',
         styles: {
           width: '32px',
           height: '32px',
           objectFit: 'cover',
-          borderRadius: '8px'
+              borderRadius: '8px'
         }
       },
       { 
         type: 'span', 
-        styles: {
-          color: 'inherit',
-          fontSize: '0.875rem',
-          fontWeight: '400'
-        }
+        styles: { 
+              color: 'inherit',
+              fontSize: '0.875rem',
+              fontWeight: '400'
+            }
+          }
+        ]
       },
       {
-        type: 'link',
-        styles: { 
-          color: 'inherit',
-          textDecoration: 'none',
-          fontSize: '0.875rem',
-          fontWeight: '400',
-          display: 'inline-block',
-          '&:hover': {
-            color: '#5C4EFA'
-          }
+        type: 'div',
+        styles: { display: 'flex', gap: '24px' },
+        children: [
+          {
+            type: 'link',
+            styles: { 
+              color: 'inherit',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              fontWeight: '400',
+              display: 'inline-block',
+              '&:hover': { color: '#5C4EFA' }
         } 
       },
       {
-        type: 'link',
+            type: 'link',
+            styles: {
+              color: 'inherit',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              fontWeight: '400',
+              display: 'inline-block',
+              '&:hover': { color: '#5C4EFA' }
+            }
+          },
+          {
+            type: 'link',
         styles: {
-          color: 'inherit',
-          textDecoration: 'none',
-          fontSize: '0.875rem',
-          fontWeight: '400',
-          display: 'inline-block',
-          '&:hover': {
-            color: '#5C4EFA'
-          }
+              color: 'inherit',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              fontWeight: '400',
+              display: 'inline-block',
+              '&:hover': { color: '#5C4EFA' }
           }
         },
-      {
-        type: 'link',
+          {
+            type: 'link',
+            styles: {
+              color: 'inherit',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              fontWeight: '400',
+              display: 'inline-block',
+              '&:hover': { color: '#5C4EFA' }
+            }
+          },
+          {
+            type: 'link',
         styles: {
-          color: 'inherit',
-          textDecoration: 'none',
-          fontSize: '0.875rem',
-          fontWeight: '400',
-          display: 'inline-block',
-          '&:hover': {
-            color: '#5C4EFA'
+              color: 'inherit',
+              textDecoration: 'none',
+              fontSize: '0.875rem',
+              fontWeight: '400',
+              display: 'inline-block',
+              '&:hover': { color: '#5C4EFA' }
           }
-        }
-      },
-      {
-        type: 'link',
-        styles: {
-          color: 'inherit',
-          textDecoration: 'none',
-          fontSize: '0.875rem',
-          fontWeight: '400',
-          display: 'inline-block',
-          '&:hover': {
-            color: '#5C4EFA'
           }
-        }
-      },
-      {
-        type: 'link',
-        styles: {
-          color: 'inherit',
-          textDecoration: 'none',
-          fontSize: '0.875rem',
-          fontWeight: '400',
-          display: 'inline-block',
-          '&:hover': {
-            color: '#5C4EFA'
-          }
-        }
+        ]
       }
     ]
   }

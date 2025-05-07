@@ -107,13 +107,35 @@ const DraggableContentSections = ({
       }
     }
 
-    // Create a new element with the same type and configuration as the dropped item
-    const newId = addNewElement(item.type, 1, null, parentId, {
+    // Special handling for ContentSections with wrappers (example: main/sidebar)
+    let newElement = {
+      type: item.type,
       content: item.content || '',
       styles: item.styles || {},
       configuration: item.configuration,
       settings: item.settings || {}
-    });
+    };
+
+    // If the configuration requires wrappers, add them (example: main and sidebar)
+    if (item.configuration === 'defaultContentSection' || item.configuration === 'customContentSection') {
+      newElement = {
+        ...newElement,
+        children: [
+          {
+            type: 'div',
+            styles: { display: 'flex', flexDirection: 'column', flex: 3, gap: '16px' },
+            children: []
+          },
+          {
+            type: 'div',
+            styles: { display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' },
+            children: []
+          }
+        ]
+      };
+    }
+
+    const newId = addNewElement(item.type, 1, null, parentId, newElement);
 
     // Update the parent element's children with unique values
     setElements((prevElements) =>

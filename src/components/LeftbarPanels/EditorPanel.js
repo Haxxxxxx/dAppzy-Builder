@@ -48,7 +48,17 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'nav':
       case 'footer':
       case 'header':
-        return null;
+        // Allow style editing for footer (and other containers)
+        return (
+          <>
+            <BackgroundEditor pageSettings={pageSettings} />
+            <BorderEditor />
+            <SizeEditor />
+            <SpacingEditor />
+            <DisplayEditor />
+            <TypographyEditor />
+          </>
+        );
       case 'image':
         return <ImageSettings settings={selectedElement.settings || {}} />;
       case 'video':

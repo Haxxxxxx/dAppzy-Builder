@@ -84,13 +84,35 @@ const DraggableNavbar = ({
       }
     }
 
-    // Create a new element with the same type and configuration as the dropped item
-    const newId = addNewElement(item.type, 1, null, parentId, {
+    // Special handling for navbars with wrappers (example: left/right)
+    let newElement = {
+      type: item.type,
       content: item.content || '',
       styles: item.styles || {},
       configuration: item.configuration,
       settings: item.settings || {}
-    });
+    };
+
+    // If the configuration requires wrappers, add them
+    if (item.configuration === 'defaultNavbar' || item.configuration === 'customNavbar') {
+      newElement = {
+        ...newElement,
+        children: [
+          {
+            type: 'div',
+            styles: { display: 'flex', alignItems: 'center', gap: '16px' },
+            children: []
+          },
+          {
+            type: 'div',
+            styles: { display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' },
+            children: []
+          }
+        ]
+      };
+    }
+
+    const newId = addNewElement(item.type, 1, null, parentId, newElement);
 
     // Update the parent element's children
     setElements((prevElements) =>
