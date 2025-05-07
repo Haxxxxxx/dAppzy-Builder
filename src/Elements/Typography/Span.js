@@ -52,6 +52,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
             suppressContentEditableWarning={true}
             style={{
               ...styles,
+              ...customStyles,
               fontSize: '1rem',
               border: 'none',
               cursor: 'text',
@@ -64,7 +65,6 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
       </div>
     );
   }
-
 
   // Render content only
   return (
@@ -79,9 +79,9 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
         ...styles,
         ...customStyles,
         cursor: 'text',
-        border: 'none',     // Remove any border
-        outline: 'none'     // Remove focus outline
-
+        border: 'none',
+        outline: 'none',
+        display: 'inline-block'
       }}
     >
       {content || 'Editable Span'}

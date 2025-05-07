@@ -1,140 +1,104 @@
-import React, { useRef, useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
+import { useDrop } from 'react-dnd';
 import { EditableContext } from '../../../context/EditableContext';
-import { Image, Span, LinkBlock } from '../../SelectableElements';
-import useElementDrop from '../../../utils/useElementDrop';
-import { DeFiFooterStyles } from './defaultFooterStyles';
+import { Span, Image, LinkBlock } from '../../SelectableElements';
 
-const DeFiFooter = ({
-  handleSelect,
-  uniqueId,
-  contentListWidth,
-  children,
-  onDropItem,
-  handleOpenMediaPanel,
-}) => {
-  const navRef = useRef(null);
-  const { elements, updateStyles } = useContext(EditableContext);
+const DeFiFooter = ({ id, children, styles: customStyles }) => {
+  const { findElementById, elements } = useContext(EditableContext);
+  const footerElement = findElementById(id, elements);
 
-  const { isOverCurrent, drop } = useElementDrop({
-    id: uniqueId,
-    elementRef: navRef,
-    onDropItem,
-  });
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: ['image', 'span', 'link'],
+    drop: (item, monitor) => {
+      if (monitor.didDrop()) {
+        return;
+      }
+    },
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver({ shallow: true }),
+    }),
+  }));
 
-  const footerElement = elements.find((el) => el.id === uniqueId);
-
-  useEffect(() => {
-    if (!footerElement) return;
-    const noCustomStyles = !footerElement.styles || Object.keys(footerElement.styles).length === 0;
-
-    if (noCustomStyles) {
-      updateStyles(footerElement.id, {
-        ...DeFiFooterStyles.footer,
-      });
-    }
-  }, [footerElement, updateStyles]);
-
-  const handleImageDrop = (droppedItem, imageId) => {
-    if (droppedItem.mediaType === 'image') {
-      onDropItem(imageId, droppedItem.src);
-    }
-  };
+  // Get the first child (image)
+  const imageChild = children?.[0];
+  // Get the second child (span)
+  const spanChild = children?.[1];
+  // Get all remaining children (links)
+  const linkChildren = children?.slice(2) || [];
 
   return (
-    <footer
-      ref={(node) => {
-        navRef.current = node;
-        drop(node);
-      }}
-      style={{
-        ...DeFiFooterStyles.footer,
-        ...(footerElement?.styles || {}),
-        borderTop: isOverCurrent ? '2px solid blue' : '1px solid #333',
-      }}
-      onClick={(e) => handleSelect(e)}
-    >
-      <div style={DeFiFooterStyles.logoContainer}>
-        {(children || [])[0]?.type === 'image' && (
-          <Image
-            key={children[0].id}
-            id={children[0].id}
-            src={children[0].content}
-            styles={{
-              ...DeFiFooterStyles.logo,
-              ...children[0].styles,
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-          />
-        )}
-        {(children || [])[1]?.type === 'span' && (
-          <Span
-            key={children[1].id}
-            id={children[1].id}
-            content={children[1].content}
-            styles={{
-              ...DeFiFooterStyles.copyright,
-              ...children[1].styles,
-            }}
-          />
-        )}
-      </div>
-      <div style={DeFiFooterStyles.linksContainer}>
-        {(children || [])[2]?.type === 'link' && (
-          <LinkBlock
-            key={children[2].id}
-            id={children[2].id}
-            content={children[2].content}
-            styles={{
-              ...DeFiFooterStyles.link,
-              ...children[2].styles,
-            }}
-          />
-        )}
-        {(children || [])[3]?.type === 'link' && (
-          <LinkBlock
-            key={children[3].id}
-            id={children[3].id}
-            content={children[3].content}
-            styles={{
-              ...DeFiFooterStyles.link,
-              ...children[3].styles,
-            }}
-          />
-        )}
-      </div>
-      <div style={DeFiFooterStyles.rightLinksContainer}>
-        {(children || []).slice(4).map((child) => {
-          if (child.type === 'image' && child.link) {
-            return (
-              <a
-                key={child.id}
-                href={child.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'inline-block' }}
-              >
-                <img src={child.content} style={child.styles} alt="social icon" />
-              </a>
-            );
-          } else if (child.type === 'link') {
-            return (
-              <LinkBlock
-                key={child.id}
-                id={child.id}
-                content={child.content}
-                styles={{
-                  ...DeFiFooterStyles.link,
-                  ...child.styles,
-                }}
-              />
-            );
-          } else {
-            return null;
-          }
-        })}
-      </div>
-    </footer>
+    <div style={{ position: 'relative', boxSizing: 'border-box' }}>
+      <footer
+        ref={drop}
+        style={{
+          ...footerElement?.styles,
+          ...customStyles,
+          borderTop: footerElement?.styles?.borderTop || '1px solid #e5e5e5',
+          position: 'relative',
+          padding: footerElement?.styles?.padding || '1rem',
+          backgroundColor: footerElement?.styles?.backgroundColor || '#ffffff',
+          color: footerElement?.styles?.color || '#1a1a1a',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+            gap: '1rem'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {imageChild && (
+              <div style={{ position: 'relative', boxSizing: 'border-box' }}>
+                <Image
+                  id={imageChild.id}
+                  content={imageChild.content}
+                  styles={{
+                    ...imageChild.styles,
+                    width: '32px',
+                    height: '32px',
+                    objectFit: 'cover',
+                    borderRadius: '8px'
+                  }}
+                />
+              </div>
+            )}
+            {spanChild && (
+              <div style={{ position: 'relative', boxSizing: 'border-box' }}>
+                <Span
+                  id={spanChild.id}
+                  content={spanChild.content}
+                  styles={{
+                    ...spanChild.styles,
+                    color: 'inherit'
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            {linkChildren.map((child) => (
+              <div key={child.id} style={{ position: 'relative', boxSizing: 'border-box' }}>
+                <LinkBlock
+                  id={child.id}
+                  content={child.content}
+                  styles={{
+                    ...child.styles,
+                    color: 'inherit',
+                    textDecoration: 'none',
+                    display: 'inline-block'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 };
 

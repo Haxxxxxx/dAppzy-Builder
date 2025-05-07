@@ -226,7 +226,7 @@ const SectionOne = ({
 
       return (
         <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId && activeDrop.index === index && (
+          {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
             <div
               className="drop-placeholder"
               style={{
@@ -258,7 +258,8 @@ const SectionOne = ({
       );
     });
 
-    // Add drop zone at the bottom
+    // Only add bottom drop zone if we're actually dragging something
+    if (activeDrop && activeDrop.containerId === containerId) {
     childrenElements.push(
       <div
         key="drop-zone-bottom"
@@ -266,7 +267,7 @@ const SectionOne = ({
         onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
         onDrop={(e) => onDrop(e, containerId)}
       >
-        {activeDrop.containerId === containerId && activeDrop.index === container.children.length && (
+          {activeDrop.index === container.children.length && (
           <div
             className="drop-placeholder"
             style={{
@@ -285,6 +286,7 @@ const SectionOne = ({
         )}
       </div>
     );
+    }
 
     return childrenElements;
   };

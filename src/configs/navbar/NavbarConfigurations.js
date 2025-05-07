@@ -93,10 +93,10 @@ export const NavbarConfigurations = {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '16px 24px',
-      backgroundColor: '#1a1a1a',
-      color: '#fff',
+      backgroundColor: '#ffffff',
+      color: '#1a1a1a',
       boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
-      borderBottom: '1px solid transparent'
+      borderBottom: '1px solid #e5e5e5'
     },
     children: [
       {
@@ -113,7 +113,7 @@ export const NavbarConfigurations = {
         type: 'span', 
         content: 'DeFi Dashboard', 
         styles: { 
-          color: '#fff', 
+          color: '#1a1a1a', 
           fontWeight: 'bold', 
           fontSize: '1.2rem',
           marginLeft: '12px'

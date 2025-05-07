@@ -222,8 +222,6 @@ export const TemplateFooterStyles = {
 
 export const DeFiFooterStyles = {
   footer: {
-    backgroundColor: '#1a1a1a',
-    color: '#ffffff',
     padding: '24px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -244,7 +242,6 @@ export const DeFiFooterStyles = {
     objectFit: 'cover',
   },
   copyright: {
-    color: '#ffffff',
     fontSize: '0.9rem',
   },
   linksContainer: {
@@ -256,7 +253,6 @@ export const DeFiFooterStyles = {
     gap: '16px',
   },
   link: {
-    color: '#ffffff',
     textDecoration: 'none',
     fontSize: '0.9rem',
     cursor: 'text',

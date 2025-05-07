@@ -68,10 +68,17 @@ export const EditableProvider = ({ children, userId }) => {
       structure = config.configuration || config;
     }
   
+    // Get base styles from configuration if it exists
+    const baseStyles = structure && structureConfigurations[structure]?.styles || {};
+    const configStyles = config?.styles || {};
+    
     const baseElement = {
       id: newId,
       type,
-      styles: config?.styles || {},
+      styles: {
+        ...baseStyles,
+        ...configStyles
+      },
       level,
       children: [],
       label: '',
@@ -108,11 +115,14 @@ export const EditableProvider = ({ children, userId }) => {
     // If config has children, use those instead of structure configurations
     if (config && config.children && !((type === 'navbar' || type === 'footer') && structureConfigurations[configuration])) {
       // Handle custom configuration with children
-      baseElement.styles = { ...baseElement.styles, ...(config.styles || {}) };
       const childrenElements = config.children.map((child) => ({
         ...child,
         id: generateUniqueId(child.type),
         parentId: newId,
+        styles: {
+          ...(structureConfigurations[configuration]?.children?.find(c => c.type === child.type)?.styles || {}),
+          ...(child.styles || {})
+        }
       }));
       baseElement.children = childrenElements.map((child) => child.id);
       if (!parentId) {
@@ -126,12 +136,14 @@ export const EditableProvider = ({ children, userId }) => {
       }
     } else if (structure && structureConfigurations[structure]) {
       // Fallback to structure configuration if no explicit children or for navbars/footers with config
-      baseElement.styles = { ...baseElement.styles, ...(structureConfigurations[structure].styles || {}) };
       const childrenElements = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,
         content: child.content || '',
-        styles: child.styles || {},
+        styles: {
+          ...(child.styles || {}),
+          color: child.styles?.color || baseStyles.color || '#1a1a1a'
+        },
         label: child.label || '',
         parentId: newId,
         settings: child.settings || {},
@@ -306,150 +318,215 @@ export const EditableProvider = ({ children, userId }) => {
   }, [currentIndex, history]);
 
   const handleAICommand = useCallback((command) => {
-    console.log('[handleAICommand] action:', command.action, 'elementType:', command.elementType, 'properties:', command.properties);
+    if (!command || !command.action) {
+      console.warn('Invalid AI command:', command);
+      return;
+    }
+
+    // Helper function to merge styles with proper inheritance
+    const mergeStyles = (baseStyles, existingStyles, newStyles) => {
+      const merged = {
+        ...baseStyles,
+        ...existingStyles,
+        ...newStyles
+      };
+
+      // Handle hover states separately
+      if (newStyles?.hover || existingStyles?.hover) {
+        merged.hover = {
+          ...(baseStyles?.hover || {}),
+          ...(existingStyles?.hover || {}),
+          ...(newStyles?.hover || {})
+        };
+      }
+
+      // Remove undefined values
+      Object.keys(merged).forEach(key => {
+        if (merged[key] === undefined) {
+          delete merged[key];
+        }
+      });
+
+      return merged;
+    };
+
+    // Helper function to handle style inheritance for children
+    const applyChildStyles = (parentId, parentStyles, children, config) => {
+      const parent = findElementById(parentId, elements);
+      if (!parent?.children) return;
+
+      parent.children.forEach((childId, index) => {
+        const child = elements.find(el => el.id === childId);
+        const childConfig = config?.children?.[index];
+        
+        if (child && childConfig) {
+          const baseStyles = {
+            color: parentStyles?.color || config?.styles?.color
+          };
+
+          const mergedStyles = mergeStyles(
+            baseStyles,
+            child.styles,
+            childConfig.styles
+          );
+
+          updateStyles(childId, mergedStyles);
+        }
+      });
+    };
+
     switch (command.action) {
       case 'add': {
-        // If adding a navbar, use the structure argument for default children
-        if (command.elementType === 'navbar' && command.properties?.configuration) {
+        // Handle structured elements (navbar, footer)
+        if ((command.elementType === 'navbar' || command.elementType === 'footer') && command.properties?.configuration) {
+          const structureConfig = structureConfigurations[command.properties.configuration];
+          if (!structureConfig) {
+            console.warn(`Configuration not found for ${command.properties.configuration}`);
+            return;
+          }
+
           const newId = addNewElement(
             command.elementType,
             1,
             command.position?.index || 0,
             command.position?.parentId || null,
-            command.properties // Pass the entire properties object
+            command.properties
           );
-          if (command.properties?.styles) {
-            updateStyles(newId, command.properties.styles);
-          }
+
+          // Apply parent styles
+          const baseStyles = mergeStyles(
+            structureConfig.styles,
+            {},
+            command.properties.styles
+          );
+          updateStyles(newId, baseStyles);
+
+          // Apply child styles
+          applyChildStyles(newId, baseStyles, structureConfig.children, structureConfig);
+          
           return newId;
-        } else if (command.properties?.configuration) {
-          // For hero, cta, defiSection, etc.
-          const newId = addNewElement(
-            command.elementType,
-            1,
-            command.position?.index || 0,
-            command.position?.parentId || null,
-            command.properties // Pass the entire properties object
-          );
-          if (command.properties?.styles) {
-            updateStyles(newId, command.properties.styles);
-          }
-          return newId;
-        } else {
-          return addNewElement(
-            command.elementType,
-            1,
-            command.position?.index || 0,
-            command.position?.parentId || null,
-            command.properties || {}
-          );
         }
+
+        // Handle other elements
+          const newId = addNewElement(
+            command.elementType,
+            1,
+            command.position?.index || 0,
+            command.position?.parentId || null,
+          command.properties
+          );
+
+          if (command.properties?.styles) {
+            updateStyles(newId, command.properties.styles);
+          }
+
+          return newId;
       }
+
       case 'edit': {
         const { children, styles, ...otherProps } = command.properties || {};
+        const targetElement = findElementById(command.targetId, elements);
         
-        // First update the parent element's properties and styles
+        if (!targetElement) {
+          console.warn(`Element not found: ${command.targetId}`);
+          return;
+        }
+        
+        // Update element properties
         if (Object.keys(otherProps).length > 0) {
           updateElementProperties(command.targetId, otherProps);
         }
+
+        // Update styles if provided
         if (styles) {
-          updateStyles(command.targetId, styles);
+          const structureConfig = targetElement.configuration ? 
+            structureConfigurations[targetElement.configuration] : null;
+
+          const mergedStyles = mergeStyles(
+            structureConfig?.styles || {},
+            targetElement.styles,
+            styles
+          );
+
+          updateStyles(command.targetId, mergedStyles);
+
+          // Update child styles if this is a structured element
+          if (structureConfig) {
+            applyChildStyles(command.targetId, mergedStyles, children, structureConfig);
+          }
         }
 
-        // Then handle children updates if provided
-        if (children) {
-          const parent = findElementById(command.targetId, elements);
-          if (parent && parent.children && parent.children.length) {
-            // Create a map of child elements by type and index for more precise matching
-            const childrenByTypeAndIndex = parent.children.reduce((acc, childId, index) => {
-              const child = elements.find(el => el.id === childId);
-              if (child) {
-                const key = `${child.type}-${index}`;
-                if (!acc[key]) acc[key] = [];
-                acc[key].push({ id: childId, element: child, index });
-              }
-              return acc;
-            }, {});
+        // Handle child updates
+        if (children && targetElement.children) {
+          children.forEach((childEdit, index) => {
+            if (!childEdit?.type) return;
 
-            // Update each child based on type and index matching
-            children.forEach((childEdit, idx) => {
-              if (!childEdit || !childEdit.type) return;
-              
-              // Try to find a matching child by type and index
-              const key = `${childEdit.type}-${idx}`;
-              const matchingChildren = childrenByTypeAndIndex[key] || [];
-              const targetChild = matchingChildren[0]; // Get the first matching child
-              
-              if (targetChild) {
-                // Update content if provided
+            const childId = targetElement.children[index];
+            if (!childId) return;
+
+            const child = elements.find(el => el.id === childId);
+            if (!child) return;
+
+            // Update child content
                 if (childEdit.content !== undefined) {
-                  updateContent(targetChild.id, childEdit.content);
+              updateContent(childId, childEdit.content);
                 }
                 
-                // Update styles if provided
+            // Update child styles
                 if (childEdit.styles) {
-                  // Handle hover styles separately
-                  const { hover, ...baseStyles } = childEdit.styles;
-                  updateStyles(targetChild.id, baseStyles);
-                  
-                  // If hover styles are provided, update them as well
-                  if (hover) {
-                    const currentStyles = elements.find(el => el.id === targetChild.id)?.styles || {};
-                    updateStyles(targetChild.id, {
-                      ...currentStyles,
-                      hover: hover
-                    });
-                  }
-                }
-                
-                // Remove the used child from the map
-                childrenByTypeAndIndex[key] = matchingChildren.slice(1);
-              } else {
-                // If no exact match found, try to find any child of the same type
-                const fallbackKey = childEdit.type;
-                const fallbackChildren = Object.entries(childrenByTypeAndIndex)
-                  .filter(([k]) => k.startsWith(fallbackKey))
-                  .flatMap(([_, children]) => children);
-                
-                if (fallbackChildren.length > 0) {
-                  const fallbackChild = fallbackChildren[0];
-                  if (childEdit.content !== undefined) {
-                    updateContent(fallbackChild.id, childEdit.content);
-                  }
-                  if (childEdit.styles) {
-                    const { hover, ...baseStyles } = childEdit.styles;
-                    updateStyles(fallbackChild.id, baseStyles);
-                    if (hover) {
-                      const currentStyles = elements.find(el => el.id === fallbackChild.id)?.styles || {};
-                      updateStyles(fallbackChild.id, {
-                        ...currentStyles,
-                        hover: hover
-                      });
-                    }
-                  }
-                }
+              const structureConfig = targetElement.configuration ? 
+                structureConfigurations[targetElement.configuration] : null;
+              const childConfig = structureConfig?.children?.[index];
+
+              const mergedStyles = mergeStyles(
+                childConfig?.styles || {},
+                child.styles,
+                childEdit.styles
+              );
+
+              updateStyles(childId, mergedStyles);
               }
             });
-          }
         }
         break;
       }
+
       case 'updateContent':
         updateContent(command.targetId, command.content);
         break;
-      case 'updateStyles':
-        updateStyles(command.targetId, command.styles || {});
+
+      case 'updateStyles': {
+        const targetElement = findElementById(command.targetId, elements);
+        if (!targetElement) {
+          console.warn(`Element not found: ${command.targetId}`);
+          return;
+        }
+
+        const structureConfig = targetElement.configuration ? 
+          structureConfigurations[targetElement.configuration] : null;
+
+        const mergedStyles = mergeStyles(
+          structureConfig?.styles || {},
+          targetElement.styles,
+          command.styles
+        );
+
+        updateStyles(command.targetId, mergedStyles);
         break;
+      }
+
       case 'delete':
         handleRemoveElement(command.targetId);
         break;
+
       case 'move':
         moveElement(command.targetId, command.newIndex);
         break;
+
       default:
         console.warn('Unknown AI command:', command);
     }
-  }, [addNewElement, updateElementProperties, updateContent, updateStyles, handleRemoveElement, moveElement, elements]);
+  }, [elements, addNewElement, updateStyles, findElementById]);
 
   // Memoize context value after all state and functions are defined
   const contextValue = useMemo(() => ({

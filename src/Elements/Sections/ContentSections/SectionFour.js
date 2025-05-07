@@ -106,24 +106,13 @@ const SectionFour = ({
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-    
-    return container.children.map((childId) => {
+
+    const childrenElements = container.children.map((childId, index) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-      
+
       let childContent;
-      switch(child.type) {
-        case 'span':
-          childContent = (
-            <Span
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{ ...sectionFourStyles.caption, ...(child.styles || {}) }}
-              onClick={(e) => handleSelect(e, child.id)}
-            />
-          );
-          break;
+      switch (child.type) {
         case 'heading':
           childContent = (
             <Heading
@@ -135,55 +124,15 @@ const SectionFour = ({
             />
           );
           break;
-        case 'featureItem':
+        case 'paragraph':
           childContent = (
-            <div key={child.id} style={sectionFourStyles.featureItem}>
-              {child.children?.map(sub => {
-                if (sub.type === 'icon') {
-                  return (
-                    <Icon
-                      key={sub.id}
-                      id={sub.id}
-                      styles={{ ...sectionFourStyles.featureIcon, ...(sub.styles || {}) }}
-                      onClick={(e) => handleSelect(e, sub.id)}
-                    />
-                  );
-                } else if (sub.type === 'image') {
-                  return (
-                    <Image
-                      key={sub.id}
-                      id={sub.id}
-                      src={sub.content}
-                      styles={{ ...sectionFourStyles.featureIcon, ...(sub.styles || {}) }}
-                      handleOpenMediaPanel={handleOpenMediaPanel}
-                      handleDrop={(item) => handleSectionDrop(item, sub.id)}
-                      onClick={(e) => handleSelect(e, sub.id)}
-                    />
-                  );
-                } else if (sub.type === 'heading') {
-                  return (
-                    <Heading
-                      key={sub.id}
-                      id={sub.id}
-                      content={sub.content}
-                      styles={{ ...sectionFourStyles.featureHeading, ...(sub.styles || {}) }}
-                      onClick={(e) => handleSelect(e, sub.id)}
-                    />
-                  );
-                } else if (sub.type === 'paragraph') {
-                  return (
-                    <Paragraph
-                      key={sub.id}
-                      id={sub.id}
-                      content={sub.content}
-                      styles={{ ...sectionFourStyles.featureText, ...(sub.styles || {}) }}
-                      onClick={(e) => handleSelect(e, sub.id)}
-                    />
-                  );
-                }
-                return null;
-              })}
-            </div>
+            <Paragraph
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{ ...sectionFourStyles.paragraph, ...(child.styles || {}) }}
+              onClick={(e) => handleSelect(e, child.id)}
+            />
           );
           break;
         case 'button':
@@ -193,6 +142,30 @@ const SectionFour = ({
               id={child.id}
               content={child.content}
               styles={{ ...sectionFourStyles.primaryButton, ...(child.styles || {}) }}
+              onClick={(e) => handleSelect(e, child.id)}
+            />
+          );
+          break;
+        case 'image':
+          childContent = (
+            <Image
+              key={child.id}
+              id={child.id}
+              src={child.content}
+              styles={{ ...sectionFourStyles.image, ...(child.styles || {}) }}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+              handleDrop={(item) => handleSectionDrop(item, child.id)}
+              onClick={(e) => handleSelect(e, child.id)}
+            />
+          );
+          break;
+        case 'span':
+          childContent = (
+            <Span
+              key={child.id}
+              id={child.id}
+              content={child.content}
+              styles={{ ...sectionFourStyles.label, ...(child.styles || {}) }}
               onClick={(e) => handleSelect(e, child.id)}
             />
           );
@@ -209,8 +182,72 @@ const SectionFour = ({
             handleOpenMediaPanel
           );
       }
-      return childContent;
+
+      return (
+        <React.Fragment key={child.id}>
+          {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+              onDragOver={(e) => onDragOver(e, containerId, index)}
+              onDrop={(e) => onDrop(e, containerId)}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
+          <span
+            draggable
+            onDragStart={(e) => onDragStart(e, child.id)}
+            onDragOver={(e) => onDragOver(e, containerId, index)}
+            onDragEnd={onDragEnd}
+            style={{ display: 'inline-block' }}
+          >
+            {childContent}
+          </span>
+        </React.Fragment>
+      );
     });
+
+    // Only add bottom drop zone if we're actually dragging something
+    if (activeDrop && activeDrop.containerId === containerId) {
+      childrenElements.push(
+        <div
+          key="drop-zone-bottom"
+          style={{ height: '40px', width: '100%' }}
+          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
+          onDrop={(e) => onDrop(e, containerId)}
+        >
+          {activeDrop.index === container.children.length && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return childrenElements;
   };
   
   const mergedSectionStyles = mergeStyles(

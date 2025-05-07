@@ -20,9 +20,15 @@ export const registerContainer = (
 ) => {
   const containerId = `${sectionId}-${containerKey}`;
 
-  // Only add the container if it does not exist.
-  if (findElementById(containerId, elements)) {
-    return; // Container already exists, skip.
+  // Only add the container if it does not exist and if it's a required container
+  const requiredContainers = ['content', 'buttons', 'image', 'label'];
+  if (findElementById(containerId, elements) || !requiredContainers.includes(containerKey)) {
+    return; // Container already exists or is not required, skip.
+  }
+
+  // Don't create empty containers for buttons
+  if (containerKey === 'buttons' && (!elements || elements.length === 0)) {
+    return;
   }
 
   setElements((prev) => [

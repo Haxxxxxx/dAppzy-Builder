@@ -12,7 +12,7 @@ const UnifiedDropZone = React.memo(({
   isDragging, 
   index, 
   onPanelToggle,
-  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK']
+  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION']
 }) => {
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -32,7 +32,7 @@ const UnifiedDropZone = React.memo(({
     }
   }, [onClick, className, onPanelToggle]);
 
-  const [{ isOver }, drop] = useDrop({
+  const [{ isOver, draggedItem }, drop] = useDrop({
     accept,
     drop: (item, monitor) => {
       if (monitor.didDrop()) {
@@ -41,34 +41,43 @@ const UnifiedDropZone = React.memo(({
       if (onDrop) {
         onDrop(item, parentId);
       }
-      // Reset hover state after drop
-      setIsHovered(false);
-      setIsVisible(false);
     },
     hover: (item, monitor) => {
       if (!dropRef.current) return;
+      
+      // Don't show dropzone if:
+      // 1. Dragging a section or configured div
+      // 2. Dragging a section into another section's content area
+      const isDraggingSection = item.type === 'SECTION';
+      const isDraggingConfiguredDiv = item.type === 'DIV' && item.configuration;
+      const isContentSection = parentId && parentId.includes('-content');
+      
+      if (isDraggingSection || isDraggingConfiguredDiv || (isDraggingSection && isContentSection)) {
+        setIsVisible(false);
+        return;
+      }
       
       const hoverBoundingRect = dropRef.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
       
       if (!clientOffset) return;
 
-      // Account for scroll position
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
+      // Calculate the mouse position relative to the drop zone
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
       
-      // Calculate position relative to viewport
-      const position = {
-        x: clientOffset.x - scrollX,
-        y: clientOffset.y - scrollY
-      };
-      
-      setPosition(position);
-      setIsHovered(true);
+      // Only update position if we're not already showing the drop zone
+      if (!isVisible) {
+        setPosition({
+          x: clientOffset.x,
+          y: clientOffset.y
+        });
       setIsVisible(true);
+      }
     },
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
+      draggedItem: monitor.getItem()
     }),
   });
 
@@ -78,32 +87,16 @@ const UnifiedDropZone = React.memo(({
     }
   }, [drop]);
 
-  useEffect(() => {
-    if (isOver) {
-      document.body.style.cursor = 'grab';
-      setIsHovered(true);
-      setIsVisible(true);
-    } else {
-      document.body.style.cursor = 'default';
-      setIsHovered(false);
-      if (className !== 'default-dropzone' && className !== 'first-dropzone') {
-        setIsVisible(false);
-      }
-    }
-    return () => {
-      document.body.style.cursor = 'default';
-    };
-  }, [isOver, className]);
+  // Don't render if:
+  // 1. Dragging a section or configured div
+  // 2. Dragging a section into another section's content area
+  const isDraggingSection = draggedItem?.type === 'SECTION';
+  const isDraggingConfiguredDiv = draggedItem?.type === 'DIV' && draggedItem?.configuration;
+  const isContentSection = parentId && parentId.includes('-content');
 
-  // Reset visibility when dragging stops
-  useEffect(() => {
-    if (!isDragging) {
-      setIsHovered(false);
-      if (className !== 'default-dropzone' && className !== 'first-dropzone') {
-        setIsVisible(false);
-      }
-    }
-  }, [isDragging, className]);
+  if (draggedItem && (isDraggingSection || isDraggingConfiguredDiv || (isDraggingSection && isContentSection))) {
+    return null;
+  }
 
   const isFirstDropzone = className === 'first-dropzone';
   const isDefaultDropzone = className === 'default-dropzone';
@@ -111,8 +104,10 @@ const UnifiedDropZone = React.memo(({
   return (
     <div
       ref={dropRef}
-      className={`unified-dropzone ${className} ${isHovered ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
+      className={`unified-dropzone ${className} ${isOver ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
       onClick={handleInteraction}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         position: isFirstDropzone ? 'absolute' : (isDefaultDropzone ? 'static' : 'absolute'),
         left: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.x),
@@ -133,7 +128,7 @@ const UnifiedDropZone = React.memo(({
       }}
     >
       <div className="dropzone-text">
-        {isHovered ? 'Drop here to add an element' : text || 'Drop here !'}
+        {isOver ? 'Drop here to add an element' : text || 'Drop here !'}
       </div>
     </div>
   );

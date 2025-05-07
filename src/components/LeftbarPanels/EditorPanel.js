@@ -48,7 +48,7 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'nav':
       case 'footer':
       case 'header':
-        return <BackgroundSettings settings={selectedElement.settings || {}} />;
+        return null;
       case 'image':
         return <ImageSettings settings={selectedElement.settings || {}} />;
       case 'video':
@@ -60,7 +60,6 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'anchor':
       case 'span':
       case 'button':
-      case 'icon':
         if (selectedElement.label !== 'title') {
           return <LinkSettings settings={selectedElement.settings || {}} />;
         }
@@ -71,7 +70,7 @@ const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'form':
         return <FormSettings settings={selectedElement.settings || {}} />;
       default:
-        return <BackgroundSettings settings={selectedElement.settings || {}} />;
+        return null;
     }
   };
 

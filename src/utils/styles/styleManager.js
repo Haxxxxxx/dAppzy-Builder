@@ -56,13 +56,11 @@ export const StyleManager = {
         fontFamily: 'Roboto, sans-serif',
         fontWeight: 500,
         fontSize: '1rem',
-        color: '#fff',
         cursor: 'text',
         border: 'none',
         outline: 'none'
       },
       link: {
-        color: '#bbb',
         textDecoration: 'none',
         fontSize: '0.9rem',
         display: 'block',

@@ -48,6 +48,12 @@ const BuilderPageCore = ({
   const [lastNavbarSpanId, setLastNavbarSpanId] = useState(null);
   const [lastFooterSpanId, setLastFooterSpanId] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState([
+    { id: 1, name: 'Conversation 1', messages: [] }
+  ]);
+  const [activeConversationId, setActiveConversationId] = useState(1);
+
+  const activeConversation = conversations.find(c => c.id === activeConversationId) || conversations[0];
 
   const handlePanelToggle = (panelName) => {
     setOpenPanel((prevPanel) => (prevPanel === panelName ? "" : panelName));
@@ -64,17 +70,25 @@ const BuilderPageCore = ({
   };
 
   const handleAIFloatingButtonClick = () => {
-    if (!showAIInputBar && openPanel !== "ai") {
+    if (!aiChatStarted) {
+      // If no chat has started yet, show the input bar and prepare for first prompt
       setShowAIInputBar(true);
-      setOpenPanel(""); // Close any open panels
+      setOpenPanel("");
+    } else {
+      // If chat has already started, just open the AI panel
+      setOpenPanel("ai");
+      setShowAIInputBar(false);
     }
   };
 
   const handleFirstPrompt = async (userMessage) => {
     try {
-      console.log('[handleFirstPrompt] started', userMessage);
+      // Remove or comment out these console logs
+      // console.log('[handleFirstPrompt] started', userMessage);
+      // console.log('[handleFirstPrompt] before navbarCommand');
+      
       // Create Navbar
-      console.log('[handleFirstPrompt] before navbarCommand');
+      // console.log('[handleFirstPrompt] before navbarCommand');
       const navbarCommand = {
         action: 'add',
         elementType: 'navbar',
@@ -89,7 +103,7 @@ const BuilderPageCore = ({
         }
       };
       const navbarId = await handleAICommand(navbarCommand);
-      console.log('[handleFirstPrompt] after navbarCommand', navbarId);
+      // console.log('[handleFirstPrompt] after navbarCommand', navbarId);
 
       // Wait for the elements to be updated in the context
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -103,7 +117,7 @@ const BuilderPageCore = ({
         const spanElement = navbarChildren.find(el => el.type === 'span');
         if (spanElement) {
           setLastNavbarSpanId(spanElement.id);
-          console.log('Found and stored navbar span ID:', spanElement.id);
+          // console.log('Found and stored navbar span ID:', spanElement.id);
         }
       }
 
@@ -114,7 +128,7 @@ const BuilderPageCore = ({
         properties: {
           configuration: 'defiSection',
           styles: {
-            backgroundColor: '#1a1a1a',
+            backgroundColor: '#2a2a2a',
             color: '#fff',
             padding: '40px',
           },
@@ -191,10 +205,14 @@ const BuilderPageCore = ({
           configuration: 'defiFooter',
           styles: {
             backgroundColor: '#ffffff',
-            color: '#000000',
-            borderTop: '1px solid #e5e7eb',
-            padding: '0',
+            color: '#1a1a1a',
+            borderTop: '1px solid #e5e5e5',
             padding: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            width: '100%',
+            boxSizing: 'border-box',
           },
           children: [
             {
@@ -203,37 +221,101 @@ const BuilderPageCore = ({
               styles: {
                 width: '32px',
                 height: '32px',
+                objectFit: 'cover',
                 borderRadius: '8px',
-                objectFit: 'cover'
               }
             },
             {
               type: 'span',
-              content: 'DeFi Dashboard',
+              content: '© 2024 DeFi Project',
               styles: {
                 color: '#1a1a1a',
-                fontSize: '1rem',
-                fontWeight: '500'
+                fontSize: '14px',
+                fontWeight: '400',
+                display: 'inline-block',
+                margin: '0',
+                padding: '0',
               }
             },
-            // Social logos as images with correct Simple Icons CDN URLs
             {
-              type: 'image',
-              content: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg',
-              styles: { width: '24px', height: '24px', margin: '0 8px', cursor: 'pointer' },
-              link: 'https://x.com/yourprofile'
+              type: 'link',
+              content: 'Whitepaper',
+              styles: {
+                color: '#1a1a1a',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'inline-block',
+                margin: '0',
+                padding: '0',
+                ':hover': {
+                  color: '#5C4EFA',
+                },
+              }
             },
             {
-              type: 'image',
-              content: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/discord.svg',
-              styles: { width: '24px', height: '24px', margin: '0 8px', cursor: 'pointer' },
-              link: 'https://discord.gg/yourinvite'
+              type: 'link',
+              content: 'Audit',
+              styles: {
+                color: '#1a1a1a',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'inline-block',
+                margin: '0',
+                padding: '0',
+                ':hover': {
+                  color: '#5C4EFA',
+                },
+              }
             },
             {
-              type: 'image',
-              content: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/github.svg',
-              styles: { width: '24px', height: '24px', margin: '0 8px', cursor: 'pointer' },
-              link: 'https://github.com/yourrepo'
+              type: 'link',
+              content: 'Governance',
+              styles: {
+                color: '#1a1a1a',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'inline-block',
+                margin: '0',
+                padding: '0',
+                ':hover': {
+                  color: '#5C4EFA',
+                },
+              }
+            },
+            {
+              type: 'link',
+              content: 'Docs',
+              styles: {
+                color: '#1a1a1a',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'inline-block',
+                margin: '0',
+                padding: '0',
+                ':hover': {
+                  color: '#5C4EFA',
+                },
+              }
+            },
+            {
+              type: 'link',
+              content: 'Connect Wallet',
+              styles: {
+                color: '#1a1a1a',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: '500',
+                display: 'inline-block',
+                margin: '0',
+                padding: '0',
+                ':hover': {
+                  color: '#5C4EFA',
+                },
+              }
             }
           ]
         },
@@ -255,7 +337,7 @@ const BuilderPageCore = ({
         const spanElement = footerChildren.find(el => el.type === 'span');
         if (spanElement) {
           setLastFooterSpanId(spanElement.id);
-          console.log('Found and stored footer span ID:', spanElement.id);
+          // console.log('Found and stored footer span ID:', spanElement.id);
         }
       }
 
@@ -269,21 +351,33 @@ const BuilderPageCore = ({
       };
 
       setShowAIInputBar(false);
-      console.log('[handleFirstPrompt] setShowAIInputBar(false)');
-      setMessages([userMessage, aiAnswer]);
-      console.log('[handleFirstPrompt] setMessages', [userMessage, aiAnswer]);
       setOpenPanel("ai");
-      console.log('[handleFirstPrompt] setOpenPanel("ai")');
       setAIChatStarted(true);
-      console.log('[handleFirstPrompt] setAIChatStarted(true)');
+      
+      // Create new messages array
+      const newMessages = [userMessage, aiAnswer];
+      
+      // Update conversations first
+      setConversations(prev => {
+        const updatedConversations = prev.map(c =>
+          c.id === activeConversationId 
+            ? { ...c, messages: newMessages }
+            : c
+        );
+        return updatedConversations;
+      });
+      
+      // Then update parent's messages state
+      setMessages(newMessages);
     } catch (err) {
       console.error('[handleFirstPrompt] error:', err);
     }
   };
 
   const handleSecondPrompt = async (userMessage) => {
-    console.log('Updating navbar span with ID:', lastNavbarSpanId);
-    console.log('Updating footer span with ID:', lastFooterSpanId);
+    // Remove or comment out these console logs
+    // console.log('Updating navbar span with ID:', lastNavbarSpanId);
+    // console.log('Updating footer span with ID:', lastFooterSpanId);
 
     // Edit Navbar
     await handleAICommand({
@@ -347,66 +441,95 @@ const BuilderPageCore = ({
           color: '#ffffff',
           borderTop: '1px solid #333',
           padding: '12px',          
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          boxSizing: 'border-box',
         },
         children: [
           {
             type: 'image',
             content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
-            styles: { width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }
+            styles: {
+              width: '32px',
+              height: '32px',
+              objectFit: 'cover',
+              borderRadius: '8px',
+            }
           },
           {
             type: 'span',
-            content: 'DeFi Dashboard',
-            styles: { color: '#ffffff', fontSize: '1rem', fontWeight: '500' }
-          },
-          {
-            type: 'link',
-            content: 'Privacy Policy',
-            styles: { 
+            content: '© 2024 DeFi Project',
+            styles: {
               color: '#ffffff',
-              textDecoration: 'none',
-              fontSize: '0.9rem',
-              hover: { color: '#ffffff' }
+              fontSize: '14px',
+              fontWeight: '400',
             }
           },
           {
             type: 'link',
-            content: 'Terms of Service',
+            content: 'Whitepaper',
             styles: { 
               color: '#ffffff',
               textDecoration: 'none',
-              fontSize: '0.9rem',
-              hover: { color: '#ffffff' }
+              fontSize: '14px',
+              fontWeight: '500',
+              ':hover': {
+                color: '#5C4EFA',
+              },
             }
           },
           {
-            type: 'icon',
-            content: 'Twitter',
+            type: 'link',
+            content: 'Audit',
             styles: { 
               color: '#ffffff',
               textDecoration: 'none',
-              fontSize: '1.2rem',
-              hover: { color: '#ffffff' }
+              fontSize: '14px',
+              fontWeight: '500',
+              ':hover': {
+                color: '#5C4EFA',
+              },
             }
           },
           {
-            type: 'icon',
-            content: 'Discord',
+            type: 'link',
+            content: 'Governance',
             styles: { 
               color: '#ffffff',
               textDecoration: 'none',
-              fontSize: '1.2rem',
-              hover: { color: '#ffffff' }
+              fontSize: '14px',
+              fontWeight: '500',
+              ':hover': {
+                color: '#5C4EFA',
+              },
             }
           },
           {
-            type: 'icon',
-            content: 'GitHub',
+            type: 'link',
+            content: 'Docs',
             styles: { 
               color: '#ffffff',
               textDecoration: 'none',
-              fontSize: '1.2rem',
-              hover: { color: '#ffffff' }
+              fontSize: '14px',
+              fontWeight: '500',
+              ':hover': {
+                color: '#5C4EFA',
+              },
+            }
+          },
+          {
+            type: 'link',
+            content: 'Connect Wallet',
+            styles: { 
+              color: '#ffffff',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '500',
+              ':hover': {
+                color: '#5C4EFA',
+              },
             }
           }
         ]
@@ -431,10 +554,22 @@ const BuilderPageCore = ({
               'All text content is now white for better contrast against the dark background.'
     };
 
-    // Only update the messages array with both the user's message and AI's response
-    setMessages(prevMessages => [...prevMessages, userMessage, aiAnswer]);
-    // Do not update setInitialAIMessages with the AI answer to avoid duplicate rendering
-    // setInitialAIMessages(prevMessages => [...prevMessages, userMessage, aiAnswer]);
+    // Create new messages array
+    const newMessages = [...messages, userMessage, aiAnswer];
+    
+    // Update conversations first
+    setConversations(prev => {
+      const updatedConversations = prev.map(c =>
+        c.id === activeConversationId 
+          ? { ...c, messages: newMessages }
+          : c
+      );
+      return updatedConversations;
+    });
+    
+    // Then update parent's messages state
+    setMessages(newMessages);
+    
     setOpenPanel("ai");
     setAIChatStarted(true);
     return aiAnswer;
@@ -590,6 +725,73 @@ const BuilderPageCore = ({
     }
   };
 
+  const handleSelectConversation = (id) => {
+    setActiveConversationId(id);
+    const selectedConv = conversations.find(c => c.id === id);
+    if (selectedConv && selectedConv.messages) {
+      setMessages([...selectedConv.messages]);
+    }
+  };
+
+  const handleSetMessages = (msgs) => {
+    if (!msgs) return;
+    
+    const newMessages = [...msgs];
+    
+    setConversations(prev => {
+      const updatedConversations = prev.map(c =>
+        c.id === activeConversationId 
+          ? { ...c, messages: newMessages }
+          : c
+      );
+      return updatedConversations;
+    });
+    
+    setMessages(newMessages);
+  };
+
+  const handleNewChat = () => {
+    const newId = Date.now();
+    const newConv = { 
+      id: newId, 
+      name: `Conversation ${conversations.length + 1}`, 
+      messages: [] 
+    };
+    
+    setConversations(prev => {
+      const updatedPrev = prev.map(c =>
+        c.id === activeConversationId
+          ? { ...c, messages: [...messages] }
+          : c
+      );
+      return [...updatedPrev, newConv];
+    });
+    
+    setActiveConversationId(newId);
+    setMessages([]);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (conversations.length === 0) {
+      setConversations([{ 
+        id: 1, 
+        name: 'Conversation 1', 
+        messages: [] 
+      }]);
+      setActiveConversationId(1);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (openPanel === "ai") {
+      const currentConv = conversations.find(c => c.id === activeConversationId);
+      if (currentConv && currentConv.messages) {
+        setMessages([...currentConv.messages]);
+      }
+    }
+  }, [openPanel, activeConversationId]);
+
   useEffect(() => {
     const updateCanvasWidth = () => {
       if (mainContentRef.current) {
@@ -601,12 +803,6 @@ const BuilderPageCore = ({
     window.addEventListener("resize", updateCanvasWidth);
     return () => window.removeEventListener("resize", updateCanvasWidth);
   }, [setAvailableCanvasWidth]);
-
-  useEffect(() => {
-    console.log("State changed:", { openPanel, showAIInputBar, messages });
-  }, [openPanel, showAIInputBar, messages]);
-
-  console.log("openPanel:", openPanel, "showAIInputBar:", showAIInputBar, "messages:", messages);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -678,7 +874,6 @@ const BuilderPageCore = ({
             {showAIInputBar && !openPanel ? (
               <div className="ai-absolute-input-bar-container">
                 <form className="ai-absolute-input-bar" onSubmit={async (e) => {
-                  console.log("AI input bar form submitted");
                   e.preventDefault();
                   const input = e.target.querySelector('input');
                   if (input.value.trim()) {
@@ -704,7 +899,12 @@ const BuilderPageCore = ({
             ) : openPanel === "ai" && (
               <div className="right-panel" id="ai-panel">
                 <AIAgentPanel 
-                  initialMessages={messages}
+                  messages={activeConversation.messages}
+                  conversations={conversations}
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={handleSelectConversation}
+                  onNewChat={handleNewChat}
+                  setMessages={handleSetMessages}
                   lastNavbarId={lastNavbarId}
                   lastDefiId={lastDefiId}
                   onClosePanel={handleCloseAIPanel}
@@ -712,7 +912,6 @@ const BuilderPageCore = ({
                   onSecondPrompt={handleSecondPrompt}
                   onSelectedElementEdit={handleSelectedElementEdit}
                   onThirdPrompt={handleThirdPrompt}
-                  setMessages={setMessages}
                 />
               </div>
             )}
