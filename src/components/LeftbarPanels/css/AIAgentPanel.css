@@ -2,7 +2,7 @@
 .ai-panel {
   width: 320px;
   height: 100vh;
-  background: #232323;
+  background: var(--builder-bg);
   display: flex;
   flex-direction: column;
   font-family: sans-serif;

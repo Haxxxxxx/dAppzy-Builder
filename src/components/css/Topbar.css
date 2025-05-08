@@ -4,8 +4,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background-color: #313031;
-  border-bottom: 1px solid var(----dark-gray, #57575B);
+  background-color: var(--builder-bg);
+  border-bottom: 1px solid var(--dark-gray, #57575B);
 }
 
 .project-info {
@@ -31,7 +31,7 @@
 }
 
 .project-name {
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   font-family: Montserrat;
   font-size: 16px;
   font-weight: 500;
@@ -42,7 +42,7 @@
 }
 
 .project-url {
-  color: var(----not-selected, #838389);
+  color: var(--not-selected, #838389);
   text-align: center;
   font-family: Montserrat;
   font-size: 12px;
@@ -95,7 +95,7 @@
 
 .resize-button.selected {
   background: rgba(255, 255, 255, 0.5);
-  color: var(----white, #FFF);
+  color: var(--white, #FFF);
 }
 
 .resize-buttons {
@@ -141,7 +141,7 @@
   cursor: pointer;
   border: none;
   border-radius: 5px;
-  background: var(----purple, #5C4EFA);
+  background: var(--purple, #5C4EFA);
   color: var(----white, #FFF);
   text-align: center;
   font-family: Montserrat;
@@ -149,12 +149,16 @@
   font-weight: 500;
 }
 
+.export-section .button:hover {
+background-color: var(--purple-hover);
+}
+
 .export-section .export-cloud {
   font-size: 20px;
 }
 
 .autosave-status {
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   text-align: center;
   font-family: Montserrat;
   font-size: 12px;

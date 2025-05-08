@@ -86,7 +86,7 @@ const BuilderPageCore = ({
       // Remove or comment out these console logs
       // console.log('[handleFirstPrompt] started', userMessage);
       // console.log('[handleFirstPrompt] before navbarCommand');
-      
+
       // Create Navbar
       // console.log('[handleFirstPrompt] before navbarCommand');
       const navbarCommand = {
@@ -133,29 +133,29 @@ const BuilderPageCore = ({
             padding: '40px',
           },
           children: [
-            { 
-              type: 'title', 
-              content: 'DeFi Dashboard', 
-              styles: { 
-                fontSize: '2rem', 
+            {
+              type: 'title',
+              content: 'DeFi Dashboard',
+              styles: {
+                fontSize: '2rem',
                 color: '#fff',
                 marginBottom: '16px'
-              } 
+              }
             },
-            { 
-              type: 'description', 
-              content: 'Monitor your assets and track performance', 
-              styles: { 
+            {
+              type: 'description',
+              content: 'Monitor your assets and track performance',
+              styles: {
                 color: '#bbb',
                 fontSize: '1.1rem',
                 marginBottom: '32px'
-              } 
+              }
             },
-            { 
-              type: 'module', 
-              content: 'Portfolio Overview', 
-              styles: { 
-                backgroundColor: '#2a2a2a', 
+            {
+              type: 'module',
+              content: 'Portfolio Overview',
+              styles: {
+                backgroundColor: '#2a2a2a',
                 borderRadius: '8px',
                 padding: '20px',
                 marginBottom: '16px'
@@ -165,11 +165,11 @@ const BuilderPageCore = ({
                 { type: 'value', content: '$0.00', styles: { color: '#4A90E2', fontSize: '2rem', fontWeight: 'bold' } }
               ]
             },
-            { 
-              type: 'module', 
-              content: 'Asset Allocation', 
-              styles: { 
-                backgroundColor: '#2a2a2a', 
+            {
+              type: 'module',
+              content: 'Asset Allocation',
+              styles: {
+                backgroundColor: '#2a2a2a',
                 borderRadius: '8px',
                 padding: '20px',
                 marginBottom: '16px'
@@ -179,11 +179,11 @@ const BuilderPageCore = ({
                 { type: 'chart', content: 'Pie Chart Placeholder', styles: { height: '200px' } }
               ]
             },
-            { 
-              type: 'module', 
-              content: 'Transaction History', 
-              styles: { 
-                backgroundColor: '#2a2a2a', 
+            {
+              type: 'module',
+              content: 'Transaction History',
+              styles: {
+                backgroundColor: '#2a2a2a',
                 borderRadius: '8px',
                 padding: '20px'
               },
@@ -353,20 +353,20 @@ const BuilderPageCore = ({
       setShowAIInputBar(false);
       setOpenPanel("ai");
       setAIChatStarted(true);
-      
+
       // Create new messages array
       const newMessages = [userMessage, aiAnswer];
-      
+
       // Update conversations first
       setConversations(prev => {
         const updatedConversations = prev.map(c =>
-          c.id === activeConversationId 
+          c.id === activeConversationId
             ? { ...c, messages: newMessages }
             : c
         );
         return updatedConversations;
       });
-      
+
       // Then update parent's messages state
       setMessages(newMessages);
     } catch (err) {
@@ -404,7 +404,7 @@ const BuilderPageCore = ({
           {
             type: 'button',
             content: 'Connect Wallet',
-            styles: { 
+            styles: {
               backgroundColor: '#5C4EFA',
               color: '#ffffff',
               padding: '8px 16px',
@@ -440,7 +440,7 @@ const BuilderPageCore = ({
           backgroundColor: '#1a1a1a',
           color: '#ffffff',
           borderTop: '1px solid #333',
-          padding: '12px',          
+          padding: '12px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -470,7 +470,7 @@ const BuilderPageCore = ({
           {
             type: 'link',
             content: 'Whitepaper',
-            styles: { 
+            styles: {
               color: '#ffffff',
               textDecoration: 'none',
               fontSize: '14px',
@@ -483,7 +483,7 @@ const BuilderPageCore = ({
           {
             type: 'link',
             content: 'Audit',
-            styles: { 
+            styles: {
               color: '#ffffff',
               textDecoration: 'none',
               fontSize: '14px',
@@ -496,7 +496,7 @@ const BuilderPageCore = ({
           {
             type: 'link',
             content: 'Governance',
-            styles: { 
+            styles: {
               color: '#ffffff',
               textDecoration: 'none',
               fontSize: '14px',
@@ -509,7 +509,7 @@ const BuilderPageCore = ({
           {
             type: 'link',
             content: 'Docs',
-            styles: { 
+            styles: {
               color: '#ffffff',
               textDecoration: 'none',
               fontSize: '14px',
@@ -522,7 +522,7 @@ const BuilderPageCore = ({
           {
             type: 'link',
             content: 'Connect Wallet',
-            styles: { 
+            styles: {
               color: '#ffffff',
               textDecoration: 'none',
               fontSize: '14px',
@@ -539,37 +539,37 @@ const BuilderPageCore = ({
     const aiAnswer = {
       role: 'assistant',
       content: 'I\'ve updated the theme to dark mode with the following changes:\n\n' +
-              '1. Navbar:\n' +
-              '   - Changed background to dark (#1a1a1a)\n' +
-              '   - Updated text color to white\n' +
-              '   - Added dark border\n\n' +
-              '2. DeFi Section:\n' +
-              '   - Set dark background (#1a1a1a)\n' +
-              '   - Updated text color to white\n' +
-              '   - Maintained rounded corners and padding\n\n' +
-              '3. Footer:\n' +
-              '   - Matched dark theme (#1a1a1a)\n' +
-              '   - Updated all text and links to white\n' +
-              '   - Added dark border\n\n' +
-              'All text content is now white for better contrast against the dark background.'
+        '1. Navbar:\n' +
+        '   - Changed background to dark (#1a1a1a)\n' +
+        '   - Updated text color to white\n' +
+        '   - Added dark border\n\n' +
+        '2. DeFi Section:\n' +
+        '   - Set dark background (#1a1a1a)\n' +
+        '   - Updated text color to white\n' +
+        '   - Maintained rounded corners and padding\n\n' +
+        '3. Footer:\n' +
+        '   - Matched dark theme (#1a1a1a)\n' +
+        '   - Updated all text and links to white\n' +
+        '   - Added dark border\n\n' +
+        'All text content is now white for better contrast against the dark background.'
     };
 
     // Create new messages array
     const newMessages = [...messages, userMessage, aiAnswer];
-    
+
     // Update conversations first
     setConversations(prev => {
       const updatedConversations = prev.map(c =>
-        c.id === activeConversationId 
+        c.id === activeConversationId
           ? { ...c, messages: newMessages }
           : c
       );
       return updatedConversations;
     });
-    
+
     // Then update parent's messages state
     setMessages(newMessages);
-    
+
     setOpenPanel("ai");
     setAIChatStarted(true);
     return aiAnswer;
@@ -614,7 +614,7 @@ const BuilderPageCore = ({
 
     try {
       await handleAICommand(editCommand);
-      
+
       return {
         role: 'assistant',
         content: `I've updated the ${selectedElement.type} element as requested.`
@@ -709,12 +709,12 @@ const BuilderPageCore = ({
 
       return {
         role: 'assistant',
-        content: `I've updated the DeFi Dashboard section with your requested changes. The section now has a ${editCommand.properties.styles.backgroundColor === '#1a1a1a' ? 'dark' : 
-                 editCommand.properties.styles.backgroundColor === '#ffffff' ? 'light' :
-                 editCommand.properties.styles.backgroundColor === '#1a2a3a' ? 'blue' :
-                 editCommand.properties.styles.backgroundColor === '#2a1a3a' ? 'purple' : 'custom'} theme, ${editCommand.properties.styles.padding === '60px' ? 'more' : 
-                 editCommand.properties.styles.padding === '20px' ? 'less' : 'standard'} padding, and ${editCommand.properties.styles.borderRadius === '16px' ? 'rounded' : 
-                 editCommand.properties.styles.borderRadius === '0' ? 'sharp' : 'standard'} corners.`
+        content: `I've updated the DeFi Dashboard section with your requested changes. The section now has a ${editCommand.properties.styles.backgroundColor === '#1a1a1a' ? 'dark' :
+          editCommand.properties.styles.backgroundColor === '#ffffff' ? 'light' :
+            editCommand.properties.styles.backgroundColor === '#1a2a3a' ? 'blue' :
+              editCommand.properties.styles.backgroundColor === '#2a1a3a' ? 'purple' : 'custom'} theme, ${editCommand.properties.styles.padding === '60px' ? 'more' :
+                editCommand.properties.styles.padding === '20px' ? 'less' : 'standard'} padding, and ${editCommand.properties.styles.borderRadius === '16px' ? 'rounded' :
+                  editCommand.properties.styles.borderRadius === '0' ? 'sharp' : 'standard'} corners.`
       };
     } catch (error) {
       console.error('Error updating DeFi section:', error);
@@ -735,29 +735,29 @@ const BuilderPageCore = ({
 
   const handleSetMessages = (msgs) => {
     if (!msgs) return;
-    
+
     const newMessages = [...msgs];
-    
+
     setConversations(prev => {
       const updatedConversations = prev.map(c =>
-        c.id === activeConversationId 
+        c.id === activeConversationId
           ? { ...c, messages: newMessages }
           : c
       );
       return updatedConversations;
     });
-    
+
     setMessages(newMessages);
   };
 
   const handleNewChat = () => {
     const newId = Date.now();
-    const newConv = { 
-      id: newId, 
-      name: `Conversation ${conversations.length + 1}`, 
-      messages: [] 
+    const newConv = {
+      id: newId,
+      name: `Conversation ${conversations.length + 1}`,
+      messages: []
     };
-    
+
     setConversations(prev => {
       const updatedPrev = prev.map(c =>
         c.id === activeConversationId
@@ -766,7 +766,7 @@ const BuilderPageCore = ({
       );
       return [...updatedPrev, newConv];
     });
-    
+
     setActiveConversationId(newId);
     setMessages([]);
   };
@@ -774,10 +774,10 @@ const BuilderPageCore = ({
   // Effects
   useEffect(() => {
     if (conversations.length === 0) {
-      setConversations([{ 
-        id: 1, 
-        name: 'Conversation 1', 
-        messages: [] 
+      setConversations([{
+        id: 1,
+        name: 'Conversation 1',
+        messages: []
       }]);
       setActiveConversationId(1);
     }
@@ -882,23 +882,48 @@ const BuilderPageCore = ({
                   }
                 }}>
                   <div className="ai-input-bar-content">
+                    <div className="ai-input-bar-header">
+                      <div className="ai-input-img-label">
+                        <div className="ai-input-img-label-content">
+                          <span class="material-symbols-outlined">
+                            image
+                          </span>
+                          <p className="ai-input-img-label-text">Image.png</p>
+                        </div>
+                        <a href="" className="ai-input-img-label-close"><span class="material-symbols-outlined">
+                          close
+                        </span></a>
+                      </div>
+
+                    </div>
                     <div className="ai-input-bar-row">
-                      <span className="material-symbols-outlined ai-input-icon-left">auto_awesome</span>
-                      <input
-                        type="text"
-                        placeholder="Ask anything"
-                        className="ai-absolute-input"
-                      />
-                      <button type="submit" className="ai-input-send-btn">
-                        <span className="material-symbols-outlined">send</span>
-                      </button>
+                      <div className="ai-input-bar-row-left">
+                        <span className="material-symbols-outlined ai-input-icon-left">auto_awesome</span>
+                        <input
+                          type="text"
+                          placeholder="Ask anything"
+                          className="ai-absolute-input"
+                        />
+                      </div>
+                      <div className="ai-input-bar-row-right">
+                        <a href="" className="ai-input-icon-right"><span className="material-symbols-outlined">
+                          attach_file
+                        </span></a>
+                        <button type="submit" className="ai-input-send-btn">
+                          <span class="material-symbols-outlined">
+                            arrow_forward
+                          </span>
+                        </button>
+                      </div>
+
+
                     </div>
                   </div>
                 </form>
               </div>
             ) : openPanel === "ai" && (
               <div className="right-panel" id="ai-panel">
-                <AIAgentPanel 
+                <AIAgentPanel
                   messages={activeConversation.messages}
                   conversations={conversations}
                   activeConversationId={activeConversationId}
