@@ -25,7 +25,7 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
     ...defaultSettings,
     ...settings,
   });
-  
+
   // Lift the dropdown links state to LinkSettings:
   const [dropdownLinks, setDropdownLinks] = useState(localSettings.dropdownLinks || []);
 

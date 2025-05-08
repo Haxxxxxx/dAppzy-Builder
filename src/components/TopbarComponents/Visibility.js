@@ -15,13 +15,13 @@ const Visibility = ({ onPreviewToggle, isPreviewMode }) => {
       <button className="redo-button" onClick={redo}>
         <span className="material-symbols-outlined">redo</span>
       </button>
-      <button className="preview-button" onClick={handlePreviewToggle}>
+      {/*<button className="preview-button" onClick={handlePreviewToggle}>
         {isPreviewMode ? (
           <span className="material-symbols-outlined">visibility_off</span>
         ) : (
           <span className="material-symbols-outlined">visibility</span>
         )}
-      </button>
+      </button>*/}
     </div>
   );
 };

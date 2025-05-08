@@ -3,9 +3,9 @@ import { TokenManager } from './tokenManager';
 
 const validateEnv = () => {
   const requiredVars = [
-    'REACT_PINATA_JWT',
-    'REACT_PINATA_KEY',
-    'REACT_PINATA_SECRET'
+    'REACT_APP_PINATA_JWT',
+    'REACT_APP_PINATA_KEY',
+    'REACT_APP_PINATA_SECRET'
   ];
 
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
@@ -18,9 +18,9 @@ const validateEnv = () => {
 
 // Initialize Pinata configuration
 const pinataConfig = {
-  jwt: process.env.REACT_PINATA_JWT,
-  apiKey: process.env.REACT_PINATA_KEY,
-  secretKey: process.env.REACT_PINATA_SECRET
+  jwt: process.env.REACT_APP_PINATA_JWT,
+  apiKey: process.env.REACT_APP_PINATA_KEY,
+  secretKey: process.env.REACT_APP_PINATA_SECRET
 };
 
 // Log the environment variables to verify they're being loaded

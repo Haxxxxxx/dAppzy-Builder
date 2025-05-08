@@ -32,6 +32,20 @@ const UnifiedDropZone = React.memo(({
     }
   }, [onClick, className, onPanelToggle]);
 
+  const handleLibraryClick = (e) => {
+    e.stopPropagation();
+    if (onPanelToggle) {
+      onPanelToggle('sidebar');
+    }
+  };
+
+  const handleConfigureClick = (e) => {
+    e.stopPropagation();
+    if (onPanelToggle) {
+      onPanelToggle('settings');
+    }
+  };
+
   const [{ isOver, draggedItem }, drop] = useDrop({
     accept,
     drop: (item, monitor) => {
@@ -127,8 +141,29 @@ const UnifiedDropZone = React.memo(({
         margin: isFirstDropzone || isDefaultDropzone ? '0' : '0',
       }}
     >
-      <div className="dropzone-text">
-        {isOver ? 'Drop here to add an element' : text || 'Drop here !'}
+      <div className="dropzone-content">
+        {(isDefaultDropzone || isFirstDropzone) ? (
+          <div className="dropzone-buttons">
+            <button 
+              className="dropzone-button library-button"
+              onClick={handleLibraryClick}
+            >
+              <span className="button-icon">📚</span>
+              <span className="button-text">Select from Library</span>
+            </button>
+            <button 
+              className="dropzone-button configure-button"
+              onClick={handleConfigureClick}
+            >
+              <span className="button-icon">⚙️</span>
+              <span className="button-text">Configure Layout</span>
+            </button>
+          </div>
+        ) : (
+          <div className="dropzone-text">
+            {isOver ? 'Drop here to add an element' : text || 'Drop here !'}
+          </div>
+        )}
       </div>
     </div>
   );

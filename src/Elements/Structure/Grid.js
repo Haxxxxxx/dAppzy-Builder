@@ -2,6 +2,7 @@ import React, { useContext, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
+import '../Basic/css/EmptyState.css';
 
 const GridLayout = ({ id }) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } =
@@ -30,6 +31,22 @@ const GridLayout = ({ id }) => {
     setSelectedElement({ id, type: 'grid', styles });
   };
 
+  const handleAddElement = (e) => {
+    e.stopPropagation();
+    // Deselect the current element
+    setSelectedElement(null);
+    
+    // Switch back to elements view
+    const switchToElementsEvent = new CustomEvent('switchToElementsView');
+    window.dispatchEvent(switchToElementsEvent);
+    
+    // Trigger element panel opening
+    const openPanelEvent = new CustomEvent('openElementPanel', {
+      detail: { parentId: id }
+    });
+    window.dispatchEvent(openPanelEvent);
+  };
+
   return (
     <div
       id={id}
@@ -48,10 +65,21 @@ const GridLayout = ({ id }) => {
     >
       {children.length === 0 ? (
         <div
-          className="empty-placeholder"
-          style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', fontFamily:'Montserrat' }}
+          className="empty-state-container"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100px',
+            background: isOverCurrent ? '#f0f0f0' : 'transparent',
+          }}
         >
-          Empty Grid – Drop items here
+          <button
+            className="add-element-button"
+            onClick={handleAddElement}
+          >
+            <span className="plus-icon">+</span>
+          </button>
         </div>
       ) : (
         children.map((childId) =>

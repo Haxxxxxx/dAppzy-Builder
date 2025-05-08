@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { pinata, pinataSDK, pinataConfig } from '../../utils/configPinata';
@@ -10,6 +10,8 @@ import { defaultDeFiStyles } from '../../Elements/Sections/Web3Related/DeFiSecti
 import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import { SimplefooterStyles, TemplateFooterStyles } from '../../Elements/Sections/Footers/defaultFooterStyles';
 import { structureConfigurations } from '../../configs/structureConfigurations';
+import { pinDirectoryToPinata } from '../../utils/ipfs';
+import '../css/Topbar.css';
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 /**
@@ -181,7 +183,7 @@ function fixClassName(html) {
  * • Renders the HTML using your renderElementToHtml function.
  * • Injects global styles and wraps the content in a main container.
  */
-export function exportProject(elements, websiteSettings) {
+function exportProject(elements, websiteSettings) {
   let bodyHtml = '';
   const processedElements = new Set();
   const collectedStyles = [];
@@ -495,60 +497,21 @@ export function exportProject(elements, websiteSettings) {
   return fullHtml;
 }
 
-/**
- * Uses the Pinata API to pin the exported HTML file to IPFS.
- */
-async function pinDirectoryToPinata(files, metadata) {
-  try {
-    console.log('Starting Pinata upload...');
-    
-    const formData = new FormData();
-    
-    // Append the file (use Blob directly)
-    formData.append('file', files[0].file, files[0].fileName);
-    
-    // Add metadata if provided
-    if (metadata) {
-      formData.append('pinataMetadata', JSON.stringify(metadata));
-    }
-
-    console.log('Uploading to Pinata:', {
-      fileName: files[0].fileName,
-      fileSize: files[0].file.size,
-      metadata: metadata
-    });
-
-    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${pinataConfig.pinata_jwt}`
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      let errorData = null;
-      try {
-        errorData = await response.json();
-      } catch (e) {
-        errorData = await response.text();
-      }
-      console.error('Pinata error:', errorData);
-      throw new Error('Network response was not ok');
-    }
-
-    const data = await response.json();
-    console.log('Pinata upload response:', data);
-
-    return data.IpfsHash;
-  } catch (error) {
-    console.error('Error uploading to Pinata:', error);
-    throw error;
-  }
-} 
-
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleDeployToIPFS = async () => {
     setAutoSaveStatus('Publishing to IPFS...');
@@ -633,6 +596,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       }
       window.open(ipfsUrl, '_blank');
     }
+    setIsDropdownOpen(false);
   };
 
   const handleExport = () => {
@@ -646,20 +610,33 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setIsDropdownOpen(false);
   };
 
   return (
-    <div className="export-section">
+    <div className="export-section" ref={dropdownRef}>
       <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
         cloud_done
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>
-      <button className="button" onClick={handlePublish}>
-        Publish
-      </button>
-      <button onClick={handleExport} className="export-button">
-        Export Website
-      </button>
+      <div className="dropdown-container">
+        <button 
+          className="button" 
+          onMouseEnter={() => setIsDropdownOpen(true)}
+        >
+          Publish
+        </button>
+        {isDropdownOpen && (
+          <div className="dropdown-menu">
+            <button onClick={handlePublish} className="dropdown-item">
+              Publish to IPFS
+            </button>
+            <button onClick={handleExport} className="dropdown-item">
+              Export Files
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

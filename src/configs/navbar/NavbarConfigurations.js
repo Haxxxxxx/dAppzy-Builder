@@ -8,7 +8,6 @@ export const NavbarConfigurations = {
       backgroundColor: '#ffffff',
       flexWrap: 'wrap',
       position: 'relative',
-      borderBottom: '1px solid transparent',
       borderRadius: '4px',
     },
     children: [
@@ -96,7 +95,6 @@ export const NavbarConfigurations = {
       backgroundColor: '#ffffff',
       color: '#1a1a1a',
       boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
-      borderBottom: '1px solid #e5e5e5'
     },
     children: [
       {

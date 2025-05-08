@@ -32,7 +32,7 @@ const DeFiFooter = ({ id, children, styles: customStyles, onDropItem }) => {
       style={{
         ...(footerElement?.styles || {}),
           ...Object.fromEntries(Object.entries(customStyles || {}).filter(([k]) => !(footerElement?.styles && k in footerElement.styles))),
-          borderTop: (footerElement?.styles && footerElement.styles.borderTop) || (customStyles && customStyles.borderTop) || '1px solid #e5e5e5',
+          borderTop: (footerElement?.styles && footerElement.styles.borderTop) || (customStyles && customStyles.borderTop) || 'none',
           position: 'relative',
           padding: (footerElement?.styles && footerElement.styles.padding) || (customStyles && customStyles.padding) || '1rem',
           backgroundColor: (footerElement?.styles && footerElement.styles.backgroundColor) || (customStyles && customStyles.backgroundColor) || '#ffffff',

@@ -3,12 +3,10 @@
   position: absolute;
   transition: all 0.2s ease;
   pointer-events: none;
-  border: 2px dashed rgba(92, 78, 250, 0.3);
-  background-color: rgba(92, 78, 250, 0.05);
-  border-radius: 5px;
-  font-family: Montserrat;
+  border: 1px dashed #ccc;
+  background-color: #f9f9f9;
+  border-radius: 4px;
   font-size: 14px;
-  color: #5C4EFA;
 }
 
 /* First dropzone specific styles */
@@ -21,10 +19,9 @@
   right: 0;
   bottom: 0;
   display: flex;
-  padding: 9px 13px;
+  padding: 10px;
   justify-content: center;
   align-items: center;
-  gap: 10px;
   text-align: center;
   z-index: 1000;
 }
@@ -32,17 +29,15 @@
 /* Default dropzone styles */
 .default-dropzone {
   position: static;
-  min-height: 50px;
+  min-height: 100px;
   margin: 5px 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
 /* Hover state */
 .dropzone-hover {
-  background-color: rgba(92, 78, 250, 0.15);
-  border-color: rgba(92, 78, 250, 0.5);
-  transform: scale(1.02);
-  box-shadow: 0 0 20px rgba(92, 78, 250, 0.15);
+  background-color: #f0f0f0;
+  border-color: #999;
 }
 
 /* Active state */
@@ -64,10 +59,60 @@
   transform: scale(1.05);
 }
 
+/* Dropzone content and buttons */
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.dropzone-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.dropzone-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: white;
+}
+
+.library-button {
+  background-color: #f0f0f0;
+}
+
+.configure-button {
+  background-color: white;
+  border: 1px solid #ccc;
+}
+
+.button-icon {
+  font-size: 18px;
+}
+
+.button-text {
+  white-space: nowrap;
+}
+
 /* Media queries */
 @media (max-width: 768px) {
-  .first-dropzone {
+  .dropzone-buttons {
+    flex-direction: column;
+    padding: 0 20px;
+  }
+
+  .dropzone-button {
     width: 100%;
-    height: 100%;
+    justify-content: center;
   }
 }

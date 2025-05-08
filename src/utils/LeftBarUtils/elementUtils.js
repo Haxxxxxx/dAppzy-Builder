@@ -41,8 +41,6 @@ export const buildHierarchy = (elements) => {
   return hierarchy;
 };
 
-
-
 export const findElementById = (id, elements) => {
   return elements.find((el) => el.id === id) || null;
 };

@@ -45,7 +45,7 @@ const DeFiNavbar = ({
         backgroundColor: '#1a1a1a',
         color: '#fff',
         boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
-        borderBottom: '1px solid transparent'
+        borderBottom: 'none'
       });
     }
   }, [navbarElement, updateStyles]);

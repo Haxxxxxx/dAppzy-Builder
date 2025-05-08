@@ -9,7 +9,6 @@ export const FooterConfigurations = {
       alignItems: 'center',
       backgroundColor: '#ffffff',
       color: '#1a1a1a',
-      borderTop: '1px solid #e5e5e5',
       width: '100%',
       boxSizing: 'border-box'
     },

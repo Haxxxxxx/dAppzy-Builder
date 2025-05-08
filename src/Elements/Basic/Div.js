@@ -3,6 +3,7 @@ import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
+import './css/EmptyState.css';
 
 const Div = ({
   id,
@@ -87,6 +88,22 @@ const Div = ({
       !(child && child.props && child.props.className && child.props.className.includes('drop-placeholder'))
     );
 
+  const handleAddElement = (e) => {
+    e.stopPropagation();
+    // Deselect the current element
+    setSelectedElement(null);
+    
+    // Switch back to elements view
+    const switchToElementsEvent = new CustomEvent('switchToElementsView');
+    window.dispatchEvent(switchToElementsEvent);
+    
+    // Trigger element panel opening
+    const openPanelEvent = new CustomEvent('openElementPanel', {
+      detail: { parentId: id }
+    });
+    window.dispatchEvent(openPanelEvent);
+  };
+
   return (
     <div
       id={id}
@@ -108,17 +125,21 @@ const Div = ({
       {(!childrenToRender ||
         (Array.isArray(childrenToRender) && nonPlaceholderChildren.length === 0)) ? (
         <div
-          className="empty-placeholder"
+          className="empty-state-container"
           style={{
-            color: '#888',
-            fontStyle: 'italic',
-            textAlign: 'center',
-            fontFamily: 'Montserrat',
-            padding: '10px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100px',
             background: isOverCurrent ? '#f0f0f0' : 'transparent',
           }}
         >
-          {isOverCurrent ? 'Drop here – element will be dropped here and nowhere else' : 'Empty Div – Drop items here'}
+          <button
+            className="add-element-button"
+            onClick={handleAddElement}
+          >
+            <span className="plus-icon">+</span>
+          </button>
         </div>
       ) : Array.isArray(childrenToRender) ? (
         childrenToRender.map(child => {
@@ -133,7 +154,7 @@ const Div = ({
         childrenToRender
       )}
 
-      {/* Overlay drop zone for new elements: show only if a new item (no id) is being dragged */}
+      {/* Overlay drop zone for new elements */}
       {isDragging && !item?.id && (
         <div
           style={{

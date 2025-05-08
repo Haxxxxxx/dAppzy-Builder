@@ -67,7 +67,6 @@ const DisplayEditor = () => {
   return (
     <div className="settings-panel">
       <div className="settings-group">
-        <label>Display</label>
         <select 
           value={display} 
           onChange={handleDisplayChange} 

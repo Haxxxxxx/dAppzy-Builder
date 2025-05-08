@@ -1,0 +1,35 @@
+.empty-state-container {
+  width: 100%;
+  min-height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.add-element-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+}
+
+.plus-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* Hover effect for the container */
+.empty-state-container:hover {
+  background-color: rgba(77, 112, 255, 0.05);
+}
+
+/* Active state for the button */
+.add-element-button:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+} 
