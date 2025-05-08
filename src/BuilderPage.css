@@ -87,6 +87,8 @@ p {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  padding-top: 30px;
+
   /* Ensures alignment to the top */
 }
 
@@ -95,8 +97,6 @@ p {
   min-height: 100vh;
   height: auto;
   max-width: 100%;
-  overflow: hidden;
-
 }
 
 

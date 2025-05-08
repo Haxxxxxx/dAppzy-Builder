@@ -34,10 +34,9 @@ const withSelectable = (WrappedComponent) => {
           <div
             style={{
               position: 'absolute',
-              top: '0',
               zIndex: 1000,
               pointerEvents: 'none',
-              backgroundColor: '#4D70FF',
+              backgroundColor: 'var(--purple)',
               color: '#fff',
               padding: '4px 8px',
               borderRadius: '5px',
@@ -49,6 +48,7 @@ const withSelectable = (WrappedComponent) => {
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              marginTop: '-25px',
             }}
           >
             <span
