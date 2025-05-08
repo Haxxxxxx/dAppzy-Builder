@@ -2,15 +2,15 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import './css/AIAgentPanel.css';
 import { EditableContext } from '../../context/EditableContext';
 
-const AIAgentPanel = ({ 
-  onClosePanel, 
+const AIAgentPanel = ({
+  onClosePanel,
   onNewChat,
   onShowHistory,
   selectedElement,
   onSelectElement,
   messages: propMessages = [],
   setMessages: setMessagesProp,
-  onFirstPrompt, 
+  onFirstPrompt,
   onSecondPrompt,
   onSelectedElementEdit,
   conversations = [],
@@ -29,7 +29,7 @@ const AIAgentPanel = ({
 
   // Ensure messages is always an array and update when propMessages changes
   const [localMessages, setLocalMessages] = useState([]);
-  
+
   // Update local messages when propMessages or activeConversationId changes
   useEffect(() => {
     const currentConv = conversations.find(c => c.id === activeConversationId);
@@ -78,7 +78,7 @@ const AIAgentPanel = ({
     if (!inputValue.trim() || isProcessing) return;
     setIsProcessing(true);
     const userMessage = { role: 'user', content: inputValue };
-    
+
     // Add user message to the conversation immediately
     const updatedMessages = [...localMessages, userMessage];
     setLocalMessages(updatedMessages);
@@ -133,11 +133,20 @@ const AIAgentPanel = ({
   return (
     <div className="ai-panel">
       <div className="ai-panel-header">
-        <span className="ai-panel-title">Structure creation</span>
+        <div className='ai-panel-title-box'>
+          <p className="ai-panel-title">Structure creation</p>
+
+        </div>
         <div className="ai-panel-controls">
-          <button onClick={handleNewChat} title="New chat">＋</button>
-          <button onClick={handleShowHistory} title="History">🕑</button>
-          <button onClick={onClosePanel} title="Close">✕</button>
+          <button onClick={handleNewChat} title="New chat"><span class="material-symbols-outlined">
+            add
+          </span></button>
+          <button onClick={handleShowHistory} title="History"><span class="material-symbols-outlined">
+            history
+          </span></button>
+          <button onClick={onClosePanel} title="Close"><span class="material-symbols-outlined">
+            close
+          </span></button>
         </div>
       </div>
       {showHistory && (
@@ -157,35 +166,46 @@ const AIAgentPanel = ({
         {localMessages.map((message, idx) => (
           message && message.role && message.content ? (
             <div key={idx} className={`ai-message ai-message-${message.role}`}>
-            {message.content}
-          </div>
+              {message.content.split('\n').map((line, i) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < message.content.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
+            </div>
           ) : null
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="ai-panel-input" style={{ marginTop: 'auto' }}>
-        <form onSubmit={handleSendMessage}>
-          <div className="ai-panel-input-row">
-            <button type="button" className="ai-panel-input-btn">Add file</button>
-            <button type="button" className="ai-panel-input-btn" onClick={onSelectElement}>
+      <div className="ai-panel-right-input" style={{ marginTop: 'auto' }}>
+        <form onSubmit={handleSendMessage} className='ai-panel-right-input-form'>
+          <div className="ai-panel-right-input-row">
+            <button type="button" className="ai-panel-right-input-btn"><span class="material-symbols-outlined">
+              attach_file
+            </span>Add file</button>
+            <button type="button" className="ai-panel-right-input-btn" onClick={onSelectElement}><span class="material-symbols-outlined">
+              ads_click
+            </span>
               {currentElement
                 ? `${currentElement.name || 'Element'}${currentElement.id ? ' (' + currentElement.id + ')' : ''}`
                 : 'Select Element'}
             </button>
           </div>
-          <div className="ai-panel-input-row">
-          <input
-            type="text"
+          <div className="ai-panel-right-input-prompt-box">
+            <input
+              type="text"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
-            placeholder="Ask anything"
-              className="ai-panel-text-input"
+              placeholder="Ask anything"
+              className="ai-panel-right-text-input"
               disabled={isProcessing}
-          />
-            
-            <button type="submit" className="ai-panel-send-btn" disabled={isProcessing}>
-              ➤
-          </button>
+            />
+
+            <button type="submit" className="ai-panel-right-send-btn" disabled={isProcessing}>
+              <span class="material-symbols-outlined">
+                arrow_forward
+              </span>
+            </button>
           </div>
         </form>
       </div>

@@ -882,7 +882,7 @@ const BuilderPageCore = ({
                   }
                 }}>
                   <div className="ai-input-bar-content">
-                    <div className="ai-input-bar-header">
+                    {/*<div className="ai-input-bar-header">
                       <div className="ai-input-img-label">
                         <div className="ai-input-img-label-content">
                           <span class="material-symbols-outlined">
@@ -895,7 +895,7 @@ const BuilderPageCore = ({
                         </span></a>
                       </div>
 
-                    </div>
+                    </div>*/}
                     <div className="ai-input-bar-row">
                       <div className="ai-input-bar-row-left">
                         <span className="material-symbols-outlined ai-input-icon-left">auto_awesome</span>

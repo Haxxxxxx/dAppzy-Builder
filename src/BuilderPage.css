@@ -295,13 +295,6 @@ p {
   width: 100%;
 }
 
-.ai-panel-header {
-  padding: 16px;
-  border-bottom: 1px solid #444;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
 .ai-agent-messages {
   flex: 1;
@@ -350,11 +343,6 @@ p {
   background: #357ABD;
 }
 
-.ai-message {
-  padding: 12px;
-  border-radius: 8px;
-  max-width: 85%;
-}
 
 .user-message {
   background: #4A90E2;
@@ -444,7 +432,6 @@ p {
   z-index: 1001;
   overflow: visible;
   padding: 0;
-
 }
 
 .ai-absolute-input-bar {
@@ -475,9 +462,26 @@ p {
   width: 100%;
 }
 
+.ai-input-bar-row-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.ai-input-bar-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .ai-input-icon-left {
   color: #9CA3AF;
   font-size: 20px;
+}
+
+.ai-input-icon-right {
+  color: var(--white);
 }
 
 .ai-absolute-input {
@@ -521,26 +525,11 @@ p {
   color: var(--builder-bg);
   font-size: 18px;
 }
-.ai-input-bar-row-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-.ai-input-bar-row-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-}
-.ai-input-icon-right {
-  color: var(--white);
-}
 
 .ai-input-bar-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .ai-input-img-label {
@@ -549,8 +538,8 @@ justify-content: space-between;
   align-items: center;
   gap: 10px;
   border-radius: 20px;
-background: #4D4D4D;
-max-height: 25px;
+  background: #4D4D4D;
+  max-height: 25px;
 }
 
 .ai-input-img-label-content {
@@ -558,9 +547,10 @@ max-height: 25px;
   align-items: center;
   gap: 8px;
 }
+
 .ai-input-img-label-content span {
-color: var(--white);
-font-size: 16px;
+  color: var(--white);
+  font-size: 16px;
 }
 
 .ai-input-img-label-text {
@@ -577,12 +567,10 @@ font-size: 16px;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-
 }
 
 .ai-input-img-label-close span {
   color: var(--white);
   font-size: 14px;
   font-weight: 500;
-  
 }
