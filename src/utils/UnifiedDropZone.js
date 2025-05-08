@@ -133,7 +133,6 @@ const UnifiedDropZone = React.memo(({
         pointerEvents: isDragging ? 'auto' : 'none',
         transform: isFirstDropzone ? 'none' : (isDefaultDropzone ? 'none' : 'translate(-50%, -50%)'),
         zIndex: 1000,
-        width: isFirstDropzone ? '100%' : (isDefaultDropzone ? '100%' : '200px'),
         height: isFirstDropzone ? '100%' : (isDefaultDropzone ? 'auto' : '20px'),
         display: 'flex',
         alignItems: 'center',

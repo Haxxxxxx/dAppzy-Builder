@@ -8,6 +8,8 @@ import './css/Sidebar.css';
 import CollapsibleSection from './LeftbarPanels/SettingsPanels/LinkSettings/CollapsibleSection';
 import TextualSettings from './LeftbarPanels/SettingsPanels/TextualSettings';
 import './LeftbarPanels/SettingsPanels/css/ImageSettings.css';
+import LinkSettings from './LeftbarPanels/SettingsPanels/LinkSettings';
+import WalletSettingsPanel from './LeftbarPanels/SettingsPanels/WalletSettings';
 
 const SideBar = ({ contentListWidth, pageSettings }) => {
   // State for when no element is selected
@@ -28,6 +30,8 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
       'code', 'pre', 'caption', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       // Link elements
       'a', 'link', 'linkblock', 'anchor',
+      // Button elements
+      'button', 'connectWalletButton',
       // Other text containers
       'label', 'legend', 'figcaption', 'cite', 'q', 'em', 'strong', 'mark',
       'small', 'sub', 'sup', 'time', 'abbr', 'dfn', 'kbd', 'samp', 'var'
@@ -126,6 +130,24 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
               )}
             </div>
           </CollapsibleSection>
+          {selectedElement.type === 'button' && (
+            <CollapsibleSection 
+              title="Link Settings"
+              className="link-settings-section"
+              defaultExpanded={true}
+            >
+              <LinkSettings element={selectedElement} />
+            </CollapsibleSection>
+          )}
+          {selectedElement.type === 'connectWalletButton' && (
+            <CollapsibleSection 
+              title="Wallet Settings"
+              className="wallet-settings-section"
+              defaultExpanded={true}
+            >
+              <WalletSettingsPanel />
+            </CollapsibleSection>
+          )}
         </div>
       );
     }
@@ -159,10 +181,8 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
                     <button 
                       className="replace-image-button"
                       onClick={() => {
-                        // TODO: Implement image upload functionality
                         setIsUploading(true);
                         setUploadProgress(0);
-                        // Simulate upload progress
                         const interval = setInterval(() => {
                           setUploadProgress(prev => {
                             if (prev >= 100) {
@@ -246,6 +266,7 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
       );
     }
 
+    // For other elements (like containers, etc.)
     return (
       <>
         <CollapsibleSection title="Display Settings">
@@ -316,13 +337,42 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
         <div className="editor-panel-container">
           {editorViewMode === 'content' ? (
             renderDisplayView()
+          ) : editorViewMode === 'settings' ? (
+            <div className="settings-panel">
+              <CollapsibleSection 
+                title="Element Information"
+                className="element-info-section"
+                defaultExpanded={true}
+              >
+                <div className="settings-wrapper">
+                  <div className="element-id-display">
+                    <label>Element ID:</label>
+                    <input
+                      type="text"
+                      value={selectedElement.id || ''}
+                      readOnly
+                      className="settings-input"
+                    />
+                  </div>
+                  <div className="element-type-display">
+                    <label>Element Type:</label>
+                    <input
+                      type="text"
+                      value={selectedElement.type || ''}
+                      readOnly
+                      className="settings-input"
+                    />
+                  </div>
+                </div>
+              </CollapsibleSection>
+            </div>
           ) : (
-          <EditorPanel
-            searchQuery={searchQuery}
-            pageSettings={pageSettings}
-            viewMode={editorViewMode}
-            setViewMode={setEditorViewMode}
-          />
+            <EditorPanel
+              searchQuery={searchQuery}
+              pageSettings={pageSettings}
+              viewMode={editorViewMode}
+              setViewMode={setEditorViewMode}
+            />
           )}
         </div>
       ) : (

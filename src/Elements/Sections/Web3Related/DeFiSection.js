@@ -4,8 +4,9 @@ import { useWalletContext } from '../../../context/WalletContext';
 import { Image, Span, Button, DeFiModule } from '../../SelectableElements';
 import { mintingSectionStyles } from './DefaultWeb3Styles';
 import useElementDrop from '../../../utils/useElementDrop';
+import useReorderDrop from '../../../utils/useReorderDrop';
 import merge from 'lodash/merge';
-
+import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
 // Default modules with specific functionality
 const defaultModules = [
   {
@@ -225,7 +226,7 @@ const DeFiSection = ({
   type = 'defiSection',
   styles
 }) => {
-  const { elements, setSelectedElement, updateContent, addNewElement, updateStyles } = useContext(EditableContext);
+  const { elements, setSelectedElement, updateContent, addNewElement, updateStyles, setElements, findElementById } = useContext(EditableContext);
   const { walletAddress, balance, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
   
   // Get settings from the element's content
@@ -268,6 +269,13 @@ const DeFiSection = ({
     elementRef: sectionRef,
     onDropItem,
   });
+
+  // Add useReorderDrop hook
+  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
+    findElementById,
+    elements,
+    setElements
+  );
 
   // Initialize styles only once when the component mounts
   React.useEffect(() => {
@@ -1195,6 +1203,78 @@ const DeFiSection = ({
     setSelectedElement(element || { id: uniqueId, type: 'defiSection', styles: {} });
   }, [handleSelect, setSelectedElement, uniqueId, elements]);
 
+  // Add handleModuleDrop function
+  const handleModuleDrop = (droppedItem, parentId = uniqueId) => {
+    if (droppedItem.id) {
+      return;
+    }
+
+    const newId = addNewElement(
+      droppedItem.type,
+      droppedItem.level || 1,
+      null,
+      parentId
+    );
+    setElements((prev) =>
+      prev.map((el) =>
+        el.id === parentId
+          ? { ...el, children: [...el.children, newId] }
+          : el
+      )
+    );
+  };
+
+  // Add renderModuleChildren function
+  const renderModuleChildren = (moduleId) => {
+    const module = findElementById(moduleId, elements);
+    if (!module || !module.children) return null;
+    return module.children.map((childId, index) => {
+      const child = findElementById(childId, elements);
+      if (!child) return null;
+      return (
+        <React.Fragment key={child.id}>
+          {activeDrop && activeDrop.containerId === moduleId && activeDrop.index === index && (
+            <div
+              className="drop-placeholder"
+              style={{
+                padding: '8px',
+                border: '2px dashed #5C4EFA',
+                textAlign: 'center',
+                fontStyle: 'italic',
+                backgroundColor: 'transparent',
+                width: '100%',
+                margin: '5px',
+                fontFamily: 'Montserrat',
+              }}
+              onDragOver={(e) => onDragOver(e, moduleId, index)}
+              onDrop={(e) => onDrop(e, moduleId)}
+            >
+              Drop here – element will be dropped here
+            </div>
+          )}
+          <span
+            draggable
+            onDragStart={(e) => onDragStart(e, child.id)}
+            onDragOver={(e) => onDragOver(e, moduleId, index)}
+            onDragEnd={onDragEnd}
+            style={{ display: 'inline-block' }}
+          >
+            {renderElement(
+              child,
+              elements,
+              null,
+              setSelectedElement,
+              setElements,
+              null,
+              undefined,
+              handleOpenMediaPanel
+            )}
+          </span>
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <div style={{ border: 'none', outline: 'none', boxShadow: 'none', backgroundColor: 'transparent' }}>
     <section
@@ -1252,80 +1332,85 @@ const DeFiSection = ({
         )}
       </div>
 
-      {/* Wallet Connection Notification / Overlay */}
-      {(!isConnected || (settings.requireSignature && !effectiveIsSigned)) && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          padding: '1.5rem',
-          borderRadius: '12px',
-          textAlign: 'center',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          maxWidth: '80%',
-          zIndex: 10
-        }}>
-          <div style={{
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            color: currentStyles.color,
-            marginBottom: '0.5rem'
-          }}>
-            {(!isConnected) ? 'Wallet Not Connected' : 'Signature Required'}
-          </div>
-          <div style={{
-            fontSize: '0.9rem',
-            color: `${currentStyles.color}99`,
-            marginBottom: '1rem'
-          }}>
-            {(!isConnected)
-              ? 'Please connect your wallet to view DeFi data and interact with this section'
-              : 'Please sign the message to unlock DeFi dashboard features.'}
-          </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            color: '#4CAF50',
-            fontSize: '0.9rem'
-          }}>
-            <span>Tip:</span>
-            <span>Add a Connect Wallet button to your page / Navbar to enable this section</span>
-          </div>
-        </div>
-      )}
-
       {/* DeFi Modules Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '2rem',
-        opacity: (!isConnected || (settings.requireSignature && !effectiveIsSigned)) ? 0.3 : 1,
-        pointerEvents: (!isConnected || (settings.requireSignature && !effectiveIsSigned)) ? 'none' : 'auto',
-        transition: 'opacity 0.3s ease'
+        gap: '2rem'
       }}>
-        {modulesToRender.map(module => (
-          <DeFiModule
-            key={module.id}
-            id={module.id}
-            content={module.content}
-            styles={{
-              ...defaultDeFiStyles.module,
-              backgroundColor: `${currentStyles.backgroundColor}80`,
-              color: currentStyles.color
-            }}
-            configuration={module.configuration}
-            handleSelect={handleSectionSelect}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            isConnected={isConnected}
-            isSigned={effectiveIsSigned}
-            requireSignature={settings.requireSignature}
-          />
+        {modulesToRender.map((module, index) => (
+          <React.Fragment key={module.id}>
+            {activeDrop && activeDrop.containerId === uniqueId && activeDrop.index === index && (
+              <div
+                className="drop-placeholder"
+                style={{
+                  padding: '8px',
+                  border: '2px dashed #5C4EFA',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  backgroundColor: 'transparent',
+                  width: '100%',
+                  margin: '5px',
+                  fontFamily: 'Montserrat',
+                }}
+                onDragOver={(e) => onDragOver(e, uniqueId, index)}
+                onDrop={(e) => onDrop(e, uniqueId)}
+              >
+                Drop here – element will be dropped here
+              </div>
+            )}
+            <span
+              draggable
+              onDragStart={(e) => onDragStart(e, module.id)}
+              onDragOver={(e) => onDragOver(e, uniqueId, index)}
+              onDragEnd={onDragEnd}
+              style={{ display: 'inline-block' }}
+            >
+              <DeFiModule
+                id={module.id}
+                content={module.content}
+                styles={{
+                  ...defaultDeFiStyles.module,
+                  backgroundColor: `${currentStyles.backgroundColor}80`,
+                  color: currentStyles.color
+                }}
+                configuration={module.configuration}
+                handleSelect={handleSectionSelect}
+                handleOpenMediaPanel={handleOpenMediaPanel}
+                isConnected={isConnected}
+                isSigned={effectiveIsSigned}
+                requireSignature={settings.requireSignature}
+              >
+                {renderModuleChildren(module.id)}
+              </DeFiModule>
+            </span>
+          </React.Fragment>
         ))}
+        {activeDrop && activeDrop.containerId === uniqueId && (
+          <div
+            style={{ height: '40px', width: '100%' }}
+            onDragOver={(e) => onDragOver(e, uniqueId, modulesToRender.length)}
+            onDrop={(e) => onDrop(e, uniqueId)}
+          >
+            {activeDrop.index === modulesToRender.length && (
+              <div
+                className="drop-placeholder"
+                style={{
+                  padding: '8px',
+                  border: '2px dashed #5C4EFA',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  backgroundColor: 'transparent',
+                  width: '100%',
+                  margin: '5px',
+                  fontFamily: 'Montserrat',
+                }}
+              >
+                Drop here – element will be dropped here
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
     </div>

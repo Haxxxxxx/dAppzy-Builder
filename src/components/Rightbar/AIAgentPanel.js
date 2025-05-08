@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import './css/AIAgentPanel.css';
+import './AIAgentPanel.css';
 import { EditableContext } from '../../context/EditableContext';
 
 const AIAgentPanel = ({
@@ -21,6 +21,10 @@ const AIAgentPanel = ({
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [compilationStatus, setCompilationStatus] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isPanelReady, setIsPanelReady] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState(null);
   const messagesEndRef = useRef(null);
   const { selectedElement: contextSelectedElement, setSelectedElement } = useContext(EditableContext);
 
@@ -29,6 +33,27 @@ const AIAgentPanel = ({
 
   // Ensure messages is always an array and update when propMessages changes
   const [localMessages, setLocalMessages] = useState([]);
+
+  // Initialize panel and show first compilation status
+  useEffect(() => {
+    const initializePanel = async () => {
+      setIsPanelReady(false);
+      await simulateCompilation('Initializing AI Panel...', [
+        'Loading AI components...',
+        'Preparing interface...',
+        'Ready to assist...'
+      ]);
+      setIsPanelReady(true);
+
+      // If there's a pending prompt, process it now
+      if (pendingPrompt) {
+        await processPrompt(pendingPrompt);
+        setPendingPrompt(null);
+      }
+    };
+
+    initializePanel();
+  }, []);
 
   // Update local messages when propMessages or activeConversationId changes
   useEffect(() => {
@@ -49,53 +74,92 @@ const AIAgentPanel = ({
     }
   }, [localMessages]);
 
-  // Add effect to log state changes for debugging
-  useEffect(() => {
-    console.log("Local messages:", localMessages.map(m => ({
-      role: m.role,
-      contentLength: m.content ? m.content.length : 0
-    })));
-    console.log("Prop messages:", propMessages.map(m => ({
-      role: m.role,
-      contentLength: m.content ? m.content.length : 0
-    })));
-    console.log("Active conversation:", activeConversationId);
-  }, [localMessages, propMessages, activeConversationId]);
-
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [localMessages]);
+  }, [localMessages, compilationStatus]);
 
   // Reset input when switching conversations
   useEffect(() => {
     setInputValue('');
     setIsProcessing(false);
+    setCompilationStatus('');
   }, [activeConversationId]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isProcessing) return;
-    setIsProcessing(true);
-    const userMessage = { role: 'user', content: inputValue };
+  const simulateCompilation = async (initialMessage, steps) => {
+    setCompilationStatus(initialMessage);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Reduced from 1000ms to 500ms
 
-    // Add user message to the conversation immediately
+    for (const step of steps) {
+      setCompilationStatus(step);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Reduced from 800ms to 400ms
+    }
+    setCompilationStatus('');
+  };
+
+  const typeMessage = async (message, setMessages) => {
+    setIsTyping(true);
+    const words = message.content.split(' ');
+    let currentMessage = '';
+    
+    for (const word of words) {
+      currentMessage += word + ' ';
+      setMessages(prev => [
+        ...prev.slice(0, -1),
+        { ...message, content: currentMessage.trim() }
+      ]);
+      // No delay - instant typing
+    }
+    
+    setIsTyping(false);
+  };
+
+  // Process prompt after panel is ready
+  const processPrompt = async (userMessage) => {
+    if (!isPanelReady) {
+      setPendingPrompt(userMessage);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Add user message to the conversation
     const updatedMessages = [...localMessages, userMessage];
     setLocalMessages(updatedMessages);
     if (setMessagesProp) {
       setMessagesProp(updatedMessages);
     }
 
+    // Show compilation status
+    await simulateCompilation('Processing request...', [
+      'Analyzing request...',
+      'Generating structure...',
+      'Creating elements...',
+      'Applying styles...',
+      'Finalizing...'
+    ]);
+
+    // Add a small delay after compilation
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Get AI response
     let aiAnswer;
     try {
+      // Determine which prompt handler to use
+      let promptHandler;
       if (onSelectedElementEdit && currentElement) {
-        aiAnswer = await onSelectedElementEdit(userMessage);
+        promptHandler = onSelectedElementEdit;
       } else if (onFirstPrompt && localMessages.length === 0) {
-        aiAnswer = await onFirstPrompt(userMessage);
+        promptHandler = onFirstPrompt;
       } else if (onSecondPrompt && localMessages.length === 2) {
-        aiAnswer = await onSecondPrompt(userMessage);
+        promptHandler = onSecondPrompt;
       } else if (onThirdPrompt && localMessages.length >= 3) {
-        aiAnswer = await onThirdPrompt(userMessage);
+        promptHandler = onThirdPrompt;
+      }
+
+      // Execute the appropriate prompt handler
+      if (promptHandler) {
+        aiAnswer = await promptHandler(userMessage);
       } else {
         aiAnswer = { role: 'assistant', content: 'I understand your request. Let me help you with that.' };
       }
@@ -103,14 +167,25 @@ const AIAgentPanel = ({
       aiAnswer = { role: 'assistant', content: 'There was an error processing your request.' };
     }
 
-    // Add AI response to the conversation
+    // Add AI response with typing effect
     const finalMessages = [...updatedMessages, aiAnswer];
     setLocalMessages(finalMessages);
     if (setMessagesProp) {
       setMessagesProp(finalMessages);
     }
+    await typeMessage(aiAnswer, setLocalMessages);
+    
     setIsProcessing(false);
     setInputValue('');
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isProcessing) return;
+    
+    const userMessage = { role: 'user', content: inputValue };
+    setInputValue('');
+    await processPrompt(userMessage);
   };
 
   const handleNewChat = () => {
@@ -119,6 +194,7 @@ const AIAgentPanel = ({
       setMessagesProp([]);
     }
     setInputValue('');
+    setCompilationStatus('');
     onNewChat && onNewChat();
     setShowHistory(false);
   };
@@ -135,18 +211,17 @@ const AIAgentPanel = ({
       <div className="ai-panel-header">
         <div className='ai-panel-title-box'>
           <p className="ai-panel-title">Structure creation</p>
-
         </div>
         <div className="ai-panel-controls">
-          <button onClick={handleNewChat} title="New chat"><span class="material-symbols-outlined">
-            add
-          </span></button>
-          <button onClick={handleShowHistory} title="History"><span class="material-symbols-outlined">
-            history
-          </span></button>
-          <button onClick={onClosePanel} title="Close"><span class="material-symbols-outlined">
-            close
-          </span></button>
+          <button onClick={handleNewChat} title="New chat" disabled={!isPanelReady}>
+            <span className="material-symbols-outlined">add</span>
+          </button>
+          <button onClick={handleShowHistory} title="History" disabled={!isPanelReady}>
+            <span className="material-symbols-outlined">history</span>
+          </button>
+          <button onClick={onClosePanel} title="Close">
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
       </div>
       {showHistory && (
@@ -175,17 +250,23 @@ const AIAgentPanel = ({
             </div>
           ) : null
         ))}
+        {compilationStatus && ( 
+          <div className="ai-compilation-status">
+            <div className="compilation-spinner"></div>
+            <span>{compilationStatus}</span>
+          </div>
+        )} 
         <div ref={messagesEndRef} />
       </div>
       <div className="ai-panel-right-input" style={{ marginTop: 'auto' }}>
         <form onSubmit={handleSendMessage} className='ai-panel-right-input-form'>
           <div className="ai-panel-right-input-row">
-            <button type="button" className="ai-panel-right-input-btn"><span class="material-symbols-outlined">
-              attach_file
-            </span>Add file</button>
-            <button type="button" className="ai-panel-right-input-btn" onClick={onSelectElement}><span class="material-symbols-outlined">
-              ads_click
-            </span>
+            <button type="button" className="ai-panel-right-input-btn" disabled={!isPanelReady}>
+              <span className="material-symbols-outlined">attach_file</span>
+              Add file
+            </button>
+            <button type="button" className="ai-panel-right-input-btn" onClick={onSelectElement} disabled={!isPanelReady}>
+              <span className="material-symbols-outlined">ads_click</span>
               {currentElement
                 ? `${currentElement.name || 'Element'}${currentElement.id ? ' (' + currentElement.id + ')' : ''}`
                 : 'Select Element'}
@@ -196,13 +277,12 @@ const AIAgentPanel = ({
               type="text"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
-              placeholder="Ask anything"
+              placeholder={isPanelReady ? "Ask anything" : "Initializing..."}
               className="ai-panel-right-text-input"
-              disabled={isProcessing}
+              disabled={isProcessing || isTyping || !isPanelReady}
             />
-
-            <button type="submit" className="ai-panel-right-send-btn" disabled={isProcessing}>
-              <span class="material-symbols-outlined">
+            <button type="submit" className="ai-panel-right-send-btn" disabled={isProcessing || isTyping || !isPanelReady}>
+              <span className="material-symbols-outlined">
                 arrow_forward
               </span>
             </button>

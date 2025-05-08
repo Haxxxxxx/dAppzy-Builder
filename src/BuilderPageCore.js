@@ -10,8 +10,8 @@ import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPane
 import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
 import Topbar from "./components/TopBar";
-import SideBar from './components/SideBar'
-import AIAgentPanel from "./components/LeftbarPanels/AIAgentPanel";
+import SideBar from './components/SideBar';
+import AIAgentPanel from "./components/Rightbar/AIAgentPanel";
 import AIFloatingButton from "./components/AIFloatingButton";
 import { Web3Configs } from "./configs/Web3/Web3Configs";
 
@@ -83,6 +83,35 @@ const BuilderPageCore = ({
 
   const handleFirstPrompt = async (userMessage) => {
     try {
+
+      setOpenPanel("ai");
+
+      const aiAnswer = {
+        role: 'assistant',
+        content: 'Creating a complete DeFi dashboard with a web3-styled navbar, comprehensive dashboard section, and footer...'
+      };
+
+      setShowAIInputBar(false);
+      setAIChatStarted(true);
+
+      // Create new messages array
+      const newMessages = [userMessage, aiAnswer];
+
+      // Update conversations first
+      setConversations(prev => {
+        const updatedConversations = prev.map(c =>
+          c.id === activeConversationId
+            ? { ...c, messages: newMessages }
+            : c
+        );
+        return updatedConversations;
+      });
+
+      // Then update parent's messages state
+      setMessages(newMessages);
+    } catch (err) {
+      console.error('[handleFirstPrompt] error:', err);
+    }
       // Remove or comment out these console logs
       // console.log('[handleFirstPrompt] started', userMessage);
       // console.log('[handleFirstPrompt] before navbarCommand');
@@ -345,33 +374,7 @@ const BuilderPageCore = ({
       setLastDefiId(defiId);
       setLastFooterId(footerId);
 
-      const aiAnswer = {
-        role: 'assistant',
-        content: 'Creating a complete DeFi dashboard with a web3-styled navbar, comprehensive dashboard section, and footer...'
-      };
-
-      setShowAIInputBar(false);
-      setOpenPanel("ai");
-      setAIChatStarted(true);
-
-      // Create new messages array
-      const newMessages = [userMessage, aiAnswer];
-
-      // Update conversations first
-      setConversations(prev => {
-        const updatedConversations = prev.map(c =>
-          c.id === activeConversationId
-            ? { ...c, messages: newMessages }
-            : c
-        );
-        return updatedConversations;
-      });
-
-      // Then update parent's messages state
-      setMessages(newMessages);
-    } catch (err) {
-      console.error('[handleFirstPrompt] error:', err);
-    }
+     
   };
 
   const handleSecondPrompt = async (userMessage) => {
