@@ -65,7 +65,7 @@ export const EditableProvider = ({ children, userId }) => {
       configuration = config;
     } else if (config && typeof config === 'object') {
       configuration = config.configuration || config;
-      structure = config.configuration || config;
+      structure = config.structure || config.configuration || config;
     }
   
     // Get base styles from configuration if it exists
@@ -81,7 +81,7 @@ export const EditableProvider = ({ children, userId }) => {
       },
       level,
       children: [],
-      label: '',
+      label: config?.label || '',
       parentId: parentId || null,
       content: config?.content || (() => {
         switch (type) {
@@ -134,7 +134,7 @@ export const EditableProvider = ({ children, userId }) => {
       } else {
         recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
       }
-    } else if (structure && structureConfigurations[structure]) {
+    } else if (structure && structureConfigurations[structure]?.children) {
       // Fallback to structure configuration if no explicit children or for navbars/footers with config
       const childrenElements = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),

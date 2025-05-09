@@ -7,6 +7,7 @@ import SectionThree from '../Sections/ContentSections/SectionThree';
 import SectionFour from '../Sections/ContentSections/SectionFour';
 import StructurePanel from '../../components/LeftbarPanels/StructurePanel';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
+import { registerContainer } from '../../utils/htmlRenderUtils/containerHelpers';
 
 /**
  * DraggableContentSections component for rendering and managing content sections.
@@ -50,7 +51,7 @@ const DraggableContentSections = ({
     type: 'ELEMENT',
     item: { 
       id, 
-      type: 'ContentSection', 
+      type: 'section', 
       configuration,
       structure: configuration 
     },
@@ -61,7 +62,6 @@ const DraggableContentSections = ({
       if (monitor.didDrop() && !isEditing) {
         const sectionConfig = structureConfigurations[item.configuration];
         if (sectionConfig) {
-          // Check if a section with this configuration already exists in the current section
           const dropResult = monitor.getDropResult();
           const targetSectionId = dropResult?.sectionId;
           
@@ -69,19 +69,159 @@ const DraggableContentSections = ({
             const sectionElement = findElementById(targetSectionId, elements);
             const existingSection = sectionElement?.children
               ?.map(childId => findElementById(childId, elements))
-              ?.find(el => el?.type === 'ContentSection' && el?.configuration === item.configuration);
+              ?.find(el => el?.type === 'section' && el?.configuration === item.configuration);
 
             if (!existingSection) {
-              // Only create a new section if one doesn't exist in the section
-              addNewElement('ContentSection', 1, null, targetSectionId, {
-                ...sectionConfig,
+              // Create a new section with the proper configuration
+              const newSectionId = addNewElement('section', 1, null, targetSectionId, {
+                type: 'section',
                 configuration: item.configuration,
-                structure: item.configuration
+                structure: item.configuration,
+                styles: sectionConfig.styles || {},
+                content: '',
+                label: sectionConfig.label || '',
+                settings: {},
+                children: sectionConfig.children || []
               });
+
+              // Register the section's containers
+              if (newSectionId) {
+                const sectionType = item.configuration;
+                const sectionConfig = structureConfigurations[sectionType];
+                const sectionStyles = sectionConfig?.styles || {};
+
+                // Register containers based on section type and configuration
+                if (sectionType === 'sectionOne') {
+                  // Register content container with proper structure
+                  registerContainer(newSectionId, 'content', {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                    maxWidth: '50%'
+                  }, elements, setElements, findElementById);
+
+                  // Register buttons container
+                  registerContainer(newSectionId, 'buttons', {
+                    display: 'flex',
+                    gap: '12px',
+                    marginTop: '24px'
+                  }, elements, setElements, findElementById);
+
+                  // Register image container
+                  registerContainer(newSectionId, 'image', {
+                    flex: 1,
+                    maxWidth: '50%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }, elements, setElements, findElementById);
+                } 
+                else if (sectionType === 'sectionTwo') {
+                  // Register content container
+                  registerContainer(newSectionId, 'content', {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '100%',
+                    textAlign: 'center'
+                  }, elements, setElements, findElementById);
+
+                  // Register label container
+                  registerContainer(newSectionId, 'label', {
+                    color: '#6B7280',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    marginBottom: '8px'
+                  }, elements, setElements, findElementById);
+
+                  // Register buttons container
+                  registerContainer(newSectionId, 'buttons', {
+                    display: 'flex',
+                    gap: '12px',
+                    marginTop: '24px',
+                    justifyContent: 'center'
+                  }, elements, setElements, findElementById);
+                } 
+                else if (sectionType === 'sectionThree') {
+                  // Register content container
+                  registerContainer(newSectionId, 'content', {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '100%',
+                    textAlign: 'center'
+                  }, elements, setElements, findElementById);
+
+                  // Register label container
+                  registerContainer(newSectionId, 'label', {
+                    color: '#6B7280',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    marginBottom: '8px'
+                  }, elements, setElements, findElementById);
+
+                  // Register text container
+                  registerContainer(newSectionId, 'text', {
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    color: '#4B5563',
+                    marginBottom: '24px',
+                    textAlign: 'center',
+                    maxWidth: '600px'
+                  }, elements, setElements, findElementById);
+                } 
+                else if (sectionType === 'sectionFour') {
+                  // Register content container
+                  registerContainer(newSectionId, 'content', {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '100%',
+                    textAlign: 'center'
+                  }, elements, setElements, findElementById);
+
+                  // Register label container
+                  registerContainer(newSectionId, 'label', {
+                    color: '#6B7280',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    marginBottom: '8px'
+                  }, elements, setElements, findElementById);
+
+                  // Register features container
+                  registerContainer(newSectionId, 'features', {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '24px',
+                    marginBottom: '24px',
+                    width: '100%'
+                  }, elements, setElements, findElementById);
+
+                  // Register button container
+                  registerContainer(newSectionId, 'button', {
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginTop: '24px'
+                  }, elements, setElements, findElementById);
+                }
+
+                // Create child elements based on section configuration
+                if (sectionConfig.children) {
+                  sectionConfig.children.forEach(child => {
+                    const childId = addNewElement(child.type, 1, null, newSectionId, {
+                      ...child,
+                      parentId: newSectionId
+                    });
+                  });
+                }
+              }
             }
           }
         }
-        setSelectedElement({ id: item.id, type: 'ContentSection', configuration: item.configuration });
+        setSelectedElement({ id: item.id, type: 'section', configuration: item.configuration });
       }
     },
   }), [configuration, isEditing, elements]);

@@ -79,11 +79,50 @@ export const NavbarConfigurations = {
   },
   threeColumn: {
     children: [
-      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-      { type: 'span', content: 'Home' },
-      { type: 'span', content: 'Services' },
-      { type: 'span', content: 'Contact' },
-      { type: 'button', content: 'Call to Action' },
+      { 
+        type: 'image', 
+        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        styles: {
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%'
+        }
+      },
+      { 
+        type: 'span', 
+        content: 'Home',
+        styles: {
+          color: '#1a1a1a',
+          cursor: 'pointer'
+        }
+      },
+      { 
+        type: 'span', 
+        content: 'Services',
+        styles: {
+          color: '#1a1a1a',
+          cursor: 'pointer'
+        }
+      },
+      { 
+        type: 'span', 
+        content: 'Contact',
+        styles: {
+          color: '#1a1a1a',
+          cursor: 'pointer'
+        }
+      },
+      { 
+        type: 'button', 
+        content: 'Call to Action',
+        styles: {
+          border: 'none',
+          padding: '10px 20px',
+          backgroundColor: '#334155',
+          color: '#ffffff',
+          cursor: 'pointer'
+        }
+      }
     ],
   },
   defiNavbar: {

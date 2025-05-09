@@ -20,14 +20,34 @@ export const registerContainer = (
 ) => {
   const containerId = `${sectionId}-${containerKey}`;
 
-  // Only add the container if it does not exist and if it's a required container
-  const requiredContainers = ['content', 'buttons', 'image', 'label'];
-  if (findElementById(containerId, elements) || !requiredContainers.includes(containerKey)) {
-    return; // Container already exists or is not required, skip.
+  // Check if container already exists
+  if (findElementById(containerId, elements)) {
+    return; // Container already exists, skip
   }
 
-  // Don't create empty containers for buttons
-  if (containerKey === 'buttons' && (!elements || elements.length === 0)) {
+  // Define required containers based on section type
+  const sectionType = elements.find(el => el.id === sectionId)?.type;
+  let requiredContainers = [];
+
+  if (sectionType === 'cta') {
+    requiredContainers = ['text', 'buttons'];
+    if (elements.find(el => el.id === sectionId)?.configuration === 'ctaOne') {
+      requiredContainers.push('image');
+    }
+  } else if (sectionType === 'hero') {
+    requiredContainers = ['content'];
+    if (elements.find(el => el.id === sectionId)?.configuration !== 'heroTwo') {
+      requiredContainers.push('image');
+    }
+  } else if (sectionType === 'section') {
+    requiredContainers = ['content', 'buttons'];
+    if (elements.find(el => el.id === sectionId)?.configuration?.includes('image')) {
+      requiredContainers.push('image');
+    }
+  }
+
+  // Only create container if it's required for this section type
+  if (!requiredContainers.includes(containerKey)) {
     return;
   }
 

@@ -54,7 +54,17 @@ const UnifiedDropZone = React.memo(({
         return;
       }
       if (onDrop) {
-        onDrop(item, parentId);
+        // For sections, ensure we pass the full configuration
+        if (item.type === 'section') {
+          onDrop({
+            ...item,
+            configuration: item.configuration,
+            structure: item.configuration,
+            children: item.children || []
+          }, parentId);
+        } else {
+          onDrop(item, parentId);
+        }
       }
     },
     hover: (item, monitor) => {
@@ -63,8 +73,8 @@ const UnifiedDropZone = React.memo(({
       // Don't show dropzone if:
       // 1. Dragging a section or configured div
       // 2. Dragging a section into another section's content area
-      const isDraggingSection = item.type === 'SECTION';
-      const isDraggingConfiguredDiv = item.type === 'DIV' && item.configuration;
+      const isDraggingSection = item.type === 'section';
+      const isDraggingConfiguredDiv = item.type === 'div' && item.configuration;
       const isContentSection = parentId && parentId.includes('-content');
 
       if (isDraggingSection || isDraggingConfiguredDiv || (isDraggingSection && isContentSection)) {

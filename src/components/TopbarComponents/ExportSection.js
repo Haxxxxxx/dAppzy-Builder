@@ -9,16 +9,29 @@ import { defaultDeFiStyles } from '../../Elements/Sections/Web3Related/DeFiSecti
 // Import your hierarchy builder – this should nest elements with a valid parentId.
 import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import { SimplefooterStyles, TemplateFooterStyles } from '../../Elements/Sections/Footers/defaultFooterStyles';
-import { structureConfigurations } from '../../configs/structureConfigurations';
+import { structureConfigurations, elementTypes, mergeStyles } from '../../core/configs/elementConfigs';
 import { pinDirectoryToPinata } from '../../utils/ipfs';
 import '../css/Topbar.css';
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 /**
- * Helper: Convert camelCase to kebab-case.
+ * Helper: Convert camelCase to kebab-case
  */
-function toKebabCase(str) {
+function camelToKebab(str) {
+  if (!str || typeof str !== 'string') return '';
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+/**
+ * Helper: Validate and format color values
+ */
+function formatColorValue(value) {
+  if (!value || typeof value !== 'string') return '';
+  if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) return value;
+  if (/^[a-zA-Z]+$/.test(value)) return value;
+  if (/^(rgb|rgba|hsl|hsla)/.test(value)) return value;
+  if (/^[A-Fa-f0-9]{6}$/.test(value)) return `#${value}`;
+  return value;
 }
 
 /**
@@ -142,28 +155,64 @@ function processStylesForExport(styles) {
 }
 
 function processElementStyles(element) {
-  // Special handling for footer elements
-  if (element.type === 'footer') {
-    let defaultStyles = {};
-    if (element.configuration === 'customTemplateFooter') {
-      defaultStyles = SimplefooterStyles.footer;
-    } else if (element.configuration === 'templateFooter') {
-      defaultStyles = TemplateFooterStyles.footer;
-    }
-    
-    // Merge default styles with custom styles
-    return {
-      ...defaultStyles,
-      ...element.styles,
-      ...element.inlineStyles
-    };
+  const elementType = elementTypes[element.type];
+  if (!elementType) {
+    console.warn(`Invalid element type: ${element.type}`);
+    return {};
   }
-  
-  // For non-footer elements, return original styles
-  return {
-    ...element.styles,
-    ...element.inlineStyles
-  };
+
+  // Get structure configuration styles if present
+  const structureConfig = element.configuration ?
+    structureConfigurations[element.configuration] : null;
+  const structureStyles = structureConfig?.styles || {};
+
+  // Special handling for sections and navbars
+  const isSection = element.type === 'section' || element.type === 'defiNavbar' || element.type === 'navbar';
+  if (isSection) {
+    // Always include base styles for sections
+    const baseStyles = {
+      display: 'flex',
+      ...structureStyles
+    };
+
+    // Remove any conflicting styles from user styles
+    const userStyles = { ...element.styles };
+    delete userStyles.backgroundColor;
+    delete userStyles.width;
+    delete userStyles.position;
+    delete userStyles.justifyContent;
+    delete userStyles.alignItems;
+
+    return mergeStyles(
+      baseStyles,
+      userStyles || {},
+      element.inlineStyles || {}
+    );
+  }
+
+  // For other elements, proceed with normal style processing
+  const hasCustomStyles = element.styles && Object.keys(element.styles).length > 0;
+  const hasInlineStyles = element.inlineStyles && Object.keys(element.inlineStyles).length > 0;
+
+  if (!hasCustomStyles && !hasInlineStyles && !structureStyles) {
+    return {};
+  }
+
+  const mergedStyles = mergeStyles(
+    structureStyles,
+    element.styles || {},
+    element.inlineStyles || {}
+  );
+
+  const { outline, boxShadow, ...productionStyles } = mergedStyles;
+
+  Object.entries(productionStyles).forEach(([key, value]) => {
+    if (key.includes('color') || key.includes('background')) {
+      productionStyles[key] = formatColorValue(value);
+    }
+  });
+
+  return productionStyles;
 }
 
 function cleanEmptyDivs(html) {
@@ -174,6 +223,17 @@ function cleanEmptyDivs(html) {
 function fixClassName(html) {
   // Replace classname with class
   return html.replace(/classname=/g, 'class=');
+}
+
+/**
+ * Helper: Convert style object to CSS string
+ */
+function styleObjectToString(styles) {
+  if (!styles) return '';
+  return Object.entries(styles)
+    .filter(([_, value]) => value != null)
+    .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+    .join('; ');
 }
 
 /**
@@ -188,48 +248,6 @@ function exportProject(elements, websiteSettings) {
   const processedElements = new Set();
   const collectedStyles = [];
   const userScripts = new Set();
-
-  // Helper to convert camelCase to kebab-case
-  function camelToKebab(str) {
-    if (!str || typeof str !== 'string') return '';
-    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-  }
-
-  // Helper to validate and format color values
-  function formatColorValue(value) {
-    if (!value || typeof value !== 'string') return '';
-    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value)) return value;
-    if (/^[a-zA-Z]+$/.test(value)) return value;
-    if (/^(rgb|rgba|hsl|hsla)/.test(value)) return value;
-    if (/^[A-Fa-f0-9]{6}$/.test(value)) return `#${value}`;
-    return value;
-  }
-
-  // Helper to process element styles
-  function processElementStyles(element) {
-    // Get base styles from configuration
-    const structureConfig = element.configuration ? 
-      structureConfigurations[element.configuration] : null;
-    
-    // Merge styles in order: configuration defaults -> element styles -> inline styles
-    const mergedStyles = {
-      ...(structureConfig?.styles || {}),
-      ...(element.styles || {}),
-      ...(element.inlineStyles || {})
-    };
-
-    // Remove editor-specific styles
-    const { outline, boxShadow, ...productionStyles } = mergedStyles;
-
-    // Process color values
-    Object.entries(productionStyles).forEach(([key, value]) => {
-      if (key.includes('color') || key.includes('background')) {
-        productionStyles[key] = formatColorValue(value);
-      }
-    });
-
-    return productionStyles;
-  }
 
   // Helper to generate style string
   function getStyleString(element) {
@@ -261,18 +279,36 @@ function exportProject(elements, websiteSettings) {
     const elementMap = new Map();
     const rootElements = [];
 
-    // First pass: create element map
+    // First pass: create element map and preserve section structure
     elements.forEach(element => {
-      elementMap.set(element.id, { ...element, children: [] });
+      const isSection = element.type === 'section' || element.type === 'defiNavbar' || element.type === 'navbar';
+      elementMap.set(element.id, {
+        ...element,
+        children: [],
+        isSection,
+        // Preserve section-specific attributes
+        ...(isSection && {
+          role: 'navigation',
+          'aria-label': element.type === 'navbar' ? 'Main Navigation' : `Section ${element.type}`
+        })
+      });
     });
 
-    // Second pass: build hierarchy
+    // Second pass: build hierarchy while preserving section structure
     elements.forEach(element => {
       const mappedElement = elementMap.get(element.id);
       if (element.parentId) {
         const parent = elementMap.get(element.parentId);
         if (parent) {
+          // Ensure sections maintain their structure
+          if (mappedElement.isSection) {
+            parent.children.push({
+              ...mappedElement,
+              className: `${mappedElement.className || ''} section-${mappedElement.type}`.trim()
+            });
+          } else {
           parent.children.push(mappedElement);
+          }
         }
       } else {
         rootElements.push(mappedElement);
@@ -288,7 +324,408 @@ function exportProject(elements, websiteSettings) {
   // Render each root element and its children recursively
   hierarchicalElements.forEach(element => {
     if (!processedElements.has(element.id)) {
-      const renderedContent = renderElementToHtml({
+      let renderedContent;
+
+      // Special handling for sections and navbars
+      if (element.type === 'hero') {
+        // Group children by type
+        const image = element.children.find(child => child?.type === 'image');
+        const heading = element.children.find(child => child?.type === 'heading');
+        const paragraph = element.children.find(child => child?.type === 'paragraph');
+        const button = element.children.find(child => child?.type === 'button');
+
+        // Content container styles based on hero type
+        const contentContainerStyles = element.configuration === 'heroTwo' ? 
+          'display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: transparent' :
+          element.configuration === 'heroThree' ?
+          'display: flex; justify-content: flex-start; align-items: flex-start; flex-direction: column; background-color: transparent; max-width: 40%; width: 40%' :
+          'display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: transparent; max-width: 40%; width: 40%';
+
+        // Left content group
+        const leftContentHtml = `
+          <div style="${contentContainerStyles}">
+            ${heading ? `
+              <h3 id="${heading.id}" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 16px; color: ${element.configuration === 'heroTwo' ? '#ffffff' : '#1a1a1a'}">${heading.content}</h3>
+            ` : ''}
+            ${paragraph ? `
+              <div id="${paragraph.id}" style="font-size: 1rem; line-height: 1.5; margin-bottom: 24px; color: ${element.configuration === 'heroTwo' ? '#ffffff' : '#1a1a1a'}">${paragraph.content}</div>
+            ` : ''}
+            ${button ? `
+              <button id="${button.id}" style="background-color: #334155; color: #ffffff; padding: 12px 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-size: 1rem">${button.content}</button>
+            ` : ''}
+          </div>
+        `;
+
+        // Right content group (image)
+        const rightContentHtml = image ? `
+          <div style="background-color: transparent; max-width: 40%; width: 40%; display: flex; justify-content: flex-end; align-items: center;">
+            <img id="${image.id}" style="max-width: 100%; height: 400px; background-color: #334155; object-fit: cover; border-radius: 8px" src="${image.content}" alt="">
+          </div>
+        ` : '';
+
+        // Get base styles based on hero configuration
+        let baseHeroStyles = {
+          display: 'flex',
+          position: 'relative',
+          flexDirection: element.configuration === 'heroTwo' ? 'column' : 'row',
+          flexWrap: 'wrap',
+          alignItems: element.configuration === 'heroThree' ? 'flex-start' : 'center',
+          justifyContent: element.configuration === 'heroThree' ? 'space-between' : 'center',
+          padding: element.configuration === 'heroTwo' ? '60px' : '40px',
+          backgroundColor: element.configuration === 'heroTwo' ? '#6B7280' : '#ffffff',
+          gap: element.configuration === 'heroThree' ? '10vw' : '1rem',
+          margin: '0',
+          color: element.configuration === 'heroTwo' ? '#fff' : 'inherit',
+          textAlign: element.configuration === 'heroTwo' ? 'center' : 'left',
+          borderRadius: element.configuration === 'heroTwo' ? '8px' : '0'
+        };
+
+        // Merge with any custom styles
+        const heroStyles = {
+          ...baseHeroStyles,
+          ...element.styles
+        };
+
+        const heroStyleString = Object.entries(heroStyles)
+          .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+          .join('; ');
+
+        renderedContent = `
+          <div id="${element.id}" class="section-hero" style="${heroStyleString}">
+            ${leftContentHtml}
+            ${element.configuration !== 'heroTwo' ? rightContentHtml : ''}
+          </div>
+        `;
+      } else if (element.type === 'navbar') {
+        // Group children by type
+        const logo = element.children.find(child => child?.type === 'image');
+        const spans = element.children.filter(child => child?.type === 'span');
+        const buttons = element.children.filter(child => child?.type === 'button' || child?.type === 'connectWalletButton');
+        
+        // Get base styles based on navbar configuration
+        let baseNavbarStyles = {
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px',
+          backgroundColor: '#ffffff',
+          flexWrap: 'wrap',
+          position: 'relative',
+          borderRadius: '4px'
+        };
+
+        // Override styles for specific navbar types
+        if (element.configuration === 'defiNavbar') {
+          baseNavbarStyles = {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 24px',
+            backgroundColor: '#ffffff',
+            color: '#1a1a1a',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.12)'
+          };
+        }
+
+        // Merge with any custom styles
+        const navbarStyles = {
+          ...baseNavbarStyles,
+          ...element.styles
+        };
+
+        const navbarStyleString = Object.entries(navbarStyles)
+          .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+          .join('; ');
+
+        // Different structure based on navbar type
+        if (element.configuration === 'twoColumn') {
+          renderedContent = `
+            <nav id="${element.id}" class="section-navbar" role="navigation" aria-label="Main Navigation" style="${navbarStyleString}">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${logo ? `
+                  <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${logo.content}" alt="">
+                ` : ''}
+              </div>
+              <div style="display: flex; align-items: center; flex: 1; gap: 30px; justify-content: flex-end;">
+                ${spans.map((span, index) => `
+                  <span id="${span.id}" style="color: #1a1a1a; cursor: pointer${index === spans.length - 1 ? '; margin-right: 16px;' : ''}">${span.content}</span>
+                `).join('')}
+              </div>
+            </nav>
+          `;
+        } else if (element.configuration === 'threeColumn') {
+          renderedContent = `
+            <nav id="${element.id}" class="section-navbar" role="navigation" aria-label="Main Navigation" style="${navbarStyleString}">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${logo ? `
+                  <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${logo.content}" alt="">
+                ` : ''}
+              </div>
+              <div style="display: flex; align-items: center; justify-content: center; flex: 1;">
+                ${spans.map((span, index) => `
+                  <span id="${span.id}" style="color: #1a1a1a; cursor: pointer; margin-right: 16px">${span.content}</span>
+                `).join('')}
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px;">
+                ${buttons.map(button => `
+                  <button id="${button.id}" style="border: none; padding: 10px 20px; background-color: #334155; color: #ffffff; cursor: pointer">${button.content}</button>
+                `).join('')}
+              </div>
+            </nav>
+          `;
+        } else {
+          // Logo group with image and first span (brand name)
+          const logoGroupHtml = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+              ${logo ? `
+                <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${logo.content}" alt="">
+              ` : ''}
+              ${spans[0] ? `
+                <span id="${spans[0].id}" style="color: #1a1a1a; cursor: pointer">${spans[0].content}</span>
+              ` : ''}
+            </div>
+          `;
+
+          // Navigation links (remaining spans)
+          const navGroupHtml = spans.length > 1 ? `
+            <div style="display: flex; align-items: center; justify-content: center; flex: 1;">
+              ${spans.slice(1).map(span => `
+                <span id="${span.id}" style="color: #1a1a1a; cursor: pointer; margin-right: 16px">${span.content}</span>
+              `).join('')}
+            </div>
+          ` : '';
+
+          // Button group
+          const buttonGroupHtml = buttons.length > 0 ? `
+            <div style="display: flex; align-items: center; gap: 16px;">
+              ${buttons.map(button => `
+                <button id="${button.id}" style="border: none; padding: 10px 20px; background-color: #334155; color: #ffffff; cursor: pointer">${button.content}</button>
+              `).join('')}
+            </div>
+          ` : '';
+
+          renderedContent = `
+            <nav id="${element.id}" class="section-navbar" role="navigation" aria-label="Main Navigation" style="${navbarStyleString}">
+              ${logoGroupHtml}
+              ${navGroupHtml}
+              ${buttonGroupHtml}
+            </nav>
+          `;
+        }
+      } else if (element.type === 'section') {
+        // Group children by type
+        const label = element.children.find(child => child?.type === 'span');
+        const heading = element.children.find(child => child?.type === 'heading');
+        const paragraph = element.children.find(child => child?.type === 'paragraph');
+        const buttons = element.children.filter(child => child?.type === 'button');
+        const image = element.children.find(child => child?.type === 'image');
+        const features = element.children.filter(child => child?.type === 'featureItem');
+
+        // Base styles for all sections
+        const baseStyles = {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          padding: '60px',
+          width: '100%',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        };
+
+        // Merge with any custom styles
+        const sectionStyles = {
+          ...baseStyles,
+          ...element.styles
+        };
+
+        const sectionStyleString = Object.entries(sectionStyles)
+          .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+          .join('; ');
+
+        let contentHtml = '';
+
+        // Generate content based on section type
+        if (element.configuration === 'sectionOne') {
+          contentHtml = `
+            <div style="display: flex; gap: 32px; align-items: center;">
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+                ${label ? `<span style="color: #6B7280; font-size: 14px; font-weight: 700; text-transform: uppercase;">${label.content}</span>` : ''}
+                ${heading ? `<h2 style="font-size: 32px; font-weight: bold; color: #1F2937;">${heading.content}</h2>` : ''}
+                ${paragraph ? `<p style="font-size: 16px; line-height: 1.5; color: #4B5563;">${paragraph.content}</p>` : ''}
+                ${buttons.length > 0 ? `
+                  <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    ${buttons.map(button => `
+                      <button style="background-color: #334155; color: #ffffff; padding: 12px 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-size: 1rem">${button.content}</button>
+                    `).join('')}
+                  </div>
+                ` : ''}
+              </div>
+              ${image ? `
+                <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
+                  <img src="${image.content}" alt="" style="max-width: 100%; height: 400px; object-fit: cover; border-radius: 8px;">
+                </div>
+              ` : ''}
+            </div>
+          `;
+        } else if (element.configuration === 'sectionTwo') {
+          contentHtml = `
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+              ${label ? `<span style="color: #6B7280; font-size: 14px; font-weight: 700; text-transform: uppercase;">${label.content}</span>` : ''}
+              ${heading ? `<h2 style="font-size: 32px; font-weight: bold; color: #1F2937; margin: 16px 0;">${heading.content}</h2>` : ''}
+              ${buttons.length > 0 ? `
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                  ${buttons.map(button => `
+                    <button style="background-color: #334155; color: #ffffff; padding: 12px 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-size: 1rem">${button.content}</button>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        } else if (element.configuration === 'sectionThree') {
+          contentHtml = `
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+              ${label ? `<span style="color: #6B7280; font-size: 14px; font-weight: 700; text-transform: uppercase;">${label.content}</span>` : ''}
+              ${heading ? `<h2 style="font-size: 32px; font-weight: bold; color: #1F2937; margin: 16px 0;">${heading.content}</h2>` : ''}
+              ${paragraph ? `<p style="font-size: 16px; line-height: 1.5; color: #4B5563; max-width: 600px; margin: 0 auto;">${paragraph.content}</p>` : ''}
+            </div>
+          `;
+        } else if (element.configuration === 'sectionFour') {
+          contentHtml = `
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+              ${label ? `<span style="color: #6B7280; font-size: 14px; font-weight: 700; text-transform: uppercase;">${label.content}</span>` : ''}
+              ${heading ? `<h2 style="font-size: 32px; font-weight: bold; color: #1F2937; margin: 16px 0;">${heading.content}</h2>` : ''}
+              ${features.length > 0 ? `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; width: 100%; margin: 24px 0;">
+                  ${features.map(feature => `
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                      ${feature.children.find(child => child.type === 'icon') ? `
+                        <img src="${feature.children.find(child => child.type === 'icon').src}" alt="" style="width: 48px; height: 48px; object-fit: contain;">
+                      ` : ''}
+                      ${feature.children.find(child => child.type === 'paragraph') ? `
+                        <p style="font-size: 16px; line-height: 1.5; color: #4B5563;">${feature.children.find(child => child.type === 'paragraph').content}</p>
+                      ` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+              ${buttons.length > 0 ? `
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                  ${buttons.map(button => `
+                    <button style="background-color: #334155; color: #ffffff; padding: 12px 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-size: 1rem">${button.content}</button>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+
+        renderedContent = `
+          <section id="${element.id}" class="section ${element.configuration}" style="${sectionStyleString}">
+            ${contentHtml}
+          </section>
+        `;
+      } else if (element.type === 'cta') {
+        const ctaConfig = element.configuration;
+        const isCtaOne = ctaConfig === 'ctaOne';
+        const isCtaTwo = ctaConfig === 'ctaTwo';
+
+        // Group children by type
+        const title = element.children.find(child => child.type === 'title');
+        const paragraph = element.children.find(child => child.type === 'paragraph');
+        const buttons = element.children.filter(child => child.type === 'button');
+        const image = element.children.find(child => child.type === 'image');
+
+        // Base styles for CTA
+        const baseStyles = {
+          display: 'flex',
+          position: 'relative',
+          flexDirection: isCtaTwo ? 'column' : 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: isCtaTwo ? '40px' : '48px 24px',
+          backgroundColor: '#FFFFFF',
+          gap: isCtaTwo ? '24px' : '32px',
+          margin: 0,
+          color: '#1a1a1a',
+          textAlign: isCtaTwo ? 'center' : 'left',
+          borderRadius: '8px',
+          width: '100%'
+        };
+
+        // Merge with custom styles
+        const mergedStyles = mergeStyles(baseStyles, element.styles);
+
+        // Generate HTML content
+        let htmlContent = `<div id="${element.id}" class="section-cta" style="${styleObjectToString(mergedStyles)}">`;
+
+        // Content container for CTAOne
+        if (isCtaOne) {
+          htmlContent += `
+            <div style="display: flex; justify-content: flex-start; align-items: center; flex-direction: column; background-color: transparent; max-width: 50%; width: 50%">
+              ${title ? `<h2 id="${title.id}" style="font-size: 48px; font-weight: 700; line-height: 1.2; text-align: center; color: #1A1A1A; margin-bottom: 16px">${title.content}</h2>` : ''}
+              ${paragraph ? `<div id="${paragraph.id}" style="font-size: 18px; line-height: 1.6; text-align: center; color: #4A4A4A; max-width: 600px; margin-bottom: 24px">${paragraph.content}</div>` : ''}
+              <div style="display: flex; flex-flow: wrap; align-items: center; justify-content: center; gap: 16px; padding: 10px; margin: 10px 0px; position: relative">
+                ${buttons.map((button, index) => {
+                  const buttonStyles = {
+                    padding: '12px 24px',
+                    backgroundColor: 'rgb(51, 65, 85)',
+                    color: 'rgb(255, 255, 255)',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'text',
+                    transition: '0.2s',
+                    outline: 'none'
+                  };
+                  return `
+                    <div style="position: relative; box-sizing: border-box">
+                      <button id="${button.id}" contenteditable="false" style="${styleObjectToString(buttonStyles)}">${button.content}</button>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+            ${image ? `
+              <div style="display: flex; justify-content: flex-end; align-items: center; max-width: 40%; width: 40%">
+                <img id="${image.id}" style="width: 100%; max-width: 600px; height: auto; border-radius: 8px; overflow: hidden" src="${image.content}" alt="">
+              </div>
+            ` : ''}`;
+        }
+        // Content container for CTATwo
+        else if (isCtaTwo) {
+          htmlContent += `
+            <div style="display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: transparent; width: 100%">
+              ${title ? `<h2 id="${title.id}" style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #1a1a1a">${title.content}</h2>` : ''}
+              <div style="display: flex; flex-flow: wrap; align-items: center; justify-content: center; gap: 16px; padding: 10px; margin: 10px 0px; position: relative">
+                ${buttons.map((button, index) => {
+                  const buttonStyles = {
+                    padding: '12px 24px',
+                    backgroundColor: 'rgb(51, 65, 85)',
+                    color: 'rgb(255, 255, 255)',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'text',
+                    transition: '0.2s',
+                    outline: 'none'
+                  };
+                  return `
+                    <div style="position: relative; box-sizing: border-box">
+                      <button id="${button.id}" contenteditable="false" style="${styleObjectToString(buttonStyles)}">${button.content}</button>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>`;
+        }
+
+        htmlContent += '</div>';
+        renderedContent = htmlContent;
+      } else {
+        renderedContent = renderElementToHtml({
         ...element,
         style: getStyleString(element),
         className: element.className ? `${sanitizeClassName(element.className)} ${element.id}` : element.id,
@@ -296,6 +733,7 @@ function exportProject(elements, websiteSettings) {
         ...(element.dataAttributes || {}),
         ...(element.events || {})
       }, collectedStyles);
+      }
 
       if (renderedContent) {
         let cleanedContent = cleanEmptyDivs(renderedContent);
@@ -309,159 +747,11 @@ function exportProject(elements, websiteSettings) {
   // Generate styles HTML
   const stylesHtml = `
     <style>
-      /* Reset and base styles */
-      * {
+    body{
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
     }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        line-height: 1.5;
-        color: #333;
-      }
-
-      .main-content {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-
-      /* Element-specific styles */
-      .navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 24px;
-        background-color: #1a1a1a;
-        color: #ffffff;
-        border-bottom: 1px solid #333;
-      }
-
-      .navbar .image {
-        margin-right: 12px;
-      }
-
-      .navbar .text {
-        font-size: 1.1rem;
-        font-weight: 500;
-      }
-
-      .defi-section {
-        flex: 1;
-        padding: 40px;
-        background-color: #1a1a1a;
-        color: #ffffff;
-      }
-
-      .footer {
-        width: 100%;
-        background-color: #1a1a1a;
-        color: #ffffff;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 24px;
-        border-top: 1px solid #333;
-        box-sizing: border-box;
-      }
-
-      .footer .image {
-        margin-right: 12px;
-      }
-
-      .footer .link {
-        margin-left: 24px;
-      }
-
-      .footer .link:first-of-type {
-        margin-left: 0;
-      }
-
-      .module {
-        border-radius: 8px;
-        background-color: #2a2a2a;
-        padding: 20px;
-        margin-bottom: 16px;
-        color: #ffffff;
-      }
-
-      .title {
-        margin-bottom: 16px;
-        font-size: 2rem;
-        color: #fff;
-      }
-
-      .description {
-        color: #bbb;
-        margin-bottom: 32px;
-        font-size: 1.1rem;
-      }
-
-      .image {
-        border-radius: 8px;
-        width: 32px;
-        height: 32px;
-        object-fit: cover;
-      }
-
-      .link {
-        font-size: 14px;
-        text-decoration: none;
-        color: #ffffff;
-        font-weight: 500;
-        transition: color 0.2s ease;
-      }
-
-      .link:hover {
-        color: #5C4EFA;
-      }
-
-      .connect-wallet-button {
-        font-weight: 500;
-        border-radius: 6px;
-        padding: 8px 16px;
-        background-color: #5C4EFA;
-        transition: all 0.2s ease;
-        font-size: 14px;
-        cursor: pointer;
-        border: none;
-        color: #ffffff;
-        margin-left: auto;
-      }
-
-      .connect-wallet-button:hover {
-        background-color: #4a3ed9;
-      }
-
-      .text {
-        font-size: 14px;
-        font-weight: 400;
-        color: #ffffff;
-      }
-
-      /* Footer link container */
-      .footer-links {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-      }
-
-      /* Footer left section */
-      .footer-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      /* Footer right section */
-      .footer-right {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-      }
-
+      /* Preserve element-specific styles */
       ${collectedStyles.map(style => `
         .${style.className} {
           ${Object.entries(style.styles)
@@ -469,6 +759,21 @@ function exportProject(elements, websiteSettings) {
             .join(';\n          ')}
         }
       `).join('\n')}
+
+      /* Section-specific responsive styles */
+      @media (max-width: 768px) {
+        .section-navbar {
+          flex-direction: column;
+          padding: 12px 16px;
+        }
+        .section-navbar > div {
+          width: 100%;
+          justify-content: center;
+        }
+        .section-navbar span {
+          margin: 8px 0;
+        }
+      }
     </style>
   `;
 
@@ -487,9 +792,7 @@ function exportProject(elements, websiteSettings) {
       ${stylesHtml}
     </head>
     <body>
-      <div class="main-content">
           ${bodyHtml}
-      </div>
     </body>
     </html>
   `.trim();
@@ -520,13 +823,17 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     }
 
     try {
-      // Log the element being processed
-      console.log('Processing element:', element);
+      // Validate element type
+      const elementType = elementTypes[element.type];
+      if (!elementType) {
+        console.warn(`Invalid element type: ${element.type}`);
+        return null;
+      }
 
       // Create a new object with only valid properties
       const cleanedElement = {
         id: element.id || '',
-        type: element.type || '',
+        type: element.type,
         content: element.content || '',
         parentId: element.parentId || null,
         children: Array.isArray(element.children) ? element.children : [],
@@ -537,93 +844,21 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         events: element.events || {},
       };
 
-      // Special handling for button elements
-      if (element.type === 'button' || element.type === 'connectWalletButton') {
-        // Ensure content is set
-        cleanedElement.content = element.content || 'Button';
-        
-        // Ensure type is set correctly
-        cleanedElement.type = element.type;
-        
-        // Create a complete styles object with all required properties
-        const defaultStyles = {
-          backgroundColor: '#5C4EFA',
-          color: '#FFFFFF',
-          padding: '8px 16px',
-          borderRadius: '8px',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontWeight: '500',
-          transition: 'all 0.2s ease',
-          display: 'inline-block',
-          textAlign: 'center',
-          textDecoration: 'none',
-          outline: 'none',
-          boxShadow: 'none',
-          margin: '0',
-          width: 'auto',
-          height: 'auto',
-          lineHeight: '1.5',
-          fontFamily: 'inherit'
-        };
-
-        // Merge existing styles with defaults, ensuring no undefined values
-        cleanedElement.styles = {
-          ...defaultStyles,
-          ...(element.styles || {}),
-        };
-
-        // Remove any undefined or null values from styles
-        Object.keys(cleanedElement.styles).forEach(key => {
-          if (cleanedElement.styles[key] === undefined || cleanedElement.styles[key] === null) {
-            cleanedElement.styles[key] = defaultStyles[key];
-          }
-        });
-
-        // Ensure hover state is properly set
-        if (!cleanedElement.styles['&:hover']) {
-          cleanedElement.styles['&:hover'] = {
-            backgroundColor: '#4a3ed9'
-          };
-        }
-      } else {
-        // Clean styles object for non-button elements
-        cleanedElement.styles = {};
-        if (element.styles) {
-          Object.entries(element.styles).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-              cleanedElement.styles[key] = value;
-            }
-          });
-        }
+      // Add type-specific properties
+      if (element.type === 'image') {
+        cleanedElement.src = element.src || 'https://via.placeholder.com/400x300';
       }
 
-      // Clean inlineStyles object
-      cleanedElement.inlineStyles = {};
-      if (element.inlineStyles) {
-        Object.entries(element.inlineStyles).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            cleanedElement.inlineStyles[key] = value;
-          }
-        });
-      }
+      // Process styles
+      cleanedElement.styles = processElementStyles(element);
 
-      // Remove any undefined values from the entire element
-      Object.keys(cleanedElement).forEach(key => {
-        if (cleanedElement[key] === undefined) {
-          delete cleanedElement[key];
-        }
-      });
-
-      // Additional validation for required properties
-      if (!cleanedElement.id || !cleanedElement.type) {
-        console.warn('Element missing required properties:', cleanedElement);
+      // Validate required properties
+      const missingProps = elementType.requiredProps.filter(prop => !cleanedElement[prop]);
+      if (missingProps.length > 0) {
+        console.warn(`Element missing required properties: ${missingProps.join(', ')}`);
         return null;
       }
 
-      // Log the cleaned element
-      console.log('Cleaned element:', cleanedElement);
       return cleanedElement;
     } catch (error) {
       console.error('Error cleaning element:', error, element);

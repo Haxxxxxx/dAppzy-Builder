@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
@@ -8,13 +8,18 @@ import { Image, Button, Heading, Paragraph, Section, Div, Span } from '../../Sel
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 
-const HeroThree = ({
+// Create a forwardRef wrapper for Section
+const SectionWithRef = forwardRef((props, ref) => (
+  <Section {...props} ref={ref} />
+));
+
+const HeroThree = forwardRef(({
   handleSelect,
   uniqueId,
   children,
   onDropItem,
   handleOpenMediaPanel,
-}) => {
+}, ref) => {
   const heroRef = useRef(null);
   const defaultInjectedRef = useRef(false);
   const {
@@ -34,6 +39,10 @@ const HeroThree = ({
   useEffect(() => {
     // Only proceed if we haven't injected content yet
     if (defaultInjectedRef.current) return;
+
+    // First, ensure the hero has the default styles
+    const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement?.styles);
+    updateStyles(heroElement.id, mergedHeroStyles);
 
     const leftContainer = findElementById(`${uniqueId}-left`, elements);
     const rightContainer = findElementById(`${uniqueId}-right`, elements);
@@ -86,7 +95,11 @@ const HeroThree = ({
             const newId = addNewElement(child.type, 1, null, `${uniqueId}-right`);
             setElements((prev) =>
               prev.map((el) =>
-                el.id === newId ? { ...el, content: child.content } : el
+                el.id === newId ? { 
+                  ...el, 
+                  content: child.content,
+                  styles: merge(CustomTemplateHeroStyles.heroImage, child.styles || {})
+                } : el
               )
             );
             setElements((prev) =>
@@ -100,7 +113,18 @@ const HeroThree = ({
             const newId = addNewElement(child.type, 1, null, `${uniqueId}-left`);
             setElements((prev) =>
               prev.map((el) =>
-                el.id === newId ? { ...el, content: child.content } : el
+                el.id === newId ? { 
+                  ...el, 
+                  content: child.content,
+                  styles: merge(
+                    child.type === 'span' ? CustomTemplateHeroStyles.caption :
+                    child.type === 'heading' ? CustomTemplateHeroStyles.heroTitle :
+                    child.type === 'paragraph' ? CustomTemplateHeroStyles.heroDescription :
+                    child.type === 'button' ? CustomTemplateHeroStyles.primaryButton :
+                    {},
+                    child.styles || {}
+                  )
+                } : el
               )
             );
             setElements((prev) =>
@@ -115,7 +139,7 @@ const HeroThree = ({
         defaultInjectedRef.current = true;
       }
     }
-  }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements]);
+  }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     const newId = addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
@@ -158,7 +182,7 @@ const HeroThree = ({
     let buttonCount = 0;
     let buttons = [];
 
-    const childrenElements = container.children.map((childId, index) => {
+    const childrenElements = container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
 
@@ -222,88 +246,31 @@ const HeroThree = ({
         buttonCount++;
       }
 
-      return (
-        <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === index && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-                onDragOver={(e) => onDragOver(e, containerId, index)}
-                onDrop={(e) => onDrop(e, containerId)}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragOver={(e) => onDragOver(e, containerId, index)}
-            onDragEnd={onDragEnd}
-            style={{ display: 'inline-block' }}
-          >
-            {childContent}
-          </span>
-        </React.Fragment>
-      );
+      return childContent;
     });
-
-    // Only add the bottom drop zone if we're actually dragging something
-    if (draggedId) {
-      childrenElements.push(
-        <div
-          key="drop-zone-bottom"
-          style={{ height: '40px', width: '100%' }}
-          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-          onDrop={(e) => onDrop(e, containerId)}
-        >
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === container.children.length && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
-        </div>
-      );
-    }
 
     return childrenElements;
   };
 
-  useEffect(() => {
-    if (heroElement) {
-      const merged = merge({}, CustomTemplateHeroStyles.heroSection, heroElement.styles);
-      if (heroElement.styles.display !== merged.display) {
-        updateStyles(heroElement.id, merged);
-      }
-    }
-  }, [heroElement, updateStyles]);
+  // Get the left and right container elements
+  const leftContainer = findElementById(`${uniqueId}-left`, elements);
+  const rightContainer = findElementById(`${uniqueId}-right`, elements);
 
-  const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement?.styles);
+  // Merge styles for containers
+  const leftContainerStyles = merge({}, CustomTemplateHeroStyles.heroContent, {
+    maxWidth: '40%',
+    width: '40%'
+  }, leftContainer?.styles || {});
+  const rightContainerStyles = merge({}, CustomTemplateHeroStyles.heroImageContainer, {
+    maxWidth: '40%',
+    width: '40%'
+  }, rightContainer?.styles || {});
+
+  // Merge styles for hero section
+  const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement?.styles || {});
 
   return (
-    <Section
+    <SectionWithRef
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
@@ -316,12 +283,19 @@ const HeroThree = ({
       ref={(node) => {
         heroRef.current = node;
         drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
       }}
     >
       <Div
         id={`${uniqueId}-left`}
         parentId={`${uniqueId}-left`}
-        styles={{ ...CustomTemplateHeroStyles.heroContent }}
+        styles={leftContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-left`)}
         onClick={(e) => handleInnerDivClick(e, `${uniqueId}-left`)}
@@ -331,15 +305,15 @@ const HeroThree = ({
       <Div
         id={`${uniqueId}-right`}
         parentId={`${uniqueId}-right`}
-        styles={{ ...CustomTemplateHeroStyles.heroImageContainer }}
+        styles={rightContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-right`)}
         onClick={(e) => handleInnerDivClick(e, `${uniqueId}-right`)}
       >
         {renderContainerChildren(`${uniqueId}-right`)}
       </Div>
-    </Section>
+    </SectionWithRef>
   );
-};
+});
 
 export default HeroThree;

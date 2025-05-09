@@ -1,33 +1,7 @@
 import { useCallback } from 'react';
-import { structureConfigurations } from '../../features/elements/configs/elementConfigs';
+import { elementTypes, mergeStyles } from '../configs/elementConfigs';
 
 export const useStyleManagement = (updateStyles, findElementById) => {
-  const mergeStyles = useCallback((baseStyles, existingStyles, newStyles) => {
-    const merged = {
-      ...baseStyles,
-      ...existingStyles,
-      ...newStyles
-    };
-
-    // Handle hover states separately
-    if (newStyles?.hover || existingStyles?.hover) {
-      merged.hover = {
-        ...(baseStyles?.hover || {}),
-        ...(existingStyles?.hover || {}),
-        ...(newStyles?.hover || {})
-      };
-    }
-
-    // Remove undefined values
-    Object.keys(merged).forEach(key => {
-      if (merged[key] === undefined) {
-        delete merged[key];
-      }
-    });
-
-    return merged;
-  }, []);
-
   const applyChildStyles = useCallback((parentId, parentStyles, children, config) => {
     const parent = findElementById(parentId);
     if (!parent?.children) return;
@@ -37,7 +11,9 @@ export const useStyleManagement = (updateStyles, findElementById) => {
       const childConfig = config?.children?.[index];
       
       if (child && childConfig) {
+        const elementType = elementTypes[child.type];
         const baseStyles = {
+          ...elementType?.defaultStyles,
           color: parentStyles?.color || config?.styles?.color
         };
 
@@ -50,22 +26,49 @@ export const useStyleManagement = (updateStyles, findElementById) => {
         updateStyles(childId, mergedStyles);
       }
     });
-  }, [findElementById, mergeStyles, updateStyles]);
+  }, [findElementById, updateStyles]);
 
   const getElementStyles = useCallback((element, newStyles = {}) => {
-    const structureConfig = element.configuration ? 
-      structureConfigurations[element.configuration] : null;
+    const elementType = elementTypes[element.type];
+    if (!elementType) return newStyles;
 
     return mergeStyles(
-      structureConfig?.styles || {},
+      elementType.defaultStyles,
       element.styles,
       newStyles
     );
-  }, [mergeStyles]);
+  }, []);
+
+  const validateStyles = useCallback((element, styles) => {
+    const elementType = elementTypes[element.type];
+    if (!elementType) return { valid: false, error: `Invalid element type: ${element.type}` };
+
+    // Check for invalid style properties
+    const invalidStyles = Object.keys(styles).filter(style => {
+      // Add your style validation logic here
+      // For example, check if color values are valid
+      if (style.includes('color')) {
+        const colorValue = styles[style];
+        return !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(colorValue) && 
+               !/^[a-zA-Z]+$/.test(colorValue) && 
+               !/^(rgb|rgba|hsl|hsla)/.test(colorValue);
+      }
+      return false;
+    });
+
+    if (invalidStyles.length > 0) {
+      return { 
+        valid: false, 
+        error: `Invalid style properties: ${invalidStyles.join(', ')}` 
+      };
+    }
+
+    return { valid: true };
+  }, []);
 
   return {
-    mergeStyles,
     applyChildStyles,
-    getElementStyles
+    getElementStyles,
+    validateStyles
   };
 }; 

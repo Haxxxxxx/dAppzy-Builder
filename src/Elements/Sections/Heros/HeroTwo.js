@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
@@ -9,13 +9,18 @@ import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
 import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { HeroConfiguration } from '../../../configs/heros/HeroConfigurations';
 
-const HeroTwo = ({
+// Create a forwardRef wrapper for Section
+const SectionWithRef = forwardRef((props, ref) => (
+  <Section {...props} ref={ref} />
+));
+
+const HeroTwo = forwardRef(({
   handleSelect,
   uniqueId,
   children,
   onDropItem,
   handleOpenMediaPanel,
-}) => {
+}, ref) => {
   const heroRef = useRef(null);
   const defaultInjectedRef = useRef(false);
   const {
@@ -34,6 +39,10 @@ const HeroTwo = ({
 
   useEffect(() => {
     if (defaultInjectedRef.current) return;
+
+    // First, ensure the hero has the default styles
+    const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement?.styles);
+    updateStyles(heroElement.id, mergedHeroStyles);
 
     const contentContainer = findElementById(`${uniqueId}-content`, elements);
 
@@ -65,7 +74,17 @@ const HeroTwo = ({
           const newId = addNewElement(child.type, 1, null, `${uniqueId}-content`);
           setElements((prev) =>
             prev.map((el) =>
-              el.id === newId ? { ...el, content: child.content } : el
+              el.id === newId ? { 
+                ...el, 
+                content: child.content,
+                styles: merge(
+                  child.type === 'heading' ? heroTwoStyles.heroTitle :
+                  child.type === 'paragraph' ? heroTwoStyles.heroDescription :
+                  child.type === 'button' ? heroTwoStyles.primaryButton :
+                  {},
+                  child.styles || {}
+                )
+              } : el
             )
           );
           setElements((prev) =>
@@ -79,12 +98,11 @@ const HeroTwo = ({
         defaultInjectedRef.current = true;
       }
     }
-  }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements]);
+  }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
-};
-
+  };
 
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
@@ -115,137 +133,35 @@ const HeroTwo = ({
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
 
-    const childrenElements = container.children.map((childId, index) => {
+    return container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-
-      const childContent =
-        child.type === 'heading' ? (
-          <Heading
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...heroTwoStyles.heroTitle, ...(child.styles || {}) }}
-          />
-        ) : child.type === 'paragraph' ? (
-          <Paragraph
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...heroTwoStyles.heroDescription, ...(child.styles || {}) }}
-          />
-        ) : child.type === 'button' ? (
-          <div key={child.id} style={heroTwoStyles.buttonContainer}>
-            <Button
-              id={child.id}
-              content={child.content}
-              styles={{ ...heroTwoStyles.primaryButton, ...(child.styles || {}) }}
-            />
-          </div>
-        ) : child.type === 'image' ? (
-          <Image
-            key={child.id}
-            id={child.id}
-            src={child.content}
-            styles={{ ...heroTwoStyles.heroImage, ...(child.styles || {}) }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={(item) => handleHeroDrop(item, child.id)}
-          />
-        ) : (
-          renderElement(
-            child,
-            elements,
-            null,
-            setSelectedElement,
-            setElements,
-            null,
-            undefined,
-            handleOpenMediaPanel
-          )
-        );
-
-      return (
-        <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === index && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-                onDragOver={(e) => onDragOver(e, containerId, index)}
-                onDrop={(e) => onDrop(e, containerId)}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragOver={(e) => onDragOver(e, containerId, index)}
-            onDragEnd={onDragEnd}
-            style={{ display: 'inline-block' }}
-          >
-            {childContent}
-          </span>
-        </React.Fragment>
+      return renderElement(
+        child,
+        elements,
+        null,
+        setSelectedElement,
+        setElements,
+        null,
+        undefined,
+        handleOpenMediaPanel
       );
     });
-
-    // Only add the bottom drop zone if we're actually dragging something
-    if (draggedId) {
-      childrenElements.push(
-        <div
-          key="drop-zone-bottom"
-          style={{ height: '40px', width: '100%' }}
-          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-          onDrop={(e) => onDrop(e, containerId)}
-        >
-          {activeDrop.containerId === containerId &&
-            activeDrop.index === container.children.length && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-              >
-                Drop here – element will be dropped here
-              </div>
-            )}
-        </div>
-      );
-    }
-
-    return childrenElements;
   };
 
-  useEffect(() => {
-    if (heroElement) {
-      const merged = merge({}, heroTwoStyles.heroSection, heroElement.styles);
-      if (heroElement.styles.display !== merged.display) {
-        updateStyles(heroElement.id, merged);
-      }
-    }
-  }, [heroElement, updateStyles]);
+  // Get the content container element
+  const contentContainer = findElementById(`${uniqueId}-content`, elements);
 
-  const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement?.styles);
+  // Merge styles for container
+  const contentContainerStyles = merge({}, heroTwoStyles.heroLeftContent, {
+    backgroundColor: 'transparent'
+  }, contentContainer?.styles || {});
+
+  // Merge styles for hero section
+  const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement?.styles || {});
 
   return (
-    <Section
+    <SectionWithRef
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
@@ -258,20 +174,27 @@ const HeroTwo = ({
       ref={(node) => {
         heroRef.current = node;
         drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
       }}
     >
       <Div
         id={`${uniqueId}-content`}
         parentId={`${uniqueId}-content`}
-        styles={{ ...heroTwoStyles.heroLeftContent }}
+        styles={contentContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-content`)}
         onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
       >
         {renderContainerChildren(`${uniqueId}-content`)}
       </Div>
-    </Section>
+    </SectionWithRef>
   );
-};
+});
 
 export default HeroTwo;

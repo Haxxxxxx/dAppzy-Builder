@@ -21,7 +21,7 @@ import CandyMachineSettings from './LeftbarPanels/SettingsPanels/CandyMachineSet
 
 const SideBar = ({ contentListWidth, pageSettings }) => {
   // State for when no element is selected
-  const [sidebarViewMode, setSidebarViewMode] = useState('elements'); 
+  const [sidebarViewMode, setSidebarViewMode] = useState('elements');
   // State for when an element is selected (editor panel)
   const [editorViewMode, setEditorViewMode] = useState('content');
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +31,7 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
 
   const isTextualElement = (element) => {
     if (!element || !element.type) return false;
-    
+
     const textualElements = [
       // Basic text elements
       'title', 'description', 'paragraph', 'p', 'blockquote',
@@ -44,20 +44,20 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
       'label', 'legend', 'figcaption', 'cite', 'q', 'em', 'strong', 'mark',
       'small', 'sub', 'sup', 'time', 'abbr', 'dfn', 'kbd', 'samp', 'var'
     ];
-    
+
     return textualElements.includes(element.type);
   };
 
   const shouldShowDisplaySettings = (element) => {
     // Early return if element is null or undefined
     if (!element || !element.type) return false;
-    
+
     // Elements that should have display settings
     const displayElements = {
       // Layout & Structure Elements
       layout: [
         'div', 'section', 'container', 'gridlayout', 'hflexlayout', 'vflexlayout',
-        'navbar', 'footer', 'hero', 'cta', 'contentsections', 'defiNavbar', 'defiFooter', 
+        'navbar', 'footer', 'hero', 'cta', 'contentsections', 'defiNavbar', 'defiFooter',
       ],
       // Form Elements
       form: [
@@ -84,10 +84,10 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
     try {
       // Flatten all categories into a single array
       const allDisplayElements = Object.values(displayElements).flat();
-      
+
       // Get the element type and convert to lowercase, with fallback to empty string
       const elementType = (element.type || '').toLowerCase();
-      
+
       // Check if the element type is in any of the categories
       return allDisplayElements.includes(elementType);
     } catch (error) {
@@ -131,9 +131,9 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
         <>
           <TextualSettings />
           {/* Show specific settings based on element type */}
-          {selectedElement.type === 'a' || selectedElement.type === 'link' || selectedElement.type === 'linkblock' ? (
+          {selectedElement.type === 'button' || selectedElement.type === 'a' || selectedElement.type === 'link' || selectedElement.type === 'linkblock' ? (
             <LinkSettings />
-          ) : selectedElement.type === 'button' || selectedElement.type === 'connectWalletButton' ? (
+          ) : selectedElement.type === 'connectWalletButton' ? (
             <WalletSettingsPanel />
           ) : null}
         </>
@@ -220,7 +220,7 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
         // Sidebar toggle buttons: layout vs. elements
         <>
           <div className="sidebar-toggle-buttons">
-          <button
+            <button
               onClick={() => setSidebarViewMode('elements')}
               className={sidebarViewMode === 'elements' ? 'active' : ''}
             >
@@ -244,7 +244,7 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
           </div>
         </>
       )}
-      
+
       {/* Render panel based on whether an element is selected */}
       {selectedElement ? (
         <div className="editor-panel-container">
@@ -252,7 +252,7 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
             renderDisplayView()
           ) : editorViewMode === 'settings' ? (
             <div className="settings-panel">
-              <CollapsibleSection 
+              <CollapsibleSection
                 title="Element Information"
                 className="element-info-section"
                 defaultExpanded={true}

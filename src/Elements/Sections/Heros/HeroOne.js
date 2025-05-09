@@ -13,13 +13,13 @@ const SectionWithRef = forwardRef((props, ref) => (
   <Section {...props} ref={ref} />
 ));
 
-const HeroOne = ({
+const HeroOne = forwardRef(({
   handleSelect,
   uniqueId,
   children,
   onDropItem,
   handleOpenMediaPanel,
-}) => {
+}, ref) => {
   const heroRef = useRef(null);
   const defaultInjectedRef = useRef(false);
   const {
@@ -73,10 +73,13 @@ const HeroOne = ({
             return {
               ...el,
               content: child.content,
-              styles: child.type === 'heading' ? defaultHeroStyles.heroTitle :
-                     child.type === 'paragraph' ? defaultHeroStyles.heroDescription :
-                     child.type === 'button' ? defaultHeroStyles.primaryButton :
-                     {}
+              styles: merge(
+                child.type === 'heading' ? defaultHeroStyles.heroTitle :
+                child.type === 'paragraph' ? defaultHeroStyles.heroDescription :
+                child.type === 'button' ? defaultHeroStyles.primaryButton :
+                {},
+                child.styles || {}
+              )
             };
           }
           return el;
@@ -117,7 +120,7 @@ const HeroOne = ({
             return {
               ...el,
               content: imageContent.content,
-              styles: defaultHeroStyles.heroImage
+              styles: merge(defaultHeroStyles.heroImage, imageContent.styles || {})
             };
           }
           return el;
@@ -140,7 +143,9 @@ const HeroOne = ({
       if (el.id === uniqueId) {
         return {
           ...el,
-          children: [leftContainerId, rightContainerId]
+          children: [leftContainerId, rightContainerId],
+          // Remove any direct children that are not containers
+          configuration: 'heroOne'
         };
       }
       return el;
@@ -227,10 +232,6 @@ const HeroOne = ({
   // Merge styles for hero section
   const mergedHeroStyles = merge({}, defaultHeroStyles.heroSection, heroElement?.styles || {});
 
-  // Filter out any direct children that are already in containers
-  const containerIds = [leftContainerId, rightContainerId];
-  const filteredChildren = heroElement?.children?.filter(childId => !containerIds.includes(childId)) || [];
-
   return (
     <SectionWithRef
       id={uniqueId}
@@ -245,6 +246,13 @@ const HeroOne = ({
       ref={(node) => {
         heroRef.current = node;
         drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
       }}
     >
       <div
@@ -259,22 +267,8 @@ const HeroOne = ({
       >
         {renderContainerChildren(rightContainerId)}
       </div>
-      {filteredChildren.map(childId => {
-        const child = findElementById(childId, elements);
-        if (!child) return null;
-        return renderElement(
-          child,
-          elements,
-          null,
-          setSelectedElement,
-          setElements,
-          null,
-          undefined,
-          handleOpenMediaPanel
-        );
-      })}
     </SectionWithRef>
   );
-};
+});
 
 export default HeroOne;
