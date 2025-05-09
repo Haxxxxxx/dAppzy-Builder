@@ -82,22 +82,20 @@ const BuilderPageCore = ({
   };
 
   const handleFirstPrompt = async (userMessage) => {
+    setOpenPanel("ai");
+
     try {
+      setShowAIInputBar(false);
+      setAIChatStarted(true);
 
-      setOpenPanel("ai");
-
+      // First, show the AI response
       const aiAnswer = {
         role: 'assistant',
         content: 'Creating a complete DeFi dashboard with a web3-styled navbar, comprehensive dashboard section, and footer...'
       };
 
-      setShowAIInputBar(false);
-      setAIChatStarted(true);
-
-      // Create new messages array
+      // Create new messages array and update the chat immediately
       const newMessages = [userMessage, aiAnswer];
-
-      // Update conversations first
       setConversations(prev => {
         const updatedConversations = prev.map(c =>
           c.id === activeConversationId
@@ -106,18 +104,10 @@ const BuilderPageCore = ({
         );
         return updatedConversations;
       });
-
-      // Then update parent's messages state
       setMessages(newMessages);
-    } catch (err) {
-      console.error('[handleFirstPrompt] error:', err);
-    }
-      // Remove or comment out these console logs
-      // console.log('[handleFirstPrompt] started', userMessage);
-      // console.log('[handleFirstPrompt] before navbarCommand');
 
+      // Then proceed with element creation
       // Create Navbar
-      // console.log('[handleFirstPrompt] before navbarCommand');
       const navbarCommand = {
         action: 'add',
         elementType: 'navbar',
@@ -132,7 +122,6 @@ const BuilderPageCore = ({
         }
       };
       const navbarId = await handleAICommand(navbarCommand);
-      // console.log('[handleFirstPrompt] after navbarCommand', navbarId);
 
       // Wait for the elements to be updated in the context
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -140,13 +129,10 @@ const BuilderPageCore = ({
       // Store the navbar span ID
       const navbar = elements.find(el => el.id === navbarId);
       if (navbar && navbar.children) {
-        // Find all elements that are children of the navbar
         const navbarChildren = elements.filter(el => navbar.children.includes(el.id));
-        // Find the span among the children
         const spanElement = navbarChildren.find(el => el.type === 'span');
         if (spanElement) {
           setLastNavbarSpanId(spanElement.id);
-          // console.log('Found and stored navbar span ID:', spanElement.id);
         }
       }
 
@@ -360,13 +346,10 @@ const BuilderPageCore = ({
       // Store the footer span ID
       const footer = elements.find(el => el.id === footerId);
       if (footer && footer.children) {
-        // Find all elements that are children of the footer
         const footerChildren = elements.filter(el => footer.children.includes(el.id));
-        // Find the span among the children
         const spanElement = footerChildren.find(el => el.type === 'span');
         if (spanElement) {
           setLastFooterSpanId(spanElement.id);
-          // console.log('Found and stored footer span ID:', spanElement.id);
         }
       }
 
@@ -374,7 +357,9 @@ const BuilderPageCore = ({
       setLastDefiId(defiId);
       setLastFooterId(footerId);
 
-     
+    } catch (err) {
+      console.error('[handleFirstPrompt] error:', err);
+    }
   };
 
   const handleSecondPrompt = async (userMessage) => {

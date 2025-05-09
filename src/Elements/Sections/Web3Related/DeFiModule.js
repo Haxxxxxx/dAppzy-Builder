@@ -47,7 +47,7 @@ const DeFiModule = React.memo(({
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                 {content?.title || 'DeFi Aggregator'}
               </h3>
-              {showError && (
+             {/**  {showError && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -58,7 +58,7 @@ const DeFiModule = React.memo(({
                 }}>
                   {(!isConnected) ? 'Connect your wallet to view DeFi data' : 'Sign the message to unlock DeFi data'}
                 </div>
-              )}
+              )}*/}
               {showConnected && (
                 <div style={{ 
                   marginTop: '0.5rem', 
@@ -113,7 +113,7 @@ const DeFiModule = React.memo(({
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                 {content?.title || 'Investment Simulator'}
               </h3>
-              {showError && (
+              {/**{showError && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -124,7 +124,7 @@ const DeFiModule = React.memo(({
                 }}>
                   {(!isConnected) ? 'Connect your wallet to simulate investments' : 'Sign the message to unlock simulation'}
                 </div>
-              )}
+              )}*/}
             </div>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {stats.map((stat, index) => (
@@ -173,7 +173,7 @@ const DeFiModule = React.memo(({
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#fff' }}>
                 {content?.title || 'Cross-Chain Bridge'}
               </h3>
-              {showError && (
+              {/**{showError && (
                 <div style={{ 
                   marginTop: '0.5rem', 
                   padding: '0.5rem', 
@@ -184,7 +184,7 @@ const DeFiModule = React.memo(({
                 }}>
                   {(!isConnected) ? 'Connect your wallet to use the bridge' : 'Sign the message to unlock bridge features'}
                 </div>
-              )}
+              )}*/}
             </div>
             <div style={{ display: 'grid', gap: '1rem' }}>
               {stats.map((stat, index) => (
