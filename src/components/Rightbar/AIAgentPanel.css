@@ -192,6 +192,7 @@ font-size: 18px;
 
 .ai-compilation-status {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 10px;
   padding: 10px;
@@ -201,7 +202,7 @@ font-size: 18px;
 }
 
 .compilation-spinner {
-  top: 30%;
+  margin-top: 15px;
   width: 10px;
   height: 10px;
   border: 1px solid #f3f3f3;
@@ -223,4 +224,13 @@ font-size: 18px;
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+.ai-compilation-text {
+  color: rgba(255, 255, 255, 0.70);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 }

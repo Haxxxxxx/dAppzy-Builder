@@ -253,7 +253,7 @@ const AIAgentPanel = ({
         {compilationStatus && ( 
           <div className="ai-compilation-status">
             <div className="compilation-spinner"></div>
-            <span>{compilationStatus}</span>
+            <p className="ai-compilation-text">{compilationStatus}</p>
           </div>
         )} 
         <div ref={messagesEndRef} />

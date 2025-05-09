@@ -1,16 +1,17 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useDrop } from 'react-dnd';
 import '../components/css/dropzone.css';
+import '../Root.css';
 
-const UnifiedDropZone = React.memo(({ 
-  onDrop, 
-  parentId, 
-  onClick, 
-  text, 
-  className, 
-  scale, 
-  isDragging, 
-  index, 
+const UnifiedDropZone = React.memo(({
+  onDrop,
+  parentId,
+  onClick,
+  text,
+  className,
+  scale,
+  isDragging,
+  index,
   onPanelToggle,
   accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION']
 }) => {
@@ -22,11 +23,11 @@ const UnifiedDropZone = React.memo(({
   const handleInteraction = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.type === 'click' && onClick) {
       onClick(e);
     }
-    
+
     if (className === 'first-dropzone' && onPanelToggle) {
       onPanelToggle('sidebar');
     }
@@ -58,35 +59,35 @@ const UnifiedDropZone = React.memo(({
     },
     hover: (item, monitor) => {
       if (!dropRef.current) return;
-      
+
       // Don't show dropzone if:
       // 1. Dragging a section or configured div
       // 2. Dragging a section into another section's content area
       const isDraggingSection = item.type === 'SECTION';
       const isDraggingConfiguredDiv = item.type === 'DIV' && item.configuration;
       const isContentSection = parentId && parentId.includes('-content');
-      
+
       if (isDraggingSection || isDraggingConfiguredDiv || (isDraggingSection && isContentSection)) {
         setIsVisible(false);
         return;
       }
-      
+
       const hoverBoundingRect = dropRef.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
-      
+
       if (!clientOffset) return;
 
       // Calculate the mouse position relative to the drop zone
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-      
+
       // Only update position if we're not already showing the drop zone
       if (!isVisible) {
         setPosition({
           x: clientOffset.x,
           y: clientOffset.y
         });
-      setIsVisible(true);
+        setIsVisible(true);
       }
     },
     collect: (monitor) => ({
@@ -137,25 +138,28 @@ const UnifiedDropZone = React.memo(({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        margin: isFirstDropzone || isDefaultDropzone ? '0' : '0',
+        margin: isFirstDropzone || isDefaultDropzone ? '5px' : '5px',
       }}
     >
       <div className="dropzone-content">
         {(isDefaultDropzone || isFirstDropzone) ? (
           <div className="dropzone-buttons">
-            <button 
-              className="dropzone-button library-button"
-              onClick={handleLibraryClick}
-            >
-              <span className="button-icon">📚</span>
-              <span className="button-text">Select from Library</span>
-            </button>
-            <button 
+
+            <button
               className="dropzone-button configure-button"
               onClick={handleConfigureClick}
             >
-              <span className="button-icon">⚙️</span>
-              <span className="button-text">Configure Layout</span>
+              <span class="material-symbols-outlined">
+                add
+              </span>
+            </button>
+            <button
+              className="dropzone-button library-button"
+              onClick={handleLibraryClick}
+            >
+              <span class="material-symbols-outlined">
+                folder_open
+              </span>
             </button>
           </div>
         ) : (
