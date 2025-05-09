@@ -42,24 +42,38 @@
 }
 
 .project-url {
-  color: var(--not-selected, #838389);
-  text-align: center;
-  font-family: Montserrat;
   font-size: 12px;
-  font-weight: 400;
-  text-decoration: underline;
-  display: flex;
-  align-items: baseline;
+  color: #5C4EFA;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  text-decoration: none;
 }
+
 .project-info img{
   max-width: 40px;
 }
+
 .project-details-url {
   display: flex;
-  align-items: flex-end;
-  gap: 5px;
-  color: #666;
-  font-size: 0.875rem;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background-color: rgba(92, 78, 250, 0.1);
+}
+
+.project-details-url:hover {
+  background-color: rgba(92, 78, 250, 0.2);
+}
+
+.project-details-url .material-symbols-outlined {
+  color: #5C4EFA;
+  transition: transform 0.2s ease;
+}
+
+.project-details-url:hover .material-symbols-outlined {
+  transform: translate(2px, -2px);
 }
 
 /* Action and resize controls */
