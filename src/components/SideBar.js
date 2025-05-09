@@ -10,6 +10,14 @@ import TextualSettings from './LeftbarPanels/SettingsPanels/TextualSettings';
 import './LeftbarPanels/SettingsPanels/css/ImageSettings.css';
 import LinkSettings from './LeftbarPanels/SettingsPanels/LinkSettings';
 import WalletSettingsPanel from './LeftbarPanels/SettingsPanels/WalletSettings';
+import ImageSettings from './LeftbarPanels/SettingsPanels/ImageSettings';
+import FormSettings from './LeftbarPanels/SettingsPanels/FormSettings';
+import ListSettings from './LeftbarPanels/SettingsPanels/ListSettings';
+import VideoSettings from './LeftbarPanels/SettingsPanels/VideoSettings';
+import DeFiSectionSettings from './LeftbarPanels/SettingsPanels/DeFiSectionSettings';
+import DeFiModuleSettings from './LeftbarPanels/SettingsPanels/DeFiModuleSettings';
+import BackgroundSettings from './LeftbarPanels/SettingsPanels/BackgroundSettings';
+import CandyMachineSettings from './LeftbarPanels/SettingsPanels/CandyMachineSettings';
 
 const SideBar = ({ contentListWidth, pageSettings }) => {
   // State for when no element is selected
@@ -93,177 +101,82 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
       return <p>Select an element to edit its settings.</p>;
     }
 
+    // Helper function to determine if element is a form element
+    const isFormElement = (element) => {
+      const formElements = ['form', 'input', 'textarea', 'select', 'label', 'fieldset', 'legend'];
+      return formElements.includes(element.type);
+    };
+
+    // Helper function to determine if element is a list element
+    const isListElement = (element) => {
+      const listElements = ['ul', 'ol', 'li'];
+      return listElements.includes(element.type);
+    };
+
+    // Helper function to determine if element is a video element
+    const isVideoElement = (element) => {
+      const videoElements = ['video', 'youtubevideo', 'bgvideo'];
+      return videoElements.includes(element.type);
+    };
+
+    // Helper function to determine if element is a DeFi element
+    const isDeFiElement = (element) => {
+      const defiElements = ['defisection', 'defimodule', 'mintingsection'];
+      return defiElements.includes(element.type);
+    };
+
+    // Always show TextualSettings for textual elements
     if (isTextualElement(selectedElement)) {
       return (
-        <div className="content-editor-container">
-          <CollapsibleSection 
-            title={`${selectedElement.type.charAt(0).toUpperCase() + selectedElement.type.slice(1)} Content`}
-            className="content-editor-section"
-            defaultExpanded={true}
-          >
-            <div className="settings-wrapper">
-              {selectedElement.type === 'code' ? (
-                <div className="code-editor-wrapper">
-                  <div className="code-editor">
-                    <textarea
-                      name="content"
-                      value={selectedElement.content || ''}
-                      onChange={(e) => updateContent(selectedElement.id, e.target.value)}
-                      placeholder="Enter your code here..."
-                      className="settings-input code-input"
-                      rows="10"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <textarea
-                  name="content"
-                  value={selectedElement.content || ''}
-                  onChange={(e) => updateContent(selectedElement.id, e.target.value)}
-                  placeholder={`Enter ${selectedElement.type} content...`}
-                  className="settings-input"
-                  rows={selectedElement.type === 'h1' || selectedElement.type === 'h2' || 
-                        selectedElement.type === 'h3' || selectedElement.type === 'h4' || 
-                        selectedElement.type === 'h5' || selectedElement.type === 'h6' || 
-                        selectedElement.type === 'span' ? 1 : 3}
-                />
-              )}
-            </div>
-          </CollapsibleSection>
-          {selectedElement.type === 'button' && (
-            <CollapsibleSection 
-              title="Link Settings"
-              className="link-settings-section"
-              defaultExpanded={true}
-            >
-              <LinkSettings element={selectedElement} />
-            </CollapsibleSection>
-          )}
-          {selectedElement.type === 'connectWalletButton' && (
-            <CollapsibleSection 
-              title="Wallet Settings"
-              className="wallet-settings-section"
-              defaultExpanded={true}
-            >
-              <WalletSettingsPanel />
-            </CollapsibleSection>
-          )}
-        </div>
+        <>
+          <TextualSettings />
+          {/* Show specific settings based on element type */}
+          {selectedElement.type === 'a' || selectedElement.type === 'link' || selectedElement.type === 'linkblock' ? (
+            <LinkSettings />
+          ) : selectedElement.type === 'button' || selectedElement.type === 'connectWalletButton' ? (
+            <WalletSettingsPanel />
+          ) : null}
+        </>
       );
     }
 
+    // Handle form elements
+    if (isFormElement(selectedElement)) {
+      return <FormSettings />;
+    }
+
+    // Handle list elements
+    if (isListElement(selectedElement)) {
+      return <ListSettings />;
+    }
+
+    // Handle video elements
+    if (isVideoElement(selectedElement)) {
+      return <VideoSettings />;
+    }
+
+    // Handle DeFi elements
+    if (isDeFiElement(selectedElement)) {
+      if (selectedElement.type === 'defisection') {
+        return <DeFiSectionSettings />;
+      } else if (selectedElement.type === 'defimodule') {
+        return <DeFiModuleSettings />;
+      }
+    }
+
+    // Handle image elements
     if (selectedElement.type === 'image') {
-      return (
-        <div className="content-editor-container">
-          <CollapsibleSection title="Image Content" defaultExpanded={true}>
-            <div className="image-settings-panel">
-              <div className="image-settings">
-                <div className="image-preview-section">
-                  <div className="image-preview-wrapper">
-                    <img 
-                      src={selectedElement.src || ''} 
-                      alt={selectedElement.alt || ''} 
-                      className="image-preview"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/80x80?text=No+Image';
-                      }}
-                    />
-                    {isUploading && (
-                      <div className="upload-overlay">
-                        <div className="spinner"></div>
-                        <p className="progress-text">Uploading... {uploadProgress}%</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="image-info">
-                    <p className="image-name">{selectedElement.alt || 'Image Preview'}</p>
-                    <p>Click to replace image</p>
-                    <button 
-                      className="replace-image-button"
-                      onClick={() => {
-                        setIsUploading(true);
-                        setUploadProgress(0);
-                        const interval = setInterval(() => {
-                          setUploadProgress(prev => {
-                            if (prev >= 100) {
-                              clearInterval(interval);
-                              setIsUploading(false);
-                              return 0;
-                            }
-                            return prev + 10;
-                          });
-                        }, 500);
-                      }}
-                    >
-                      Replace Image
-                    </button>
-                  </div>
-                </div>
-                <hr />
-                <div className="image-settings-group">
-                  <label>Image Source</label>
-                  <input
-                    type="text"
-                    value={selectedElement.src || ''}
-                    onChange={(e) => updateConfiguration(selectedElement.id, 'src', e.target.value)}
-                    placeholder="Enter image URL"
-                  />
-                </div>
-                <div className="image-settings-group">
-                  <label>Alt Text</label>
-                  <input
-                    type="text"
-                    value={selectedElement.alt || ''}
-                    onChange={(e) => updateConfiguration(selectedElement.id, 'alt', e.target.value)}
-                    placeholder="Enter alt text"
-                  />
-                </div>
-                <hr />
-                <div className="image-settings-group">
-                  <label>Width</label>
-                  <input
-                    type="text"
-                    value={selectedElement.styles?.width || ''}
-                    onChange={(e) => updateStyles(selectedElement.id, { width: e.target.value })}
-                    placeholder="Enter width (e.g., 100px, 50%)"
-                  />
-                </div>
-                <div className="image-settings-group">
-                  <label>Height</label>
-                  <input
-                    type="text"
-                    value={selectedElement.styles?.height || ''}
-                    onChange={(e) => updateStyles(selectedElement.id, { height: e.target.value })}
-                    placeholder="Enter height (e.g., 100px, 50%)"
-                  />
-                </div>
-                <div className="image-settings-group">
-                  <label>Object Fit</label>
-                  <select
-                    value={selectedElement.styles?.objectFit || 'contain'}
-                    onChange={(e) => updateStyles(selectedElement.id, { objectFit: e.target.value })}
-                  >
-                    <option value="contain">Contain</option>
-                    <option value="cover">Cover</option>
-                    <option value="fill">Fill</option>
-                    <option value="none">None</option>
-                    <option value="scale-down">Scale Down</option>
-                  </select>
-                </div>
-                <div className="image-settings-group">
-                  <label>Border Radius</label>
-                  <input
-                    type="text"
-                    value={selectedElement.styles?.borderRadius || ''}
-                    onChange={(e) => updateStyles(selectedElement.id, { borderRadius: e.target.value })}
-                    placeholder="Enter border radius (e.g., 4px, 50%)"
-                  />
-                </div>
-              </div>
-            </div>
-          </CollapsibleSection>
-        </div>
-      );
+      return <ImageSettings />;
+    }
+
+    // Handle background elements
+    if (selectedElement.type === 'bgvideo') {
+      return <BackgroundSettings />;
+    }
+
+    // Handle candy machine elements
+    if (selectedElement.type === 'candymachine') {
+      return <CandyMachineSettings />;
     }
 
     // For other elements (like containers, etc.)
@@ -307,17 +220,17 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
         // Sidebar toggle buttons: layout vs. elements
         <>
           <div className="sidebar-toggle-buttons">
+          <button
+              onClick={() => setSidebarViewMode('elements')}
+              className={sidebarViewMode === 'elements' ? 'active' : ''}
+            >
+              Elements
+            </button>
             <button
               onClick={() => setSidebarViewMode('layout')}
               className={sidebarViewMode === 'layout' ? 'active' : ''}
             >
               Layout
-            </button>
-            <button
-              onClick={() => setSidebarViewMode('elements')}
-              className={sidebarViewMode === 'elements' ? 'active' : ''}
-            >
-              Elements
             </button>
           </div>
           <div className="sidebar-search-bar">

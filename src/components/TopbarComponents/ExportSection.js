@@ -513,6 +513,124 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const cleanElementData = (element) => {
+    if (!element) {
+      console.warn('Received null or undefined element');
+      return null;
+    }
+
+    try {
+      // Log the element being processed
+      console.log('Processing element:', element);
+
+      // Create a new object with only valid properties
+      const cleanedElement = {
+        id: element.id || '',
+        type: element.type || '',
+        content: element.content || '',
+        parentId: element.parentId || null,
+        children: Array.isArray(element.children) ? element.children : [],
+        configuration: element.configuration || '',
+        className: element.className || '',
+        attributes: element.attributes || {},
+        dataAttributes: element.dataAttributes || {},
+        events: element.events || {},
+      };
+
+      // Special handling for button elements
+      if (element.type === 'button' || element.type === 'connectWalletButton') {
+        // Ensure content is set
+        cleanedElement.content = element.content || 'Button';
+        
+        // Ensure type is set correctly
+        cleanedElement.type = element.type;
+        
+        // Create a complete styles object with all required properties
+        const defaultStyles = {
+          backgroundColor: '#5C4EFA',
+          color: '#FFFFFF',
+          padding: '8px 16px',
+          borderRadius: '8px',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '14px',
+          fontWeight: '500',
+          transition: 'all 0.2s ease',
+          display: 'inline-block',
+          textAlign: 'center',
+          textDecoration: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          margin: '0',
+          width: 'auto',
+          height: 'auto',
+          lineHeight: '1.5',
+          fontFamily: 'inherit'
+        };
+
+        // Merge existing styles with defaults, ensuring no undefined values
+        cleanedElement.styles = {
+          ...defaultStyles,
+          ...(element.styles || {}),
+        };
+
+        // Remove any undefined or null values from styles
+        Object.keys(cleanedElement.styles).forEach(key => {
+          if (cleanedElement.styles[key] === undefined || cleanedElement.styles[key] === null) {
+            cleanedElement.styles[key] = defaultStyles[key];
+          }
+        });
+
+        // Ensure hover state is properly set
+        if (!cleanedElement.styles['&:hover']) {
+          cleanedElement.styles['&:hover'] = {
+            backgroundColor: '#4a3ed9'
+          };
+        }
+      } else {
+        // Clean styles object for non-button elements
+        cleanedElement.styles = {};
+        if (element.styles) {
+          Object.entries(element.styles).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+              cleanedElement.styles[key] = value;
+            }
+          });
+        }
+      }
+
+      // Clean inlineStyles object
+      cleanedElement.inlineStyles = {};
+      if (element.inlineStyles) {
+        Object.entries(element.inlineStyles).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            cleanedElement.inlineStyles[key] = value;
+          }
+        });
+      }
+
+      // Remove any undefined values from the entire element
+      Object.keys(cleanedElement).forEach(key => {
+        if (cleanedElement[key] === undefined) {
+          delete cleanedElement[key];
+        }
+      });
+
+      // Additional validation for required properties
+      if (!cleanedElement.id || !cleanedElement.type) {
+        console.warn('Element missing required properties:', cleanedElement);
+        return null;
+      }
+
+      // Log the cleaned element
+      console.log('Cleaned element:', cleanedElement);
+      return cleanedElement;
+    } catch (error) {
+      console.error('Error cleaning element:', error, element);
+      return null;
+    }
+  };
+
   const handleDeployToIPFS = async () => {
     setAutoSaveStatus('Publishing to IPFS...');
     try {
@@ -537,14 +655,51 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         return null;
       }
 
+      // Log the original elements
+      console.log('Original elements:', elements);
+
+      // Clean and validate elements data
+      const cleanedElements = elements
+        .map(cleanElementData)
+        .filter(Boolean)
+        .map(element => {
+          // Additional validation for each element
+          if (!element.id || !element.type) {
+            console.warn('Invalid element found:', element);
+            return null;
+          }
+          return element;
+        })
+        .filter(Boolean);
+
+      // Log the cleaned elements
+      console.log('Cleaned elements:', cleanedElements);
+
+      // Clean and validate website settings
+      const cleanedWebsiteSettings = {
+        siteTitle: websiteSettings?.siteTitle || 'My Website',
+        faviconUrl: websiteSettings?.faviconUrl || '',
+        metaDescription: websiteSettings?.metaDescription || '',
+        metaKeywords: websiteSettings?.metaKeywords || '',
+        customStyles: websiteSettings?.customStyles || '',
+        customScripts: websiteSettings?.customScripts || '',
+      };
+
+      // Log the data being sent to Firestore
+      console.log('Data being sent to Firestore:', {
+        elements: cleanedElements,
+        websiteSettings: cleanedWebsiteSettings,
+        userId: sanitizedUserId
+      });
+
       await setDoc(projectRef, {
-        elements,
-        websiteSettings: websiteSettings || {},
+        elements: cleanedElements,
+        websiteSettings: cleanedWebsiteSettings,
         lastUpdated: serverTimestamp(),
         userId: sanitizedUserId,
       }, { merge: true });
 
-      const fullHtml = exportProject(elements, websiteSettings);
+      const fullHtml = exportProject(cleanedElements, cleanedWebsiteSettings);
       
       const htmlBlob = new Blob([fullHtml], { 
         type: 'text/html;charset=utf-8'
@@ -557,7 +712,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       }];
       
       const metadata = {
-        name: (websiteSettings?.siteTitle || 'MyWebsite').toString(),
+        name: cleanedWebsiteSettings.siteTitle,
         keyvalues: { 
           userId: sanitizedUserId,
           timestamp: new Date().toISOString(),
@@ -582,6 +737,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       setAutoSaveStatus('IPFS deploy complete!');
       return ipfsUrl;
     } catch (error) {
+      console.error('Deployment error:', error);
       setAutoSaveStatus('Error during deployment: ' + error.message);
       return null;
     }

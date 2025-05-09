@@ -114,6 +114,39 @@ const TextualSettings = () => {
           />
         </div>
       </CollapsibleSection>
+
+      <CollapsibleSection title="Content" defaultExpanded={true}>
+        <div className="settings-group">
+          <textarea
+            name="content"
+            value={localSettings.content}
+            onChange={handleInputChange}
+            placeholder={getPlaceholderText(localSettings.type)}
+            rows={getTextareaRows(localSettings.type)}
+            className="settings-textarea"
+          />
+        </div>
+      </CollapsibleSection>
+
+      {localSettings.type && localSettings.type.startsWith('h') && (
+        <CollapsibleSection title="Heading Level" defaultExpanded={true}>
+          <div className="settings-group">
+            <select
+              name="type"
+              value={localSettings.type}
+              onChange={handleInputChange}
+              className="settings-select"
+            >
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+              <option value="h4">Heading 4</option>
+              <option value="h5">Heading 5</option>
+              <option value="h6">Heading 6</option>
+            </select>
+          </div>
+        </CollapsibleSection>
+      )}
     </div>
   );
 };

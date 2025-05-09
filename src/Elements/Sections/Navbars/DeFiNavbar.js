@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-  import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
+import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import useReorderDrop from '../../../utils/useReorderDrop';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
@@ -22,7 +22,7 @@ const DeFiNavbar = ({
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: navRef,
-    onDropItem,
+    onDropItem: (droppedItem) => handleNavbarDrop(droppedItem, uniqueId),
   });
 
   const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
@@ -70,27 +70,48 @@ const DeFiNavbar = ({
 
   // Handle dropping new elements
   const handleNavbarDrop = (droppedItem, parentId = uniqueId) => {
+    console.log('handleNavbarDrop called with:', droppedItem, parentId);
+    
     if (droppedItem.id) {
+      console.log('Item already has an ID, skipping');
       return;
     }
 
+    // Default button configuration
+    const defaultButtonConfig = {
+      content: 'New Button',
+      type: 'button',
+      styles: {
+        backgroundColor: '#5C4EFA',
+        color: '#FFFFFF',
+        padding: '8px 16px',
+        borderRadius: '8px',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: '500',
+        transition: 'all 0.2s ease',
+        display: 'inline-block',
+        textAlign: 'center',
+        textDecoration: 'none',
+        outline: 'none',
+        boxShadow: 'none',
+        margin: '0',
+        width: 'auto',
+        height: 'auto',
+        lineHeight: '1.5',
+        fontFamily: 'inherit',
+        '&:hover': {
+          backgroundColor: '#4a3ed9'
+        }
+      }
+    };
+
     // Find existing buttons to get their styles
     const existingButtons = children?.filter(child => child.type === 'button' || child.type === 'connectWalletButton');
-    const buttonStyles = existingButtons?.[0]?.styles || {
-      backgroundColor: '#5C4EFA',
-      color: '#FFFFFF',
-      padding: '8px 16px',
-      borderRadius: '8px',
-      border: 'none',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '500',
-      transition: 'all 0.2s ease',
-      '&:hover': {
-        backgroundColor: '#4A3ED9'
-    }
-  };
+    const buttonStyles = existingButtons?.[0]?.styles || defaultButtonConfig.styles;
 
+    console.log('Adding new element:', droppedItem.type);
     const newId = addNewElement(
       droppedItem.type,
       droppedItem.level || 1,
@@ -98,14 +119,23 @@ const DeFiNavbar = ({
       parentId
     );
 
-    // If the dropped element is a button, apply the existing button styles
+    // If the dropped element is a button, apply the existing button styles and ensure all required properties
     if (droppedItem.type === 'button') {
+      console.log('Processing button element');
       setElements((prev) =>
         prev.map((el) => {
           if (el.id === newId) {
             return {
               ...el,
-              styles: { ...buttonStyles }  // Create a new object to avoid reference issues
+              content: el.content || defaultButtonConfig.content,
+              type: 'button',
+              styles: { ...buttonStyles },
+              configuration: el.configuration || '',
+              className: el.className || '',
+              attributes: el.attributes || {},
+              dataAttributes: el.dataAttributes || {},
+              events: el.events || {},
+              children: el.children || []
             };
           }
           return el;
@@ -113,13 +143,16 @@ const DeFiNavbar = ({
       );
     }
 
+    // Update parent element's children array
     setElements((prev) =>
       prev.map((el) =>
         el.id === parentId
-          ? { ...el, children: [...el.children, newId] }
+          ? { ...el, children: [...(el.children || []), newId] }
           : el
       )
     );
+
+    console.log('Element added successfully with ID:', newId);
   };
 
   // Render children with drag and drop support
@@ -130,12 +163,12 @@ const DeFiNavbar = ({
     const logoGroup = children.slice(0, 2);
     const walletGroup = children.slice(2);
 
-  return (
+    return (
       <>
-      {/* Logo and Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Logo and Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {logoGroup.map((child, index) => (
-          <React.Fragment key={child.id}>
+            <React.Fragment key={child.id}>
               {activeDrop && activeDrop.containerId === uniqueId && activeDrop.index === index && (
                 <div
                   className="drop-placeholder"
@@ -162,43 +195,43 @@ const DeFiNavbar = ({
                 onDragEnd={onDragEnd}
                 style={{ display: 'inline-block' }}
               >
-            {child.type === 'image' && (
-                <Image
-                  id={child.id}
-                  src={child.content}
-                  styles={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    objectFit: 'cover',
-                  }}
-                  onClick={(e) => handleElementClick(e, child.id)}
-                  handleOpenMediaPanel={handleOpenMediaPanel}
-                  handleDrop={(item) => handleImageDrop(item, child.id)}
-                />
-            )}
-            {child.type === 'span' && (
-              <Span
-                  id={child.id}
-                  content={child.content}
-                style={{
-                  color: '#fff',
-                  fontWeight: 'bold',
-                  fontSize: '1.2rem',
-                  marginLeft: '12px',
-                }}
-                  onClick={(e) => handleElementClick(e, child.id)}
-                />
-            )}
+                {child.type === 'image' && (
+                  <Image
+                    id={child.id}
+                    src={child.content}
+                    styles={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      objectFit: 'cover',
+                    }}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                    handleOpenMediaPanel={handleOpenMediaPanel}
+                    handleDrop={(item) => handleImageDrop(item, child.id)}
+                  />
+                )}
+                {child.type === 'span' && (
+                  <Span
+                    id={child.id}
+                    content={child.content}
+                    style={{
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '1.2rem',
+                      marginLeft: '12px',
+                    }}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                  />
+                )}
               </span>
-          </React.Fragment>
-        ))}
-      </div>
+            </React.Fragment>
+          ))}
+        </div>
 
         {/* Connect Wallet Button and Other Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {walletGroup.map((child, index) => (
-          <React.Fragment key={child.id}>
+            <React.Fragment key={child.id}>
               {activeDrop && activeDrop.containerId === uniqueId && activeDrop.index === logoGroup.length + index && (
                 <div
                   className="drop-placeholder"
@@ -226,15 +259,15 @@ const DeFiNavbar = ({
                 style={{ display: 'inline-block' }}
               >
                 {child.type === 'connectWalletButton' ? (
-              <ConnectWalletButton
-                id={child.id}
-                content={child.content}
-                styles={{
-                  ...child.styles,
-                  marginLeft: 'auto',
-                }}
-                  onClick={(e) => handleElementClick(e, child.id)}
-              />
+                  <ConnectWalletButton
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      marginLeft: 'auto',
+                    }}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                  />
                 ) : child.type === 'button' ? (
                   <Button
                     id={child.id}
@@ -244,8 +277,8 @@ const DeFiNavbar = ({
                   />
                 ) : null}
               </span>
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          ))}
           {activeDrop && activeDrop.containerId === uniqueId && (
             <div
               style={{ height: '40px', width: '100%' }}
@@ -271,59 +304,59 @@ const DeFiNavbar = ({
               )}
             </div>
           )}
-      </div>
+        </div>
 
-      {/* Compact Menu */}
-      {isCompact && (
-        <>
-          <div
-            style={{
-              cursor: 'pointer',
-              fontSize: '24px',
-                color: '#fff',
-            }}
-            onClick={toggleMenu}
-          >
-            ☰
-          </div>
-          {isMenuOpen && (
+        {/* Compact Menu */}
+        {isCompact && (
+          <>
             <div
               style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                backgroundColor: '#1a1a1a',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                zIndex: 1000,
+                cursor: 'pointer',
+                fontSize: '24px',
+                color: '#fff',
               }}
+              onClick={toggleMenu}
             >
+              ☰
+            </div>
+            {isMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#1a1a1a',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  zIndex: 1000,
+                }}
+              >
                 {walletGroup.map((child) => (
-                <React.Fragment key={child.id}>
-                  {child.type === 'connectWalletButton' ? (
-                    <ConnectWalletButton
-                      id={child.id}
-                      content={child.content}
-                      styles={child.styles}
+                  <React.Fragment key={child.id}>
+                    {child.type === 'connectWalletButton' ? (
+                      <ConnectWalletButton
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
                         onClick={(e) => handleElementClick(e, child.id)}
-                    />
+                      />
                     ) : child.type === 'button' ? (
                       <Button
-                      id={child.id}
-                      content={child.content}
-                      styles={child.styles}
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
                         onClick={(e) => handleElementClick(e, child.id)}
-                    />
-                  ) : null}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                      />
+                    ) : null}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </>
     );
   };
