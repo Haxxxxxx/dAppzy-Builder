@@ -12,6 +12,7 @@ import { SimplefooterStyles, TemplateFooterStyles } from '../../Elements/Section
 import { structureConfigurations, elementTypes, mergeStyles } from '../../core/configs/elementConfigs';
 import { pinDirectoryToPinata } from '../../utils/ipfs';
 import '../css/Topbar.css';
+import SnsDomainSelector from './Deployements/SnsDomainSelector';
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 /**
@@ -803,7 +804,11 @@ function exportProject(elements, websiteSettings) {
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showSnsSelector, setShowSnsSelector] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Get wallet address from session storage
+  const walletAddress = sessionStorage.getItem("userAccount");
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -990,6 +995,26 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     setIsDropdownOpen(false);
   };
 
+  const handleSnsDeploy = () => {
+    if (!walletAddress) {
+      setAutoSaveStatus('Error: No Solana wallet connected');
+      return;
+    }
+    setShowSnsSelector(true);
+    setIsDropdownOpen(false);
+  };
+
+  const handleSnsDomainSelected = (domain) => {
+    setShowSnsSelector(false);
+    if (onProjectPublished) {
+      onProjectPublished(`https://${domain}.sol`);
+    }
+  };
+
+  const handleSnsCancel = () => {
+    setShowSnsSelector(false);
+  };
+
   const handleExport = () => {
     const html = exportProject(elements, websiteSettings);
     const blob = new Blob([html], { type: 'text/html' });
@@ -1022,12 +1047,44 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
             <button onClick={handlePublish} className="dropdown-item">
               Publish to IPFS
             </button>
+            <button 
+              onClick={handleSnsDeploy} 
+              className="dropdown-item"
+              disabled={!walletAddress}
+            >
+              Deploy to SNS
+            </button>
             <button onClick={handleExport} className="dropdown-item">
               Export Files
             </button>
           </div>
         )}
       </div>
+      {showSnsSelector && (
+        <SnsDomainSelector
+          userId={userId}
+          walletAddress={walletAddress}
+          elements={elements}
+          websiteSettings={websiteSettings}
+          onDomainSelected={handleSnsDomainSelected}
+          onCancel={handleSnsCancel}
+          setAutoSaveStatus={setAutoSaveStatus}
+          generateFullHtml={() => exportProject(elements, websiteSettings)}
+          saveProjectToFirestore={async (userId, html, type, domain) => {
+            const projectRef = doc(db, 'projects', userId);
+            await setDoc(projectRef, {
+              elements,
+              websiteSettings: {
+                ...websiteSettings,
+                snsDomain: domain,
+                walletAddress: walletAddress, // Store the wallet address
+              },
+              lastUpdated: serverTimestamp(),
+              userId,
+            }, { merge: true });
+          }}
+        />
+      )}
     </div>
   );
 };

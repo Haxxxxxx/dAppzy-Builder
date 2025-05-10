@@ -66,6 +66,8 @@ export const EditableProvider = ({ children, userId }) => {
     } else if (config && typeof config === 'object') {
       configuration = config.configuration || config;
       structure = config.structure || config.configuration || config;
+      // Use the type from config if provided, otherwise use the passed type
+      type = config.type || type;
     }
   
     // Get base styles from configuration if it exists
@@ -74,7 +76,7 @@ export const EditableProvider = ({ children, userId }) => {
     
     const baseElement = {
       id: newId,
-      type,
+      type, // Use the determined type
       styles: {
         ...baseStyles,
         ...configStyles
@@ -113,18 +115,23 @@ export const EditableProvider = ({ children, userId }) => {
     }
   
     // If config has children, use those instead of structure configurations
-    if (config && config.children && !((type === 'navbar' || type === 'footer') && structureConfigurations[configuration])) {
+    if (config && config.children && Array.isArray(config.children)) {
       // Handle custom configuration with children
       const childrenElements = config.children.map((child) => ({
-        ...child,
         id: generateUniqueId(child.type),
-        parentId: newId,
+        type: child.type,
+        content: child.content || '',
         styles: {
           ...(structureConfigurations[configuration]?.children?.find(c => c.type === child.type)?.styles || {}),
           ...(child.styles || {})
-        }
+        },
+        parentId: newId,
+        settings: child.settings || {},
+        children: child.children || []
       }));
+      
       baseElement.children = childrenElements.map((child) => child.id);
+      
       if (!parentId) {
         recordElementsUpdate((prev) => {
           const newElements = [...prev];
@@ -135,7 +142,7 @@ export const EditableProvider = ({ children, userId }) => {
         recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
       }
     } else if (structure && structureConfigurations[structure]?.children) {
-      // Fallback to structure configuration if no explicit children or for navbars/footers with config
+      // Fallback to structure configuration if no explicit children
       const childrenElements = structureConfigurations[structure].children.map((child) => ({
         id: generateUniqueId(child.type),
         type: child.type,

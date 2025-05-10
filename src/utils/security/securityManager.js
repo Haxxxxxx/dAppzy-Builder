@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { isAddress } from 'ethers';
 
 /**
  * Centralized security management system
@@ -25,7 +25,7 @@ export const SecurityManager = {
    */
   validateEthAddress: (address) => {
     try {
-      return ethers.utils.isAddress(address);
+      return isAddress(address);
     } catch {
       return false;
     }

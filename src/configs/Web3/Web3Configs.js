@@ -105,5 +105,61 @@ export const Web3Configs = {
                 { name: 'Freighter', enabled: true, type: 'stellar' }
             ]
         }
+    },
+    // RPC Configuration
+    rpc: {
+        // Helius RPC (Primary)
+        helius: {
+            endpoint: 'https://mainnet.helius-rpc.com',
+            apiKey: process.env.REACT_APP_HELIUS_API_KEY || '',
+            getUrl: function() {
+                return this.apiKey ? `${this.endpoint}/?api-key=${this.apiKey}` : null;
+            },
+            // SNS-specific configuration
+            snsConfig: {
+                commitment: 'confirmed',
+                confirmTransactionInitialTimeout: 60000,
+                wsEndpoint: function() {
+                    return this.apiKey ? `wss://mainnet.helius-rpc.com/?api-key=${this.apiKey}` : null;
+                }
+            }
+        },
+        // Public RPC (Fallback)
+        public: {
+            endpoint: 'https://api.mainnet-beta.solana.com',
+            getUrl: function() {
+                return this.endpoint;
+            }
+        },
+        // Get all configured RPC endpoints
+        getEndpoints: function() {
+            const endpoints = [];
+            
+            // Add Helius if configured (prioritized for SNS)
+            const heliusUrl = this.helius.getUrl();
+            if (heliusUrl) {
+                endpoints.push(heliusUrl);
+            }
+            
+            // Add public endpoint as fallback
+            endpoints.push(this.public.getUrl());
+            
+            return endpoints;
+        }
+    },
+    // SNS Configuration
+    sns: {
+        // SNS Program IDs
+        domainProgram: '58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx',
+        domainRegistry: '58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx',
+        // SNS Token Program ID
+        tokenProgram: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        // SNS-specific settings
+        settings: {
+            commitment: 'confirmed',
+            maxRetries: 3,
+            retryDelay: 1000, // 1 second
+            timeout: 30000 // 30 seconds
+        }
     }
 }

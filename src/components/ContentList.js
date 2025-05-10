@@ -60,16 +60,25 @@ const ContentList = forwardRef(
         if (item.type === 'button' || item.type === 'image') {
           newId = addNewElement(item.type, 1, index);
         } else if (
-          item.type === 'hero' ||
           item.type === 'navbar' ||
+          item.type === 'hero' ||
           item.type === 'cta' ||
           item.type === 'mintingSection' ||
           item.type === 'ContentSection' ||
-          item.type === 'footer'
+          item.type === 'footer' ||
+          item.type === 'section'
         ) {
-          const config = item.configuration || item.structure;
-          newId = addNewElement(item.type, 1, index, null, config);
-          // No defaultContent logic here; footer children and styles are handled by DraggableFooter.js
+          // Handle all section types with their full configuration
+          console.log('Adding section with data:', item);
+          newId = addNewElement(item.type, 1, index, null, {
+            type: item.type,
+            configuration: item.configuration,
+            structure: item.structure,
+            styles: item.styles,
+            children: item.children,
+            settings: item.settings,
+            label: item.label
+          });
         } else {
           newId = addNewElement(item.type, 1, index);
         }
