@@ -47,8 +47,33 @@ const ContentList = forwardRef(
       calculateScale();
     }, [contentListWidth, canvasWidth]);
 
+    // Helper function to recursively create flex elements
+    function createFlexElement(config, addNewElement, parentId = null) {
+      const id = addNewElement(config.parentType || config.type, 1, 0, parentId, {
+        styles: { gap: '12px', padding: '12px', display: 'flex', flexDirection: config.direction }
+      });
+      if (config.children && config.children.length > 0) {
+        config.children.forEach(child => {
+          if (child.children) {
+            createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflex' ? 'column' : 'row' }, addNewElement, id);
+          } else {
+            addNewElement(child.type, 1, 0, id, {
+              styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflex' ? 'column' : 'row' }
+            });
+          }
+        });
+      }
+      return id;
+    }
+
     const handleDrop = (item, index) => {
       if (!item) return;
+
+      // Handle flex config drop
+      if (item.isFlexConfig && item.flexConfig) {
+        createFlexElement(item.flexConfig, addNewElement, null);
+        return;
+      }
 
       if (item.id) {
         // If the item has an id, it's an existing element being moved

@@ -502,7 +502,19 @@ const SnsDomainSelector = ({
 
       <p className="status">{status}</p>
 
-      <div className="domain-grid">{renderDomainCards()}</div>
+      <div className="domain-grid">{renderDomainCards()}
+
+      <div
+          key={1}
+          className={`domain-card ${selectedDomain === "Domain test" ? 'selected' : ''}`}
+          onClick={() => setSelectedDomain("Domain test")}
+        >
+          <div className="radio-circle">
+            {selectedDomain === "Domain test" && <div className="radio-circle-inner" />}
+          </div>
+          <p className="domain-text">Domain test </p>
+        </div>
+      </div>
 
       <div className="buttons">
         <button className="cancel-btn" onClick={onCancel}>
