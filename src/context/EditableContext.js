@@ -178,6 +178,17 @@ export const EditableProvider = ({ children, userId }) => {
       }
     }
   
+    // After adding the new element, if it has a parentId, update the parent's children array
+    if (parentId) {
+      setElements(prev =>
+        prev.map(el =>
+          el.id === parentId
+            ? { ...el, children: [...(el.children || []), newId] }
+            : el
+        )
+      );
+    }
+  
     console.log('Added new element:', baseElement);
     return newId;
   }, [recordElementsUpdate]);

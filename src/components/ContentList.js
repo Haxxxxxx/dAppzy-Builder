@@ -71,7 +71,8 @@ const ContentList = forwardRef(
 
       // Handle flex config drop
       if (item.isFlexConfig && item.flexConfig) {
-        createFlexElement(item.flexConfig, addNewElement, null);
+        // Use the parentId if provided (for nested drops)
+        createFlexElement(item.flexConfig, addNewElement, item.parentId || null);
         return;
       }
 
