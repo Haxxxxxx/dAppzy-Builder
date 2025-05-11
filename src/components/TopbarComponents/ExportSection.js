@@ -9,10 +9,11 @@ import { defaultDeFiStyles } from '../../Elements/Sections/Web3Related/DeFiSecti
 // Import your hierarchy builder – this should nest elements with a valid parentId.
 import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import { SimplefooterStyles, TemplateFooterStyles } from '../../Elements/Sections/Footers/defaultFooterStyles';
-import { structureConfigurations, elementTypes, mergeStyles } from '../../core/configs/elementConfigs';
+import { structureConfigurations, mergeStyles } from '../../core/configs/elementConfigs';
 import { pinDirectoryToPinata } from '../../utils/ipfs';
 import '../css/Topbar.css';
 import SnsDomainSelector from './Deployements/SnsDomainSelector';
+import { elementTypes } from '../../core/configs/elementConfigs';
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 /**
@@ -155,10 +156,14 @@ function processStylesForExport(styles) {
   return processedStyles;
 }
 
+// Add missing element types
+defaultDeFiStyles.section = defaultDeFiStyles.section || {};
+
+// In processElementStyles, skip unknown types gracefully
 function processElementStyles(element) {
   const elementType = elementTypes[element.type];
   if (!elementType) {
-    console.warn(`Invalid element type: ${element.type}`);
+    // Instead of warning, just skip or provide a default
     return {};
   }
 

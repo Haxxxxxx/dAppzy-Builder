@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { SecurityManager } from '../../../utils/security/securityManager';
 import { Web3Configs } from '../../../configs/Web3/Web3Configs';
-import { getAllDomains, getDomainKeysWithReverses } from '@bonfida/spl-name-service';
+import { getAllDomains, getDomainKeysWithReverses, updateNameRegistryData, ROOT_DOMAIN_ACCOUNT, getNameAccountKey, NameRegistryState, getHashedName, performReverseLookup, getPrimaryDomain, getMultiplePrimaryDomains, useDomains, useDomainsForUser, usePrimaryDomain, updateRecordInstruction, createRecordInstruction } from '@bonfida/spl-name-service';
 import './DomainsStyles.css';
+import { Transaction } from '@solana/web3.js';
+import { pinDirectoryToPinata } from '../../../utils/ipfs';
 
 // SNS Program IDs from config
 const SNS_DOMAIN_PROGRAM = new PublicKey(Web3Configs.sns.domainProgram);
@@ -87,6 +89,315 @@ const debugLog = (message, data = null) => {
   console.log(logMessage);
 };
 
+// Add domain name validation utility
+const validateAndFormatDomain = (domainName) => {
+  // Remove .sol if present
+  const baseName = domainName.replace(/\.sol$/, '');
+  
+  // Basic validation
+  if (!baseName || baseName.length === 0) {
+    throw new Error('Invalid domain name');
+  }
+
+  // Return formatted domain name
+  return `${baseName}.sol`;
+};
+
+// Add domain verification utility
+const verifyDomain = async (connection, domainName, walletAddress) => {
+  try {
+    // Remove .sol suffix for hashing
+    const baseName = domainName.replace(/\.sol$/, '');
+    debugLog('Base name for verification', { 
+      domainName,
+      baseName
+    });
+
+    // Get hashed name
+    const hashedName = await getHashedName(baseName);
+    debugLog('Hashed name generated', { 
+      hashedName: hashedName.toString('hex')
+    });
+
+    // Get domain key
+    const domainKey = await getNameAccountKey(hashedName);
+    debugLog('Domain key generated', { 
+      domainKey: domainKey.toBase58() 
+    });
+
+    try {
+      // First try to get domain info from initial list
+      const domainsWithReverses = await getDomainKeysWithReverses(connection, new PublicKey(walletAddress));
+      debugLog('Domains found with reverses', {
+        domainsWithReverses
+      });
+
+      const domainInfo = domainsWithReverses.find(item => item.domain === baseName);
+      if (domainInfo) {
+        debugLog('Domain found in initial list', {
+          domain: baseName,
+          pubKey: domainInfo.pubKey.toBase58()
+        });
+        return domainKey;
+      }
+
+      // If not found in initial list, try to get domain state
+      const domainState = await NameRegistryState.retrieve(connection, domainKey);
+      debugLog('Domain state retrieved', { 
+        exists: !!domainState,
+        owner: domainState?.owner?.toBase58(),
+        state: domainState ? {
+          owner: domainState.owner.toBase58(),
+          class: domainState.class?.toBase58(),
+          parent: domainState.parent?.toBase58(),
+          data: domainState.data ? 'present' : 'absent'
+        } : null
+      });
+
+      if (!domainState) {
+        throw new Error('Domain does not exist');
+      }
+
+      // Check if domain is registered
+      if (!domainState.owner || domainState.owner.toBase58() === '11111111111111111111111111111111') {
+        throw new Error('Domain is not registered');
+      }
+
+      // Verify ownership
+      if (domainState.owner.toBase58() !== walletAddress) {
+        throw new Error('You do not own this domain');
+      }
+
+      return domainKey;
+    } catch (error) {
+      if (error.message.includes('does not exist')) {
+        throw new Error('Domain does not exist or is not registered');
+      }
+      throw error;
+    }
+  } catch (error) {
+    debugLog('Domain verification error', {
+      error: error.message,
+      domain: domainName
+    });
+    throw error;
+  }
+};
+
+// Add domain content update utility
+const updateDomainContent = async (connection, domainName, content, walletAddress) => {
+  try {
+    // First verify domain exists and is owned by the user
+    const domainKey = await verifyDomain(connection, domainName, walletAddress);
+    
+    // Convert content to buffer
+    const contentBuffer = Buffer.from(content, 'utf-8');
+    debugLog('Content buffer created', {
+      size: contentBuffer.length
+    });
+
+    // Create instruction for content update
+    const updateInstruction = await updateNameRegistryData(
+      connection,
+      domainName,
+      0, // offset
+      contentBuffer,
+      undefined,
+      ROOT_DOMAIN_ACCOUNT
+    );
+
+    return updateInstruction;
+  } catch (error) {
+    debugLog('Error creating update instruction', {
+      error: error.message,
+      domain: domainName
+    });
+    throw error;
+  }
+};
+
+// Add element type validation
+const isValidElementType = (type) => {
+  const validTypes = [
+    'hero',
+    'navbar',
+    'section',
+    'cta',
+    'defiSection',
+    'footer',
+    'image',
+    'heading',
+    'paragraph',
+    'button',
+    'span',
+    'input',
+    'textarea',
+    'featureItem'
+  ];
+  return validTypes.includes(type);
+};
+
+// Utility: Unified HTML export and IPFS upload
+const exportAndUploadToIPFS = async (elements, websiteSettings, userId, generateFullHtml) => {
+  // 1. Generate HTML
+  const fullHtml = generateFullHtml();
+  if (!fullHtml || typeof fullHtml !== 'string') {
+    throw new Error('Invalid HTML content generated');
+  }
+  // 2. Upload to IPFS
+  const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
+  const files = [{ file: htmlBlob, fileName: 'index.html', type: 'text/html' }];
+  const metadata = {
+    name: websiteSettings.siteTitle || 'My Website',
+    keyvalues: { userId, timestamp: new Date().toISOString(), size: htmlBlob.size },
+  };
+  const ipfsHash = await pinDirectoryToPinata(files, metadata);
+  if (!ipfsHash) throw new Error('No IPFS hash returned from Pinata');
+  const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
+  debugLog('IPFS deployment complete', { cid: ipfsHash, url: ipfsUrl });
+  return { ipfsHash, ipfsUrl, fullHtml };
+};
+
+// Utility: Save deployment info to Firestore
+const saveDeploymentToFirestore = async (userId, websiteSettings, ipfsHash, ipfsUrl, formattedDomain, walletAddress) => {
+  const projectRef = doc(db, 'projects', userId);
+  const websiteSettingsData = {
+    ...websiteSettings,
+    snsDomain: formattedDomain,
+    walletAddress,
+    ipfsCid: ipfsHash,
+    ipfsUrl,
+    lastUpdated: serverTimestamp(),
+    deploymentStatus: 'pending',
+    deploymentTransaction: null
+  };
+  const projectDoc = await getDoc(projectRef);
+  if (!projectDoc.exists()) {
+    await setDoc(projectRef, {
+      userId,
+      websiteSettings: websiteSettingsData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } else {
+    await updateDoc(projectRef, {
+      websiteSettings: websiteSettingsData,
+      updatedAt: serverTimestamp()
+    });
+  }
+};
+
+// Utility: Update SNS domain content record with IPFS URL, creating it if needed
+const updateSnsDomainRecord = async (connection, formattedDomain, ipfsUrl, walletAddress) => {
+  const domainName = formattedDomain.replace(/\.sol$/, '');
+  const recordType = 'content';
+  const recordValue = ipfsUrl;
+  const authority = new PublicKey(walletAddress);
+  
+  // Validate all inputs
+  if (!connection || !domainName || !recordType || !recordValue || !authority) {
+    throw new Error('Missing required parameters for SNS record update');
+  }
+
+  debugLog('Preparing SNS content record update', {
+    domain: domainName,
+    recordType,
+    recordValue,
+    authority: authority.toBase58(),
+    authorityType: typeof authority
+  });
+
+  let transaction = new Transaction();
+  try {
+    debugLog('Calling updateRecordInstruction with:', {
+      domain: domainName,
+      recordType,
+      recordValue,
+      authority: authority.toBase58()
+    });
+
+    // Try to update the record
+    const ix = await updateRecordInstruction(
+      connection,
+      domainName,
+      recordType,
+      recordValue,
+      authority
+    );
+
+    // Validate instruction keys
+    ix.keys.forEach((key, index) => {
+      if (!key.pubkey) {
+        throw new Error(`Missing pubkey in instruction key at index ${index}`);
+      }
+      debugLog(`Instruction key ${index}:`, {
+        pubkey: key.pubkey.toBase58(),
+        isSigner: key.isSigner,
+        isWritable: key.isWritable
+      });
+    });
+
+    transaction.add(ix);
+  } catch (err) {
+    // If the record does not exist, create it first
+    if (err.message && err.message.includes('record account does not exist')) {
+      debugLog('Record account does not exist, creating it first...');
+      debugLog('Calling createRecordInstruction with:', {
+        domain: domainName,
+        recordType,
+        recordValue,
+        authority: authority.toBase58()
+      });
+
+      const createIx = await createRecordInstruction(
+        connection,
+        domainName,
+        recordType,
+        recordValue,
+        authority,
+        authority  // payer parameter
+      );
+
+      // Validate create instruction keys
+      createIx.keys.forEach((key, index) => {
+        if (!key.pubkey) {
+          throw new Error(`Missing pubkey in create instruction key at index ${index}`);
+        }
+        debugLog(`Create instruction key ${index}:`, {
+          pubkey: key.pubkey.toBase58(),
+          isSigner: key.isSigner,
+          isWritable: key.isWritable
+        });
+      });
+
+      transaction.add(createIx);
+    } else {
+      throw err;
+    }
+  }
+
+  // Get latest blockhash and set fee payer
+  const { blockhash } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = authority;
+
+  // Validate final transaction
+  if (!transaction.recentBlockhash) {
+    throw new Error('Transaction missing recentBlockhash');
+  }
+  if (!transaction.feePayer) {
+    throw new Error('Transaction missing feePayer');
+  }
+
+  debugLog('Prepared SNS content record update transaction', { 
+    blockhash, 
+    feePayer: authority.toBase58(),
+    instructionCount: transaction.instructions.length
+  });
+
+  return transaction;
+};
+
 const SnsDomainSelector = ({
   userId,
   walletAddress,
@@ -107,6 +418,8 @@ const SnsDomainSelector = ({
   const [connectionError, setConnectionError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [lastError, setLastError] = useState(null);
+  const [primaryDomain, setPrimaryDomain] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize Solana connection with Helius configuration
   useEffect(() => {
@@ -177,148 +490,66 @@ const SnsDomainSelector = ({
     initializeConnection();
   }, []);
 
-  // Fetch SNS domains using spl-name-service library
+  // Fetch domains and primary domain
   useEffect(() => {
-    const fetchSnsDomains = async () => {
-      if (!walletAddress || !connection || connectionStatus !== CONNECTION_STATUS.CONNECTED) {
-        debugLog('Missing requirements for domain fetch', {
-          hasWalletAddress: !!walletAddress,
-          hasConnection: !!connection,
-          connectionStatus
-        });
+    const fetchDomains = async () => {
+      if (!connection || !walletAddress || connectionStatus !== CONNECTION_STATUS.CONNECTED) {
         return;
       }
 
       try {
-        setStatus('Scanning your wallet for SNS domains...');
-        debugLog('Starting domain fetch for wallet', { walletAddress });
-        
-        // Validate Solana address
-        if (!SecurityManager.validateSolanaAddress(walletAddress)) {
-          debugLog('Invalid wallet address', { walletAddress });
-          setLastError({ type: ERROR_TYPES.INVALID_WALLET });
-          setStatus('Invalid Solana wallet address.');
-          return;
-        }
+        setIsLoading(true);
+        setStatus('Loading domains...');
 
         const walletPubkey = new PublicKey(walletAddress);
-        debugLog('Wallet public key created', { 
-          walletPubkey: walletPubkey.toBase58()
+
+        // Get domains with reverses first
+        const domainsWithReverses = await getDomainKeysWithReverses(connection, walletPubkey);
+        debugLog('Domains with reverses fetched', {
+          domainsWithReverses
         });
 
-        try {
-          // Method 1: Get all domains using spl-name-service
-          debugLog('Fetching domains using spl-name-service');
-          const domainsWithReverses = await getDomainKeysWithReverses(connection, walletPubkey);
-          
-          debugLog('Domains found with reverses', { domainsWithReverses });
+        const domainNames = domainsWithReverses
+          .filter(item => item && item.domain)
+          .map(item => item.domain);
 
-          if (domainsWithReverses && domainsWithReverses.length > 0) {
-            // Extract domain names from the domainsWithReverses array
-            const domains = domainsWithReverses
-              .filter(item => item && item.domain) // Filter out any invalid items
-              .map(item => item.domain); // Get just the domain names
-
-            debugLog('Found domains via spl-name-service', { domains });
-
-            if (domains.length > 0) {
-              setDomains(domains);
-              setStatus('Found SNS domains in your wallet.');
-              return;
-            }
-          }
-
-          // Method 2: Fallback to getAllDomains
-          debugLog('No domains found with reverses, trying getAllDomains');
+        if (domainNames.length > 0) {
+          setDomains(domainNames);
+          setStatus('Found SNS domains in your wallet.');
+        } else {
+          // Fallback to getAllDomains
           const domainKeys = await getAllDomains(connection, walletPubkey);
-          
-          debugLog('Domain keys found', { 
-            domainKeys: domainKeys.map(key => key.toBase58())
-          });
+          const domains = domainKeys.map(key => key.toBase58());
+          setDomains(domains);
+          setStatus('Found SNS domains in your wallet.');
+        }
 
-          if (domainKeys && domainKeys.length > 0) {
-            const domains = domainKeys.map(key => key.toBase58());
-            debugLog('Found domains via getAllDomains', { domains });
-            setDomains(domains);
-            setStatus('Found SNS domains in your wallet.');
-            return;
-          }
-
-          // Method 3: Get all token accounts as final fallback
-          debugLog('No domains found via spl-name-service, trying token accounts');
-          const tokenAccounts = await connection.getParsedTokenAccountsByOwner(walletPubkey, {
-            programId: TOKEN_PROGRAM_ID,
-          });
-
-          debugLog('Token accounts fetched', { 
-            totalAccounts: tokenAccounts.value.length
-          });
-
-          // Process token accounts for SNS domains
-          const tokenDomains = tokenAccounts.value
-            .filter(account => {
-              try {
-                const data = account.account.data.parsed;
-                return data?.info?.mint === SNS_DOMAIN_PROGRAM.toBase58();
-              } catch (error) {
-                return false;
-              }
-            })
-            .map(account => {
-              try {
-                const data = account.account.data.parsed;
-                if (data?.info?.name) {
-                  debugLog('Found domain in token account', {
-                    domainName: data.info.name,
-                    accountPubkey: account.pubkey.toBase58()
-                  });
-                  return data.info.name;
-                }
-              } catch (error) {
-                debugLog('Error parsing token account data', {
-                  accountPubkey: account.pubkey.toBase58(),
-                  error: error.message
-                });
-              }
-              return null;
-            })
-            .filter(Boolean);
-
-          if (tokenDomains.length > 0) {
-            debugLog('Found domains via token accounts', { tokenDomains });
-            setDomains(tokenDomains);
-            setStatus('Found SNS domains in your wallet.');
-          } else {
-            setLastError({ type: ERROR_TYPES.NO_DOMAINS });
-            setStatus('No SNS domains found in your wallet.');
+        // Get primary domain
+        try {
+          const { domain } = await getPrimaryDomain(connection, walletPubkey);
+          if (domain) {
+            setPrimaryDomain(domain);
+            debugLog('Primary domain fetched', {
+              primaryDomain: domain.toBase58()
+            });
           }
         } catch (error) {
-          debugLog('Error fetching domains', {
-            error: error.message,
-            stack: error.stack
+          debugLog('Error getting primary domain', {
+            error: error.message
           });
-          throw error;
+          // Don't throw error here, just log it
         }
       } catch (error) {
-        console.error('Error fetching SNS domains:', error);
-        debugLog('Fatal error in domain fetch', {
-          error: error.message,
-          stack: error.stack
-        });
-        
+        console.error('Error fetching domains:', error);
         setLastError(error);
-        setStatus('Error scanning wallet for SNS domains: ' + error.message);
+        setStatus('Error loading domains: ' + error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (connection && walletAddress) {
-      debugLog('Starting domain fetch process', {
-        walletAddress,
-        connectionEndpoint: connection.rpcEndpoint
-      });
-      fetchSnsDomains();
-    }
-  }, [walletAddress, connection, connectionStatus]);
+    fetchDomains();
+  }, [connection, walletAddress, connectionStatus]);
 
   // Render connection status indicator
   const renderConnectionStatus = () => {
@@ -377,49 +608,96 @@ const SnsDomainSelector = ({
     }
   };
 
-  // Handle domain selection and deployment
+  // Refactored handleSelectDomain
   const handleSelectDomain = async () => {
     if (!selectedDomain) return;
-
+    let formattedDomain;
     try {
       setDeploymentStage('DEPLOYING');
       setStatus('Deployment in Progress...');
-
-      // Generate HTML content
-      const fullHtml = generateFullHtml();
-      
-      // Save to Firestore with SNS domain info
-      await saveProjectToFirestore(userId, fullHtml, 'sns', selectedDomain);
-
-      // Update website settings with the SNS domain and wallet info
+      // 1. Format and validate domain name
+      formattedDomain = validateAndFormatDomain(selectedDomain);
+      debugLog('Validating domain', { original: selectedDomain, formatted: formattedDomain });
+      // 2. Verify domain exists and is owned by the user
+      const domainKey = await verifyDomain(connection, formattedDomain, walletAddress);
+      debugLog('Domain verified', { domainKey: domainKey.toBase58() });
+      // 3. Export and upload to IPFS
+      setStatus('Deploying to IPFS...');
+      const { ipfsHash, ipfsUrl } = await exportAndUploadToIPFS(elements, websiteSettings, userId, generateFullHtml);
+      // 4. Save to Firestore
+      await saveDeploymentToFirestore(userId, websiteSettings, ipfsHash, ipfsUrl, formattedDomain, walletAddress);
+      // 5. Update SNS domain record
+      setStatus('Updating SNS domain...');
+      const transaction = await updateSnsDomainRecord(connection, formattedDomain, ipfsUrl, walletAddress);
+      // 6. Sign and send transaction
+      debugLog('Transaction before signing', {
+        recentBlockhash: transaction.recentBlockhash,
+        feePayer: transaction.feePayer.toBase58(),
+        instructions: transaction.instructions.length
+      });
+      const signed = await window.solana.signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(signed.serialize());
+      debugLog('Transaction sent', { signature });
+      // 7. Wait for confirmation
+      const confirmation = await connection.confirmTransaction(signature);
+      debugLog('Transaction confirmed', { confirmation: confirmation.value });
+      if (confirmation.value.err) {
+        debugLog('SNS transaction error', { error: confirmation.value.err });
+        throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
+      }
+      // 8. Update Firestore with transaction info
       const projectRef = doc(db, 'projects', userId);
       await updateDoc(projectRef, {
-        websiteSettings: {
-          ...websiteSettings,
-          snsDomain: selectedDomain,
-          walletAddress: walletAddress,
-          lastUpdated: serverTimestamp(),
-        },
+        'websiteSettings.deploymentStatus': 'completed',
+        'websiteSettings.deploymentTransaction': signature,
+        'websiteSettings.lastUpdated': serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
-
       setDeploymentStage('COMPLETE');
       setStatus('Deployment Complete!');
       setAutoSaveStatus('All changes saved.');
-
       // Open the new domain in a new tab
-      const domainUrl = `https://${selectedDomain}`;
+      const domainUrl = `https://${formattedDomain}`;
       const newTab = window.open(domainUrl, '_blank', 'noopener,noreferrer');
       if (newTab) {
         newTab.blur();
         window.focus();
       }
-
       if (onDomainSelected) {
-        onDomainSelected(selectedDomain);
+        onDomainSelected(formattedDomain);
       }
     } catch (error) {
       console.error('Error deploying to SNS domain:', error);
       setStatus('Error deploying to SNS domain: ' + error.message);
+      // Update Firestore with error status
+      const projectRef = doc(db, 'projects', userId);
+      try {
+        const projectDoc = await getDoc(projectRef);
+        if (projectDoc.exists()) {
+          await updateDoc(projectRef, {
+            'websiteSettings.deploymentStatus': 'failed',
+            'websiteSettings.deploymentError': error.message,
+            'websiteSettings.lastUpdated': serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          await setDoc(projectRef, {
+            userId,
+            websiteSettings: {
+              ...websiteSettings,
+              snsDomain: formattedDomain || selectedDomain,
+              walletAddress: walletAddress,
+              deploymentStatus: 'failed',
+              deploymentError: error.message,
+              lastUpdated: serverTimestamp()
+            },
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        }
+      } catch (firestoreError) {
+        console.error('Error updating Firestore:', firestoreError);
+      }
     }
   };
 
@@ -439,21 +717,25 @@ const SnsDomainSelector = ({
         ? domainName 
         : `${domainName}.sol`;
       
+      const isPrimary = primaryDomain?.toBase58() === domainName;
+      
       debugLog('Rendering domain card', { 
         originalName: domainName,
-        fullName: fullDomainName 
+        fullName: fullDomainName,
+        isPrimary
       });
 
       return (
         <div
           key={index}
-          className={`domain-card ${selectedDomain === fullDomainName ? 'selected' : ''}`}
+          className={`domain-card ${selectedDomain === fullDomainName ? 'selected' : ''} ${isPrimary ? 'primary' : ''}`}
           onClick={() => setSelectedDomain(fullDomainName)}
         >
           <div className="radio-circle">
             {selectedDomain === fullDomainName && <div className="radio-circle-inner" />}
           </div>
           <p className="domain-text">{fullDomainName}</p>
+          {isPrimary && <span className="primary-badge">Primary</span>}
         </div>
       );
     }).filter(Boolean); // Remove any null entries

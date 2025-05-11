@@ -113,6 +113,33 @@ export const elementTypes = {
     },
     requiredProps: ['id', 'type'],
   },
+  defiSection: {
+    type: 'defiSection',
+    defaultStyles: {
+      backgroundColor: '#2a2a2a',
+      color: '#fff',
+      padding: '40px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    requiredProps: ['id', 'type'],
+  },
+  footer: {
+    type: 'footer',
+    defaultStyles: {
+      backgroundColor: '#ffffff',
+      color: '#1a1a1a',
+      borderTop: '1px solid #e5e5e5',
+      padding: '12px',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    requiredProps: ['id', 'type'],
+  },
 };
 
 // Structure configurations for complex elements
