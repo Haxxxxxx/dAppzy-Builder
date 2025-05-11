@@ -345,3 +345,76 @@ input:checked+.dropdown-menu-item-content-slider:before {
   line-height: normal;
   cursor: pointer;
 }
+
+.preview-url-container {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.preview-url-container:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.preview-url-container .dropdown-menu-item-content-left-text {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  transition: color 0.2s ease;
+}
+
+.preview-url-container .dropdown-menu-item-content-left-text:hover {
+  color: #5C4EFA;
+}
+
+.copy-url-button {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #fff;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-url-button:hover {
+  opacity: 1;
+}
+
+.copy-url-button:active {
+  transform: scale(0.95);
+}
+
+/* Add a tooltip for the copy button */
+.copy-url-button::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.copy-url-button:hover::after {
+  opacity: 1;
+  visibility: visible;
+}

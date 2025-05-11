@@ -810,21 +810,93 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showSnsSelector, setShowSnsSelector] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isTestDomainEnabled, setIsTestDomainEnabled] = useState(false);
   const dropdownRef = useRef(null);
 
   // Get wallet address from session storage
   const walletAddress = sessionStorage.getItem("userAccount");
 
+  // Generate preview URL when dropdown opens
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
+    if (isDropdownOpen) {
+      generatePreviewUrl();
+    }
+  }, [isDropdownOpen, elements, websiteSettings]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const generatePreviewUrl = async () => {
+    try {
+      if (!userId || !projectId) {
+        setPreviewUrl(null);
+        return;
+      }
+
+      const sanitizedUserId = userId.toString().trim();
+      const sanitizedProjectId = projectId.toString().trim();
+
+      if (!sanitizedUserId || !sanitizedProjectId) {
+        setPreviewUrl(null);
+        return;
+      }
+
+      // Clean and validate elements data
+      const cleanedElements = elements
+        .map(cleanElementData)
+        .filter(Boolean)
+        .map(element => {
+          if (!element.id || !element.type) {
+            return null;
+          }
+          return element;
+        })
+        .filter(Boolean);
+
+      // Clean and validate website settings
+      const cleanedWebsiteSettings = {
+        siteTitle: websiteSettings?.siteTitle || 'My Website',
+        faviconUrl: websiteSettings?.faviconUrl || '',
+        metaDescription: websiteSettings?.metaDescription || '',
+        metaKeywords: websiteSettings?.metaKeywords || '',
+        customStyles: websiteSettings?.customStyles || '',
+        customScripts: websiteSettings?.customScripts || '',
+      };
+
+      const fullHtml = exportProject(cleanedElements, cleanedWebsiteSettings);
+      const htmlBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      
+      const files = [{
+        file: htmlBlob,
+        fileName: 'index.html',
+        type: 'text/html'
+      }];
+
+      // Ensure all metadata values are strings or numbers
+      const metadata = {
+        name: cleanedWebsiteSettings.siteTitle,
+        keyvalues: {
+          userId: sanitizedUserId,
+          timestamp: new Date().toISOString(),
+          size: htmlBlob.size.toString(), // Convert to string
+          isPreview: "true", // Convert to string
+          projectId: sanitizedProjectId,
+          contentType: "text/html"
+        },
+      };
+
+      console.log('Uploading to Pinata with metadata:', metadata);
+      const ipfsHash = await pinDirectoryToPinata(files, metadata);
+      
+      if (ipfsHash) {
+        const previewUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
+        setPreviewUrl(previewUrl);
+        console.log('Preview URL generated:', previewUrl);
+      }
+    } catch (error) {
+      console.error('Error generating preview URL:', error);
+      setPreviewUrl(null);
+      setAutoSaveStatus('Error generating preview: ' + error.message);
+    }
+  };
 
   const cleanElementData = (element) => {
     if (!element) {
@@ -988,14 +1060,33 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     }
   };
 
-  const handlePublish = async () => {
-    const ipfsUrl = await handleDeployToIPFS();
+  const handleUpdate = async () => {
+    if (isTestDomainEnabled) {
+      setAutoSaveStatus('Deploying to IPFS...');
+      try {
+        const ipfsUrl = await handleDeployToIPFS();
+        if (ipfsUrl) {
+          // Update the project in Firestore with the new IPFS URL
+          const projectRef = doc(db, 'projects', userId);
+          await setDoc(projectRef, {
+            websiteSettings: {
+              ...websiteSettings,
+              testUrl: ipfsUrl,
+              lastUpdated: serverTimestamp()
+            },
+            lastUpdated: serverTimestamp()
+          }, { merge: true });
 
-    if (ipfsUrl) {
-      if (onProjectPublished) {
-        onProjectPublished(ipfsUrl);
+          setPreviewUrl(ipfsUrl);
+          setAutoSaveStatus('Deployment complete!');
+          if (onProjectPublished) {
+            onProjectPublished(ipfsUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error deploying to IPFS:', error);
+        setAutoSaveStatus('Error during deployment: ' + error.message);
       }
-      window.open(ipfsUrl, '_blank');
     }
     setIsDropdownOpen(false);
   };
@@ -1034,6 +1125,20 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     setIsDropdownOpen(false);
   };
 
+  // Helper function to format IPFS URL for display
+  const formatIpfsUrl = (url) => {
+    if (!url) return '';
+    try {
+      // Extract the hash from the URL
+      const hash = url.split('/').pop();
+      // Return a shorter, more readable format
+      return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
+    } catch (error) {
+      console.error('Error formatting IPFS URL:', error);
+      return url;
+    }
+  };
+
   return (
     <div className="export-section" ref={dropdownRef}>
       <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
@@ -1053,60 +1158,58 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
               <p className='dropdown-menu-item-title'>Test Domain</p>
               <div className='dropdown-menu-item-content'>
                 <div className='dropdown-menu-item-content-left'>
-                  <span class="material-symbols-outlined">
+                  <span className="material-symbols-outlined">
                     experiment
                   </span>
-                  <a className='dropdown-menu-item-content-left-text' href='' target='_blank'>ipfs://urltest</a>
-
+                  {previewUrl ? (
+                    <div className="preview-url-container">
+                      <a 
+                        className='dropdown-menu-item-content-left-text' 
+                        href={previewUrl} 
+                        target='_blank'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(previewUrl, '_blank');
+                        }}
+                      >
+                        {formatIpfsUrl(previewUrl)}
+                      </a>
+                    </div>
+                  ) : (
+                    <span className='dropdown-menu-item-content-left-text'>
+                      Generating preview...
+                    </span>
+                  )}
                 </div>
                 <div className='dropdown-menu-item-content-toggle-box'>
                   <label className="dropdown-menu-item-content-switch">
-                    <input type="checkbox" />
+                    <input 
+                      type="checkbox" 
+                      checked={isTestDomainEnabled}
+                      onChange={(e) => setIsTestDomainEnabled(e.target.checked)}
+                    />
                     <span className="dropdown-menu-item-content-slider dropdown-menu-item-content-round"></span>
                   </label>
                 </div>
-
               </div>
-
             </div>
             <div className='dropdown-menu-item'>
               <p className='dropdown-menu-item-title'>Custom Domain</p>
               <div className='dropdown-menu-item-content'>
-
                 <button
                   onClick={handleSnsDeploy}
                   className="dropdown-menu-item-content-button"
                   disabled={!walletAddress}
                 >Add Domain</button>
-                {/*<div className='dropdown-menu-item-content-left'>
-                  <span class="material-symbols-outlined">
-                    language
-                  </span>
-                  <a className='dropdown-menu-item-content-left-text' href='' target='_blank'>ipfs://urltest</a>
-
-                </div>
-                <div className='dropdown-menu-item-content-toggle-box'>
-                  <label className="dropdown-menu-item-content-switch">
-                    <input type="checkbox" />
-                    <span className="dropdown-menu-item-content-slider dropdown-menu-item-content-round"></span>
-                  </label>
-                </div>*/}
-
               </div>
-
             </div>
-
-            <button className='dropdown-menu-button'>
+            <button 
+              className='dropdown-menu-button'
+              onClick={handleUpdate}
+              disabled={!isTestDomainEnabled}
+            >
               Update
             </button>
-            {/* <button onClick={handlePublish} className="dropdown-item">
-              Publish to IPFS
-            </button>*/}
-
-
-            {/*<button onClick={handleExport} className="dropdown-item">
-              Export Files
-            </button>*/}
           </div>
         )}
       </div>
@@ -1127,7 +1230,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
               websiteSettings: {
                 ...websiteSettings,
                 snsDomain: domain,
-                walletAddress: walletAddress, // Store the wallet address
+                walletAddress: walletAddress,
               },
               lastUpdated: serverTimestamp(),
               userId,
