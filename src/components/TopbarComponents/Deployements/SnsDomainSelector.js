@@ -708,24 +708,24 @@ const SnsDomainSelector = ({
         updatedAt: serverTimestamp()
       });
       
+      // Set completion state
       setDeploymentStage('COMPLETE');
-      setStatus('Deployment Complete!');
-      setAutoSaveStatus('All changes saved.');
       
-      // Open the new domain in a new tab
-      const domainUrl = `https://${formattedDomain}`;
-      const newTab = window.open(domainUrl, '_blank', 'noopener,noreferrer');
-      if (newTab) {
-        newTab.blur();
-        window.focus();
-      }
-      
+      // Notify parent component
       if (onDomainSelected) {
         onDomainSelected(formattedDomain);
       }
+
+      // Open the new domain in a new tab after a short delay
+      setTimeout(() => {
+        const domainUrl = `https://${formattedDomain}`;
+        window.open(domainUrl, '_blank');
+      }, 1000);
+
     } catch (error) {
       console.error('Error deploying to SNS domain:', error);
       setStatus('Error deploying to SNS domain: ' + error.message);
+      
       // Update Firestore with error status
       const projectRef = doc(db, 'projects', userId);
       try {
@@ -870,6 +870,58 @@ const SnsDomainSelector = ({
             <div className="check-circle" />
             <h2>Deployment Complete</h2>
             <p>Your project has been successfully deployed to your SNS domain.</p>
+            
+            <div className="deployment-timeline">
+              <div className="timeline-step completed">
+                <div className="step-icon">1</div>
+                <div className="step-content">
+                  <h3>Preparing Content</h3>
+                  <p>Content generated and validated</p>
+                </div>
+              </div>
+
+              <div className="timeline-step completed">
+                <div className="step-icon">2</div>
+                <div className="step-content">
+                  <h3>Uploading to IPFS</h3>
+                  <p>Website stored on IPFS</p>
+                </div>
+              </div>
+
+              <div className="timeline-step completed">
+                <div className="step-icon">3</div>
+                <div className="step-content">
+                  <h3>Updating SNS Record</h3>
+                  <p>IPFS content linked to domain</p>
+                </div>
+              </div>
+
+              <div className="timeline-step completed">
+                <div className="step-icon">4</div>
+                <div className="step-content">
+                  <h3>Confirming Transaction</h3>
+                  <p>Transaction confirmed on blockchain</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="deployment-actions">
+              <button 
+                className="view-site-btn"
+                onClick={() => {
+                  const domainUrl = `https://${selectedDomain}`;
+                  window.open(domainUrl, '_blank');
+                }}
+              >
+                View Site
+              </button>
+              <button 
+                className="close-deployment-btn"
+                onClick={onCancel}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>

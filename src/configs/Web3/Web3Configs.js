@@ -126,7 +126,7 @@ export const Web3Configs = {
         },
         // Public RPC (Fallback)
         public: {
-            endpoint: 'https://api.mainnet-beta.solana.com',
+            endpoint: 'https://api.devnet-beta.solana.com',
             getUrl: function() {
                 return this.endpoint;
             }

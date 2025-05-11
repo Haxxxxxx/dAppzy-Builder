@@ -534,3 +534,61 @@
   font-weight: 300;
   margin: 0;
 }
+
+.deployment-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+  width: 100%;
+}
+
+.view-site-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--purple, #5C4EFA);
+  color: var(--white, #FFF);
+  text-align: center;
+  font-family: Satoshi;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.view-site-btn:hover {
+  background: var(--purple-hover, #4A3ED9);
+}
+
+.close-deployment-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--not-selected, #838389);
+  color: var(--white, #FFF);
+  text-align: center;
+  font-family: Satoshi;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.close-deployment-btn:hover {
+  background: var(--dark-gray, #57575B);
+}
+
+.timeline-step.completed .step-icon {
+  background: var(--purple, #5C4EFA);
+  color: var(--white, #FFF);
+}
+
+.timeline-step.completed .step-content h3 {
+  color: var(--white, #FFF);
+}
+
+.timeline-step.completed .step-content p {
+  color: var(--not-selected, #838389);
+}
