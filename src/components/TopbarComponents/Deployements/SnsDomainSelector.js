@@ -420,7 +420,15 @@ const SnsDomainSelector = ({
   const [lastError, setLastError] = useState(null);
   const [primaryDomain, setPrimaryDomain] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isToggleActive, setIsToggleActive] = useState(false);
+  const [enabledDomains, setEnabledDomains] = useState({});
+  const [deploymentStep, setDeploymentStep] = useState('preparing');
+  const [deploymentProgress, setDeploymentProgress] = useState({
+    preparing: true,
+    uploading: false,
+    updating: false,
+    confirming: false,
+    complete: false
+  });
 
   // Initialize Solana connection with Helius configuration
   useEffect(() => {
@@ -552,6 +560,22 @@ const SnsDomainSelector = ({
     fetchDomains();
   }, [connection, walletAddress, connectionStatus]);
 
+  const handleDomainToggle = (domainName) => {
+    setEnabledDomains(prev => {
+      const newState = {};
+      // Disable all other domains
+      Object.keys(prev).forEach(key => {
+        newState[key] = false;
+      });
+      // Toggle the clicked domain
+      newState[domainName] = !prev[domainName];
+      return newState;
+    });
+
+    // Update selected domain
+    setSelectedDomain(prev => prev === domainName ? null : domainName);
+  };
+
   // Render connection status indicator
   const renderConnectionStatus = () => {
     switch (connectionStatus) {
@@ -616,20 +640,42 @@ const SnsDomainSelector = ({
     try {
       setDeploymentStage('DEPLOYING');
       setStatus('Deployment in Progress...');
+      
+      // Step 1: Preparing
+      setDeploymentProgress(prev => ({ ...prev, preparing: true }));
+      setDeploymentStep('preparing');
+      
       // 1. Format and validate domain name
       formattedDomain = validateAndFormatDomain(selectedDomain);
       debugLog('Validating domain', { original: selectedDomain, formatted: formattedDomain });
+      
       // 2. Verify domain exists and is owned by the user
       const domainKey = await verifyDomain(connection, formattedDomain, walletAddress);
       debugLog('Domain verified', { domainKey: domainKey.toBase58() });
+      
+      // Step 2: Uploading
+      setDeploymentProgress(prev => ({ ...prev, uploading: true }));
+      setDeploymentStep('uploading');
+      
       // 3. Export and upload to IPFS
       setStatus('Deploying to IPFS...');
       const { ipfsHash, ipfsUrl } = await exportAndUploadToIPFS(elements, websiteSettings, userId, generateFullHtml);
+      
       // 4. Save to Firestore
       await saveDeploymentToFirestore(userId, websiteSettings, ipfsHash, ipfsUrl, formattedDomain, walletAddress);
+      
+      // Step 3: Updating
+      setDeploymentProgress(prev => ({ ...prev, updating: true }));
+      setDeploymentStep('updating');
+      
       // 5. Update SNS domain record
       setStatus('Updating SNS domain...');
       const transaction = await updateSnsDomainRecord(connection, formattedDomain, ipfsUrl, walletAddress);
+      
+      // Step 4: Confirming
+      setDeploymentProgress(prev => ({ ...prev, confirming: true }));
+      setDeploymentStep('confirming');
+      
       // 6. Sign and send transaction
       debugLog('Transaction before signing', {
         recentBlockhash: transaction.recentBlockhash,
@@ -639,13 +685,20 @@ const SnsDomainSelector = ({
       const signed = await window.solana.signTransaction(transaction);
       const signature = await connection.sendRawTransaction(signed.serialize());
       debugLog('Transaction sent', { signature });
+      
       // 7. Wait for confirmation
       const confirmation = await connection.confirmTransaction(signature);
       debugLog('Transaction confirmed', { confirmation: confirmation.value });
+      
       if (confirmation.value.err) {
         debugLog('SNS transaction error', { error: confirmation.value.err });
         throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
       }
+      
+      // Step 5: Complete
+      setDeploymentProgress(prev => ({ ...prev, complete: true }));
+      setDeploymentStep('complete');
+      
       // 8. Update Firestore with transaction info
       const projectRef = doc(db, 'projects', userId);
       await updateDoc(projectRef, {
@@ -654,9 +707,11 @@ const SnsDomainSelector = ({
         'websiteSettings.lastUpdated': serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+      
       setDeploymentStage('COMPLETE');
       setStatus('Deployment Complete!');
       setAutoSaveStatus('All changes saved.');
+      
       // Open the new domain in a new tab
       const domainUrl = `https://${formattedDomain}`;
       const newTab = window.open(domainUrl, '_blank', 'noopener,noreferrer');
@@ -664,6 +719,7 @@ const SnsDomainSelector = ({
         newTab.blur();
         window.focus();
       }
+      
       if (onDomainSelected) {
         onDomainSelected(formattedDomain);
       }
@@ -704,53 +760,101 @@ const SnsDomainSelector = ({
 
   // Render domain cards
   const renderDomainCards = () => {
+    if (isLoading) {
+      return (
+        <div className="domain-selection-modal-content-fetching-domains">
+          <p className="domain-selection-modal-content-fetching-domains-text">
+            Fetching domains...
+          </p>
+          <div className="domain-selection-modal-content-fetching-domains-loader" />
+        </div>
+      );
+    }
+
     if (!domains || domains.length === 0) return null;
 
     return domains.map((domainName, index) => {
-      // Skip invalid domain names
       if (!domainName) {
         debugLog('Skipping invalid domain name', { index });
         return null;
       }
 
-      // Ensure we have the full domain name
       const fullDomainName = typeof domainName === 'string' && domainName.endsWith('.sol')
         ? domainName
         : `${domainName}.sol`;
 
       const isPrimary = primaryDomain?.toBase58() === domainName;
-
-      debugLog('Rendering domain card', {
-        originalName: domainName,
-        fullName: fullDomainName,
-        isPrimary
-      });
+      const isEnabled = enabledDomains[fullDomainName] || false;
 
       return (
         <div
           key={index}
-          className={`domain-card ${selectedDomain === fullDomainName ? 'selected' : ''} ${isPrimary ? 'primary' : ''}`}
-          onClick={() => setSelectedDomain(selectedDomain === fullDomainName ? null : fullDomainName)}
+          className={`domain-card ${isEnabled ? 'selected' : ''} ${isPrimary ? 'primary' : ''}`}
+          onClick={() => handleDomainToggle(fullDomainName)}
         >
-          <div className="radio-circle">
-            <div className="radio-circle-inner" />
+          <div className="toggle-domain-container">
+            <div 
+              className={`toggle-switch ${isEnabled ? 'active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDomainToggle(fullDomainName);
+              }}
+            >
+              <div className="toggle-switch-inner" />
+            </div>
           </div>
           <p className="domain-text">{fullDomainName}</p>
           {isPrimary && <span className="primary-badge">Primary</span>}
         </div>
       );
-    }).filter(Boolean); // Remove any null entries
+    }).filter(Boolean);
   };
 
   // Loading state
   if (deploymentStage === 'DEPLOYING') {
     return (
-      <div className="domain-selection-modal">
-        <button className="close-btn" onClick={onCancel}>×</button>
-        <div className="deployment-status">
-          <div className="spinner" />
-          <h2>Deployment in Progress</h2>
-          <p>Your project is currently being deployed to your SNS domain. This may take a few moments.</p>
+      <div className="domain-selection-modal-bg">
+        <div className="domain-selection-modal deployment-modal">
+          <button className="close-btn" onClick={onCancel}>×</button>
+          <div className="deployment-status">
+            <div className="spinner" />
+            <h2>Deployment in Progress</h2>
+            <p>Your project is currently being deployed to your SNS domain. This may take a few moments.</p>
+            
+            <div className="deployment-timeline">
+              <div className={`timeline-step ${deploymentProgress.preparing ? 'active' : ''} ${deploymentProgress.uploading || deploymentProgress.updating || deploymentProgress.confirming || deploymentProgress.complete ? 'completed' : ''}`}>
+                <div className="step-icon">1</div>
+                <div className="step-content">
+                  <h3>Preparing Content</h3>
+                  <p>Generating and validating website content</p>
+                </div>
+              </div>
+
+              <div className={`timeline-step ${deploymentProgress.uploading ? 'active' : ''} ${deploymentProgress.updating || deploymentProgress.confirming || deploymentProgress.complete ? 'completed' : ''}`}>
+                <div className="step-icon">2</div>
+                <div className="step-content">
+                  <h3>Uploading to IPFS</h3>
+                  <p>Storing your website on IPFS</p>
+                </div>
+              </div>
+
+              <div className={`timeline-step ${deploymentProgress.updating ? 'active' : ''} ${deploymentProgress.confirming || deploymentProgress.complete ? 'completed' : ''}`}>
+                <div className="step-icon">3</div>
+                <div className="step-content">
+                  <h3>Updating SNS Record</h3>
+                  <p>Linking IPFS content to your domain</p>
+                </div>
+              </div>
+
+              <div className={`timeline-step ${deploymentProgress.confirming ? 'active' : ''} ${deploymentProgress.complete ? 'completed' : ''}`}>
+                <div className="step-icon">4</div>
+                <div className="step-content">
+                  <h3>Confirming Transaction</h3>
+                  <p>Waiting for blockchain confirmation</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -759,12 +863,14 @@ const SnsDomainSelector = ({
   // Success state
   if (deploymentStage === 'COMPLETE') {
     return (
-      <div className="domain-selection-modal">
-        <button className="close-btn" onClick={onCancel}>×</button>
-        <div className="deployment-status">
-          <div className="check-circle" />
-          <h2>Deployment Complete</h2>
-          <p>Your project has been successfully deployed to your SNS domain.</p>
+      <div className="domain-selection-modal-bg">
+        <div className="domain-selection-modal deployment-modal">
+          <button className="close-btn" onClick={onCancel}>×</button>
+          <div className="deployment-status">
+            <div className="check-circle" />
+            <h2>Deployment Complete</h2>
+            <p>Your project has been successfully deployed to your SNS domain.</p>
+          </div>
         </div>
       </div>
     );
@@ -772,7 +878,7 @@ const SnsDomainSelector = ({
 
   // Selection state
   return (
-    <div className='domain-selection-modal-bg'>
+    <div className="domain-selection-modal-bg">
       <div className="domain-selection-modal">
         <div className="domain-selection-modal-header">
           <div className="domain-selection-modal-header-title-container">
@@ -781,7 +887,7 @@ const SnsDomainSelector = ({
             {renderErrorMessage()}
           </div>
           <div className="domain-selection-modal-header-bot-container">
-            <img className='domain-selection-modal-header-bot-img' src='../img/sns-icon.png'></img>
+            <img className='domain-selection-modal-header-bot-img' src='../img/sns-icon.png' alt="SNS" />
             <p className="domain-selection-modal-header-bot-text">powered by SNS</p>
           </div>
         </div>
@@ -790,38 +896,7 @@ const SnsDomainSelector = ({
           Select a domain to deploy your website:
         </p>
 
-        <div className="domain-selection-modal-content-fetching-domains">
-          <p className='domain-selection-modal-content-fetching-domains-text'>Fetching domains...</p>
-
-          <div className="domain-selection-modal-content-fetching-domains-loader">
-
-          </div>
-        </div>
-
-        <div className="domain-grid">{renderDomainCards()}
-
-          <div
-            key={1}
-            className={`domain-card ${selectedDomain === "Domain test" ? 'selected' : ''}`}
-            onClick={() => setSelectedDomain("Domain test")}
-          >
-            {/*<div className="radio-circle">
-              {selectedDomain === "Domain test" && <div className="radio-circle-inner" />}
-            </div>*/}
-            <div className='toggle-domain-container'>
-              <div 
-                className={`toggle-switch ${isToggleActive ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsToggleActive(!isToggleActive);
-                }}
-              >
-                <div className="toggle-switch-inner" />
-              </div>
-            </div>
-            <p className="domain-text">test-domain.sol</p>
-          </div>
-        </div>
+        {renderDomainCards()}
 
         <div className="buttons">
           <button className="cancel-btn" onClick={onCancel}>

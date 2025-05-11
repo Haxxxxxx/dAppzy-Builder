@@ -12,7 +12,7 @@ const Topbar = ({
   setScale,
   onPreviewToggle,
   isPreviewMode,
-  pageSettings, // Contains website settings, including siteTitle.
+  pageSettings,
   userId,
   projectId
 }) => {
@@ -22,19 +22,63 @@ const Topbar = ({
   const description = pageSettings.description || 'My Website';
   const faviconUrl = pageSettings.faviconUrl || '';
 
-  // Determine base URL based on hostname.
+  // Determine base URL based on hostname
   const isLocal = window.location.hostname === 'localhost';
   const baseUrl = isLocal ? 'http://localhost:3000' : 'https://demo.dappzy.io';
 
-  // Set initial project URL (Web2 preview) 
-  const [projectUrl, setProjectUrl] = useState(`${baseUrl}/${userId}/${projectName}`);
+  // Set initial project URL
+  const [projectUrl, setProjectUrl] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Update the URL if pageSettings change and there's no IPFS URL yet.
+  // Update the URL based on available options
   useEffect(() => {
-    if (!pageSettings.testUrl) {
-      setProjectUrl(`${baseUrl}/${userId}/${projectName}`);
-    }
+    const updateProjectUrl = () => {
+      // Priority order: SNS domain > IPFS URL > Test URL > Default URL
+      if (pageSettings.snsDomain) {
+        setProjectUrl(`https://${pageSettings.snsDomain}`);
+      } else if (pageSettings.ipfsUrl) {
+        setProjectUrl(pageSettings.ipfsUrl);
+      } else if (pageSettings.testUrl) {
+        setProjectUrl(pageSettings.testUrl);
+      } else {
+        setProjectUrl(`${baseUrl}/${userId}/${projectName}`);
+      }
+    };
+
+    updateProjectUrl();
   }, [pageSettings, baseUrl, userId, projectName]);
+
+  // Function to handle dropdown state changes
+  const handleDropdownToggle = (isOpen) => {
+    setIsDropdownOpen(isOpen);
+    // If dropdown is being opened, update the URL
+    if (isOpen) {
+      // Priority order: SNS domain > IPFS URL > Test URL > Default URL
+      if (pageSettings.snsDomain) {
+        setProjectUrl(`https://${pageSettings.snsDomain}`);
+      } else if (pageSettings.ipfsUrl) {
+        setProjectUrl(pageSettings.ipfsUrl);
+      } else if (pageSettings.testUrl) {
+        setProjectUrl(pageSettings.testUrl);
+      } else {
+        setProjectUrl(`${baseUrl}/${userId}/${projectName}`);
+      }
+    }
+  };
+
+  // Function to handle project updates
+  const handleProjectUpdate = (newSettings) => {
+    if (newSettings.snsDomain) {
+      setProjectUrl(`https://${newSettings.snsDomain}`);
+    } else if (newSettings.ipfsUrl) {
+      setProjectUrl(newSettings.ipfsUrl);
+    } else if (newSettings.testUrl) {
+      setProjectUrl(newSettings.testUrl);
+    }
+  };
+
+  // Determine if the project is deployed
+  const isDeployed = !!(pageSettings.snsDomain || pageSettings.ipfsUrl || pageSettings.testUrl);
 
   return (
     <div className="topbar">
@@ -43,6 +87,9 @@ const Topbar = ({
         description={description}
         url={projectUrl}
         faviconUrl={faviconUrl}
+        onDropdownToggle={handleDropdownToggle}
+        isDeployed={isDeployed}
+        snsDomain={pageSettings.snsDomain}
       />
       <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} />
       <ResizeControls scale={scale} onResize={onResize} onScaleChange={setScale} />
@@ -52,7 +99,7 @@ const Topbar = ({
         userId={userId}
         websiteSettings={pageSettings}
         projectId={projectId}
-        onProjectPublished={(ipfsUrl) => setProjectUrl(ipfsUrl)}
+        onProjectPublished={handleProjectUpdate}
       />
     </div>
   );
