@@ -3,32 +3,35 @@ import { useDrop } from 'react-dnd';
 import '../components/css/dropzone.css';
 import '../Root.css';
 import { structureConfigurations } from '../configs/structureConfigurations';
+import { createPortal } from 'react-dom';
 
 // Section Selection Popup Component
 const SectionSelectionPopup = ({ onClose, onSelect }) => {
   // Define section configurations with their preview images
   const sectionConfigurations = {
     // Navbar configurations
-    customTemplateNavbar: { name: 'Custom Navbar', previewImage: './img/previewcomponent.png' },
-    twoColumn: { name: 'Two Columns', previewImage: './img/previewcomponent.png' },
-    threeColumn: { name: 'Three Column', previewImage: './img/previewcomponent.png' },
-    defiNavbar: { name: 'DeFi Navbar', previewImage: './img/previewcomponent.png' },
-    
+    customTemplateNavbar: { name: 'Custom Navbar', previewImage: './img/previsu-custom-navbar.png' },
+    twoColumn: { name: 'Two Columns', previewImage: './img/previsu-two-columns-navbar.png' },
+    defiNavbar: { name: 'DeFi Navbar', previewImage: './img/previsu-defi-navbar.png' },
+
     // Hero configurations
-    heroOne: { name: 'Basic Hero', previewImage: './img/previewcomponent.png' },
-    heroTwo: { name: 'Small Hero', previewImage: './img/previewcomponent.png' },
-    heroThree: { name: 'Advanced Hero', previewImage: './img/previewcomponent.png' },
-    
+    heroOne: { name: 'Basic Hero', previewImage: './img/previsu-basic-hero.png' },
+    heroTwo: { name: 'Small Hero', previewImage: './img/previsu-small-hero.png' },
+    heroThree: { name: 'Advanced Hero', previewImage: './img/previsu-advanced-hero.png' },
+
     // CTA configurations
-    ctaOne: { name: 'Advanced CTA', previewImage: './img/previewcomponent.png' },
-    ctaTwo: { name: 'Quick CTA', previewImage: './img/previewcomponent.png' },
-    
-    // Content section configurations
-    sectionOne: { name: 'Feature Section', previewImage: './img/previewcomponent.png' },
-    sectionTwo: { name: 'Content Grid', previewImage: './img/previewcomponent.png' },
-    sectionThree: { name: 'Testimonial Section', previewImage: './img/previewcomponent.png' },
-    sectionFour: { name: 'Pricing Section', previewImage: './img/previewcomponent.png' }
-  };
+    ctaOne: { name: 'Advanced CTA', previewImage: './img/previsu-advanced-cta.png' },
+    ctaTwo: { name: 'Quick CTA', previewImage: './img/previsu-quick-cta.png' },
+
+    // Web3 section configurations
+    defiSection: { name: 'DeFi Dashboard', previewImage: './img/previsu-defi-dashboard.png' },
+  
+      // Footer configurations
+      customTemplateFooter: { name: 'Simple Footer', previewImage: './img/previsu-simple-footer.png' },
+      detailedFooter: { name: 'Detailed Footer', previewImage: './img/previsu-detailed-footer.png' },
+      templateFooter: { name: 'Advanced Footer', previewImage: './img/previsu-advanced-footer.png' },
+      defiFooter: { name: 'DeFi Footer', previewImage: './img/previsu-defi-footer.png' },
+    };
 
   const sections = Object.entries(structureConfigurations)
     .filter(([key]) => sectionConfigurations[key]) // Only include sections with configurations
@@ -39,41 +42,51 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
       configuration: config
     }));
 
-  return (
+  return createPortal(
     <div className="section-selection-popup">
-      <div className="popup-content">
-        <div className="popup-header">
-          <h3>Select a Section</h3>
-          <button onClick={onClose} className="close-button">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+      <div className="section-selection-popup-content">
+        <div className="section-selection-popup-header">
+          <h3 className='section-selection-popup-header-title'>Sections Library</h3>
+          <button onClick={onClose} className="section-selection-close-button">&times;</button>
         </div>
-        <div className="sections-grid">
+        <hr className='section-selection-popup-hr'></hr>
+        <div className="section-selection-popup-toolbar">
+          <select>
+            <option>Category</option>
+            {/* Ajoute ici les catégories si besoin */}
+          </select>
+          <input type="search" placeholder="Search" />
+        </div>
+        <div className="section-selection-sections-grid">
           {sections.map((section) => (
             <div
               key={section.id}
-              className="section-item"
-              onClick={() => onSelect(section)}
+              className="section-selection-section-item"
             >
-              <div className="section-preview">
-                <img 
-                  src={section.previewImage} 
+              <div className="section-selection-section-preview">
+                <img
+                  src={section.previewImage}
                   alt={section.name}
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    marginBottom: '8px',
-                    borderRadius: '4px',
-                  }}
                   loading="lazy"
                 />
               </div>
-              <div className="section-name">{section.name}</div>
+              <div className="section-selection-section-overlay">
+                <button
+                  className="section-selection-insert-btn"
+                  onClick={() => onSelect(section)}
+                >
+                  <span class="material-symbols-outlined">
+                    download
+                  </span>
+                  Insert
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -83,28 +96,28 @@ const divConfigurations = [
     name: '2 Rows',
     parentType: 'vflex',
     direction: 'column',
-    children: [ { type: 'hflex' }, { type: 'hflex' } ]
+    children: [{ type: 'hflex' }, { type: 'hflex' }]
   },
   {
     id: 'vflex-3-hflex',
     name: '3 Rows',
     parentType: 'vflex',
     direction: 'column',
-    children: [ { type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' } ]
+    children: [{ type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }]
   },
   {
     id: 'hflex-2-vflex',
     name: '2 Columns',
     parentType: 'hflex',
     direction: 'row',
-    children: [ { type: 'vflex' }, { type: 'vflex' } ]
+    children: [{ type: 'vflex' }, { type: 'vflex' }]
   },
   {
     id: 'hflex-3-vflex',
     name: '3 Columns',
     parentType: 'hflex',
     direction: 'row',
-    children: [ { type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' } ]
+    children: [{ type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }]
   },
   {
     id: 'vflex-nested-grid',
@@ -112,8 +125,8 @@ const divConfigurations = [
     parentType: 'vflex',
     direction: 'column',
     children: [
-      { type: 'hflex', children: [ { type: 'vflex' }, { type: 'vflex' } ] },
-      { type: 'hflex', children: [ { type: 'vflex' }, { type: 'vflex' } ] }
+      { type: 'hflex', children: [{ type: 'vflex' }, { type: 'vflex' }] },
+      { type: 'hflex', children: [{ type: 'vflex' }, { type: 'vflex' }] }
     ]
   },
   {
@@ -122,8 +135,8 @@ const divConfigurations = [
     parentType: 'hflex',
     direction: 'row',
     children: [
-      { type: 'vflex', children: [ { type: 'hflex' }, { type: 'hflex' } ] },
-      { type: 'vflex', children: [ { type: 'hflex' }, { type: 'hflex' } ] }
+      { type: 'vflex', children: [{ type: 'hflex' }, { type: 'hflex' }] },
+      { type: 'vflex', children: [{ type: 'hflex' }, { type: 'hflex' }] }
     ]
   },
   {
@@ -131,28 +144,28 @@ const divConfigurations = [
     name: 'Row + Col',
     parentType: 'vflex',
     direction: 'column',
-    children: [ { type: 'hflex' }, { type: 'vflex' } ]
+    children: [{ type: 'hflex' }, { type: 'vflex' }]
   },
   {
     id: 'hflex-mixed',
     name: 'Col + Row',
     parentType: 'hflex',
     direction: 'row',
-    children: [ { type: 'vflex' }, { type: 'hflex' } ]
+    children: [{ type: 'vflex' }, { type: 'hflex' }]
   },
   {
     id: 'vflex-4-hflex',
     name: '4 Rows',
     parentType: 'vflex',
     direction: 'column',
-    children: [ { type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' } ]
+    children: [{ type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }]
   },
   {
     id: 'hflex-4-vflex',
     name: '4 Columns',
     parentType: 'hflex',
     direction: 'row',
-    children: [ { type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' } ]
+    children: [{ type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }]
   }
 ];
 
@@ -407,7 +420,7 @@ const UnifiedDropZone = React.memo(({
         settings: sectionConfig.settings || {},
         label: sectionConfig.label || section.name
       };
-      
+
       console.log('Sending section data:', sectionData); // Debug log
       onDrop(sectionData, parentId);
     }
@@ -448,7 +461,10 @@ const UnifiedDropZone = React.memo(({
             type = 'hero';
           } else if (item.configuration.includes('cta')) {
             type = 'cta';
-          } else if (item.configuration.includes('footer')) {
+          
+          }  else if (item.configuration.includes('defiSection')) {
+            type = 'defiSection';
+          }else if (item.configuration.includes('footer')) {
             type = 'footer';
           }
 
@@ -533,32 +549,32 @@ const UnifiedDropZone = React.memo(({
 
   return (
     <>
-    <div
-      ref={dropRef}
-      className={`unified-dropzone ${className} ${isOver ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
-      onClick={handleInteraction}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        position: isFirstDropzone ? 'absolute' : (isDefaultDropzone ? 'static' : 'absolute'),
-        left: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.x),
-        top: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.y),
-        right: isFirstDropzone ? '0' : 'auto',
-        bottom: isFirstDropzone ? '0' : 'auto',
-        opacity: isFirstDropzone || isDefaultDropzone ? 1 : (isVisible ? 1 : 0),
-        transition: 'all 0.2s ease',
-        pointerEvents: isDragging ? 'auto' : 'none',
-        transform: isFirstDropzone ? 'none' : (isDefaultDropzone ? 'none' : 'translate(-50%, -50%)'),
-        zIndex: 1000,
-        height: isFirstDropzone ? '100%' : (isDefaultDropzone ? 'auto' : '20px'),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: isFirstDropzone || isDefaultDropzone ? '5px' : '5px',
-      }}
-    >
-      <div className="dropzone-content">
-        {(isDefaultDropzone || isFirstDropzone) ? (
+      <div
+        ref={dropRef}
+        className={`unified-dropzone ${className} ${isOver ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
+        onClick={handleInteraction}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          position: isFirstDropzone ? 'absolute' : (isDefaultDropzone ? 'static' : 'absolute'),
+          left: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.x),
+          top: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.y),
+          right: isFirstDropzone ? '0' : 'auto',
+          bottom: isFirstDropzone ? '0' : 'auto',
+          opacity: isFirstDropzone || isDefaultDropzone ? 1 : (isVisible ? 1 : 0),
+          transition: 'all 0.2s ease',
+          pointerEvents: isDragging ? 'auto' : 'none',
+          transform: isFirstDropzone ? 'none' : (isDefaultDropzone ? 'none' : 'translate(-50%, -50%)'),
+          zIndex: 1000,
+          height: isFirstDropzone ? '100%' : (isDefaultDropzone ? 'auto' : '20px'),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: isFirstDropzone || isDefaultDropzone ? '5px' : '5px',
+        }}
+      >
+        <div className="dropzone-content">
+          {(isDefaultDropzone || isFirstDropzone) ? (
             showDivOptions ? (
               <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%' }}>
                 {divConfigurations.map((config) => (
@@ -590,34 +606,34 @@ const UnifiedDropZone = React.memo(({
                 ))}
               </div>
             ) : (
-          <div className="dropzone-buttons">
-            <button
-              className="dropzone-button configure-button"
-              onClick={handleConfigureClick}
+              <div className="dropzone-buttons">
+                <button
+                  className="dropzone-button configure-button"
+                  onClick={handleConfigureClick}
                   type="button"
-            >
+                >
                   <span className="material-symbols-outlined">
-                add
-              </span>
-            </button>
-            <button
-              className="dropzone-button library-button"
-              onClick={handleLibraryClick}
+                    add
+                  </span>
+                </button>
+                <button
+                  className="dropzone-button library-button"
+                  onClick={handleLibraryClick}
                   type="button"
-            >
+                >
                   <span className="material-symbols-outlined">
-                folder_open
-              </span>
-            </button>
-          </div>
+                    folder_open
+                  </span>
+                </button>
+              </div>
             )
-        ) : (
-          <div className="dropzone-text">
-            {isOver ? 'Drop here to add an element' : text || 'Drop here !'}
-          </div>
-        )}
+          ) : (
+            <div className="dropzone-text">
+              {isOver ? 'Drop here to add an element' : text || 'Drop here !'}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
       {showSectionPopup && (
         <SectionSelectionPopup
           onClose={() => setShowSectionPopup(false)}

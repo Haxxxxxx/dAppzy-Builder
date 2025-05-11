@@ -12,7 +12,7 @@ const Web3SectionPanel = ({ searchQuery }) => {
  //     label: 'Minting Section',
  //   },
     { 
-      imgSrc: './img/previewcomponent.png', 
+      imgSrc: './img/previsu-defi-dashboard.png', 
       configuration: 'defiSection',
       type: 'defiSection',
       id: 'defi-dashboard',
