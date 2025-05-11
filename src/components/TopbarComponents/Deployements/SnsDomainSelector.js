@@ -83,7 +83,7 @@ const ERROR_TYPES = {
 // Add debug logging utility
 const debugLog = (message, data = null) => {
   const timestamp = new Date().toISOString();
-  const logMessage = data 
+  const logMessage = data
     ? `[SNS Debug ${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`
     : `[SNS Debug ${timestamp}] ${message}`;
   console.log(logMessage);
@@ -93,7 +93,7 @@ const debugLog = (message, data = null) => {
 const validateAndFormatDomain = (domainName) => {
   // Remove .sol if present
   const baseName = domainName.replace(/\.sol$/, '');
-  
+
   // Basic validation
   if (!baseName || baseName.length === 0) {
     throw new Error('Invalid domain name');
@@ -108,21 +108,21 @@ const verifyDomain = async (connection, domainName, walletAddress) => {
   try {
     // Remove .sol suffix for hashing
     const baseName = domainName.replace(/\.sol$/, '');
-    debugLog('Base name for verification', { 
+    debugLog('Base name for verification', {
       domainName,
       baseName
     });
 
     // Get hashed name
     const hashedName = await getHashedName(baseName);
-    debugLog('Hashed name generated', { 
+    debugLog('Hashed name generated', {
       hashedName: hashedName.toString('hex')
     });
 
     // Get domain key
     const domainKey = await getNameAccountKey(hashedName);
-    debugLog('Domain key generated', { 
-      domainKey: domainKey.toBase58() 
+    debugLog('Domain key generated', {
+      domainKey: domainKey.toBase58()
     });
 
     try {
@@ -143,7 +143,7 @@ const verifyDomain = async (connection, domainName, walletAddress) => {
 
       // If not found in initial list, try to get domain state
       const domainState = await NameRegistryState.retrieve(connection, domainKey);
-      debugLog('Domain state retrieved', { 
+      debugLog('Domain state retrieved', {
         exists: !!domainState,
         owner: domainState?.owner?.toBase58(),
         state: domainState ? {
@@ -189,7 +189,7 @@ const updateDomainContent = async (connection, domainName, content, walletAddres
   try {
     // First verify domain exists and is owned by the user
     const domainKey = await verifyDomain(connection, domainName, walletAddress);
-    
+
     // Convert content to buffer
     const contentBuffer = Buffer.from(content, 'utf-8');
     debugLog('Content buffer created', {
@@ -293,7 +293,7 @@ const updateSnsDomainRecord = async (connection, formattedDomain, ipfsUrl, walle
   const recordType = 'content';
   const recordValue = ipfsUrl;
   const authority = new PublicKey(walletAddress);
-  
+
   // Validate all inputs
   if (!connection || !domainName || !recordType || !recordValue || !authority) {
     throw new Error('Missing required parameters for SNS record update');
@@ -389,8 +389,8 @@ const updateSnsDomainRecord = async (connection, formattedDomain, ipfsUrl, walle
     throw new Error('Transaction missing feePayer');
   }
 
-  debugLog('Prepared SNS content record update transaction', { 
-    blockhash, 
+  debugLog('Prepared SNS content record update transaction', {
+    blockhash,
     feePayer: authority.toBase58(),
     instructionCount: transaction.instructions.length
   });
@@ -420,13 +420,14 @@ const SnsDomainSelector = ({
   const [lastError, setLastError] = useState(null);
   const [primaryDomain, setPrimaryDomain] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isToggleActive, setIsToggleActive] = useState(false);
 
   // Initialize Solana connection with Helius configuration
   useEffect(() => {
     const initializeConnection = async () => {
       try {
         setConnectionStatus(CONNECTION_STATUS.CONNECTING);
-        
+
         if (RPC_ENDPOINTS.length === 0) {
           throw new Error('No RPC endpoints configured. Please add your Helius API key to your .env file.');
         }
@@ -441,7 +442,7 @@ const SnsDomainSelector = ({
           confirmTransactionInitialTimeout: Web3Configs.rpc.helius.snsConfig.confirmTransactionInitialTimeout,
           wsEndpoint: Web3Configs.rpc.helius.snsConfig.wsEndpoint()
         });
-        
+
         // Test the connection
         await conn.getVersion();
         setConnection(conn);
@@ -453,7 +454,7 @@ const SnsDomainSelector = ({
         console.error(`Failed to connect to Helius RPC:`, error);
         setConnectionError(error.message);
         setLastError(error);
-        
+
         // Handle specific error types
         if (error.message.includes('API key')) {
           setConnectionStatus(CONNECTION_STATUS.ERROR);
@@ -713,13 +714,13 @@ const SnsDomainSelector = ({
       }
 
       // Ensure we have the full domain name
-      const fullDomainName = typeof domainName === 'string' && domainName.endsWith('.sol') 
-        ? domainName 
+      const fullDomainName = typeof domainName === 'string' && domainName.endsWith('.sol')
+        ? domainName
         : `${domainName}.sol`;
-      
+
       const isPrimary = primaryDomain?.toBase58() === domainName;
-      
-      debugLog('Rendering domain card', { 
+
+      debugLog('Rendering domain card', {
         originalName: domainName,
         fullName: fullDomainName,
         isPrimary
@@ -729,10 +730,10 @@ const SnsDomainSelector = ({
         <div
           key={index}
           className={`domain-card ${selectedDomain === fullDomainName ? 'selected' : ''} ${isPrimary ? 'primary' : ''}`}
-          onClick={() => setSelectedDomain(fullDomainName)}
+          onClick={() => setSelectedDomain(selectedDomain === fullDomainName ? null : fullDomainName)}
         >
           <div className="radio-circle">
-            {selectedDomain === fullDomainName && <div className="radio-circle-inner" />}
+            <div className="radio-circle-inner" />
           </div>
           <p className="domain-text">{fullDomainName}</p>
           {isPrimary && <span className="primary-badge">Primary</span>}
@@ -771,53 +772,78 @@ const SnsDomainSelector = ({
 
   // Selection state
   return (
-    <div className="domain-selection-modal">
-      <button className="close-btn" onClick={onCancel}>×</button>
-
-      <h2>Choose an SNS Domain</h2>
-      <p className="subtitle">
-        Select your Solana Name Service domain to deploy your website.
-      </p>
-
-      {renderConnectionStatus()}
-      {renderErrorMessage()}
-
-      <p className="status">{status}</p>
-
-      <div className="domain-grid">{renderDomainCards()}
-
-      <div
-          key={1}
-          className={`domain-card ${selectedDomain === "Domain test" ? 'selected' : ''}`}
-          onClick={() => setSelectedDomain("Domain test")}
-        >
-          <div className="radio-circle">
-            {selectedDomain === "Domain test" && <div className="radio-circle-inner" />}
+    <div className='domain-selection-modal-bg'>
+      <div className="domain-selection-modal">
+        <div className="domain-selection-modal-header">
+          <div className="domain-selection-modal-header-title-container">
+            <h2 className="domain-selection-modal-header-title">Custom Domain</h2>
+            {renderConnectionStatus()}
+            {renderErrorMessage()}
           </div>
-          <p className="domain-text">Domain test </p>
+          <div className="domain-selection-modal-header-bot-container">
+            <img className='domain-selection-modal-header-bot-img' src='../img/sns-icon.png'></img>
+            <p className="domain-selection-modal-header-bot-text">powered by SNS</p>
+          </div>
         </div>
-      </div>
 
-      <div className="buttons">
-        <button className="cancel-btn" onClick={onCancel}>
-          Cancel
-        </button>
-        <button 
-          className="select-btn" 
-          onClick={handleSelectDomain}
-          disabled={!selectedDomain || connectionStatus !== CONNECTION_STATUS.CONNECTED}
-        >
-          Deploy to Selected Domain
-        </button>
-      </div>
+        <p className="domain-selection-modal-subtitle">
+          Select a domain to deploy your website:
+        </p>
 
-      <p className="no-domains-message">
-        If you don't own any SNS domains in your wallet, please visit{' '}
-        <a href="https://naming.bonfida.org/" target="_blank" rel="noopener noreferrer">
-          Bonfida
-        </a>{' '}
-        to purchase a domain.
-      </p>
+        <div className="domain-selection-modal-content-fetching-domains">
+          <p className='domain-selection-modal-content-fetching-domains-text'>Fetching domains...</p>
+
+          <div className="domain-selection-modal-content-fetching-domains-loader">
+
+          </div>
+        </div>
+
+        <div className="domain-grid">{renderDomainCards()}
+
+          <div
+            key={1}
+            className={`domain-card ${selectedDomain === "Domain test" ? 'selected' : ''}`}
+            onClick={() => setSelectedDomain("Domain test")}
+          >
+            {/*<div className="radio-circle">
+              {selectedDomain === "Domain test" && <div className="radio-circle-inner" />}
+            </div>*/}
+            <div className='toggle-domain-container'>
+              <div 
+                className={`toggle-switch ${isToggleActive ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsToggleActive(!isToggleActive);
+                }}
+              >
+                <div className="toggle-switch-inner" />
+              </div>
+            </div>
+            <p className="domain-text">test-domain.sol</p>
+          </div>
+        </div>
+
+        <div className="buttons">
+          <button className="cancel-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="select-btn"
+            onClick={handleSelectDomain}
+            disabled={!selectedDomain || connectionStatus !== CONNECTION_STATUS.CONNECTED}
+          >
+            Update Domain
+          </button>
+        </div>
+
+        <p className="no-domains-message">
+          If you don't own any SNS domains in your wallet, please visit{' '}
+          <a href="https://naming.bonfida.org/" target="_blank" rel="noopener noreferrer">
+            Bonfida
+          </a>{' '}
+          to purchase a domain.
+        </p>
+      </div>
     </div>
   );
 };

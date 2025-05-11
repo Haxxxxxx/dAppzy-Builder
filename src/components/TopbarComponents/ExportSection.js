@@ -55,7 +55,7 @@ function mergeDefaultsIntoElement(element) {
       ...element.styles,
     };
   }
-  
+
   // Handle CTA elements
   if (element.type === 'cta') {
     const ctaStyles = element.configuration === 'ctaTwo' ? ctaTwoStyles : ctaOneStyles;
@@ -132,27 +132,27 @@ function mergeDefaultsIntoElement(element) {
  */
 function processStylesForExport(styles) {
   const processedStyles = { ...styles };
-  
+
   // Handle vendor prefixes
   if (styles.transform) {
     processedStyles.WebkitTransform = styles.transform;
     processedStyles.MozTransform = styles.transform;
     processedStyles.msTransform = styles.transform;
   }
-  
+
   if (styles.transition) {
     processedStyles.WebkitTransition = styles.transition;
     processedStyles.MozTransition = styles.transition;
     processedStyles.msTransition = styles.transition;
   }
-  
+
   // Handle special cases
   if (styles.backgroundImage) {
     processedStyles.backgroundImage = styles.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, (match, url) => {
       return `url('${url}')`;
     });
   }
-  
+
   return processedStyles;
 }
 
@@ -313,7 +313,7 @@ function exportProject(elements, websiteSettings) {
               className: `${mappedElement.className || ''} section-${mappedElement.type}`.trim()
             });
           } else {
-          parent.children.push(mappedElement);
+            parent.children.push(mappedElement);
           }
         }
       } else {
@@ -326,7 +326,7 @@ function exportProject(elements, websiteSettings) {
 
   // Process elements and build HTML
   const hierarchicalElements = buildElementHierarchy(elements);
-  
+
   // Render each root element and its children recursively
   hierarchicalElements.forEach(element => {
     if (!processedElements.has(element.id)) {
@@ -341,11 +341,11 @@ function exportProject(elements, websiteSettings) {
         const button = element.children.find(child => child?.type === 'button');
 
         // Content container styles based on hero type
-        const contentContainerStyles = element.configuration === 'heroTwo' ? 
+        const contentContainerStyles = element.configuration === 'heroTwo' ?
           'display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: transparent' :
           element.configuration === 'heroThree' ?
-          'display: flex; justify-content: flex-start; align-items: flex-start; flex-direction: column; background-color: transparent; max-width: 40%; width: 40%' :
-          'display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: transparent; max-width: 40%; width: 40%';
+            'display: flex; justify-content: flex-start; align-items: flex-start; flex-direction: column; background-color: transparent; max-width: 40%; width: 40%' :
+            'display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: transparent; max-width: 40%; width: 40%';
 
         // Left content group
         const leftContentHtml = `
@@ -407,7 +407,7 @@ function exportProject(elements, websiteSettings) {
         const logo = element.children.find(child => child?.type === 'image');
         const spans = element.children.filter(child => child?.type === 'span');
         const buttons = element.children.filter(child => child?.type === 'button' || child?.type === 'connectWalletButton');
-        
+
         // Get base styles based on navbar configuration
         let baseNavbarStyles = {
           display: 'flex',
@@ -673,24 +673,24 @@ function exportProject(elements, websiteSettings) {
               ${paragraph ? `<div id="${paragraph.id}" style="font-size: 18px; line-height: 1.6; text-align: center; color: #4A4A4A; max-width: 600px; margin-bottom: 24px">${paragraph.content}</div>` : ''}
               <div style="display: flex; flex-flow: wrap; align-items: center; justify-content: center; gap: 16px; padding: 10px; margin: 10px 0px; position: relative">
                 ${buttons.map((button, index) => {
-                  const buttonStyles = {
-                    padding: '12px 24px',
-                    backgroundColor: 'rgb(51, 65, 85)',
-                    color: 'rgb(255, 255, 255)',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'text',
-                    transition: '0.2s',
-                    outline: 'none'
-                  };
-                  return `
+            const buttonStyles = {
+              padding: '12px 24px',
+              backgroundColor: 'rgb(51, 65, 85)',
+              color: 'rgb(255, 255, 255)',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'text',
+              transition: '0.2s',
+              outline: 'none'
+            };
+            return `
                     <div style="position: relative; box-sizing: border-box">
                       <button id="${button.id}" contenteditable="false" style="${styleObjectToString(buttonStyles)}">${button.content}</button>
                     </div>
                   `;
-                }).join('')}
+          }).join('')}
               </div>
             </div>
             ${image ? `
@@ -706,24 +706,24 @@ function exportProject(elements, websiteSettings) {
               ${title ? `<h2 id="${title.id}" style="font-size: 2rem; font-weight: bold; margin-bottom: 16px; color: #1a1a1a">${title.content}</h2>` : ''}
               <div style="display: flex; flex-flow: wrap; align-items: center; justify-content: center; gap: 16px; padding: 10px; margin: 10px 0px; position: relative">
                 ${buttons.map((button, index) => {
-                  const buttonStyles = {
-                    padding: '12px 24px',
-                    backgroundColor: 'rgb(51, 65, 85)',
-                    color: 'rgb(255, 255, 255)',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'text',
-                    transition: '0.2s',
-                    outline: 'none'
-                  };
-                  return `
+            const buttonStyles = {
+              padding: '12px 24px',
+              backgroundColor: 'rgb(51, 65, 85)',
+              color: 'rgb(255, 255, 255)',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'text',
+              transition: '0.2s',
+              outline: 'none'
+            };
+            return `
                     <div style="position: relative; box-sizing: border-box">
                       <button id="${button.id}" contenteditable="false" style="${styleObjectToString(buttonStyles)}">${button.content}</button>
                     </div>
                   `;
-                }).join('')}
+          }).join('')}
               </div>
             </div>`;
         }
@@ -732,13 +732,13 @@ function exportProject(elements, websiteSettings) {
         renderedContent = htmlContent;
       } else {
         renderedContent = renderElementToHtml({
-        ...element,
-        style: getStyleString(element),
-        className: element.className ? `${sanitizeClassName(element.className)} ${element.id}` : element.id,
-        ...(element.attributes || {}),
-        ...(element.dataAttributes || {}),
-        ...(element.events || {})
-      }, collectedStyles);
+          ...element,
+          style: getStyleString(element),
+          className: element.className ? `${sanitizeClassName(element.className)} ${element.id}` : element.id,
+          ...(element.attributes || {}),
+          ...(element.dataAttributes || {}),
+          ...(element.events || {})
+        }, collectedStyles);
       }
 
       if (renderedContent) {
@@ -761,8 +761,8 @@ function exportProject(elements, websiteSettings) {
       ${collectedStyles.map(style => `
         .${style.className} {
           ${Object.entries(style.styles)
-            .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
-            .join(';\n          ')}
+      .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+      .join(';\n          ')}
         }
       `).join('\n')}
 
@@ -894,7 +894,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       }
 
       const projectRef = doc(db, 'projects', sanitizedUserId, 'ProjectRef', sanitizedProjectId);
-      
+
       if (!Array.isArray(elements)) {
         setAutoSaveStatus('Error: Invalid elements data');
         return null;
@@ -945,34 +945,34 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       }, { merge: true });
 
       const fullHtml = exportProject(cleanedElements, cleanedWebsiteSettings);
-      
-      const htmlBlob = new Blob([fullHtml], { 
+
+      const htmlBlob = new Blob([fullHtml], {
         type: 'text/html;charset=utf-8'
       });
-      
-      const files = [{ 
-        file: htmlBlob, 
+
+      const files = [{
+        file: htmlBlob,
         fileName: 'index.html',
         type: 'text/html'
       }];
-      
+
       const metadata = {
         name: cleanedWebsiteSettings.siteTitle,
-        keyvalues: { 
+        keyvalues: {
           userId: sanitizedUserId,
           timestamp: new Date().toISOString(),
           size: htmlBlob.size
         },
       };
-      
+
       const ipfsHash = await pinDirectoryToPinata(files, metadata);
-      
+
       if (!ipfsHash) {
         throw new Error('No IPFS hash returned from Pinata');
       }
-      
+
       const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
-      
+
       await setDoc(projectRef, {
         ipfsUrl,
         ipfsHash,
@@ -990,7 +990,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
 
   const handlePublish = async () => {
     const ipfsUrl = await handleDeployToIPFS();
-    
+
     if (ipfsUrl) {
       if (onProjectPublished) {
         onProjectPublished(ipfsUrl);
@@ -1041,27 +1041,72 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       </span>
       <span className="autosave-status">{autoSaveStatus}</span>
       <div className="dropdown-container">
-        <button 
-          className="button" 
+        <button
+          className="button"
           onMouseEnter={() => setIsDropdownOpen(true)}
         >
           Publish
         </button>
         {isDropdownOpen && (
           <div className="dropdown-menu">
-            <button onClick={handlePublish} className="dropdown-item">
+            <div className='dropdown-menu-item'>
+              <p className='dropdown-menu-item-title'>Test Domain</p>
+              <div className='dropdown-menu-item-content'>
+                <div className='dropdown-menu-item-content-left'>
+                  <span class="material-symbols-outlined">
+                    experiment
+                  </span>
+                  <a className='dropdown-menu-item-content-left-text' href='' target='_blank'>ipfs://urltest</a>
+
+                </div>
+                <div className='dropdown-menu-item-content-toggle-box'>
+                  <label className="dropdown-menu-item-content-switch">
+                    <input type="checkbox" />
+                    <span className="dropdown-menu-item-content-slider dropdown-menu-item-content-round"></span>
+                  </label>
+                </div>
+
+              </div>
+
+            </div>
+            <div className='dropdown-menu-item'>
+              <p className='dropdown-menu-item-title'>Custom Domain</p>
+              <div className='dropdown-menu-item-content'>
+
+                <button
+                  onClick={handleSnsDeploy}
+                  className="dropdown-menu-item-content-button"
+                  disabled={!walletAddress}
+                >Add Domain</button>
+                {/*<div className='dropdown-menu-item-content-left'>
+                  <span class="material-symbols-outlined">
+                    language
+                  </span>
+                  <a className='dropdown-menu-item-content-left-text' href='' target='_blank'>ipfs://urltest</a>
+
+                </div>
+                <div className='dropdown-menu-item-content-toggle-box'>
+                  <label className="dropdown-menu-item-content-switch">
+                    <input type="checkbox" />
+                    <span className="dropdown-menu-item-content-slider dropdown-menu-item-content-round"></span>
+                  </label>
+                </div>*/}
+
+              </div>
+
+            </div>
+
+            <button className='dropdown-menu-button'>
+              Update
+            </button>
+            {/* <button onClick={handlePublish} className="dropdown-item">
               Publish to IPFS
-            </button>
-            <button 
-              onClick={handleSnsDeploy} 
-              className="dropdown-item"
-              disabled={!walletAddress}
-            >
-              Deploy to SNS
-            </button>
-            <button onClick={handleExport} className="dropdown-item">
+            </button>*/}
+
+
+            {/*<button onClick={handleExport} className="dropdown-item">
               Export Files
-            </button>
+            </button>*/}
           </div>
         )}
       </div>
