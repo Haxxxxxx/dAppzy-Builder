@@ -51,8 +51,7 @@ import {
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
-
-
+import { elementTypes } from '../../core/configs/elementConfigs';
 const warnedElements = new Set();
 
 export const renderElement = (
@@ -64,23 +63,38 @@ export const renderElement = (
   handlePanelToggle,
   selectedElement,
   selectedStyle,
-  isPreviewMode = true, // Default to true for static rendering
+  isPreviewMode = true,
   handleOpenMediaPanel = () => {}
 ) => {
-
   if (!element || !element.id || !element.type) {
-    return null; // Skip invalid elements
+    return null;
   }
+
   const { id, type, children, configuration } = element;
 
+  // Get base configuration and structure configuration
+  const baseConfig = elementTypes[type];
+  const structureConfig = configuration ? structureConfigurations[configuration] : null;
+
+  // Merge styles from base config, structure config, and element
+  const mergedStyles = {
+    ...(baseConfig?.defaultStyles || {}),
+    ...(structureConfig?.styles || {}),
+    ...(element.styles || {})
+  };
+
+  // Single method for rendering children
   const renderChildren = (resolvedChildren) => {
     if (!resolvedChildren || resolvedChildren.length === 0) {
       return null;
     }
+
+    // If children are IDs, resolve them from elements array
+    if (typeof resolvedChildren[0] === 'string') {
     return resolvedChildren
-      .filter((child) => child)
-      .map((child) =>
-        renderElement(
+        .map(childId => elements.find(el => el.id === childId))
+        .filter(Boolean)
+        .map(child => renderElement(
           child,
           elements,
           contentListWidth,
@@ -89,9 +103,26 @@ export const renderElement = (
           handlePanelToggle,
           selectedElement,
           selectedStyle,
-          isPreviewMode
-        )
-      );
+          isPreviewMode,
+          handleOpenMediaPanel
+        ));
+    }
+
+    // If children are direct element objects
+    return resolvedChildren
+      .filter(Boolean)
+      .map(child => renderElement(
+        child,
+        elements,
+        contentListWidth,
+        setSelectedElement,
+        setElements,
+        handlePanelToggle,
+        selectedElement,
+        selectedStyle,
+        isPreviewMode,
+        handleOpenMediaPanel
+      ));
   };
 
   const renderConfiguredChildren = (configKey) => {
@@ -128,30 +159,37 @@ export const renderElement = (
     }
     return null;
   }
+
+  // Component map with unified configuration handling
   const componentMap = {
-    paragraph: <Paragraph id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    heading: <Heading id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    paragraph: <Paragraph id={id} key={id} content={element.content} styles={mergedStyles} />,
+    heading: <Heading id={id} key={id} content={element.content} styles={mergedStyles} />,
     section: (
-      <Section id={id} key={id} styles={{ ...element.styles }}>
-        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      <Section
+        id={id}
+        key={id}
+        styles={mergedStyles}
+        settings={element.settings}
+      >
+        {children ? renderChildren(children) : null}
       </Section>
     ),
     div: (
-      <Div id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel}>
-        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      <Div id={id} key={id} styles={mergedStyles} handleOpenMediaPanel={handleOpenMediaPanel}>
+        {children ? renderChildren(children) : null}
       </Div>
     ),
-    button: <Button id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    span: <Span id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    image: <Image id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
-    input: <Input id={id} key={id} styles={{ ...element.styles }} />,
-    form: <Form id={id} key={id} styles={{ ...element.styles }} />,
+    button: <Button id={id} key={id} content={element.content} styles={mergedStyles} />,
+    span: <Span id={id} key={id} content={element.content} styles={mergedStyles} />,
+    image: <Image id={id} key={id} styles={mergedStyles} handleOpenMediaPanel={handleOpenMediaPanel} />,
+    input: <Input id={id} key={id} styles={mergedStyles} />,
+    form: <Form id={id} key={id} styles={mergedStyles} />,
     list: (
       <List
         id={id}
         key={id}
         type="ul"
-        styles={{ ...element.styles }}
+        styles={mergedStyles}
         configuration={configuration}
       />
     ),
@@ -160,10 +198,13 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+        children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        styles={mergedStyles}
+        settings={element.settings}
+        uniqueId={id}
       />
     ),
     hero: (
@@ -171,9 +212,12 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
+        children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        styles={mergedStyles}
+        settings={element.settings}
       />
     ),
     footer: (
@@ -191,10 +235,12 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+        children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        styles={mergedStyles}
+        settings={element.settings}
       />
     ),
     ContentSection: (
@@ -202,38 +248,38 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+        children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
       />
     ),
-    table: <Table id={id} key={id} styles={{ ...element.styles }} />,
-    tableRow: <TableRow id={id} key={id} styles={{ ...element.styles }} />,
-    tableCell: <TableCell id={id} key={id} styles={{ ...element.styles }} />,
-    anchor: <Anchor id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    textarea: <Textarea id={id} key={id} styles={{ ...element.styles }} />,
-    select: <Select id={id} key={id} styles={{ ...element.styles }} />,
-    video: <Video id={id} key={id} styles={{ ...element.styles }} />,
-    audio: <Audio id={id} key={id} styles={{ ...element.styles }} />,
-    iframe: <Iframe id={id} key={id} styles={{ ...element.styles }} />,
-    label: <Label id={id} key={id} styles={{ ...element.styles }} />,
-    fieldset: <Fieldset id={id} key={id} styles={{ ...element.styles }} />,
-    legend: <Legend id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    progress: <Progress id={id} key={id} styles={{ ...element.styles }} />,
-    meter: <Meter id={id} key={id} styles={{ ...element.styles }} />,
-    blockquote: <Blockquote id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    code: <Code id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    pre: <Pre id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    hr: <Hr id={id} key={id} styles={{ ...element.styles }} />,
-    caption: <Caption id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
+    table: <Table id={id} key={id} styles={mergedStyles} />,
+    tableRow: <TableRow id={id} key={id} styles={mergedStyles} />,
+    tableCell: <TableCell id={id} key={id} styles={mergedStyles} />,
+    anchor: <Anchor id={id} key={id} content={element.content} styles={mergedStyles} />,
+    textarea: <Textarea id={id} key={id} styles={mergedStyles} />,
+    select: <Select id={id} key={id} styles={mergedStyles} />,
+    video: <Video id={id} key={id} styles={mergedStyles} />,
+    audio: <Audio id={id} key={id} styles={mergedStyles} />,
+    iframe: <Iframe id={id} key={id} styles={mergedStyles} />,
+    label: <Label id={id} key={id} styles={mergedStyles} />,
+    fieldset: <Fieldset id={id} key={id} styles={mergedStyles} />,
+    legend: <Legend id={id} key={id} content={element.content} styles={mergedStyles} />,
+    progress: <Progress id={id} key={id} styles={mergedStyles} />,
+    meter: <Meter id={id} key={id} styles={mergedStyles} />,
+    blockquote: <Blockquote id={id} key={id} content={element.content} styles={mergedStyles} />,
+    code: <Code id={id} key={id} content={element.content} styles={mergedStyles} />,
+    pre: <Pre id={id} key={id} content={element.content} styles={mergedStyles} />,
+    hr: <Hr id={id} key={id} styles={mergedStyles} />,
+    caption: <Caption id={id} key={id} content={element.content} styles={mergedStyles} />,
     mintingSection: (
       <DraggableWeb3Elements
         id={id}
         key={id}
         type={'candyMachine'}
         configuration={configuration}
-        children={renderConfiguredChildren(configuration)}
+        children={children ? renderChildren(children) : null}
         setElements={setElements}
         setSelectedElement={setSelectedElement}
         handlePanelToggle={handlePanelToggle}
@@ -241,14 +287,14 @@ export const renderElement = (
         handleOpenMediaPanel={handleOpenMediaPanel}
       />
     ),
-    date: <DateComponent id={id} key={id} styles={{ ...element.styles }} />,
+    date: <DateComponent id={id} key={id} styles={mergedStyles} />,
     connectWalletButton: (
       <ConnectWalletButton
         id={id}
         key={id}
         type={'connectWalletButton'}
         content={element.content}
-        styles={{ ...element.styles }}
+        styles={mergedStyles}
         handlePanelToggle={handlePanelToggle}
       />
     ),
@@ -258,44 +304,46 @@ export const renderElement = (
         key={id}
         type={'connectWalletButton'}
         content={element.content}
-        styles={{ ...element.styles }}
+        styles={mergedStyles}
         handlePanelToggle={handlePanelToggle}
       />
     ),
     container: (
-      <Container id={id} key={id} styles={{ ...element.styles }}>
-        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      <Container id={id} key={id} styles={mergedStyles}>
+        {children ? renderChildren(children) : null}
       </Container>
     ),
     grid: (
-      <GridLayout id={id} key={id} styles={{ ...element.styles }}>
-        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      <GridLayout id={id} key={id} styles={mergedStyles}>
+        {children ? renderChildren(children) : null}
       </GridLayout>
     ),
     hflex: (
-      <HFlexLayout id={id} key={id} styles={{ ...element.styles }}>
-        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      <HFlexLayout id={id} key={id} styles={mergedStyles}>
+        {children ? renderChildren(children) : null}
       </HFlexLayout>
     ),
     vflex: (
-      <VFlexLayout id={id} key={id} styles={{ ...element.styles }}>
-        {children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+      <VFlexLayout id={id} key={id} styles={mergedStyles}>
+        {children ? renderChildren(children) : null}
       </VFlexLayout>
     ),
-    line: <Line id={id} key={id} styles={{ ...element.styles }} />,
-    linkblock: <LinkBlock id={id} key={id} content={element.content} styles={{ ...element.styles }} />,
-    youtube: <YouTubeVideo id={id} key={id} styles={{ ...element.styles }} />,
-    icon: <Icon id={id} key={id} styles={{ ...element.styles }} handleOpenMediaPanel={handleOpenMediaPanel} />,
+    line: <Line id={id} key={id} styles={mergedStyles} />,
+    linkblock: <LinkBlock id={id} key={id} content={element.content} styles={mergedStyles} />,
+    youtube: <YouTubeVideo id={id} key={id} styles={mergedStyles} />,
+    icon: <Icon id={id} key={id} styles={mergedStyles} handleOpenMediaPanel={handleOpenMediaPanel} />,
     defiSection: (
       <DraggableDeFi
         id={id}
         key={id}
-        configuration={configuration}
-        children={children ? renderChildren(children.map((childId) => elements.find((el) => el.id === childId))) : null}
+        configuration={configuration || 'defiSection'}
+        children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         isEditing={false}
+        styles={mergedStyles}
+        uniqueId={id}
       />
     ),
     defiModule: (
@@ -303,14 +351,14 @@ export const renderElement = (
         id={id}
         key={id}
         content={typeof element.content === 'string' ? element.content : JSON.stringify(element.content)}
-        styles={{ ...element.styles }}
+        styles={mergedStyles}
         configuration={element.configuration || configuration}
       />
     ),
   };
 
-  // Fallback: render a simple div if type is not found in the map
-  const component = componentMap[type] || <div key={id}>Unsupported element type: {type}</div>;
+  // Get the appropriate component or fallback
+  const Component = componentMap[type] || <div key={id}>Unsupported element type: {type}</div>;
 
-  return <React.Fragment key={id}>{component}</React.Fragment>;
+  return <React.Fragment key={id}>{Component}</React.Fragment>;
 };

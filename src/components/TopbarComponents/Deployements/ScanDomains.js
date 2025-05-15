@@ -226,11 +226,11 @@ const ScanDomains = ({
       const isEnabled = enabledDomains[domainName] || false;
 
       return (
-        <div
-          key={index}
+      <div
+        key={index}
           className={`domain-card ${isEnabled ? 'selected' : ''}`}
           onClick={() => handleDomainToggle(domainName)}
-        >
+      >
           <div className="toggle-domain-container">
             <div 
               className={`toggle-switch ${isEnabled ? 'active' : ''}`}
@@ -241,9 +241,9 @@ const ScanDomains = ({
             >
               <div className="toggle-switch-inner" />
             </div>
-          </div>
-          <p className="domain-text">{domainName}</p>
         </div>
+        <p className="domain-text">{domainName}</p>
+      </div>
       );
     });
   };
@@ -255,11 +255,11 @@ const ScanDomains = ({
     return (
       <div className="domain-selection-modal-bg">
         <div className="domain-selection-modal deployment-modal">
-          <button className="close-btn" onClick={onCancel}>×</button>
-          <div className="deployment-status">
-            <div className="spinner" />
-            <h2>Deployment in Progress</h2>
-            <p>Your project is currently being deployed. This may take a few moments.</p>
+        <button className="close-btn" onClick={onCancel}>×</button>
+        <div className="deployment-status">
+          <div className="spinner" />
+          <h2>Deployment in Progress</h2>
+          <p>Your project is currently being deployed. This may take a few moments.</p>
           </div>
         </div>
       </div>
@@ -270,11 +270,11 @@ const ScanDomains = ({
     return (
       <div className="domain-selection-modal-bg">
         <div className="domain-selection-modal deployment-modal">
-          <button className="close-btn" onClick={onCancel}>×</button>
-          <div className="deployment-status">
-            <div className="check-circle" />
-            <h2>Deployment Complete</h2>
-            <p>Your project has been successfully deployed and is now live.</p>
+        <button className="close-btn" onClick={onCancel}>×</button>
+        <div className="deployment-status">
+          <div className="check-circle" />
+          <h2>Deployment Complete</h2>
+          <p>Your project has been successfully deployed and is now live.</p>
           </div>
         </div>
       </div>
@@ -284,30 +284,30 @@ const ScanDomains = ({
   // Otherwise, "SELECTING"
   return (
     <div className="domain-selection-modal-bg">
-      <div className="domain-selection-modal">
-        <button className="close-btn" onClick={onCancel}>×</button>
+    <div className="domain-selection-modal">
+      <button className="close-btn" onClick={onCancel}>×</button>
 
-        <h2>Choose a Domain</h2>
-        <p className="subtitle">
+      <h2>Choose a Domain</h2>
+      <p className="subtitle">
           Select your Unstoppable Domain or IPFS fallback to deploy on IPFS.
-        </p>
+      </p>
 
-        <p className="status">{status}</p>
+      <p className="status">{status}</p>
 
         {renderDomainCards()}
 
-        <div className="buttons">
-          <button className="cancel-btn" onClick={onCancel}>
-            Cancel
-          </button>
+      <div className="buttons">
+        <button className="cancel-btn" onClick={onCancel}>
+          Cancel
+        </button>
           <button 
             className="select-btn" 
             onClick={handleSelectDomain}
             disabled={!selectedDomain}
           >
-            Select Domain
-          </button>
-        </div>
+          Select Domain
+        </button>
+      </div>
 
         <p className="no-domains-message">
           If you don't own any Unstoppable Domains NFTs in your wallet. Please visit{' '}

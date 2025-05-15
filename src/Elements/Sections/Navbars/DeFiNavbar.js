@@ -16,16 +16,26 @@ const DeFiNavbar = ({
   const navRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const [isDropHandled, setIsDropHandled] = useState(false);
 
-  const { elements, updateStyles, setElements, findElementById, setSelectedElement, addNewElement } = useContext(EditableContext);
+  const {generateUniqueId, elements, updateStyles, setElements, findElementById, setSelectedElement, addNewElement } = useContext(EditableContext);
 
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: navRef,
-    onDropItem: (droppedItem) => handleNavbarDrop(droppedItem, uniqueId),
+    onDropItem: (droppedItem) => {
+      // Skip if drop was already handled by a drop zone
+      if (isDropHandled || !droppedItem) return;
+      
+      const navbarElement = findElementById(uniqueId, elements);
+      if (!navbarElement) return;
+      
+      // Add to the end of the navbar
+      handleNavbarDrop(droppedItem, navbarElement.children?.length || 0);
+    }
   });
 
-  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
+  const { activeDrop, onDragStart, onDragOver, onDragEnd } = useReorderDrop(
     findElementById,
     elements,
     setElements
@@ -69,106 +79,82 @@ const DeFiNavbar = ({
   }, [children, navbarElement, updateStyles]);
 
   // Handle dropping new elements
-  const handleNavbarDrop = (droppedItem, parentId = uniqueId) => {
-    console.log('handleNavbarDrop called with:', droppedItem, parentId);
-    
-    if (droppedItem.id) {
-      console.log('Item already has an ID, skipping');
-      return;
-    }
+  const handleNavbarDrop = (item, index, groupType) => {
+    if (!item) return;
 
-    // Default button configuration
-    const defaultButtonConfig = {
-      content: 'New Button',
-      type: 'button',
-      styles: {
-        backgroundColor: '#5C4EFA',
-        color: '#FFFFFF',
-        padding: '8px 16px',
-        borderRadius: '8px',
-        border: 'none',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: '500',
-        transition: 'all 0.2s ease',
-        display: 'inline-block',
-        textAlign: 'center',
-        textDecoration: 'none',
-        outline: 'none',
-        boxShadow: 'none',
-        margin: '0',
-        width: 'auto',
-        height: 'auto',
-        lineHeight: '1.5',
-        fontFamily: 'inherit',
-        '&:hover': {
-          backgroundColor: '#4a3ed9'
-        }
+    // Get the current navbar element
+    const navbarElement = findElementById(uniqueId, elements);
+    if (!navbarElement) return;
+
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Add the new element
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      uniqueId,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: item.styles || {}
       }
-    };
-
-    // Find existing buttons to get their styles
-    const existingButtons = children?.filter(child => child.type === 'button' || child.type === 'connectWalletButton');
-    const buttonStyles = existingButtons?.[0]?.styles || defaultButtonConfig.styles;
-
-    console.log('Adding new element:', droppedItem.type);
-    const newId = addNewElement(
-      droppedItem.type,
-      droppedItem.level || 1,
-      null,
-      parentId
     );
 
-    // If the dropped element is a button, apply the existing button styles and ensure all required properties
-    if (droppedItem.type === 'button') {
-      console.log('Processing button element');
-      setElements((prev) =>
-        prev.map((el) => {
-          if (el.id === newId) {
-            return {
-              ...el,
-              content: el.content || defaultButtonConfig.content,
-              type: 'button',
-              styles: { ...buttonStyles },
-              configuration: el.configuration || '',
-              className: el.className || '',
-              attributes: el.attributes || {},
-              dataAttributes: el.dataAttributes || {},
-              events: el.events || {},
-              children: el.children || []
-            };
-          }
-          return el;
-        })
-      );
-    }
+    // Update the parent element's children array while preserving existing elements
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === uniqueId) {
+          // Create a new array for the children, maintaining existing ones
+          const existingChildren = [...(el.children || [])];
+          
+          // Insert the new element ID at the specified index
+          existingChildren.splice(index, 0, elementId);
 
-    // Update parent element's children array
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === parentId
-          ? { ...el, children: [...(el.children || []), newId] }
-          : el
-      )
-    );
+          return {
+            ...el,
+            children: existingChildren
+          };
+        }
+        return el;
+      });
 
-    console.log('Element added successfully with ID:', newId);
+      return updatedElements;
+    });
+
+    // Select the new element
+    setSelectedElement({ id: elementId, type: item.type });
   };
 
-  // Render children with drag and drop support
+  // Modify the renderChildren function to properly handle the logo group
   const renderChildren = () => {
     if (!children || children.length === 0) return null;
 
+    // Get the current navbar element
+    const navbarElement = findElementById(uniqueId, elements);
+    if (!navbarElement) return null;
+
+    // Get all children elements
+    const allChildren = navbarElement.children
+      .map(childId => findElementById(childId, elements))
+      .filter(Boolean);
+
     // Group children by their intended position
-    const logoGroup = children.slice(0, 2);
-    const walletGroup = children.slice(2);
+    const logoGroup = allChildren.filter(child => 
+      child.type === 'image' || child.type === 'span'
+    );
+    const walletGroup = allChildren.filter(child => 
+      child.type === 'button' || child.type === 'connectWalletButton'
+    );
 
     return (
       <>
         {/* Logo and Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {logoGroup.map((child, index) => (
-            <React.Fragment key={child.id}>
+            <React.Fragment key={child.id || `logo-group-${index}`}>
               {activeDrop && activeDrop.containerId === uniqueId && activeDrop.index === index && (
                 <div
                   className="drop-placeholder"
@@ -183,7 +169,15 @@ const DeFiNavbar = ({
                     fontFamily: 'Montserrat',
                   }}
                   onDragOver={(e) => onDragOver(e, uniqueId, index)}
-                  onDrop={(e) => onDrop(e, uniqueId)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDropHandled(true);
+                    const item = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    handleNavbarDrop(item, index);
+                    // Reset the drop handled state after a short delay
+                    setTimeout(() => setIsDropHandled(false), 100);
+                  }}
                 >
                   Drop here – element will be dropped here
                 </div>
@@ -194,10 +188,12 @@ const DeFiNavbar = ({
                 onDragOver={(e) => onDragOver(e, uniqueId, index)}
                 onDragEnd={onDragEnd}
                 style={{ display: 'inline-block' }}
+                key={child.id || `logo-element-${index}`}
               >
                 {child.type === 'image' && (
                   <Image
                     id={child.id}
+                    key={child.id}
                     src={child.content}
                     styles={{
                       width: '32px',
@@ -213,6 +209,7 @@ const DeFiNavbar = ({
                 {child.type === 'span' && (
                   <Span
                     id={child.id}
+                    key={child.id}
                     content={child.content}
                     style={{
                       color: '#fff',
@@ -231,7 +228,7 @@ const DeFiNavbar = ({
         {/* Connect Wallet Button and Other Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {walletGroup.map((child, index) => (
-            <React.Fragment key={child.id}>
+            <React.Fragment key={child.id || `wallet-group-${index}`}>
               {activeDrop && activeDrop.containerId === uniqueId && activeDrop.index === logoGroup.length + index && (
                 <div
                   className="drop-placeholder"
@@ -246,7 +243,15 @@ const DeFiNavbar = ({
                     fontFamily: 'Montserrat',
                   }}
                   onDragOver={(e) => onDragOver(e, uniqueId, logoGroup.length + index)}
-                  onDrop={(e) => onDrop(e, uniqueId)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDropHandled(true);
+                    const item = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    handleNavbarDrop(item, logoGroup.length + index);
+                    // Reset the drop handled state after a short delay
+                    setTimeout(() => setIsDropHandled(false), 100);
+                  }}
                 >
                   Drop here – element will be dropped here
                 </div>
@@ -257,10 +262,12 @@ const DeFiNavbar = ({
                 onDragOver={(e) => onDragOver(e, uniqueId, logoGroup.length + index)}
                 onDragEnd={onDragEnd}
                 style={{ display: 'inline-block' }}
+                key={child.id || `wallet-element-${index}`}
               >
                 {child.type === 'connectWalletButton' ? (
                   <ConnectWalletButton
                     id={child.id}
+                    key={child.id}
                     content={child.content}
                     styles={{
                       ...child.styles,
@@ -271,6 +278,7 @@ const DeFiNavbar = ({
                 ) : child.type === 'button' ? (
                   <Button
                     id={child.id}
+                    key={child.id}
                     content={child.content}
                     styles={child.styles}
                     onClick={(e) => handleElementClick(e, child.id)}
@@ -279,31 +287,6 @@ const DeFiNavbar = ({
               </span>
             </React.Fragment>
           ))}
-          {activeDrop && activeDrop.containerId === uniqueId && (
-            <div
-              style={{ height: '40px', width: '100%' }}
-              onDragOver={(e) => onDragOver(e, uniqueId, children.length)}
-              onDrop={(e) => onDrop(e, uniqueId)}
-            >
-              {activeDrop.index === children.length && (
-                <div
-                  className="drop-placeholder"
-                  style={{
-                    padding: '8px',
-                    border: '2px dashed #5C4EFA',
-                    textAlign: 'center',
-                    fontStyle: 'italic',
-                    backgroundColor: 'transparent',
-                    width: '100%',
-                    margin: '5px',
-                    fontFamily: 'Montserrat',
-                  }}
-                >
-                  Drop here – element will be dropped here
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Compact Menu */}
@@ -316,6 +299,7 @@ const DeFiNavbar = ({
                 color: '#fff',
               }}
               onClick={toggleMenu}
+              key="menu-toggle"
             >
               ☰
             </div>
@@ -333,12 +317,14 @@ const DeFiNavbar = ({
                   gap: '16px',
                   zIndex: 1000,
                 }}
+                key="menu-content"
               >
                 {walletGroup.map((child) => (
-                  <React.Fragment key={child.id}>
+                  <React.Fragment key={child.id || `menu-item-${child.type}`}>
                     {child.type === 'connectWalletButton' ? (
                       <ConnectWalletButton
                         id={child.id}
+                        key={child.id}
                         content={child.content}
                         styles={child.styles}
                         onClick={(e) => handleElementClick(e, child.id)}
@@ -346,6 +332,7 @@ const DeFiNavbar = ({
                     ) : child.type === 'button' ? (
                       <Button
                         id={child.id}
+                        key={child.id}
                         content={child.content}
                         styles={child.styles}
                         onClick={(e) => handleElementClick(e, child.id)}
@@ -395,8 +382,49 @@ const DeFiNavbar = ({
     e.stopPropagation();
     const element = findElementById(elementId, elements);
     if (element) {
-      setSelectedElement(element);
+      // Ensure we're passing the full element data including its position in the navbar
+      const navbarElement = findElementById(uniqueId, elements);
+      const elementIndex = navbarElement?.children?.indexOf(elementId) ?? -1;
+      
+      setSelectedElement({
+        ...element,
+        parentId: uniqueId,
+        index: elementIndex,
+        navbarId: uniqueId
+      });
     }
+  };
+
+  // Add this new function to handle element updates
+  const handleElementUpdate = (elementId, updates) => {
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === elementId) {
+          return {
+            ...el,
+            ...updates,
+            // Preserve the parent-child relationship
+            parentId: el.parentId,
+            children: el.children
+          };
+        }
+        return el;
+      });
+
+      // Ensure the navbar's children array is maintained
+      const navbarElement = updatedElements.find(el => el.id === uniqueId);
+      if (navbarElement) {
+        const updatedNavbar = {
+          ...navbarElement,
+          children: navbarElement.children || []
+        };
+        return updatedElements.map(el => 
+          el.id === uniqueId ? updatedNavbar : el
+        );
+      }
+
+      return updatedElements;
+    });
   };
 
   return (

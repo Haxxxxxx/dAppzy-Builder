@@ -2,7 +2,12 @@
 
 let elementCounter = 0;
 
-export const generateUniqueId = (type) => {
+export const generateUniqueId = (type = 'element') => {
+  if (!type) {
+    console.warn('generateUniqueId called without type, using default "element"');
+    type = 'element';
+  }
+  
   elementCounter += 1;
   const timestamp = Date.now();
   const randomPart = Math.random().toString(36).substr(2, 5);

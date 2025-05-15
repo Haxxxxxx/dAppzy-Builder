@@ -19,7 +19,7 @@ import { SecurityManager } from '../../../security/securityManager';
 export function renderNavbar(navbarElement, context) {
   const { id, configuration, children = [], styles: customStyles = {} } = navbarElement;
 
-  // 1. Group children by type with improved type safety
+  // 1. Group children by type with improved type safety and ID handling
   const logo = children.find(c => c?.type === 'image');
   const spans = children.filter(c => c?.type === 'span');
   const brand = spans[0];
@@ -42,16 +42,18 @@ export function renderNavbar(navbarElement, context) {
     buttonsContainer: StyleManager.applyStyles(styleConfig.buttonsContainer, {}, 'buttonsContainer')
   };
 
-  // 4. Render a single navigation link with improved accessibility
+  // 4. Render a single navigation link with improved accessibility and ID handling
   const renderLink = (link, index) => {
     if (!link?.content) return null;
 
     const sanitizedContent = SecurityManager.sanitizeInput(link.content);
     const sanitizedHref = SecurityManager.sanitizeUrl(link.href || '#');
+    const linkId = link.id || `${id}-link-${index}`;
 
     return (
       <a
-        key={`${id}-link-${index}`}
+        key={linkId}
+        id={linkId}
         href={sanitizedHref}
         style={appliedStyles.link}
         onClick={(e) => {
@@ -68,12 +70,13 @@ export function renderNavbar(navbarElement, context) {
     );
   };
 
-  // 5. Render a single button with improved accessibility and event handling
+  // 5. Render a single button with improved accessibility and ID handling
   const renderButton = (button, index) => {
     if (!button?.content) return null;
 
     const buttonContent = typeof button.content === 'object' ? button.content.text : button.content;
     const sanitizedContent = SecurityManager.sanitizeInput(buttonContent);
+    const buttonId = button.id || `${id}-button-${index}`;
     const buttonTypeStyle = StyleManager.applyStyles(
       index === 0 ? styleConfig.primaryButton : styleConfig.secondaryButton,
       button.styles,
@@ -82,7 +85,8 @@ export function renderNavbar(navbarElement, context) {
 
     return (
       <button
-        key={`${id}-button-${index}`}
+        key={buttonId}
+        id={buttonId}
         style={buttonTypeStyle}
         onClick={() => context.onButtonClick?.(button)}
         onKeyPress={(e) => e.key === 'Enter' && context.onButtonClick?.(button)}
@@ -95,15 +99,16 @@ export function renderNavbar(navbarElement, context) {
     );
   };
 
-  // 6. Render the logo with improved error handling and accessibility
+  // 6. Render the logo with improved error handling and ID handling
   const renderLogo = () => {
     if (!logo?.src) return null;
 
     const sanitizedSrc = SecurityManager.sanitizeUrl(logo.src);
     const sanitizedAlt = SecurityManager.sanitizeInput(logo.alt || brand?.content || 'Logo');
+    const logoId = logo.id || `${id}-logo`;
 
     return (
-      <div className="navbar-logo" role="img" aria-label={sanitizedAlt}>
+      <div className="navbar-logo" role="img" aria-label={sanitizedAlt} id={logoId}>
         <img
           src={sanitizedSrc}
           alt={sanitizedAlt}
@@ -118,7 +123,7 @@ export function renderNavbar(navbarElement, context) {
     );
   };
 
-  // 7. Render the navbar with improved structure and accessibility
+  // 7. Render the navbar with improved structure and ID handling
   return (
     <nav 
       id={id}
@@ -127,10 +132,10 @@ export function renderNavbar(navbarElement, context) {
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="navbar-brand-container">
+      <div className="navbar-brand-container" id={`${id}-brand-container`}>
         {renderLogo()}
         {brand && (
-          <div className="navbar-brand">
+          <div className="navbar-brand" id={brand.id || `${id}-brand`}>
             <span 
               style={appliedStyles.brand}
               aria-label={SecurityManager.sanitizeInput(brand.content)}
@@ -147,6 +152,7 @@ export function renderNavbar(navbarElement, context) {
           style={appliedStyles.linksContainer}
           role="navigation"
           aria-label="Navigation links"
+          id={`${id}-links`}
         >
           {links.map(renderLink)}
         </div>
@@ -158,9 +164,10 @@ export function renderNavbar(navbarElement, context) {
           style={appliedStyles.buttonsContainer}
           role="group"
           aria-label="Action buttons"
+          id={`${id}-buttons`}
         >
           {buttons.map(renderButton)}
-      </div>
+        </div>
       )}
     </nav>
   );

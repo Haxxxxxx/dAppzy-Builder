@@ -137,6 +137,7 @@ export const NavbarConfigurations = {
     },
     children: [
       {
+        id: 'defi-navbar-logo',
         type: 'image',
         content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
         styles: {
@@ -147,6 +148,7 @@ export const NavbarConfigurations = {
         }
       },
       { 
+        id: 'defi-navbar-title',
         type: 'span', 
         content: 'DeFi Dashboard', 
         styles: { 
@@ -157,6 +159,7 @@ export const NavbarConfigurations = {
         } 
       },
       {
+        id: 'defi-navbar-wallet',
         type: 'connectWalletButton',
         content: 'Connect Wallet',
         styles: {

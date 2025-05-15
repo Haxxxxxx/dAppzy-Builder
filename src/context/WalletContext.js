@@ -36,7 +36,11 @@ export const WalletProvider = ({ children }) => {
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProviderBase wallets={wallets} autoConnect>
+      <WalletProviderBase 
+        wallets={wallets} 
+        autoConnect={false}  // Disable auto-connect
+        localStorageKey="walletAdapter"  // Add a specific key for wallet storage
+      >
         <WalletContextProvider>{children}</WalletContextProvider>
       </WalletProviderBase>
     </ConnectionProvider>
@@ -52,6 +56,7 @@ const WalletContextProvider = ({ children }) => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [error, setError] = useState(null);
 
+  // Only update wallet state when explicitly connected
   useEffect(() => {
     if (connected && publicKey) {
       const address = publicKey.toString();
@@ -65,11 +70,6 @@ const WalletContextProvider = ({ children }) => {
         setBalance(100); // Mock balance
         setIsLoading(false);
       }, 1000);
-    } else {
-      setWalletAddress('');
-      setBalance(0);
-      setWalletId('');
-      setIsWalletConnected(false);
     }
   }, [connected, publicKey]);
 
@@ -87,13 +87,15 @@ const WalletContextProvider = ({ children }) => {
           setIsWalletConnected(true);
         }
       } else if (window.solana) {
-        // Handle Solana wallet
-        const { publicKey } = await window.solana.connect();
-        if (publicKey) {
-          const address = publicKey.toString();
-          setWalletAddress(address);
-          setWalletId(address);
-          setIsWalletConnected(true);
+        // Handle Solana wallet - only connect when explicitly requested
+        if (window.solana.isPhantom) {
+          const { publicKey } = await window.solana.connect();
+          if (publicKey) {
+            const address = publicKey.toString();
+            setWalletAddress(address);
+            setWalletId(address);
+            setIsWalletConnected(true);
+          }
         }
       } else {
         throw new Error('No supported wallet found');
@@ -149,4 +151,6 @@ const WalletContextProvider = ({ children }) => {
   };
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
-}; 
+};
+
+export { WalletContext, WalletContextProvider }; 

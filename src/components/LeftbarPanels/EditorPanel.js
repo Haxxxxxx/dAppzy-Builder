@@ -18,6 +18,7 @@ import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 import BackgroundSettings from './SettingsPanels/BackgroundSettings';
 import FormSettings from './SettingsPanels/FormSettings';
+import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
@@ -105,7 +106,16 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
                              selectedElement.type === 'defiFooter' || 
                              selectedElement.type === 'video' || 
                              selectedElement.type === 'mintingSection' || 
-                             selectedElement.type === 'defiSection';
+                             selectedElement.type === 'defiSection' ||
+                             selectedElement.type === 'defiModule';
+
+    // Handle DeFi elements first
+    if (selectedElement.type === 'defiSection') {
+      return <DeFiSectionSettings selectedElement={selectedElement} />;
+    }
+    if (selectedElement.type === 'defiModule') {
+      return <DeFiModuleSettings selectedElement={selectedElement} />;
+    }
 
     // Handle link elements (including buttons)
     if (selectedElement.type === 'a' || selectedElement.type === 'link' || 
@@ -126,8 +136,6 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         return <VideoSettings settings={selectedElement.settings || {}} />;
       case 'mintingSection':
         return <CandyMachineSettings settings={selectedElement.settings || {}} />;
-      case 'defiSection':
-        return <DeFiSectionSettings selectedElement={selectedElement} />;
       case 'defiNavbar':
       case 'defiFooter':
         return (

@@ -7,7 +7,8 @@ import SectionThree from '../Sections/ContentSections/SectionThree';
 import SectionFour from '../Sections/ContentSections/SectionFour';
 import StructurePanel from '../../components/LeftbarPanels/StructurePanel';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
-import { registerContainer } from '../../utils/htmlRenderUtils/containerHelpers';
+import { mergeStyles } from '../../utils/htmlRenderUtils/containerHelpers';
+import { defaultSectionStyles } from '../Sections/ContentSections/defaultSectionStyles';
 
 /**
  * DraggableContentSections component for rendering and managing content sections.
@@ -41,10 +42,12 @@ const DraggableContentSections = ({
     elements,
     findElementById,
     setSelectedElement,
+    updateStyles,
   } = useContext(EditableContext);
 
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
+  const defaultInjectedRef = useRef(false);
 
   // Setup drag behavior with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -72,151 +75,106 @@ const DraggableContentSections = ({
               ?.find(el => el?.type === 'section' && el?.configuration === item.configuration);
 
             if (!existingSection) {
-              // Create a new section with the proper configuration
+              // Create a new section with the proper configuration and styles
               const newSectionId = addNewElement('section', 1, null, targetSectionId, {
                 type: 'section',
                 configuration: item.configuration,
-                structure: item.configuration,
-                styles: sectionConfig.styles || {},
+                styles: sectionConfig.styles?.section || {},
                 content: '',
                 label: sectionConfig.label || '',
-                settings: {},
-                children: sectionConfig.children || []
+                settings: sectionConfig.settings || {},
+                children: [],
+                layout: sectionConfig.layout || ['left', 'right']
               });
 
-              // Register the section's containers
-              if (newSectionId) {
-                const sectionType = item.configuration;
-                const sectionConfig = structureConfigurations[sectionType];
-                const sectionStyles = sectionConfig?.styles || {};
+              // Create default containers for the section based on its layout
+              const layout = sectionConfig.layout || ['left', 'right'];
+              const containerUpdates = layout.map(part => ({
+                id: `${newSectionId}-${part}`,
+                type: 'div',
+                part: part,
+                layout: part,
+                styles: sectionConfig.styles?.[part] || {},
+                children: [],
+                parentId: newSectionId,
+                configuration: item.configuration
+              }));
 
-                // Register containers based on section type and configuration
-                if (sectionType === 'sectionOne') {
-                  // Register content container with proper structure
-                  registerContainer(newSectionId, 'content', {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    maxWidth: '50%'
-                  }, elements, setElements, findElementById);
-
-                  // Register buttons container
-                  registerContainer(newSectionId, 'buttons', {
-                    display: 'flex',
-                    gap: '12px',
-                    marginTop: '24px'
-                  }, elements, setElements, findElementById);
-
-                  // Register image container
-                  registerContainer(newSectionId, 'image', {
-                    flex: 1,
-                    maxWidth: '50%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }, elements, setElements, findElementById);
-                } 
-                else if (sectionType === 'sectionTwo') {
-                  // Register content container
-                  registerContainer(newSectionId, 'content', {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    width: '100%',
-                    textAlign: 'center'
-                  }, elements, setElements, findElementById);
-
-                  // Register label container
-                  registerContainer(newSectionId, 'label', {
-                    color: '#6B7280',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    marginBottom: '8px'
-                  }, elements, setElements, findElementById);
-
-                  // Register buttons container
-                  registerContainer(newSectionId, 'buttons', {
-                    display: 'flex',
-                    gap: '12px',
-                    marginTop: '24px',
-                    justifyContent: 'center'
-                  }, elements, setElements, findElementById);
-                } 
-                else if (sectionType === 'sectionThree') {
-                  // Register content container
-                  registerContainer(newSectionId, 'content', {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    width: '100%',
-                    textAlign: 'center'
-                  }, elements, setElements, findElementById);
-
-                  // Register label container
-                  registerContainer(newSectionId, 'label', {
-                    color: '#6B7280',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    marginBottom: '8px'
-                  }, elements, setElements, findElementById);
-
-                  // Register text container
-                  registerContainer(newSectionId, 'text', {
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    color: '#4B5563',
-                    marginBottom: '24px',
-                    textAlign: 'center',
-                    maxWidth: '600px'
-                  }, elements, setElements, findElementById);
-                } 
-                else if (sectionType === 'sectionFour') {
-                  // Register content container
-                  registerContainer(newSectionId, 'content', {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    width: '100%',
-                    textAlign: 'center'
-                  }, elements, setElements, findElementById);
-
-                  // Register label container
-                  registerContainer(newSectionId, 'label', {
-                    color: '#6B7280',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    marginBottom: '8px'
-                  }, elements, setElements, findElementById);
-
-                  // Register features container
-                  registerContainer(newSectionId, 'features', {
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                    gap: '24px',
-                    marginBottom: '24px',
-                    width: '100%'
-                  }, elements, setElements, findElementById);
-
-                  // Register button container
-                  registerContainer(newSectionId, 'button', {
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginTop: '24px'
-                  }, elements, setElements, findElementById);
+              // Add all containers in a single update
+              setElements(prev => {
+                const newElements = [...prev];
+                containerUpdates.forEach(container => {
+                  newElements.push(container);
+                });
+                // Update the section's children array
+                const sectionIndex = newElements.findIndex(el => el.id === newSectionId);
+                if (sectionIndex !== -1) {
+                  newElements[sectionIndex] = {
+                    ...newElements[sectionIndex],
+                    children: containerUpdates.map(container => container.id)
+                  };
                 }
+                return newElements;
+              });
 
-                // Create child elements based on section configuration
-                if (sectionConfig.children) {
-                  sectionConfig.children.forEach(child => {
-                    const childId = addNewElement(child.type, 1, null, newSectionId, {
-                      ...child,
-                      parentId: newSectionId
-                    });
-                  });
-                }
+              // Apply configuration styles
+              if (sectionConfig.styles) {
+                // Apply section styles
+                updateStyles(newSectionId, sectionConfig.styles.section || {});
+
+                // Apply container styles
+                containerUpdates.forEach(container => {
+                  if (sectionConfig.styles[container.part]) {
+                    updateStyles(container.id, sectionConfig.styles[container.part]);
+                  }
+                });
+
+                // Create and apply styles for content elements
+                sectionConfig.children?.forEach(child => {
+                  const containerType = child.type === 'button' ? 'buttons' : 
+                                      child.type === 'image' ? 'image' : 'content';
+                  const containerId = `${newSectionId}-${containerType}`;
+                  const newId = `${newSectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+
+                  // Get the appropriate styles for this element type
+                  let elementStyles = {};
+                  if (child.type === 'button') {
+                    elementStyles = child.content === 'Primary Action' ? 
+                      sectionConfig.styles.primaryButton : 
+                      sectionConfig.styles.secondaryButton;
+                  } else if (child.type === 'image') {
+                    // Get both image container and image element styles
+                    elementStyles = {
+                      ...sectionConfig.styles.image,
+                      img: sectionConfig.styles.image?.img || {}
+                    };
+                  } else {
+                    elementStyles = sectionConfig.styles[child.type] || {};
+                  }
+
+                  // Create the element with its styles
+                  const newElement = {
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: elementStyles,
+                    parentId: containerId,
+                    configuration: item.configuration
+                  };
+
+                  // Add the element
+                  setElements(prev => [...prev, newElement]);
+
+                  // Update container's children array
+                  setElements(prev => prev.map(el => 
+                    el.id === containerId
+                      ? { ...el, children: [...(el.children || []), newId] }
+                      : el
+                  ));
+
+                  // Apply the element's styles
+                  updateStyles(newId, elementStyles);
+                });
               }
             }
           }
@@ -235,32 +193,27 @@ const DraggableContentSections = ({
 
     // Check if the item being dropped is a section
     if (item.type === 'ContentSection') {
-      // Check if a section with this configuration already exists in the parent section
       const sectionElement = findElementById(parentElement.parentId, elements);
       const existingSection = sectionElement?.children
         ?.map(childId => findElementById(childId, elements))
         ?.find(el => el?.type === 'ContentSection' && el?.configuration === item.configuration);
 
-      if (existingSection) {
-        // If a section with this configuration exists, don't create a new one
-        return;
-      }
+      if (existingSection) return;
     }
 
-    // Special handling for ContentSections with wrappers (example: main/sidebar)
-    let newElement = {
+    // Create new element with proper configuration
+    const newElement = {
       type: item.type,
       content: item.content || '',
-      styles: item.styles || {},
+      styles: mergeStyles(item.styles || {}, {}),
       configuration: item.configuration,
-      settings: item.settings || {}
+      settings: item.settings || {},
+      children: []
     };
 
-    // If the configuration requires wrappers, add them (example: main and sidebar)
+    // Add wrappers for specific configurations
     if (item.configuration === 'defaultContentSection' || item.configuration === 'customContentSection') {
-      newElement = {
-        ...newElement,
-        children: [
+      newElement.children = [
           {
             type: 'div',
             styles: { display: 'flex', flexDirection: 'column', flex: 3, gap: '16px' },
@@ -271,38 +224,31 @@ const DraggableContentSections = ({
             styles: { display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' },
             children: []
           }
-        ]
-      };
+      ];
     }
 
     const newId = addNewElement(item.type, 1, null, parentId, newElement);
 
-    // Update the parent element's children with unique values
-    setElements((prevElements) =>
-      prevElements.map((el) =>
+    // Update parent's children array
+    setElements(prev => prev.map(el => 
         el.id === parentId
-          ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
+        ? { ...el, children: [...new Set([...el.children, newId])] }
           : el
-      )
-    );
+    ));
 
-    // Select the newly created element
     setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
   };
 
-  // Find the current section and its children with improved error handling
+  // Find the current section and its children
   const sectionElement = findElementById(id, elements);
   const configChildren = structureConfigurations[configuration]?.children || [];
   const resolvedChildren = (sectionElement?.children || [])
-    .map((childId) => findElementById(childId, elements))
+    .map(childId => findElementById(childId, elements))
     .filter(Boolean);
   const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
-  // Toggle the modal state
-  const toggleModal = () => setModalOpen((prev) => !prev);
+  // Toggle modal state
+  const toggleModal = () => setModalOpen(prev => !prev);
 
   // Close modal if clicked outside
   useEffect(() => {
@@ -325,11 +271,11 @@ const DraggableContentSections = ({
 
   // Handle element selection
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent parent selections
+    e.stopPropagation();
     setSelectedElement({ id, type: 'ContentSection', styles: sectionElement?.styles });
   };
 
-  // Handle preview display with description
+  // Render preview with description
   if (showDescription) {
     return (
       <div 
@@ -360,59 +306,32 @@ const DraggableContentSections = ({
     );
   }
 
-  // Assign the correct section component based on configuration
-  let SectionComponent;
-  if (configuration === 'sectionOne') {
-    SectionComponent = (
-      <SectionOne
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'sectionTwo') {
-    SectionComponent = (
-      <SectionTwo
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'sectionThree') {
-    SectionComponent = (
-      <SectionThree
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'sectionFour') {
-    SectionComponent = (
-      <SectionFour
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  }
+  // Get the appropriate section component
+  const getSectionComponent = () => {
+    const props = {
+      uniqueId: id,
+      contentListWidth,
+      children: childrenToRender,
+      onDropItem,
+      handlePanelToggle,
+      handleOpenMediaPanel,
+      handleSelect,
+    };
 
-  // Render the draggable section component
+    switch (configuration) {
+      case 'sectionOne':
+        return <SectionOne {...props} />;
+      case 'sectionTwo':
+        return <SectionTwo {...props} />;
+      case 'sectionThree':
+        return <SectionThree {...props} />;
+      case 'sectionFour':
+        return <SectionFour {...props} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <div
@@ -435,7 +354,7 @@ const DraggableContentSections = ({
         aria-label={`${label} component`}
       >
         <strong>{label}</strong>
-        {SectionComponent}
+        {getSectionComponent()}
       </div>
 
       {isModalOpen && (

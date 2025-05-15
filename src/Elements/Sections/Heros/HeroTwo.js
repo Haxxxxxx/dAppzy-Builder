@@ -38,44 +38,37 @@ const HeroTwo = forwardRef(({
   );
 
   useEffect(() => {
-    if (defaultInjectedRef.current) return;
+    if (defaultInjectedRef.current || !heroElement) return;
 
     // First, ensure the hero has the default styles
     const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement?.styles);
     updateStyles(heroElement.id, mergedHeroStyles);
 
     const contentContainer = findElementById(`${uniqueId}-content`, elements);
+    const defaultContent = heroElement?.configuration ? 
+      HeroConfiguration[heroElement.configuration].children : [];
 
+    // Create a batch of updates
+    const updates = [];
+
+    // Add content container if it doesn't exist
     if (!contentContainer) {
-      setElements((prev) => [
-        ...prev,
-        {
+      updates.push({
           id: `${uniqueId}-content`,
           type: 'div',
           styles: heroTwoStyles.heroLeftContent,
           children: [],
           parentId: uniqueId,
-        },
-      ]);
+      });
     }
 
-    const defaultContent = heroElement?.configuration ? 
-      HeroConfiguration[heroElement.configuration].children : [];
-
-    if (defaultContent.length > 0) {
-      const currentContentContainer = findElementById(`${uniqueId}-content`, elements);
-
-      const containerIsEmpty = 
-        currentContentContainer && 
-        currentContentContainer.children.length === 0;
-
-      if (containerIsEmpty) {
-        defaultContent.forEach((child) => {
-          const newId = addNewElement(child.type, 1, null, `${uniqueId}-content`);
-          setElements((prev) =>
-            prev.map((el) =>
-              el.id === newId ? { 
-                ...el, 
+    // Only inject content if we have default content and the container is empty
+    if (defaultContent.length > 0 && (!contentContainer || contentContainer.children.length === 0)) {
+      const newChildren = defaultContent.map(child => {
+        const newId = `${uniqueId}-content-${Math.random().toString(36).substr(2, 9)}`;
+        return {
+          id: newId,
+          type: child.type,
                 content: child.content,
                 styles: merge(
                   child.type === 'heading' ? heroTwoStyles.heroTitle :
@@ -83,22 +76,35 @@ const HeroTwo = forwardRef(({
                   child.type === 'button' ? heroTwoStyles.primaryButton :
                   {},
                   child.styles || {}
-                )
-              } : el
-            )
-          );
-          setElements((prev) =>
-            prev.map((el) =>
-              el.id === `${uniqueId}-content`
-                ? { ...el, children: [...el.children, newId] }
-                : el
-            )
-          );
+          ),
+          parentId: `${uniqueId}-content`
+        };
+      });
+
+      // Add all new children to updates
+      updates.push(...newChildren);
+
+      // Update content container with new children
+      if (contentContainer) {
+        updates.push({
+          ...contentContainer,
+          children: newChildren.map(child => child.id)
+        });
+      } else {
+        updates[0].children = newChildren.map(child => child.id);
+      }
+    }
+
+    // Apply all updates in a single state change
+    if (updates.length > 0) {
+      setElements(prev => {
+        const existingIds = new Set(prev.map(el => el.id));
+        const newElements = updates.filter(el => !existingIds.has(el.id));
+        return [...prev, ...newElements];
         });
         defaultInjectedRef.current = true;
       }
-    }
-  }, [children, heroElement, elements, findElementById, uniqueId, addNewElement, setElements, updateStyles]);
+  }, [heroElement, elements, findElementById, uniqueId, updateStyles, setElements]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);

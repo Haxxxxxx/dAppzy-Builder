@@ -49,15 +49,12 @@ export const EditableProvider = ({ children, userId }) => {
   }, [pushToHistory]);
 
   const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
-    console.log('[addNewElement] type:', type, 'config:', config);
-    
+    // Generate unique ID for parent element
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
-      console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
   
-    // Determine if config is a structure (string) or a configuration (object)
     let configuration = null;
     let structure = null;
     if (typeof config === 'string' && structureConfigurations[config]) {
@@ -66,116 +63,47 @@ export const EditableProvider = ({ children, userId }) => {
     } else if (config && typeof config === 'object') {
       configuration = config.configuration || config;
       structure = config.structure || config.configuration || config;
-      // Use the type from config if provided, otherwise use the passed type
       type = config.type || type;
     }
   
-    // Get base styles from configuration if it exists
-    const baseStyles = structure && structureConfigurations[structure]?.styles || {};
-    const configStyles = config?.styles || {};
+    const configStyles = structure && structureConfigurations[structure]?.styles || {};
+    const elementStyles = config?.styles || {};
+
+    // Recursively create children if present
+    let childrenIds = [];
+    if (config && config.children && Array.isArray(config.children)) {
+      childrenIds = config.children.map(childConfig => {
+        // Generate unique ID for each child
+        const childId = generateUniqueId(childConfig.type);
+        const childWithId = {
+          ...childConfig,
+          id: childId
+        };
+        return addNewElement(childConfig.type, 1, 0, newId, childWithId);
+      });
+    }
     
     const baseElement = {
       id: newId,
-      type, // Use the determined type
-      styles: {
-        ...baseStyles,
-        ...configStyles
-      },
-      level,
-      children: [],
+      type,
+      configuration,
+      structure,
+      styles: { ...configStyles, ...elementStyles },
+      content: config?.content || '',
       label: config?.label || '',
-      parentId: parentId || null,
-      content: config?.content || (() => {
-        switch (type) {
-          case 'paragraph':
-            return 'New Paragraph';
-          case 'anchor':
-            return 'Click here';
-          case 'blockquote':
-            return 'Blockquote text...';
-          case 'code':
-            return 'Code snippet...';
-          case 'pre':
-            return 'Preformatted text...';
-          case 'list-item':
-            return 'Editable Item';
-          case 'button':
-            return 'Click Me';
-          default:
-            return '';
-        }
-      })(),
-      structure: structure || null,
-      configuration: configuration || null,
+      parentId,
       settings: config?.settings || {},
+      children: childrenIds,
     };
-  
-    if (type === 'image') {
-      baseElement.src = config?.src || 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7';
-    }
-  
-    // If config has children, use those instead of structure configurations
-    if (config && config.children && Array.isArray(config.children)) {
-      // Handle custom configuration with children
-      const childrenElements = config.children.map((child) => ({
-        id: generateUniqueId(child.type),
-        type: child.type,
-        content: child.content || '',
-        styles: {
-          ...(structureConfigurations[configuration]?.children?.find(c => c.type === child.type)?.styles || {}),
-          ...(child.styles || {})
-        },
-        parentId: newId,
-        settings: child.settings || {},
-        children: child.children || []
-      }));
-      
-      baseElement.children = childrenElements.map((child) => child.id);
-      
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index || 0, 0, baseElement, ...childrenElements);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
-      }
-    } else if (structure && structureConfigurations[structure]?.children) {
-      // Fallback to structure configuration if no explicit children
-      const childrenElements = structureConfigurations[structure].children.map((child) => ({
-        id: generateUniqueId(child.type),
-        type: child.type,
-        content: child.content || '',
-        styles: {
-          ...(child.styles || {}),
-          color: child.styles?.color || baseStyles.color || '#1a1a1a'
-        },
-        label: child.label || '',
-        parentId: newId,
-        settings: child.settings || {},
-      }));
-      baseElement.children = childrenElements.map((child) => child.id);
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index || 0, 0, baseElement, ...childrenElements);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
-      }
+
+    if (!parentId) {
+      recordElementsUpdate((prev) => {
+        const newElements = [...prev];
+        newElements.splice(index || 0, 0, baseElement);
+        return newElements;
+      });
     } else {
-      // No structure or custom configuration provided, so just add the base element.
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index || 0, 0, baseElement);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement]);
-      }
+      recordElementsUpdate((prev) => [...prev, baseElement]);
     }
   
     // After adding the new element, if it has a parentId, update the parent's children array
@@ -189,9 +117,8 @@ export const EditableProvider = ({ children, userId }) => {
       );
     }
   
-    console.log('Added new element:', baseElement);
     return newId;
-  }, [recordElementsUpdate]);
+  }, [recordElementsUpdate, setElements, elements]);
 
   const moveElement = useCallback((id, newIndex) => {
     recordElementsUpdate((prevElements) => {
@@ -217,44 +144,36 @@ export const EditableProvider = ({ children, userId }) => {
   }, [recordElementsUpdate]);
 
   const updateStyles = useCallback((id, newStyles) => {
-    console.log(`Updating styles for ${id}:`, newStyles);
-    recordElementsUpdate((prev) =>
-      prev.map((el) => {
-        if (el.id === id) {
-          // Create a new styles object to avoid reference issues
-          const updatedStyles = { ...newStyles };
-          // If the element has existing styles, merge them carefully
-          if (el.styles) {
-            Object.keys(el.styles).forEach(key => {
-              // Only keep existing styles if they're not being updated
-              if (!(key in newStyles)) {
-                updatedStyles[key] = el.styles[key];
-              }
-            });
-          }
-          return { ...el, styles: updatedStyles };
-        }
-        return el;
-      })
-    );
-    // Also update the selected element if it's the one being updated
-    if (selectedElement && selectedElement.id === id) {
-      setSelectedElement((prevSelected) => {
-        const updatedStyles = { ...newStyles };
-        if (prevSelected.styles) {
-          Object.keys(prevSelected.styles).forEach(key => {
-            if (!(key in newStyles)) {
-              updatedStyles[key] = prevSelected.styles[key];
-            }
-          });
-        }
-        return {
-          ...prevSelected,
-          styles: updatedStyles
+    setElements(prev => {
+      const element = findElementById(id, prev);
+      if (!element) return prev;
+
+      // Get the configuration styles if available
+      const configStyles = element.configuration && structureConfigurations[element.configuration]?.styles;
+      
+      // Merge styles in the correct order: base styles -> config styles -> new styles
+      const mergedStyles = {
+        ...(configStyles?.[element.type] || {}), // Base styles from configuration
+        ...(element.styles || {}), // Existing styles
+        ...newStyles // New styles override everything
+      };
+
+      // Handle nested styles (like img styles for images)
+      if (element.type === 'image' && configStyles?.image?.img) {
+        mergedStyles.img = {
+          ...(configStyles.image.img || {}), // Base img styles from configuration
+          ...(element.styles?.img || {}), // Existing img styles
+          ...(newStyles?.img || {}) // New img styles override everything
         };
-      });
-    }
-  }, [recordElementsUpdate]);
+      }
+
+      return prev.map(el =>
+        el.id === id
+          ? { ...el, styles: mergedStyles }
+          : el
+      );
+    });
+  }, [findElementById]);
 
   const updateElementProperties = useCallback((id, newProperties) => {
     recordElementsUpdate((prev) =>
@@ -568,7 +487,8 @@ export const EditableProvider = ({ children, userId }) => {
     handleAICommand,
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
-    findElementById
+    findElementById,
+    generateUniqueId
   }), [
     elements,
     selectedElement,

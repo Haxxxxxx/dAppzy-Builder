@@ -240,7 +240,7 @@ const UnifiedDropZone = React.memo(({
   isDragging,
   index,
   onPanelToggle,
-  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION']
+  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION', 'defiSection']
 }) => {
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -256,11 +256,7 @@ const UnifiedDropZone = React.memo(({
     if (e.type === 'click' && onClick) {
       onClick(e);
     }
-
-    if (className === 'first-dropzone' && onPanelToggle) {
-      onPanelToggle('sidebar');
-    }
-  }, [onClick, className, onPanelToggle]);
+  }, [onClick]);
 
   const handleLibraryClick = (e) => {
     e.preventDefault();

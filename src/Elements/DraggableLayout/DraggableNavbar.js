@@ -18,7 +18,7 @@ const DraggableNavbar = ({
   imgSrc, // Image source for the navbar preview
   label, // Label for the navbar
 }) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const {generateUniqueId, addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
@@ -64,70 +64,59 @@ const DraggableNavbar = ({
   }), [configuration, isEditing, elements]);
 
   // Handle dropping items inside this navbar
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
+  const onDropItem = (item, index) => {
+    if (!item) return;
 
-    const parentElement = findElementById(parentId, elements);
-    if (!parentElement) return;
-
-    // Check if the item being dropped is a navbar
+    // Check if we're trying to add a navbar inside another navbar
     if (item.type === 'navbar') {
-      // Check if a navbar with this configuration already exists in the parent section
-      const sectionElement = findElementById(parentElement.parentId, elements);
-      const existingNavbar = sectionElement?.children
-        ?.map(childId => findElementById(childId, elements))
-        ?.find(el => el?.type === 'navbar' && el?.configuration === item.configuration);
+      console.warn('Cannot add a navbar inside another navbar');
+      return;
+    }
 
-      if (existingNavbar) {
-        // If a navbar with this configuration exists, don't create a new one
-        return;
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Create the new element with proper configuration
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      id,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: item.styles || {},
+        configuration: item.configuration || '',
+        className: item.className || '',
+        attributes: item.attributes || {},
+        dataAttributes: item.dataAttributes || {},
+        events: item.events || {},
+        children: item.children || []
       }
-    }
-
-    // Special handling for navbars with wrappers (example: left/right)
-    let newElement = {
-      type: item.type,
-      content: item.content || '',
-      styles: item.styles || {},
-      configuration: item.configuration,
-      settings: item.settings || {}
-    };
-
-    // If the configuration requires wrappers, add them
-    if (item.configuration === 'defaultNavbar' || item.configuration === 'customNavbar') {
-      newElement = {
-        ...newElement,
-        children: [
-          {
-            type: 'div',
-            styles: { display: 'flex', alignItems: 'center', gap: '16px' },
-            children: []
-          },
-          {
-            type: 'div',
-            styles: { display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' },
-            children: []
-          }
-        ]
-      };
-    }
-
-    const newId = addNewElement(item.type, 1, null, parentId, newElement);
-
-    // Update the parent element's children
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId
-          ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-          : el
-      )
     );
 
-    // Select the newly created element
-    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const parentElement = prevElements.find(el => el.id === id);
+      if (!parentElement) return prevElements;
+
+      // Create a new array for the children, maintaining existing ones
+      const updatedChildren = [...(parentElement.children || [])];
+      
+      // Insert the new element ID at the specified index
+      updatedChildren.splice(index, 0, elementId);
+
+      // Update the parent element with the new children array
+      return prevElements.map(el =>
+        el.id === id
+          ? { ...el, children: updatedChildren }
+          : el
+      );
+    });
+
+    // Select the new element
+    setSelectedElement({ id: elementId, type: item.type });
   };
 
   // Find the current navbar and its children
@@ -135,7 +124,11 @@ const DraggableNavbar = ({
   const configChildren = structureConfigurations[configuration]?.children || [];
   const resolvedChildren = (navbar?.children || [])
     .map((childId) => findElementById(childId, elements))
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(child => ({
+      ...child,
+      id: child.id || generateUniqueId(child.type) // Ensure each child has an ID
+    }));
   const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
   // Toggle the modal state

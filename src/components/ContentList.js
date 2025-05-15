@@ -28,6 +28,7 @@ const ContentList = forwardRef(
       saveToLocalStorage,
       selectedStyle,
       selectedElement,
+      generateUniqueId,
     } = useContext(EditableContext);
 
     // Use useDragLayer to determine if any drag is active.
@@ -91,19 +92,27 @@ const ContentList = forwardRef(
           item.type === 'cta' ||
           item.type === 'mintingSection' ||
           item.type === 'ContentSection' ||
+          item.type === 'defiSection' ||
           item.type === 'footer' ||
           item.type === 'section'
         ) {
           // Handle all section types with their full configuration
           console.log('Adding section with data:', item);
+          
+          // Ensure children have unique IDs
+          const processedChildren = item.children?.map(child => ({
+            ...child,
+            id: generateUniqueId(child.type || 'element')
+          })) || [];
+
           newId = addNewElement(item.type, 1, index, null, {
             type: item.type,
-            configuration: item.configuration,
-            structure: item.structure,
-            styles: item.styles,
-            children: item.children,
-            settings: item.settings,
-            label: item.label
+            configuration: item.configuration || item.type,
+            structure: item.structure || item.type,
+            styles: item.styles || {},
+            settings: item.settings || {},
+            label: item.label,
+            children: processedChildren
           });
         } else {
           newId = addNewElement(item.type, 1, index);

@@ -8,6 +8,7 @@ import { getAllDomains, getDomainKeysWithReverses, updateNameRegistryData, ROOT_
 import './DomainsStyles.css';
 import { Transaction } from '@solana/web3.js';
 import { pinDirectoryToPinata } from '../../../utils/ipfs';
+import { ComputeBudgetProgram } from '@solana/web3.js';
 
 // SNS Program IDs from config
 const SNS_DOMAIN_PROGRAM = new PublicKey(Web3Configs.sns.domainProgram);
@@ -16,6 +17,22 @@ const TOKEN_PROGRAM_ID = new PublicKey(Web3Configs.sns.tokenProgram);
 
 // Get RPC endpoints from config
 const RPC_ENDPOINTS = Web3Configs.rpc.getEndpoints();
+
+// Add devnet configuration for transactions
+const DEVNET_CONFIG = {
+  endpoint: 'https://api.devnet.solana.com',
+  commitment: 'confirmed',
+  wsEndpoint: 'wss://api.devnet.solana.com',
+  confirmTransactionInitialTimeout: 60000
+};
+
+// Add mainnet configuration for domain operations
+const MAINNET_CONFIG = {
+  endpoint: RPC_ENDPOINTS[0] || 'https://api.mainnet-beta.solana.com',
+  commitment: 'confirmed',
+  wsEndpoint: Web3Configs.rpc.helius.snsConfig.wsEndpoint(),
+  confirmTransactionInitialTimeout: 30000
+};
 
 // SNS API endpoints and configuration
 const SNS_API_CONFIG = {
@@ -287,115 +304,151 @@ const saveDeploymentToFirestore = async (userId, websiteSettings, ipfsHash, ipfs
   }
 };
 
-// Utility: Update SNS domain content record with IPFS URL, creating it if needed
-const updateSnsDomainRecord = async (connection, formattedDomain, ipfsUrl, walletAddress) => {
-  const domainName = formattedDomain.replace(/\.sol$/, '');
-  const recordType = 'content';
-  const recordValue = ipfsUrl;
-  const authority = new PublicKey(walletAddress);
-
-  // Validate all inputs
-  if (!connection || !domainName || !recordType || !recordValue || !authority) {
-    throw new Error('Missing required parameters for SNS record update');
-  }
-
-  debugLog('Preparing SNS content record update', {
-    domain: domainName,
-    recordType,
-    recordValue,
-    authority: authority.toBase58(),
-    authorityType: typeof authority
-  });
-
-  let transaction = new Transaction();
+// Add new utility function to verify domain record update
+const verifyDomainRecordUpdate = async (connection, domainName, expectedContent) => {
   try {
-    debugLog('Calling updateRecordInstruction with:', {
+    const domainKey = await getNameAccountKey(await getHashedName(domainName.replace(/\.sol$/, '')));
+    const domainState = await NameRegistryState.retrieve(connection, domainKey);
+    
+    if (!domainState || !domainState.data) {
+      throw new Error('Domain record not found or empty');
+    }
+
+    const recordContent = domainState.data.toString();
+    debugLog('Domain record content', {
+      domain: domainName,
+      expected: expectedContent,
+      actual: recordContent
+    });
+
+    return recordContent === expectedContent;
+  } catch (error) {
+    debugLog('Error verifying domain record', {
+      error: error.message,
+      domain: domainName
+    });
+    throw error;
+  }
+};
+
+// Add new utility function to create domain record
+const createDomainRecord = async (connection, domainName, recordType, recordValue, authority) => {
+  try {
+    debugLog('Creating new domain record', {
       domain: domainName,
       recordType,
       recordValue,
       authority: authority.toBase58()
     });
 
-    // Try to update the record
-    const ix = await updateRecordInstruction(
+    // Get domain key
+    const hashedName = await getHashedName(domainName);
+    const domainKey = await getNameAccountKey(hashedName);
+    
+    // Create record instruction with proper structure
+    const createIx = await createRecordInstruction(
       connection,
       domainName,
       recordType,
       recordValue,
-      authority
+      authority,
+      authority,
+      {
+        space: 1000, // Allocate space for the record
+        owner: SNS_DOMAIN_PROGRAM, // Set the program as owner
+        lamports: await connection.getMinimumBalanceForRentExemption(1000), // Add rent exemption
+        programId: SNS_DOMAIN_PROGRAM // Explicitly set program ID
+      }
     );
 
-    // Validate instruction keys
-    ix.keys.forEach((key, index) => {
-      if (!key.pubkey) {
-        throw new Error(`Missing pubkey in instruction key at index ${index}`);
-      }
-      debugLog(`Instruction key ${index}:`, {
-        pubkey: key.pubkey.toBase58(),
-        isSigner: key.isSigner,
-        isWritable: key.isWritable
-      });
+    const transaction = new Transaction();
+    
+    // Add compute budget instruction to ensure enough compute units
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({ 
+      units: 300000 
+    });
+    transaction.add(modifyComputeUnits);
+    
+    // Add the create record instruction
+    transaction.add(createIx);
+
+    // Get latest blockhash and set fee payer
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = authority;
+
+    debugLog('Create record transaction prepared', {
+      blockhash,
+      feePayer: authority.toBase58(),
+      instructionCount: transaction.instructions.length,
+      domainKey: domainKey.toBase58(),
+      programId: SNS_DOMAIN_PROGRAM.toBase58()
     });
 
-    transaction.add(ix);
-  } catch (err) {
-    // If the record does not exist, create it first
-    if (err.message && err.message.includes('record account does not exist')) {
-      debugLog('Record account does not exist, creating it first...');
-      debugLog('Calling createRecordInstruction with:', {
-        domain: domainName,
-        recordType,
-        recordValue,
-        authority: authority.toBase58()
-      });
-
-      const createIx = await createRecordInstruction(
-        connection,
-        domainName,
-        recordType,
-        recordValue,
-        authority,
-        authority  // payer parameter
-      );
-
-      // Validate create instruction keys
-      createIx.keys.forEach((key, index) => {
-        if (!key.pubkey) {
-          throw new Error(`Missing pubkey in create instruction key at index ${index}`);
-        }
-        debugLog(`Create instruction key ${index}:`, {
-          pubkey: key.pubkey.toBase58(),
-          isSigner: key.isSigner,
-          isWritable: key.isWritable
-        });
-      });
-
-      transaction.add(createIx);
-    } else {
-      throw err;
-    }
+    return transaction;
+  } catch (error) {
+    debugLog('Error creating domain record', {
+      error: error.message,
+      domain: domainName
+    });
+    throw error;
   }
+};
 
-  // Get latest blockhash and set fee payer
-  const { blockhash } = await connection.getLatestBlockhash();
-  transaction.recentBlockhash = blockhash;
-  transaction.feePayer = authority;
+// Update the updateSnsDomainRecord function
+const updateSnsDomainRecord = async (connection, formattedDomain, ipfsUrl, walletAddress) => {
+  const domainName = formattedDomain.replace(/\.sol$/, '');
+  const authority = new PublicKey(walletAddress);
+  const data = Buffer.from(ipfsUrl, 'utf-8');
+  const offset = 0;
 
-  // Validate final transaction
-  if (!transaction.recentBlockhash) {
-    throw new Error('Transaction missing recentBlockhash');
-  }
-  if (!transaction.feePayer) {
-    throw new Error('Transaction missing feePayer');
-  }
-
-  debugLog('Prepared SNS content record update transaction', {
-    blockhash,
-    feePayer: authority.toBase58(),
-    instructionCount: transaction.instructions.length
+  debugLog('Starting SNS record update (using updateNameRegistryData)', {
+    domain: domainName,
+    recordValue: ipfsUrl,
+    authority: authority.toBase58()
   });
 
-  return transaction;
+  // Check record size before updating
+  try {
+    // Derive the record key for the content record
+    const recordKey = await getNameAccountKey(await getHashedName(domainName));
+    const recordInfo = await connection.getAccountInfo(recordKey);
+    const currentSize = recordInfo?.data?.length || 0;
+    debugLog('Current record size', { currentSize, newDataLength: data.length });
+    if (data.length > currentSize) {
+      const errorMsg = `Record too small for new data (${data.length} bytes > ${currentSize} bytes). Please delete and recreate the record with a larger size.`;
+      debugLog('Record size error', { errorMsg });
+      throw new Error(errorMsg);
+    }
+
+    const ix = await updateNameRegistryData(
+      connection,
+      domainName,
+      offset,
+      data,
+      undefined,
+      ROOT_DOMAIN_ACCOUNT
+    );
+    const transaction = new Transaction();
+    const modifyComputeUnits = ComputeBudgetProgram.setComputeUnitLimit({ units: 300000 });
+    transaction.add(modifyComputeUnits);
+    transaction.add(ix);
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = authority;
+    debugLog('Update record transaction prepared (updateNameRegistryData)', {
+      blockhash,
+      feePayer: authority.toBase58(),
+      instructionCount: transaction.instructions.length
+    });
+    return transaction;
+  } catch (error) {
+    debugLog('Error in updateNameRegistryData', {
+      error: error.message,
+      domain: domainName
+    });
+    throw error;
+  }
 };
 
 const SnsDomainSelector = ({
@@ -413,7 +466,8 @@ const SnsDomainSelector = ({
   const [domains, setDomains] = useState([]);
   const [status, setStatus] = useState('Initializing connection...');
   const [selectedDomain, setSelectedDomain] = useState(null);
-  const [connection, setConnection] = useState(null);
+  const [mainnetConnection, setMainnetConnection] = useState(null);
+  const [devnetConnection, setDevnetConnection] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState(CONNECTION_STATUS.INITIALIZING);
   const [connectionError, setConnectionError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -430,79 +484,54 @@ const SnsDomainSelector = ({
     complete: false
   });
 
-  // Initialize Solana connection with Helius configuration
+  // Initialize both mainnet and devnet connections
   useEffect(() => {
-    const initializeConnection = async () => {
+    const initializeConnections = async () => {
       try {
         setConnectionStatus(CONNECTION_STATUS.CONNECTING);
 
-        if (RPC_ENDPOINTS.length === 0) {
-          throw new Error('No RPC endpoints configured. Please add your Helius API key to your .env file.');
-        }
-
-        const heliusEndpoint = RPC_ENDPOINTS[0];
-        if (!heliusEndpoint) {
-          throw new Error('No valid RPC endpoint available');
-        }
-
-        const conn = new Connection(heliusEndpoint, {
-          commitment: Web3Configs.sns.settings.commitment,
-          confirmTransactionInitialTimeout: Web3Configs.rpc.helius.snsConfig.confirmTransactionInitialTimeout,
-          wsEndpoint: Web3Configs.rpc.helius.snsConfig.wsEndpoint()
+        // Initialize mainnet connection for domain operations
+        const mainnetConn = new Connection(MAINNET_CONFIG.endpoint, {
+          commitment: MAINNET_CONFIG.commitment,
+          confirmTransactionInitialTimeout: MAINNET_CONFIG.confirmTransactionInitialTimeout,
+          wsEndpoint: MAINNET_CONFIG.wsEndpoint
         });
 
-        // Test the connection
-        await conn.getVersion();
-        setConnection(conn);
+        // Initialize devnet connection for transactions
+        const devnetConn = new Connection(DEVNET_CONFIG.endpoint, {
+          commitment: DEVNET_CONFIG.commitment,
+          confirmTransactionInitialTimeout: DEVNET_CONFIG.confirmTransactionInitialTimeout,
+          wsEndpoint: DEVNET_CONFIG.wsEndpoint
+        });
+
+        // Test both connections
+        await Promise.all([
+          mainnetConn.getVersion(),
+          devnetConn.getVersion()
+        ]);
+
+        setMainnetConnection(mainnetConn);
+        setDevnetConnection(devnetConn);
         setConnectionStatus(CONNECTION_STATUS.CONNECTED);
-        setStatus('Connected to Helius RPC. Scanning for domains...');
+        setStatus('Connected to Solana networks. Scanning for domains...');
         setConnectionError(null);
         setRetryCount(0);
       } catch (error) {
-        console.error(`Failed to connect to Helius RPC:`, error);
+        console.error(`Failed to connect to Solana networks:`, error);
         setConnectionError(error.message);
         setLastError(error);
-
-        // Handle specific error types
-        if (error.message.includes('API key')) {
-          setConnectionStatus(CONNECTION_STATUS.ERROR);
-          setStatus('Error: Invalid or missing Helius API key. Please check your configuration.');
-        } else if (error.message.includes('rate limit')) {
-          setConnectionStatus(CONNECTION_STATUS.ERROR);
-          setStatus('Error: Rate limit exceeded. Please try again in a few moments.');
-        } else {
-          // Try public endpoint as fallback
-          if (RPC_ENDPOINTS.length > 1) {
-            try {
-              setConnectionStatus(CONNECTION_STATUS.RETRYING);
-              const publicEndpoint = RPC_ENDPOINTS[1];
-              const fallbackConn = new Connection(publicEndpoint, {
-                commitment: Web3Configs.sns.settings.commitment
-              });
-              await fallbackConn.getVersion();
-              setConnection(fallbackConn);
-              setConnectionStatus(CONNECTION_STATUS.CONNECTED);
-              setStatus('Connected to public RPC. Scanning for domains...');
-              setConnectionError(null);
-            } catch (fallbackError) {
-              setConnectionStatus(CONNECTION_STATUS.ERROR);
-              setStatus('Error: Unable to connect to Solana network. Please check your Helius API key and try again.');
-            }
-          } else {
-            setConnectionStatus(CONNECTION_STATUS.ERROR);
-            setStatus('Error: Unable to connect to Solana network. Please check your Helius API key and try again.');
-          }
-        }
+        setConnectionStatus(CONNECTION_STATUS.ERROR);
+        setStatus('Error: Unable to connect to Solana networks. Please try again.');
       }
     };
 
-    initializeConnection();
+    initializeConnections();
   }, []);
 
-  // Fetch domains and primary domain
+  // Fetch domains using mainnet connection
   useEffect(() => {
     const fetchDomains = async () => {
-      if (!connection || !walletAddress || connectionStatus !== CONNECTION_STATUS.CONNECTED) {
+      if (!mainnetConnection || !walletAddress || connectionStatus !== CONNECTION_STATUS.CONNECTED) {
         return;
       }
 
@@ -512,8 +541,8 @@ const SnsDomainSelector = ({
 
         const walletPubkey = new PublicKey(walletAddress);
 
-        // Get domains with reverses first
-        const domainsWithReverses = await getDomainKeysWithReverses(connection, walletPubkey);
+        // Get domains with reverses using mainnet
+        const domainsWithReverses = await getDomainKeysWithReverses(mainnetConnection, walletPubkey);
         debugLog('Domains with reverses fetched', {
           domainsWithReverses
         });
@@ -527,15 +556,15 @@ const SnsDomainSelector = ({
           setStatus('Found SNS domains in your wallet.');
         } else {
           // Fallback to getAllDomains
-          const domainKeys = await getAllDomains(connection, walletPubkey);
+          const domainKeys = await getAllDomains(mainnetConnection, walletPubkey);
           const domains = domainKeys.map(key => key.toBase58());
           setDomains(domains);
           setStatus('Found SNS domains in your wallet.');
         }
 
-        // Get primary domain
+        // Get primary domain using mainnet
         try {
-          const { domain } = await getPrimaryDomain(connection, walletPubkey);
+          const { domain } = await getPrimaryDomain(mainnetConnection, walletPubkey);
           if (domain) {
             setPrimaryDomain(domain);
             debugLog('Primary domain fetched', {
@@ -546,7 +575,6 @@ const SnsDomainSelector = ({
           debugLog('Error getting primary domain', {
             error: error.message
           });
-          // Don't throw error here, just log it
         }
       } catch (error) {
         console.error('Error fetching domains:', error);
@@ -558,7 +586,7 @@ const SnsDomainSelector = ({
     };
 
     fetchDomains();
-  }, [connection, walletAddress, connectionStatus]);
+  }, [mainnetConnection, walletAddress, connectionStatus]);
 
   const handleDomainToggle = (domainName) => {
     setEnabledDomains(prev => {
@@ -633,9 +661,9 @@ const SnsDomainSelector = ({
     }
   };
 
-  // Refactored handleSelectDomain
+  // Update handleSelectDomain to use mainnet for domain operations
   const handleSelectDomain = async () => {
-    if (!selectedDomain) return;
+    if (!selectedDomain || !mainnetConnection) return;
     let formattedDomain;
     try {
       setDeploymentStage('DEPLOYING');
@@ -649,8 +677,8 @@ const SnsDomainSelector = ({
       formattedDomain = validateAndFormatDomain(selectedDomain);
       debugLog('Validating domain', { original: selectedDomain, formatted: formattedDomain });
       
-      // 2. Verify domain exists and is owned by the user
-      const domainKey = await verifyDomain(connection, formattedDomain, walletAddress);
+      // 2. Verify domain exists and is owned by the user (using mainnet)
+      const domainKey = await verifyDomain(mainnetConnection, formattedDomain, walletAddress);
       debugLog('Domain verified', { domainKey: domainKey.toBase58() });
       
       // Step 2: Uploading
@@ -668,38 +696,68 @@ const SnsDomainSelector = ({
       setDeploymentProgress(prev => ({ ...prev, updating: true }));
       setDeploymentStep('updating');
       
-      // 5. Update SNS domain record
+      // 5. Update SNS domain record (using mainnet)
       setStatus('Updating SNS domain...');
-      const transaction = await updateSnsDomainRecord(connection, formattedDomain, ipfsUrl, walletAddress);
+      const transaction = await updateSnsDomainRecord(mainnetConnection, formattedDomain, ipfsUrl, walletAddress);
       
       // Step 4: Confirming
       setDeploymentProgress(prev => ({ ...prev, confirming: true }));
       setDeploymentStep('confirming');
       
-      // 6. Sign and send transaction
+      // 6. Simulate transaction before signing
+      debugLog('Simulating transaction before signing', {
+        recentBlockhash: transaction.recentBlockhash,
+        feePayer: transaction.feePayer.toBase58(),
+        instructions: transaction.instructions.length
+      });
+      const simulation = await mainnetConnection.simulateTransaction(transaction);
+      if (simulation.value.err) {
+        debugLog('Simulation failed', { err: simulation.value.err, logs: simulation.value.logs });
+        setStatus('Simulation failed: ' + JSON.stringify(simulation.value.err));
+        // Optionally show a modal or notification to the user
+        return; // Do not proceed to signing
+      }
+
+      // 7. Sign and send transaction (using mainnet)
       debugLog('Transaction before signing', {
         recentBlockhash: transaction.recentBlockhash,
         feePayer: transaction.feePayer.toBase58(),
         instructions: transaction.instructions.length
       });
       const signed = await window.solana.signTransaction(transaction);
-      const signature = await connection.sendRawTransaction(signed.serialize());
+      const signature = await mainnetConnection.sendRawTransaction(signed.serialize());
       debugLog('Transaction sent', { signature });
       
-      // 7. Wait for confirmation
-      const confirmation = await connection.confirmTransaction(signature);
+      // 8. Wait for confirmation
+      const confirmation = await mainnetConnection.confirmTransaction(signature, 'confirmed');
       debugLog('Transaction confirmed', { confirmation: confirmation.value });
       
       if (confirmation.value.err) {
         debugLog('SNS transaction error', { error: confirmation.value.err });
         throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
       }
+
+      // Add delay to allow for record propagation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // 9. Verify the domain record was updated
+      setStatus('Verifying domain update...');
+      const isUpdated = await verifyDomainRecordUpdate(mainnetConnection, formattedDomain, ipfsUrl);
+      
+      if (!isUpdated) {
+        throw new Error('Domain record was not updated correctly');
+      }
+      
+      debugLog('Domain record verified', {
+        domain: formattedDomain,
+        ipfsUrl
+      });
       
       // Step 5: Complete
       setDeploymentProgress(prev => ({ ...prev, complete: true }));
       setDeploymentStep('complete');
       
-      // 8. Update Firestore with transaction info
+      // 10. Update Firestore with transaction info
       const projectRef = doc(db, 'projects', userId);
       await updateDoc(projectRef, {
         'websiteSettings.deploymentStatus': 'completed',
@@ -724,7 +782,15 @@ const SnsDomainSelector = ({
 
     } catch (error) {
       console.error('Error deploying to SNS domain:', error);
-      setStatus('Error deploying to SNS domain: ' + error.message);
+      
+      // Get detailed error logs if available
+      let errorMessage = error.message;
+      if (error.logs) {
+        debugLog('Transaction error logs', { logs: error.logs });
+        errorMessage += '\nTransaction logs: ' + error.logs.join('\n');
+      }
+      
+      setStatus('Error deploying to SNS domain: ' + errorMessage);
       
       // Update Firestore with error status
       const projectRef = doc(db, 'projects', userId);
@@ -733,7 +799,7 @@ const SnsDomainSelector = ({
         if (projectDoc.exists()) {
           await updateDoc(projectRef, {
             'websiteSettings.deploymentStatus': 'failed',
-            'websiteSettings.deploymentError': error.message,
+            'websiteSettings.deploymentError': errorMessage,
             'websiteSettings.lastUpdated': serverTimestamp(),
             updatedAt: serverTimestamp()
           });
@@ -745,7 +811,7 @@ const SnsDomainSelector = ({
               snsDomain: formattedDomain || selectedDomain,
               walletAddress: walletAddress,
               deploymentStatus: 'failed',
-              deploymentError: error.message,
+              deploymentError: errorMessage,
               lastUpdated: serverTimestamp()
             },
             createdAt: serverTimestamp(),

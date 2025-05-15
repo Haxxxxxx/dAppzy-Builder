@@ -19,7 +19,7 @@ import DeFiModuleSettings from './LeftbarPanels/SettingsPanels/DeFiModuleSetting
 import BackgroundSettings from './LeftbarPanels/SettingsPanels/BackgroundSettings';
 import CandyMachineSettings from './LeftbarPanels/SettingsPanels/CandyMachineSettings';
 
-const SideBar = ({ contentListWidth, pageSettings }) => {
+const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpenMediaPanel }) => {
   // State for when no element is selected
   const [sidebarViewMode, setSidebarViewMode] = useState('elements');
   // State for when an element is selected (editor panel)
@@ -28,6 +28,30 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
   const { selectedElement, updateContent, updateConfiguration, updateStyles } = useContext(EditableContext);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Helper function to determine if element is a form element
+  const isFormElement = (element) => {
+    const formElements = ['form', 'input', 'textarea', 'select', 'label', 'fieldset', 'legend'];
+    return formElements.includes(element.type);
+  };
+
+  // Helper function to determine if element is a list element
+  const isListElement = (element) => {
+    const listElements = ['ul', 'ol', 'li'];
+    return listElements.includes(element.type);
+  };
+
+  // Helper function to determine if element is a video element
+  const isVideoElement = (element) => {
+    const videoElements = ['video', 'youtubevideo', 'bgvideo'];
+    return videoElements.includes(element.type);
+  };
+
+  // Helper function to determine if element is a DeFi element
+  const isDeFiElement = (element) => {
+    const defiElements = ['defiSection', 'defiModule', 'mintingSection', 'defiNavbar', 'defiFooter'];
+    return defiElements.includes(element.type?.toLowerCase());
+  };
 
   const isTextualElement = (element) => {
     if (!element || !element.type) return false;
@@ -101,29 +125,14 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
       return <p>Select an element to edit its settings.</p>;
     }
 
-    // Helper function to determine if element is a form element
-    const isFormElement = (element) => {
-      const formElements = ['form', 'input', 'textarea', 'select', 'label', 'fieldset', 'legend'];
-      return formElements.includes(element.type);
-    };
-
-    // Helper function to determine if element is a list element
-    const isListElement = (element) => {
-      const listElements = ['ul', 'ol', 'li'];
-      return listElements.includes(element.type);
-    };
-
-    // Helper function to determine if element is a video element
-    const isVideoElement = (element) => {
-      const videoElements = ['video', 'youtubevideo', 'bgvideo'];
-      return videoElements.includes(element.type);
-    };
-
-    // Helper function to determine if element is a DeFi element
-    const isDeFiElement = (element) => {
-      const defiElements = ['defisection', 'defimodule', 'mintingsection'];
-      return defiElements.includes(element.type);
-    };
+    // Handle DeFi elements first
+    if (isDeFiElement(selectedElement)) {
+      if (selectedElement.type === 'defiSection') {
+        return <DeFiSectionSettings selectedElement={selectedElement} />;
+      } else if (selectedElement.type === 'defiModule') {
+        return <DeFiModuleSettings selectedElement={selectedElement} />;
+      }
+    }
 
     // Always show TextualSettings for textual elements
     if (isTextualElement(selectedElement)) {
@@ -153,15 +162,6 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
     // Handle video elements
     if (isVideoElement(selectedElement)) {
       return <VideoSettings />;
-    }
-
-    // Handle DeFi elements
-    if (isDeFiElement(selectedElement)) {
-      if (selectedElement.type === 'defisection') {
-        return <DeFiSectionSettings />;
-      } else if (selectedElement.type === 'defimodule') {
-        return <DeFiModuleSettings />;
-      }
     }
 
     // Handle image elements
@@ -252,6 +252,13 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
             renderDisplayView()
           ) : editorViewMode === 'settings' ? (
             <div className="settings-panel">
+              {isDeFiElement(selectedElement) ? (
+                selectedElement.type === 'defiSection' ? (
+                  <DeFiSectionSettings selectedElement={selectedElement} />
+                ) : selectedElement.type === 'defiModule' ? (
+                  <DeFiModuleSettings selectedElement={selectedElement} />
+                ) : null
+              ) : (
               <CollapsibleSection
                 title="Element Information"
                 className="element-info-section"
@@ -278,6 +285,7 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
                   </div>
                 </div>
               </CollapsibleSection>
+              )}
             </div>
           ) : (
             <EditorPanel
@@ -294,6 +302,8 @@ const SideBar = ({ contentListWidth, pageSettings }) => {
             viewMode={sidebarViewMode}
             contentListWidth={contentListWidth}
             searchQuery={searchQuery}
+            handlePanelToggle={handlePanelToggle}
+            handleOpenMediaPanel={handleOpenMediaPanel}
           />
         </div>
       )}

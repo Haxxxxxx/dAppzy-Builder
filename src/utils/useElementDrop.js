@@ -2,7 +2,7 @@ import { useDrop } from 'react-dnd';
 
 const useElementDrop = ({ id, elementRef, onDropItem }) => {
   const [{ isOverCurrent, canDrop }, drop] = useDrop(() => ({
-    accept: ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK'],
+    accept: ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'defiSection'],
     drop: (item, monitor) => {
       // If a nested drop target already handled the drop, do nothing
       if (monitor.didDrop()) return;

@@ -1,19 +1,37 @@
 import { v4 as uuidv4 } from 'uuid';
 
-// Base element types and their default properties
+// Unified element configuration structure
 export const elementTypes = {
+  navbar: {
+    type: 'navbar',
+    defaultStyles: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '1rem',
+      width: '100%'
+    },
+    requiredProps: ['type'],
+    allowedChildren: ['image', 'span', 'button', 'link'],
+    defaultContent: '',
+    settings: {
+      sticky: false,
+      transparent: false
+    }
+  },
   section: {
     type: 'section',
     defaultStyles: {
-      position: 'relative',
-      width: '100%',
-      padding: '40px 20px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
+      padding: '2rem',
+      width: '100%'
     },
-    requiredProps: ['id', 'type'],
+    requiredProps: ['type'],
+    allowedChildren: ['div', 'heading', 'paragraph', 'image'],
+    defaultContent: '',
+    settings: {
+      fullWidth: false,
+      background: 'transparent'
+    }
   },
   container: {
     type: 'container',
@@ -144,6 +162,60 @@ export const elementTypes = {
 
 // Structure configurations for complex elements
 export const structureConfigurations = {
+  defaultNavbar: {
+    type: 'navbar',
+    styles: {
+      backgroundColor: '#ffffff',
+      borderBottom: '1px solid #e5e7eb'
+    },
+    children: [
+      {
+        type: 'image',
+        styles: {
+          width: '32px',
+          height: '32px',
+          borderRadius: '8px'
+        }
+      },
+      {
+        type: 'span',
+        content: 'Website Name',
+        styles: {
+          fontSize: '1.1rem',
+          fontWeight: '500'
+        }
+      },
+      {
+        type: 'button',
+        content: 'Connect Wallet',
+        styles: {
+          backgroundColor: '#5C4EFA',
+          color: '#ffffff',
+          padding: '8px 16px',
+          borderRadius: '6px'
+        }
+      }
+    ]
+  },
+  defaultSection: {
+    type: 'section',
+    styles: {
+      backgroundColor: '#f5f5f5',
+      padding: '60px 20px'
+    },
+    children: [
+      {
+        type: 'div',
+        styles: {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }
+      }
+    ]
+  },
   defaultHero: {
     type: 'hero',
     styles: {

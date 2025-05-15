@@ -1,6 +1,16 @@
-import { pinataConfig } from './configPinata';
+import { pinataConfig, isPinataConfigured } from './configPinata';
 
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+
+/**
+ * Validates Pinata configuration before making API calls
+ * @throws {Error} If Pinata configuration is invalid
+ */
+const validatePinataConfig = () => {
+  if (!isPinataConfigured()) {
+    throw new Error('Invalid Pinata configuration: Please check your environment variables (REACT_APP_PINATA_JWT, REACT_APP_PINATA_KEY, REACT_APP_PINATA_SECRET)');
+  }
+};
 
 /**
  * Pins a directory of files to IPFS using Pinata
@@ -10,6 +20,7 @@ const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
  */
 export async function pinDirectoryToPinata(files, metadata) {
   try {
+    validatePinataConfig();
     console.log('Starting Pinata upload...');
     
     const formData = new FormData();
@@ -31,7 +42,7 @@ export async function pinDirectoryToPinata(files, metadata) {
     const response = await fetch(PINATA_PIN_FILE_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${pinataConfig.pinata_jwt}`
+        Authorization: `Bearer ${pinataConfig.jwt}`
       },
       body: formData
     });
@@ -40,15 +51,27 @@ export async function pinDirectoryToPinata(files, metadata) {
       let errorData = null;
       try {
         errorData = await response.json();
+        console.error('Pinata error details:', errorData);
+        
+        if (response.status === 401) {
+          throw new Error('Pinata authentication failed. Please check your API credentials.');
+        } else if (response.status === 413) {
+          throw new Error('File size too large for Pinata upload.');
+        } else if (response.status === 429) {
+          throw new Error('Rate limit exceeded for Pinata API.');
+        }
       } catch (e) {
-        errorData = await response.text();
+        console.error('Error parsing Pinata response:', e);
       }
-      console.error('Pinata error:', errorData);
-      throw new Error('Network response was not ok');
+      throw new Error(`Pinata API error: ${errorData?.error || response.statusText}`);
     }
 
     const data = await response.json();
     console.log('Pinata upload response:', data);
+
+    if (!data.IpfsHash) {
+      throw new Error('No IPFS hash returned from Pinata');
+    }
 
     return data.IpfsHash;
   } catch (error) {
@@ -66,6 +89,7 @@ export async function pinDirectoryToPinata(files, metadata) {
  */
 export async function uploadFileToPinata(file, walletId, projectName) {
   try {
+    validatePinataConfig();
     const url = PINATA_PIN_FILE_URL;
     const formData = new FormData();
     formData.append('file', file);
@@ -83,10 +107,26 @@ export async function uploadFileToPinata(file, walletId, projectName) {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${pinataConfig.pinata_jwt}`,
+        'Authorization': `Bearer ${pinataConfig.jwt}`,
       },
       body: formData,
     });
+
+    if (!response.ok) {
+      let errorData = null;
+      try {
+        errorData = await response.json();
+        console.error('Pinata error details:', errorData);
+        
+        if (response.status === 401) {
+          throw new Error('Pinata authentication failed. Please check your API credentials.');
+        }
+      } catch (e) {
+        console.error('Error parsing Pinata response:', e);
+      }
+      throw new Error(`Pinata API error: ${errorData?.error || response.statusText}`);
+    }
+
     const data = await response.json();
     console.log("Pinata upload response:", data);
     return data;

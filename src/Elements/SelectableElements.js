@@ -150,7 +150,6 @@ export {
   SelectableYoutubeVideo as YouTubeVideo,
   SelectableIcon as Icon,
 
-
   SelectableDeFiSection as DraggableDeFi,
   SelectableDeFiModule as DeFiModule,
 };

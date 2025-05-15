@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { createElement, validateElement, structureConfigurations } from '../configs/elementConfigs';
+import { createElement, validateElement, structureConfigurations, elementTypes } from '../configs/elementConfigs';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useElementOperations = (elements, setElements, updateStyles) => {
   const findElementById = useCallback((id) => {
@@ -8,11 +9,32 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
 
   const addNewElement = useCallback((type, parentId = null, configuration = null) => {
     try {
-      // Create the new element using the factory function
-      const newElement = createElement(type, {
+      // Get base configuration
+      const baseConfig = elementTypes[type];
+      if (!baseConfig) {
+        throw new Error(`Invalid element type: ${type}`);
+      }
+
+      // Get structure configuration if provided
+      const structureConfig = configuration ? structureConfigurations[configuration] : null;
+      
+      // Create the new element
+      const newElement = {
+        id: uuidv4(),
+        type,
         configuration,
+        styles: {
+          ...baseConfig.defaultStyles,
+          ...(structureConfig?.styles || {}),
+        },
+        children: [],
+        content: baseConfig.defaultContent || '',
         parentId,
-      });
+        settings: {
+          ...baseConfig.settings,
+          ...(structureConfig?.settings || {})
+        }
+      };
 
       // Validate the element
       const validation = validateElement(newElement);
@@ -20,35 +42,35 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
         throw new Error(validation.error);
       }
 
-      // Add the element to the state
+      // Handle structure configuration children if present
+      if (structureConfig?.children) {
+        const childElements = structureConfig.children.map(childConfig => ({
+          id: uuidv4(),
+          type: childConfig.type,
+          content: childConfig.content || '',
+          styles: {
+            ...(elementTypes[childConfig.type]?.defaultStyles || {}),
+            ...(childConfig.styles || {})
+          },
+          parentId: newElement.id,
+          settings: childConfig.settings || {}
+        }));
+
+        // Set children IDs in the parent element
+        newElement.children = childElements.map(child => child.id);
+
+        // Add all elements to state in a single update
+        setElements(prev => [...prev, newElement, ...childElements]);
+      } else {
+        // Add just the new element if no children
     setElements(prev => [...prev, newElement]);
+      }
 
       // Update parent's children if there is a parent
     if (parentId) {
       setElements(prev => prev.map(el => 
         el.id === parentId 
             ? { ...el, children: [...el.children, newElement.id] }
-          : el
-      ));
-    }
-
-      // Handle structure configuration children if present
-      const structureConfig = configuration ? structureConfigurations[configuration] : null;
-    if (structureConfig?.children) {
-        const childElements = structureConfig.children.map(childConfig => 
-          createElement(childConfig.type, {
-            ...childConfig,
-            parentId: newElement.id,
-          })
-        );
-
-        // Add child elements to state
-      setElements(prev => [...prev, ...childElements]);
-        
-        // Update parent's children array
-      setElements(prev => prev.map(el => 
-          el.id === newElement.id 
-          ? { ...el, children: childElements.map(child => child.id) }
           : el
       ));
     }

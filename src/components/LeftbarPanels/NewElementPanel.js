@@ -15,7 +15,7 @@ import FormElements from './ElementsMapping/FormElements';
 import MediaElements from './ElementsMapping/MediaElements';
 import ContentSectionsPanel from '../SectionsPanels/ContentSectionsPanel';
 
-const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
+const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelToggle, handleOpenMediaPanel }) => {
   // Define default expanded state based on view mode.
   const defaultExpanded =
        {
@@ -58,7 +58,7 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery }) => {
   // Layout-based panels if viewMode is 'layout'
   const layoutSections = [
     { name: 'Navbar', component: <NavbarPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'Hero', component: <HeroPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
+    { name: 'Hero', component: <HeroPanel contentListWidth={contentListWidth} searchQuery={searchQuery} handlePanelToggle={handlePanelToggle} handleOpenMediaPanel={handleOpenMediaPanel} /> },
     { name: 'cta', component: <CTAPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
     { name: 'ContentSection', component: <ContentSectionsPanel contentListWidth={contentListWidth} searchQuery={searchQuery}/>},
     { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },

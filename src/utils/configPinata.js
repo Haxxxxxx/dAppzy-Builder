@@ -17,17 +17,27 @@ const validateEnv = () => {
 };
 
 // Initialize Pinata configuration
-const pinataConfig = {
-  jwt: process.env.REACT_APP_PINATA_JWT,
-  apiKey: process.env.REACT_APP_PINATA_KEY,
-  secretKey: process.env.REACT_APP_PINATA_SECRET
+const pinataConfigObject = {
+  jwt: process.env.REACT_APP_PINATA_JWT || '',
+  apiKey: process.env.REACT_APP_PINATA_KEY || '',
+  secretKey: process.env.REACT_APP_PINATA_SECRET || ''
+};
+
+// Validate configuration on import
+if (!validateEnv()) {
+  console.error('Pinata configuration is incomplete. Please check your environment variables.');
+}
+
+// Export a function to check if configuration is valid
+export const isPinataConfigured = () => {
+  return validateEnv() && pinataConfigObject.jwt && pinataConfigObject.apiKey && pinataConfigObject.secretKey;
 };
 
 // Log the environment variables to verify they're being loaded
 console.log('Pinata Config:', {
-  hasJWT: !!pinataConfig.jwt,
-  hasApiKey: !!pinataConfig.apiKey,
-  hasSecretKey: !!pinataConfig.secretKey,
+  hasJWT: !!pinataConfigObject.jwt,
+  hasApiKey: !!pinataConfigObject.apiKey,
+  hasSecretKey: !!pinataConfigObject.secretKey,
   env: process.env
 });
 
@@ -38,8 +48,8 @@ try {
   let pinataJWT = await TokenManager.getToken('PINATA');
   
   // If not found in TokenManager, use the one from environment
-  if (!pinataJWT && pinataConfig.jwt) {
-    pinataJWT = pinataConfig.jwt;
+  if (!pinataJWT && pinataConfigObject.jwt) {
+    pinataJWT = pinataConfigObject.jwt;
     // Store it in TokenManager for future use
     await TokenManager.setToken('PINATA', pinataJWT);
   }
@@ -50,8 +60,8 @@ try {
 
   // Initialize Pinata SDK with all credentials
   pinata = new pinataSDK({
-    pinataApiKey: pinataConfig.apiKey,
-    pinataSecretApiKey: pinataConfig.secretKey,
+    pinataApiKey: pinataConfigObject.apiKey,
+    pinataSecretApiKey: pinataConfigObject.secretKey,
     pinataJWTKey: pinataJWT
   });
 
@@ -73,14 +83,5 @@ try {
   };
 }
 
-/**
- * Pinata configuration object
- * @type {Object}
- */
-const pinataConfigObject = {
-  pinata_api_key: pinataConfig.apiKey,
-  pinata_secret_api_key: pinataConfig.secretKey,
-  pinata_jwt: pinataConfig.jwt,
-};
-
+// Export the configuration and SDK instance
 export { pinata, pinataConfigObject as pinataConfig };

@@ -20,7 +20,7 @@ import { renderFeature } from '../RenderFeatures/renderFeature';
  * @returns {React.Element} The rendered section
  */
 export function renderSection(sectionElement, context) {
-  const { id, type, children = [], styles = {} } = sectionElement;
+  const { id, type, configuration, children = [], styles = {} } = sectionElement;
 
   // Configuration mapping for different section types
   const configMap = {
@@ -58,12 +58,17 @@ export function renderSection(sectionElement, context) {
     }
   };
 
-  // Get section configuration
-  const config = configMap[type] || configMap.sectionOne;
+  // Get section configuration - use configuration if available, otherwise fallback to type
+  const sectionType = configuration || type;
+  const config = configMap[sectionType] || configMap.sectionOne;
 
   // Group children into parts based on layout
   const parts = config.layout.reduce((acc, part) => {
-    acc[part] = children.filter(child => child.part === part);
+    // Handle both direct children and children referenced by ID
+    acc[part] = children.filter(child => {
+      const childElement = typeof child === 'string' ? context.elements.find(el => el.id === child) : child;
+      return childElement && (childElement.part === part || childElement.layout === part);
+    });
     return acc;
   }, {});
 
@@ -112,10 +117,10 @@ export function renderSection(sectionElement, context) {
   return (
     <section 
       id={id}
-      className={`section ${type}`}
+      className={`section ${sectionType}`}
       style={containerStyle}
       role="region"
-      aria-label={`Section ${type}`}
+      aria-label={`Section ${sectionType}`}
     >
       {config.layout.map(part => renderPart(part, parts[part]))}
     </section>

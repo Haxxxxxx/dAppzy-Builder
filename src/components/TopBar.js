@@ -41,8 +41,8 @@ const Topbar = ({
       } else if (pageSettings.testUrl) {
         setProjectUrl(pageSettings.testUrl);
       } else {
-        setProjectUrl(`${baseUrl}/${userId}/${projectName}`);
-      }
+      setProjectUrl(`${baseUrl}/${userId}/${projectName}`);
+    }
     };
 
     updateProjectUrl();
