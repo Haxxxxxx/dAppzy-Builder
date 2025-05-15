@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 const useReorderDrop = (findElementById, elements, setElements) => {
@@ -8,36 +8,36 @@ const useReorderDrop = (findElementById, elements, setElements) => {
     const [isDragging, setIsDragging] = useState(false);
 
     // Cleanup function to reset drag state
-    const resetDrag = () => {
+    const resetDrag = useCallback(() => {
         setActiveDrop({ containerId: null, index: null });
         setDraggedId(null);
         setIsInternalDrag(false);
         setIsDragging(false);
-    };
+    }, []);
 
     // Add cleanup on unmount
     useEffect(() => {
         return () => {
             resetDrag();
         };
-    }, []);
+    }, [resetDrag]);
 
-    const onDragStart = (e, id) => {
+    const onDragStart = useCallback((e, id) => {
         e.stopPropagation();
         setDraggedId(id);
         setIsInternalDrag(true);
         setIsDragging(true);
         e.dataTransfer.setData("text/plain", id);
-    };
+    }, []);
 
-    const onDragOver = (e, containerId, index) => {
+    const onDragOver = useCallback((e, containerId, index) => {
         e.preventDefault();
         e.stopPropagation();
         if (!isDragging) return;
         setActiveDrop({ containerId, index });
-    };
+    }, [isDragging]);
 
-    const onDrop = (e, containerId) => {
+    const onDrop = useCallback((e, containerId) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -76,12 +76,41 @@ const useReorderDrop = (findElementById, elements, setElements) => {
             }
         }
 
+        // Reset drag state immediately after drop
         resetDrag();
-    };
+    }, [draggedId, activeDrop, elements, setElements, resetDrag]);
 
-    const onDragEnd = () => {
+    const onDragEnd = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
         resetDrag();
-    };
+    }, [resetDrag]);
+
+    // Reset drag state when mouse leaves the window
+    useEffect(() => {
+        const handleMouseLeave = () => {
+            resetDrag();
+        };
+
+        window.addEventListener('mouseleave', handleMouseLeave);
+        return () => {
+            window.removeEventListener('mouseleave', handleMouseLeave);
+        };
+    }, [resetDrag]);
+
+    // Reset drag state when mouse up occurs outside of a drop target
+    useEffect(() => {
+        const handleMouseUp = (e) => {
+            if (isDragging) {
+                resetDrag();
+            }
+        };
+
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, resetDrag]);
 
     return {
         activeDrop,

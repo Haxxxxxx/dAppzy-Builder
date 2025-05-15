@@ -1,5 +1,4 @@
 import { pinataClient, pinataSDK } from '../configPinata';
-
 // Mock the fetch function
 global.fetch = jest.fn();
 
@@ -8,9 +7,9 @@ describe('Pinata Configuration', () => {
     // Clear all mocks before each test
     jest.clearAllMocks();
     // Reset environment variables
-    process.env.REACT_PINATA_JWT = 'test-jwt';
-    process.env.REACT_PINATA_KEY = 'test-key';
-    process.env.REACT_PINATA_SECRET = 'test-secret';
+    process.env.REACT_APP_PINATA_JWT = 'test-jwt';
+    process.env.REACT_APP_PINATA_KEY = 'test-key';
+    process.env.REACT_APP_PINATA_SECRET = 'test-secret';
   });
 
   describe('pinataClient', () => {

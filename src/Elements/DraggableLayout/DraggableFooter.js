@@ -4,7 +4,26 @@ import { EditableContext } from '../../context/EditableContext';
 import SimpleFooter from '../Sections/Footers/SimpleFooter';
 import DetailedFooter from '../Sections/Footers/DetailedFooter';
 import TemplateFooter from '../Sections/Footers/TemplateFooter';
+import { Image, Span, LinkBlock } from '../SelectableElements';
+import useElementDrop from '../../utils/useElementDrop';
+import DeFiFooter from '../Sections/Footers/DeFiFooter';
+import { FooterConfigurations } from '../../configs/footers/FooterConfigurations';
+import { SimplefooterStyles, DetailedFooterStyles, TemplateFooterStyles, DeFiFooterStyles } from '../Sections/Footers/defaultFooterStyles';
 
+/**
+ * DraggableFooter component for rendering and managing footer sections.
+ * Supports drag and drop functionality, modal interactions, and different footer configurations.
+ * 
+ * @param {Object} props - Component props
+ * @param {string} props.id - Unique identifier for the footer
+ * @param {string} props.configuration - Footer configuration type
+ * @param {boolean} props.isEditing - Whether the footer is in edit mode
+ * @param {boolean} props.showDescription - Whether to show the description
+ * @param {number} props.contentListWidth - Width of the content list
+ * @param {Function} props.handleOpenMediaPanel - Function to handle media panel opening
+ * @param {string} props.imgSrc - Image source for the footer preview
+ * @param {string} props.label - Label for the footer
+ */
 const DraggableFooter = ({
   id,
   configuration,
@@ -21,58 +40,161 @@ const DraggableFooter = ({
     elements,
     findElementById,
     setSelectedElement,
+    updateStyles,
   } = useContext(EditableContext);
+  
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
+  const navRef = useRef(null);
 
+  // Handle drop events within the footer with improved error handling
+  const onDropItem = (item, parentId) => {
+    if (!item || !parentId) return;
+
+    const parentElement = findElementById(parentId, elements);
+    if (!parentElement) return;
+
+    // Check if the item being dropped is a footer
+    if (item.type === 'footer') {
+      // Check if a footer with this configuration already exists in the parent section
+      const sectionElement = findElementById(parentElement.parentId, elements);
+      const existingFooter = sectionElement?.children
+        ?.map(childId => findElementById(childId, elements))
+        ?.find(el => el?.type === 'footer' && el?.configuration === item.configuration);
+
+      if (existingFooter) {
+        // If a footer with this configuration exists, don't create a new one
+        return;
+      }
+    }
+
+    // Create a new element with the same type and configuration as the dropped item
+    const configStyles = (FooterConfigurations[item.configuration] && FooterConfigurations[item.configuration].styles) || {};
+    
+    // Special handling for DeFi footer to include wrapper divs
+    let newElement = {
+      type: item.type,
+      content: item.content || '',
+      styles: { ...configStyles, ...(item.styles || {}) },
+      configuration: item.configuration,
+      settings: item.settings || {}
+    };
+
+    // If it's a DeFi footer, add the wrapper divs
+    if (item.configuration === 'defiFooter') {
+      newElement = {
+        ...newElement,
+        children: [
+          {
+            type: 'div',
+            styles: { display: 'flex', alignItems: 'center', gap: '12px' },
+            children: []
+          },
+          {
+            type: 'div',
+            styles: { display: 'flex', gap: '24px' },
+            children: []
+          }
+        ]
+      };
+    }
+
+    const newId = addNewElement(item.type, 1, null, parentId, newElement);
+
+    // Update the parent element's children with unique values
+    setElements((prevElements) =>
+      prevElements.map((el) =>
+        el.id === parentId
+          ? {
+              ...el,
+              children: [...new Set([...el.children, newId])], // Ensure unique children
+            }
+          : el
+      )
+    );
+
+    // Select the newly created element
+    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
+  };
+
+  // Setup drag behavior with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { id, type: 'footer', configuration },
+    item: { 
+      id, 
+      type: 'footer', 
+      configuration,
+      structure: configuration 
+    },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        // Calculate the index at which the footer should be placed:
-        // Count the number of top-level elements (elements with no parentId)
-        const topLevelElements = elements.filter(el => !el.parentId) + 1;
-        const index = topLevelElements.length; // Append at the end
+        const footerConfig = FooterConfigurations[item.configuration];
+        if (footerConfig) {
+          // Check if a footer with this configuration already exists in the current section
+          const dropResult = monitor.getDropResult();
+          const targetSectionId = dropResult?.sectionId;
+          
+          if (targetSectionId) {
+            const sectionElement = findElementById(targetSectionId, elements);
+            const existingFooter = sectionElement?.children
+              ?.map(childId => findElementById(childId, elements))
+              ?.find(el => el?.type === 'footer' && el?.configuration === item.configuration);
 
-        const newId = addNewElement('footer', 1, index, null, configuration);
-        setElements((prevElements) =>
-          prevElements.map((el) =>
-            el.id === newId ? { ...el, configuration } : el
-          )
-        );
-      }
-    },
-  }), [configuration, isEditing, addNewElement, setElements, elements]);
+            if (!existingFooter) {
+              // Only create a new footer if one doesn't exist in the section
+              const configStyles = (footerConfig && footerConfig.styles) || {};
+              
+              // Special handling for DeFi footer to include wrapper divs
+              let newElement = {
+                ...footerConfig,
+                styles: { ...configStyles, ...(footerConfig.styles || {}) },
+                configuration: item.configuration,
+                structure: item.configuration
+              };
 
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
-
-    const parentElement = findElementById(parentId, elements);
-    if (parentElement) {
-      const newId = addNewElement(item.type, 1, null, parentId);
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === parentId
-            ? {
-                ...el,
-                children: [...new Set([...el.children, newId])],
+              // If it's a DeFi footer, add the wrapper divs
+              if (item.configuration === 'defiFooter') {
+                newElement = {
+                  ...newElement,
+                  children: [
+                    {
+                      type: 'div',
+                      styles: { display: 'flex', alignItems: 'center', gap: '12px' },
+                      children: []
+                    },
+                    {
+                      type: 'div',
+                      styles: { display: 'flex', gap: '24px' },
+                      children: []
+                    }
+                  ]
+                };
               }
-            : el
-        )
-      );
+
+              addNewElement('footer', 1, null, targetSectionId, newElement);
+            }
+          }
+        }
+        setSelectedElement({ id: item.id, type: 'footer', configuration: item.configuration });
+      }
     }
-  };
+  }), [configuration, isEditing, elements]);
 
+  // Find the current footer and its children with improved error handling
   const footer = findElementById(id, elements);
-  const resolvedChildren =
-    footer?.children?.map((childId) => findElementById(childId, elements)) || [];
+  const configChildren = FooterConfigurations[configuration]?.children || [];
+  const resolvedChildren = (footer?.children || [])
+    .map((childId) => findElementById(childId, elements))
+    .filter(Boolean);
+  const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
+  // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
 
+  // Close modal if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -91,24 +213,26 @@ const DraggableFooter = ({
     };
   }, [isModalOpen]);
 
-  const titles = {
-    simple: 'Simple Footer',
-    detailed: 'Detailed Footer',
-    template: 'Template Footer',
-  };
-
+  // Handle element selection
   const handleSelect = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent parent selections
     setSelectedElement({ id, type: 'footer', styles: footer?.styles });
   };
 
+  // Handle preview display with description
   if (showDescription) {
     return (
-      <div
-        className='bento-extract-display'
-        onClick={toggleModal}
-        ref={drag}
-        style={{ opacity: isDragging ? 0.5 : 1 }}
+      <div 
+        className="bento-extract-display" 
+        ref={drag} 
+        style={{ 
+          opacity: isDragging ? 0.5 : 1,
+          cursor: 'pointer'
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
+        aria-label={`${label} preview`}
       >
         <img
           src={imgSrc}
@@ -119,41 +243,57 @@ const DraggableFooter = ({
             marginBottom: '8px',
             borderRadius: '4px',
           }}
+          loading="lazy"
         />
         <strong className='element-name'>{label}</strong>
       </div>
     );
   }
 
+  // Special handling for DeFi footer
+  if (configuration === 'defiFooter') {
+    return (
+      <DeFiFooter
+        id={id}
+        handleSelect={handleSelect}
+        contentListWidth={contentListWidth}
+        children={childrenToRender}
+        onDropItem={onDropItem}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+      />
+    );
+  }
+
+  // Assign the correct footer component based on configuration
   let FooterComponent;
-  if (configuration === 'simple') {
+  if (configuration === 'customTemplateFooter') {
     FooterComponent = (
       <SimpleFooter
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
       />
     );
-  } else if (configuration === 'detailed') {
+  } else if (configuration === 'detailedFooter') {
     FooterComponent = (
       <DetailedFooter
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
       />
     );
-  } else if (configuration === 'template') {
+  } else if (configuration === 'templateFooter') {
     FooterComponent = (
       <TemplateFooter
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={resolvedChildren}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
@@ -161,26 +301,33 @@ const DraggableFooter = ({
     );
   }
 
-  return (
-    <div
-      ref={drag}
-      style={{
-        position: 'relative',
-        cursor: 'pointer',
-        border: isDragging ? '1px dashed #000' : 'none',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onClick={(e) => {
-        toggleModal(); // Show/hide your modal
-      }}
-    >
-      <strong>{label}</strong>
-      {FooterComponent}
-    </div>
-  );
+  // Render the draggable footer component
+  if (isEditing) {
+    return (
+      <div
+        ref={drag}
+        style={{
+          position: 'relative',
+          cursor: 'pointer',
+          border: isDragging ? '1px dashed #000' : 'none',
+          backgroundColor: '#f9f9f9',
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={toggleModal}
+        role="button"
+        tabIndex={0}
+        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
+        aria-label={`${label} component`}
+      >
+        <strong>{label}</strong>
+        {FooterComponent}
+      </div>
+    );
+  }
+
+  return FooterComponent;
 };
 
 export default DraggableFooter;

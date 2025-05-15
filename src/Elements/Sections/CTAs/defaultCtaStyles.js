@@ -6,7 +6,6 @@ export const ctaOneStyles = {
     justifyContent: 'center',
     padding: '48px 24px',
     gap: '32px',
-    width: '100%',
     backgroundColor: '#FFFFFF',
   },
   ctaContent: {
@@ -41,32 +40,25 @@ export const ctaOneStyles = {
   },
   primaryButton: {
     padding: '12px 24px',
-    backgroundColor: '#4D70FF',
+    backgroundColor: '#334155',
     color: '#FFFFFF',
     border: 'none',
     borderRadius: '4px',
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'background-color 0.2s ease',
-    '&:hover': {
-      backgroundColor: '#3D5CFF',
-    },
+    transition: 'all 0.2s ease',
   },
   secondaryButton: {
     padding: '12px 24px',
     backgroundColor: 'transparent',
-    color: '#4D70FF',
-    border: '2px solid #4D70FF',
+    color: '#334155',
+    border: '2px solid #334155',
     borderRadius: '4px',
     fontSize: '16px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    '&:hover': {
-      backgroundColor: '#4D70FF',
-      color: '#FFFFFF',
-    },
   },
   ctaImage: {
     width: '100%',
@@ -102,6 +94,7 @@ export const ctaTwoStyles = {
     fontSize: '2rem',
     fontWeight: 'bold',
     marginBottom: '16px',
+    color: '#1a1a1a',
   },
   buttonContainer: {
     display: 'flex',
@@ -110,20 +103,22 @@ export const ctaTwoStyles = {
   },
   primaryButton: {
     padding: '12px 24px',
-    backgroundColor: '#1a1aff',
+    backgroundColor: '#334155',
     color: '#ffffff',
     fontWeight: 'bold',
     border: 'none',
     cursor: 'pointer',
     borderRadius: '4px',
+    transition: 'all 0.2s ease',
   },
   secondaryButton: {
     padding: '12px 24px',
     backgroundColor: 'transparent',
-    color: '#1a1aff',
-    border: '2px solid #1a1aff',
+    color: '#334155',
+    border: '2px solid #334155',
     fontWeight: 'bold',
     cursor: 'pointer',
     borderRadius: '4px',
+    transition: 'all 0.2s ease',
   }
 };

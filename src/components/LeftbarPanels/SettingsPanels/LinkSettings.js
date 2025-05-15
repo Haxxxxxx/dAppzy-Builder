@@ -25,7 +25,7 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
     ...defaultSettings,
     ...settings,
   });
-  
+
   // Lift the dropdown links state to LinkSettings:
   const [dropdownLinks, setDropdownLinks] = useState(localSettings.dropdownLinks || []);
 
@@ -95,19 +95,6 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
 
   return (
     <div className="settings-panel link-settings-panel">
-      <hr />
-      {/* Display the element's ID */}
-      <div className="settings-group settings-header">
-        <label htmlFor="redirectId">ID</label>
-        <input
-          type="text"
-          name="redirectId"
-          value={localSettings.id}
-          readOnly
-          placeholder="ID"
-          className="settings-input"
-        />
-      </div>
       <hr />
       <CollapsibleSection title="Link Settings">
         <div className="link-settings-wrapper-target">

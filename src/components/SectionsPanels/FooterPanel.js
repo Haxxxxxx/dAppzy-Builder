@@ -5,9 +5,26 @@ const FooterPanel = ({ contentListWidth, searchQuery }) => {
   const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand
 
   const footerConfigurations = [
-    { imgSrc: './img/previewcomponent.png', configuration: 'template', label: 'Template Footer' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'simple', label: 'Simple Footer' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'detailed', label: 'Detailed Footer' },
+    { 
+      imgSrc: './img/previewcomponent.png', 
+      configuration: 'customTemplateFooter', 
+      label: 'Simple Footer',
+    },
+    { 
+      imgSrc: './img/previewcomponent.png', 
+      configuration: 'detailedFooter', 
+      label: 'Detailed Footer',
+    },
+    { 
+      imgSrc: './img/previewcomponent.png', 
+      configuration: 'templateFooter', 
+      label: 'Advanced Footer',
+    },
+    { 
+      imgSrc: './img/previewcomponent.png', 
+      configuration: 'defiFooter', 
+      label: 'DeFi Footer',
+    },
   ];
 
   // Filter footer configurations based on search query
@@ -18,7 +35,7 @@ const FooterPanel = ({ contentListWidth, searchQuery }) => {
   return (
     <div>
         <div className="bento-display-elements" style={{ marginTop: '16px' }}>
-          {filteredFooters.map(({ configuration, label, imgSrc }) => (
+          {filteredFooters.map(({ configuration, label, imgSrc, description }) => (
             <DraggableFooter
               key={configuration}
               configuration={configuration}
@@ -26,7 +43,8 @@ const FooterPanel = ({ contentListWidth, searchQuery }) => {
               isEditing={false}
               showDescription={true}
               contentListWidth={contentListWidth}
-              imgSrc={imgSrc} // Pass the image source correctly
+              imgSrc={imgSrc}
+              description={description}
             />
           ))}
           {filteredFooters.length === 0 && <p>No footers found.</p>}

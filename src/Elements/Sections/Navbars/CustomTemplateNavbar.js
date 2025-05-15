@@ -4,14 +4,14 @@ import { CustomTemplateNavbarStyles } from './DefaultNavbarStyles';
 import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 
-
 const CustomTemplateNavbar = ({
   handleSelect,
   uniqueId,
   contentListWidth,
-  children,
+  children = [],
   onDropItem,
   handleOpenMediaPanel,
+  label,
 }) => {
   const navRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,6 +55,10 @@ const CustomTemplateNavbar = ({
     }
   };
 
+  if (!navbarElement) {
+    return null; // Don't render if navbar element is not found
+  }
+
   return (
     <nav
       ref={(node) => {
@@ -62,46 +66,68 @@ const CustomTemplateNavbar = ({
         drop(node);
       }}
       style={{
-        // 4) Merge your local default styles + the styles from state,
-        //    so they actually render in the browser
         ...CustomTemplateNavbarStyles.nav,
         ...(navbarElement?.styles || {}),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '1rem',
+        backgroundColor: '#ffffff',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        flexWrap: 'wrap',
+        gap: '1rem',
       }}
-      onClick={(e) => handleSelect(e)}  // if you need the event explicitly
-
+      onClick={(e) => handleSelect(e)}
+      className="custom-template-navbar"
     >
       {/* Logo and Title */}
-      <div style={{ ...CustomTemplateNavbarStyles.logoContainer }}>
-        {children
-          .filter((child) => child?.type === 'image')
-          .map((child) => (
-            <Image
-              key={child.id}
-              id={child.id}
-              src={child.content || 'Default Logo'}
-              styles={{
-                ...child.styles,
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-              }}
-              handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={handleImageDrop}
-            />
-          ))}
-        {children
-          .filter((child) => child?.type === 'span' && child?.content === '3S.Template')
-          .map((child) => (
-            <Span
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{
-                ...child.styles,
-                cursor: 'pointer',
-              }}
-            />
-          ))}
+      <div 
+        style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '1rem',
+          flex: '0 1 auto',
+          minWidth: 'fit-content'
+        }} 
+        className="navbar-logo-container"
+      >
+        {children?.[0]?.type === 'image' && (
+          <Image
+            key={children[0].id}
+            id={children[0].id}
+            src={children[0].content || 'Default Logo'}
+            styles={{
+              ...children[0].styles,
+              width: '100%',
+              maxWidth: '40px',
+              height: '40px',
+              objectFit: 'cover',
+              borderRadius: '4px',
+              aspectRatio: '1/1',
+              flex: '0 0 auto',
+            }}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            handleDrop={handleImageDrop}
+            settings={children[0].settings || {}}
+            className="navbar-logo"
+          />
+        )}
+        {children?.[1]?.type === 'span' && (
+          <Span
+            key={children[1].id}
+            id={children[1].id}
+            content={children[1].content}
+            styles={{
+              ...children[1].styles,
+              cursor: 'pointer',
+              fontSize: '1.25rem',
+              fontWeight: 'bold',
+              flex: '0 1 auto',
+              whiteSpace: 'nowrap',
+            }}
+            className="navbar-title"
+          />
+        )}
       </div>
 
       {/* Compact Menu */}
@@ -109,20 +135,35 @@ const CustomTemplateNavbar = ({
         <>
           <div
             style={{
-              ...CustomTemplateNavbarStyles.compactMenuIcon,
+              cursor: 'pointer',
+              fontSize: '1.5rem',
+              padding: '0.5rem',
+              flex: '0 0 auto',
             }}
             onClick={toggleMenu}
+            className="navbar-compact-menu-icon"
           >
             ☰
           </div>
           {isMenuOpen && (
             <div
               style={{
-                ...CustomTemplateNavbarStyles.compactMenu,
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: '#ffffff',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                padding: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                width: '100%',
+                zIndex: 1000,
               }}
+              className="navbar-compact-menu"
             >
-              {children
-                .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+              {children?.slice(2)
+                .filter((child) => child?.type === 'span')
                 .map((child) => (
                   <Span
                     key={child.id}
@@ -131,10 +172,13 @@ const CustomTemplateNavbar = ({
                     styles={{
                       ...child.styles,
                       cursor: 'pointer',
+                      padding: '0.5rem',
+                      flex: '0 0 auto',
                     }}
+                    className="navbar-link"
                   />
                 ))}
-              {children
+              {children?.slice(2)
                 .filter(
                   (child) =>
                     child?.type === 'button' || child?.type === 'connectWalletButton'
@@ -148,7 +192,10 @@ const CustomTemplateNavbar = ({
                         styles={{
                           ...child.styles,
                           cursor: 'pointer',
+                          padding: '0.5rem',
+                          flex: '0 0 auto',
                         }}
+                        className="navbar-connect-wallet"
                       />
                     ) : (
                       <Button
@@ -157,7 +204,10 @@ const CustomTemplateNavbar = ({
                         styles={{
                           ...child.styles,
                           cursor: 'pointer',
+                          padding: '0.5rem',
+                          flex: '0 0 auto',
                         }}
+                        className="navbar-button"
                       />
                     )}
                   </React.Fragment>
@@ -167,12 +217,21 @@ const CustomTemplateNavbar = ({
         </>
       )}
 
-      {/* Desktop Links and Buttons */}
+      {/* Standard Menu */}
       {!isCompact && (
         <>
-          <div style={{ ...CustomTemplateNavbarStyles.standardMenuContainer }}>
-            {children
-              .filter((child) => child?.type === 'span' && child?.content !== '3S.Template')
+          <div 
+            style={{ 
+              display: 'flex', 
+              gap: '2rem',
+              flex: '1 1 auto',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }} 
+            className="navbar-standard-menu"
+          >
+            {children?.slice(2)
+              .filter((child) => child?.type === 'span')
               .map((child) => (
                 <Span
                   key={child.id}
@@ -181,13 +240,24 @@ const CustomTemplateNavbar = ({
                   styles={{
                     ...child.styles,
                     cursor: 'pointer',
+                    flex: '0 0 auto',
                   }}
+                  className="navbar-link"
                 />
               ))}
           </div>
 
-          <div style={{ ...CustomTemplateNavbarStyles.buttonContainer }}>
-            {children
+          <div 
+            style={{ 
+              display: 'flex', 
+              gap: '1rem',
+              flex: '0 1 auto',
+              justifyContent: 'flex-end',
+              flexWrap: 'wrap',
+            }} 
+            className="navbar-buttons"
+          >
+            {children?.slice(2)
               .filter(
                 (child) => child?.type === 'button' || child?.type === 'connectWalletButton'
               )
@@ -197,7 +267,11 @@ const CustomTemplateNavbar = ({
                     <ConnectWalletButton
                       id={child.id}
                       content={child.content}
-                      styles={child.styles}
+                      styles={{
+                        ...child.styles,
+                        flex: '0 0 auto',
+                      }}
+                      className="navbar-connect-wallet"
                     />
                   ) : (
                     <Button
@@ -205,7 +279,9 @@ const CustomTemplateNavbar = ({
                       content={child.content}
                       styles={{
                         ...child.styles,
+                        flex: '0 0 auto',
                       }}
+                      className="navbar-button"
                     />
                   )}
                 </React.Fragment>

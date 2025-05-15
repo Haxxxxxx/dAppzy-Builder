@@ -4,6 +4,8 @@ import { EditableContext } from '../../context/EditableContext';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
+import DeFiNavbar from '../Sections/Navbars/DeFiNavbar';
+import { structureConfigurations } from '../../configs/structureConfigurations.js';
 
 const DraggableNavbar = ({
   id,
@@ -16,45 +18,118 @@ const DraggableNavbar = ({
   imgSrc, // Image source for the navbar preview
   label, // Label for the navbar
 }) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const {generateUniqueId, addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const modalRef = useRef(null);
 
   // DraggableNavbar.js
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    // rename config -> structure so handleDrop sees item.structure
-    item: {id, type: 'navbar', structure: configuration },
+    item: { 
+      id, 
+      type: 'navbar', 
+      configuration,
+      structure: configuration
+    },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-  }));
+    end: (item, monitor) => {
+      if (monitor.didDrop() && !isEditing) {
+        const navbarConfig = structureConfigurations[item.configuration];
+        if (navbarConfig) {
+          // Check if a navbar with this configuration already exists in the current section
+          const dropResult = monitor.getDropResult();
+          const targetSectionId = dropResult?.sectionId;
+          
+          if (targetSectionId) {
+            const sectionElement = findElementById(targetSectionId, elements);
+            const existingNavbar = sectionElement?.children
+              ?.map(childId => findElementById(childId, elements))
+              ?.find(el => el?.type === 'navbar' && el?.configuration === item.configuration);
+
+            if (!existingNavbar) {
+              // Only create a new navbar if one doesn't exist in the section
+              addNewElement('navbar', 1, null, targetSectionId, {
+                ...navbarConfig,
+                configuration: item.configuration,
+                structure: item.configuration
+              });
+            }
+          }
+        }
+        setSelectedElement({ id: item.id, type: 'navbar', configuration: item.configuration });
+      }
+    },
+  }), [configuration, isEditing, elements]);
 
   // Handle dropping items inside this navbar
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
+  const onDropItem = (item, index) => {
+    if (!item) return;
 
-    const parentElement = findElementById(parentId, elements);
-
-    if (parentElement) {
-      const newId = addNewElement(item.type, 1, null, parentId);
-
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === parentId
-            ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-            : el
-        )
-      );
+    // Check if we're trying to add a navbar inside another navbar
+    if (item.type === 'navbar') {
+      console.warn('Cannot add a navbar inside another navbar');
+      return;
     }
+
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Create the new element with proper configuration
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      id,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: item.styles || {},
+        configuration: item.configuration || '',
+        className: item.className || '',
+        attributes: item.attributes || {},
+        dataAttributes: item.dataAttributes || {},
+        events: item.events || {},
+        children: item.children || []
+      }
+    );
+
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const parentElement = prevElements.find(el => el.id === id);
+      if (!parentElement) return prevElements;
+
+      // Create a new array for the children, maintaining existing ones
+      const updatedChildren = [...(parentElement.children || [])];
+      
+      // Insert the new element ID at the specified index
+      updatedChildren.splice(index, 0, elementId);
+
+      // Update the parent element with the new children array
+      return prevElements.map(el =>
+        el.id === id
+          ? { ...el, children: updatedChildren }
+          : el
+      );
+    });
+
+    // Select the new element
+    setSelectedElement({ id: elementId, type: item.type });
   };
 
   // Find the current navbar and its children
   const navbar = findElementById(id, elements);
-  const children = navbar?.children?.map((childId) => findElementById(childId, elements)) || [];
+  const configChildren = structureConfigurations[configuration]?.children || [];
+  const resolvedChildren = (navbar?.children || [])
+    .map((childId) => findElementById(childId, elements))
+    .filter(Boolean)
+    .map(child => ({
+      ...child,
+      id: child.id || generateUniqueId(child.type) // Ensure each child has an ID
+    }));
+  const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
@@ -79,11 +154,12 @@ const DraggableNavbar = ({
   }, [isModalOpen]);
 
 
-  const titles = {
-    twoColumn: 'Two Columns',
-    threeColumn: 'Three Columns',
-    customTemplate: '3S Navbar',
-  };
+  //const titles = {
+  //  twoColumn: 'Two Columns',
+  //  threeColumn: 'Three Columns',
+  //  customTemplate: '3S Navbar',
+  //  defiNavbar: 'DeFi Navbar',
+  //};
 
   // Inside DraggableNavbar.js
   const handleSelect = (e) => {
@@ -105,7 +181,7 @@ const DraggableNavbar = ({
             borderRadius: '4px',
           }}
         />
-        <strong className='element-name'>{titles[configuration]}</strong>
+        <strong className='element-name'>{label}</strong>
         {/* <p>{descriptions[configuration]}</p> */}
       </div>
     );
@@ -113,29 +189,27 @@ const DraggableNavbar = ({
 
   // Assign the correct navbar component
   let NavbarComponent;
-  if (configuration === 'customTemplate') {
+  if (configuration === 'customTemplateNavbar') {
     NavbarComponent = (
       <CustomTemplateNavbar
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={children}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
-
       />
     );
   } else if (configuration === 'twoColumn') {
     NavbarComponent = (
       <TwoColumnNavbar
         uniqueId={id}
-        children={children}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
         handleSelect={handleSelect}
-
       />
     );
   } else if (configuration === 'threeColumn') {
@@ -143,7 +217,19 @@ const DraggableNavbar = ({
       <ThreeColumnNavbar
         uniqueId={id}
         contentListWidth={contentListWidth}
-        children={children}
+        children={childrenToRender}
+        onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        handleSelect={handleSelect}
+      />
+    );
+  } else if (configuration === 'defiNavbar') {
+    NavbarComponent = (
+      <DeFiNavbar
+        uniqueId={id}
+        contentListWidth={contentListWidth}
+        children={childrenToRender}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}

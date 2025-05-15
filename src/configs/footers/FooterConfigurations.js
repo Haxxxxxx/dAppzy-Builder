@@ -1,12 +1,11 @@
 export const FooterConfigurations = {
-    
-  simple: {
+  customTemplate: {
     children: [
       { type: 'span', content: 'Simple Footer - © 2024 My Company' },
       { type: 'button', content: 'Subscribe' },
     ],
   },
-  detailed: {
+  detailedFooter: {
     children: [
       { type: 'span', content: 'Company Name, Address Line 1, Address Line 2' },
       { type: 'button', content: 'Contact Us' },
@@ -16,7 +15,7 @@ export const FooterConfigurations = {
       { type: 'span', content: 'Follow us: [Social Links]' },
     ],
   },
-  template: {
+  templateFooter: {
     type: 'footer',
     children: [
       { type: 'span', content: 'Eleven', styles: { fontSize: '1rem', color: '#E5E7EB' } },
@@ -31,5 +30,15 @@ export const FooterConfigurations = {
       { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7', styles: { width: '40px', height: '40px' } },
     ],
   },
-  
-}
+  defiFooter: {
+    children: [
+      { type: 'image', content: './img/defi-logo.png', styles: { width: '32px', height: '32px', borderRadius: '8px' } },
+      { type: 'span', content: '© 2024 DeFi Project', styles: { color: '#ffffff' } },
+      { type: 'link', content: 'Whitepaper', styles: { color: '#ffffff', textDecoration: 'none' } },
+      { type: 'link', content: 'Audit', styles: { color: '#ffffff', textDecoration: 'none' } },
+      { type: 'link', content: 'Governance', styles: { color: '#ffffff', textDecoration: 'none' } },
+      { type: 'link', content: 'Docs', styles: { color: '#ffffff', textDecoration: 'none' } },
+      { type: 'link', content: 'Connect Wallet', styles: { color: '#ffffff', textDecoration: 'none' } }
+    ],
+  }
+};

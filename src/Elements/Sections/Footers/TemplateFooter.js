@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
 import { TemplateFooterStyles } from './defaultFooterStyles.js';
-import { Image, Span } from '../../SelectableElements';
+import { Image, Span, Div } from '../../SelectableElements';
 
 const TemplateFooter = ({
   uniqueId,
@@ -61,7 +61,23 @@ const TemplateFooter = ({
     ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
     flexDirection: isCompact ? 'column' : 'row',
     textAlign: isCompact ? 'center' : 'left',
+    alignItems: 'center',
   };
+
+  // Separate children into different categories
+  const navigationLinks = children.filter(child => 
+    child.type === 'span' && child.styles?.fontSize === '1rem' && child.styles?.color === '#E5E7EB'
+  );
+  
+  const brandingElements = children.filter(child => 
+    child.type === 'span' && child.styles?.fontSize === '1.1rem' && child.styles?.fontWeight === 'bold'
+  );
+  
+  const copyrightText = children.filter(child => 
+    child.type === 'span' && child.styles?.fontSize === '0.9rem' && child.styles?.color === '#9CA3AF'
+  );
+  
+  const socialImages = children.filter(child => child.type === 'image');
 
   return (
     <footer
@@ -75,10 +91,22 @@ const TemplateFooter = ({
         handleSelect(e);
       }}
     >
-      {/* Render ALL Spans */}
-      {children
-        .filter((child) => child.type === 'span')
-        .map((child) => (
+      {/* Navigation Links Section */}
+      <Div
+        id={`${uniqueId}-navigation`}
+        styles={{
+          ...TemplateFooterStyles.navigationLinks,
+          display: 'flex',
+          gap: '24px',
+          justifyContent: 'center',
+          alignItems: 'center',
+          margin: '0',
+          padding: '0',
+          whiteSpace: 'nowrap',
+          flexWrap: 'nowrap',
+        }}
+      >
+        {navigationLinks.map((child) => (
           <Span
             key={child.id}
             id={child.id}
@@ -86,14 +114,36 @@ const TemplateFooter = ({
             styles={{
               ...TemplateFooterStyles.link,
               ...(child.styles || {}),
+              whiteSpace: 'nowrap',
             }}
           />
         ))}
+      </Div>
 
-      {/* Render ALL Images (droppable) */}
-      {children
-        .filter((child) => child.type === 'image')
-        .map((child) => (
+      {/* Branding Section */}
+      <Div
+        id={`${uniqueId}-branding`}
+        styles={TemplateFooterStyles.branding}
+      >
+        {brandingElements.map((child) => (
+          <Span
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...TemplateFooterStyles.branding,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
+      </Div>
+
+      {/* Social Media Section */}
+      <Div
+        id={`${uniqueId}-social`}
+        styles={TemplateFooterStyles.socialIcons}
+      >
+        {socialImages.map((child) => (
           <Image
             key={child.id}
             id={child.id}
@@ -106,6 +156,30 @@ const TemplateFooter = ({
             handleDrop={handleImageDrop}
           />
         ))}
+      </Div>
+
+      {/* Copyright Section */}
+      <Div
+        id={`${uniqueId}-copyright`}
+        styles={{
+          width: '100%',
+          textAlign: 'center',
+          paddingTop: '16px',
+          margin: '0',
+        }}
+      >
+        {copyrightText.map((child) => (
+          <Span
+            key={child.id}
+            id={child.id}
+            content={child.content}
+            styles={{
+              ...TemplateFooterStyles.copyright,
+              ...(child.styles || {}),
+            }}
+          />
+        ))}
+      </Div>
     </footer>
   );
 };

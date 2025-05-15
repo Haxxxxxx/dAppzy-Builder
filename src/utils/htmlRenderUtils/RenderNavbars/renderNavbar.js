@@ -1,163 +1,174 @@
-// src/utils/htmlRenderUtils/RenderNavbars/renderNavbar.js
-
+// File: src/utils/htmlRenderUtils/RenderNavbars/renderNavbar.js
+import React from 'react';
 import { defaultNavbarStyles, CustomTemplateNavbarStyles } from '../../../Elements/Sections/Navbars/DefaultNavbarStyles';
-import { renderElementToHtml } from '../../htmlRender';
+import { StyleManager } from '../../../styles/styleManager';
+import { SecurityManager } from '../../../security/securityManager';
 
 /**
- * Generic handler for all "navbar" elements.
- * - Merges default styles + user's custom styles
- * - Groups children (logo, brand, links, buttons) based on `configuration`
+ * Renders a navigation bar with support for different configurations.
+ * The navbar can include a logo, brand name, navigation links, and action buttons.
+ * 
+ * @param {Object} navbarElement - The navbar element to render
+ * @param {string} navbarElement.id - Unique identifier for the navbar
+ * @param {string} navbarElement.configuration - Navbar configuration ('customTemplate' or default)
+ * @param {Object} navbarElement.styles - Custom styles to apply
+ * @param {Array} navbarElement.children - Child elements (logo, brand, links, buttons)
+ * @param {Object} context - Rendering context with callbacks
+ * @returns {React.Element} The rendered navigation bar
  */
-export function renderNavbar(navbarElement, collectedStyles) {
-  const {
-    id,
-    configuration,
-    children = [],
-    styles = {},
-  } = navbarElement;
+export function renderNavbar(navbarElement, context) {
+  const { id, configuration, children = [], styles: customStyles = {} } = navbarElement;
 
-  // 1) Convert each child to HTML and categorize them
-  //    (logo = images, brand = special spans, links = normal spans, buttons = button/connectWallet)
-  let logoHtml = '';
-  let brandHtml = '';
-  let linkHtmls = [];
-  let buttonHtmls = [];
+  // 1. Group children by type with improved type safety and ID handling
+  const logo = children.find(c => c?.type === 'image');
+  const spans = children.filter(c => c?.type === 'span');
+  const brand = spans[0];
+  const links = spans.slice(1);
+  const buttons = children.filter(c => c?.type === 'button' || c?.type === 'connectWalletButton');
 
-  children.forEach((child) => {
-    const childHtml = renderElementToHtml(child, collectedStyles);
+  // 2. Get style configuration
+  const styleConfig = configuration === 'customTemplate' 
+    ? CustomTemplateNavbarStyles 
+    : defaultNavbarStyles;
 
-    // The type of the child is usually 'image', 'span', 'button', 'connectWalletButton', etc.
-    if (child.type === 'image') {
-      logoHtml += childHtml;
-    } else if (child.type === 'span') {
-      // For the customTemplate, you might treat a special "3S.Template" span as a brand
-      if (configuration === 'customTemplate' && child.content === '3S.Template') {
-        brandHtml += childHtml;
-      } else {
-        linkHtmls.push(childHtml);
-      }
-    } else if (child.type === 'button' || child.type === 'connectWalletButton') {
-      buttonHtmls.push(childHtml);
-    }
-  });
-
-  // 2) Merge default styles with user's custom styles,
-  //    plus sub-rules for .logoContainer, .standardMenuContainer, etc.
-  const className = `${id}`;
-
-  // We'll define "base" as the main nav defaults.
-  // For "customTemplate" we might use `CustomTemplateNavbarStyles.nav` as the base instead.
-  let baseNavStyles = defaultNavbarStyles.nav; 
-  if (configuration === 'customTemplate') {
-    baseNavStyles = CustomTemplateNavbarStyles.nav;
-  }
-
-  // We do the same for sub-rules: if 'customTemplate', fallback to the custom style set:
-  const mergedStyles = {
-    ...baseNavStyles, // top-level nav
-    ...styles,
-
-    '.logoContainer': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.logoContainer
-        : defaultNavbarStyles.logoContainer),
-    },
-    // For convenience, let's define a "linksContainer" (or "navList") sub-rule
-    '.linksContainer': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.standardMenuContainer
-        : defaultNavbarStyles.standardMenuContainer),
-    },
-    '.buttonContainer': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.buttonContainer
-        : defaultNavbarStyles.buttonContainer),
-    },
-    '.compactMenuIcon': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.compactMenuIcon
-        : defaultNavbarStyles.compactMenuIcon),
-    },
-    '.compactMenu': {
-      ...(configuration === 'customTemplate'
-        ? CustomTemplateNavbarStyles.compactMenu
-        : defaultNavbarStyles.compactMenu),
-    },
+  // 3. Apply styles using StyleManager with improved organization
+  const appliedStyles = {
+    navbar: StyleManager.applyStyles(styleConfig.navbar, customStyles, 'navbar'),
+    logo: StyleManager.applyStyles(styleConfig.logo, logo?.styles, 'image'),
+    brand: StyleManager.applyStyles(styleConfig.brand, brand?.styles, 'span'),
+    link: StyleManager.applyStyles(styleConfig.link, {}, 'link'),
+    button: StyleManager.applyStyles(styleConfig.button, {}, 'button'),
+    linksContainer: StyleManager.applyStyles(styleConfig.linksContainer, {}, 'linksContainer'),
+    buttonsContainer: StyleManager.applyStyles(styleConfig.buttonsContainer, {}, 'buttonsContainer')
   };
 
-  // 3) Depending on the layout (twoColumn / threeColumn / customTemplate),
-  //    produce slightly different HTML groupings
-  let navbarHtml = '';
-  
-  if (configuration === 'twoColumn') {
-    // - Left = logoHtml
-    // - Right = (links + brandHtml + buttons) or brand can also be combined with links
-    navbarHtml = `
-      <nav id="${className}" class="${className}">
-        <div class="logoContainer">
-          ${logoHtml}
-        </div>
-        <div class="linksContainer">
-          <!-- If you have a brandHtml, you could place it before links -->
-          ${brandHtml ? brandHtml : ''}
-          ${linkHtmls.join('\n')}
-          <div class="buttonContainer">
-            ${buttonHtmls.join('\n')}
+  // 4. Render a single navigation link with improved accessibility and ID handling
+  const renderLink = (link, index) => {
+    if (!link?.content) return null;
+
+    const sanitizedContent = SecurityManager.sanitizeInput(link.content);
+    const sanitizedHref = SecurityManager.sanitizeUrl(link.href || '#');
+    const linkId = link.id || `${id}-link-${index}`;
+
+    return (
+      <a
+        key={linkId}
+        id={linkId}
+        href={sanitizedHref}
+        style={appliedStyles.link}
+        onClick={(e) => {
+          e.preventDefault();
+          context.onLinkClick?.(link);
+        }}
+        onKeyPress={(e) => e.key === 'Enter' && context.onLinkClick?.(link)}
+        aria-label={sanitizedContent}
+        role="link"
+        tabIndex={0}
+      >
+        {sanitizedContent}
+      </a>
+    );
+  };
+
+  // 5. Render a single button with improved accessibility and ID handling
+  const renderButton = (button, index) => {
+    if (!button?.content) return null;
+
+    const buttonContent = typeof button.content === 'object' ? button.content.text : button.content;
+    const sanitizedContent = SecurityManager.sanitizeInput(buttonContent);
+    const buttonId = button.id || `${id}-button-${index}`;
+    const buttonTypeStyle = StyleManager.applyStyles(
+      index === 0 ? styleConfig.primaryButton : styleConfig.secondaryButton,
+      button.styles,
+      'button'
+    );
+
+    return (
+      <button
+        key={buttonId}
+        id={buttonId}
+        style={buttonTypeStyle}
+        onClick={() => context.onButtonClick?.(button)}
+        onKeyPress={(e) => e.key === 'Enter' && context.onButtonClick?.(button)}
+        aria-label={sanitizedContent}
+        role="button"
+        tabIndex={0}
+      >
+        {sanitizedContent}
+      </button>
+    );
+  };
+
+  // 6. Render the logo with improved error handling and ID handling
+  const renderLogo = () => {
+    if (!logo?.src) return null;
+
+    const sanitizedSrc = SecurityManager.sanitizeUrl(logo.src);
+    const sanitizedAlt = SecurityManager.sanitizeInput(logo.alt || brand?.content || 'Logo');
+    const logoId = logo.id || `${id}-logo`;
+
+    return (
+      <div className="navbar-logo" role="img" aria-label={sanitizedAlt} id={logoId}>
+        <img
+          src={sanitizedSrc}
+          alt={sanitizedAlt}
+          style={appliedStyles.logo}
+          loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = '/fallback-logo.png';
+          }}
+        />
+      </div>
+    );
+  };
+
+  // 7. Render the navbar with improved structure and ID handling
+  return (
+    <nav 
+      id={id}
+      className={`navbar ${configuration}`}
+      style={appliedStyles.navbar}
+      role="navigation"
+      aria-label="Main navigation"
+    >
+      <div className="navbar-brand-container" id={`${id}-brand-container`}>
+        {renderLogo()}
+        {brand && (
+          <div className="navbar-brand" id={brand.id || `${id}-brand`}>
+            <span 
+              style={appliedStyles.brand}
+              aria-label={SecurityManager.sanitizeInput(brand.content)}
+            >
+              {SecurityManager.sanitizeInput(brand.content)}
+            </span>
           </div>
-        </div>
-      </nav>
-    `.trim();
-  } else if (configuration === 'threeColumn') {
-    // - Left = logo
-    // - Middle = links
-    // - Right = brand + buttons (or brand could be middle, etc.)
-    navbarHtml = `
-      <nav id="${className}" class="${className}">
-        <div class="logoContainer">
-          ${logoHtml}
-        </div>
-        <div class="linksContainer">
-          ${linkHtmls.join('\n')}
-        </div>
-        <div class="buttonContainer">
-          ${brandHtml}
-          ${buttonHtmls.join('\n')}
-        </div>
-      </nav>
-    `.trim();
-  } else if (configuration === 'customTemplate') {
-    // The "classic" left/logo + brand, center=links, right=buttons approach
-    navbarHtml = `
-      <nav id="${className}" class="${className}">
-        <div class="logoContainer">
-          ${logoHtml}
-          ${brandHtml}
-        </div>
-        <div class="linksContainer">
-          ${linkHtmls.join('\n')}
-        </div>
-        <div class="buttonContainer">
-          ${buttonHtmls.join('\n')}
-        </div>
-      </nav>
-    `.trim();
-  } else {
-    // fallback if unknown
-    navbarHtml = `
-      <nav class="${className}">
-        ${logoHtml}
-        ${brandHtml}
-        ${linkHtmls.join('\n')}
-        ${buttonHtmls.join('\n')}
-      </nav>
-    `.trim();
-  }
+        )}
+      </div>
 
-  // 4) Push the final merged styles
-  collectedStyles.push({
-    className,
-    styles: mergedStyles,
-  });
+      {links.length > 0 && (
+        <div 
+          className="navbar-links"
+          style={appliedStyles.linksContainer}
+          role="navigation"
+          aria-label="Navigation links"
+          id={`${id}-links`}
+        >
+          {links.map(renderLink)}
+        </div>
+      )}
 
-  return navbarHtml;
+      {buttons.length > 0 && (
+        <div 
+          className="navbar-buttons"
+          style={appliedStyles.buttonsContainer}
+          role="group"
+          aria-label="Action buttons"
+          id={`${id}-buttons`}
+        >
+          {buttons.map(renderButton)}
+        </div>
+      )}
+    </nav>
+  );
 }

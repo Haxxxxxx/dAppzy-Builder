@@ -57,21 +57,21 @@ const DeFiModuleSettings = ({ selectedElement }) => {
 
     const updatedData = {
       ...moduleData,
-      title: allValues.title,
-      stats: allValues.stats || [],
+      title: allValues.title || moduleData.title,
+      stats: allValues.stats || moduleData.stats || [],
       settings: {
         ...moduleData.settings,
-        showStats: allValues.showStats,
-        showButton: allValues.showButton,
-        customColor: allValues.customColor,
+        showStats: allValues.showStats ?? moduleData.settings?.showStats ?? true,
+        showButton: allValues.showButton ?? moduleData.settings?.showButton ?? true,
+        customColor: allValues.customColor || moduleData.settings?.customColor || '#2A2A3C',
         // Module type specific settings
         ...(moduleData.moduleType === 'aggregator' && {
-          supportedChains: allValues.supportedChains,
-          supportedTokens: allValues.supportedTokens
+          supportedChains: allValues.supportedChains || moduleData.settings?.supportedChains || [],
+          supportedTokens: allValues.supportedTokens || moduleData.settings?.supportedTokens || []
         }),
         ...(moduleData.moduleType === 'simulation' && {
-          simulationBalance: allValues.simulationBalance,
-          timeRange: allValues.timeRange
+          simulationBalance: allValues.simulationBalance || moduleData.settings?.simulationBalance || 10000,
+          timeRange: allValues.timeRange || moduleData.settings?.timeRange || '5Y'
         })
       }
     };
@@ -83,9 +83,12 @@ const DeFiModuleSettings = ({ selectedElement }) => {
       content: JSON.stringify(updatedData),
       styles: {
         ...selectedElement.styles,
-        backgroundColor: allValues.customColor
+        backgroundColor: allValues.customColor || selectedElement.styles?.backgroundColor
       }
     });
+
+    // Update local state
+    setModuleData(updatedData);
   };
 
   const renderStatsSettings = () => {

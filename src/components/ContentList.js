@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, forwardRef } from 'react';
 import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../context/EditableContext';
-import DropZone from '../utils/DropZone';
+import UnifiedDropZone from '../utils/UnifiedDropZone';
+import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 
 const ContentList = forwardRef(
@@ -27,6 +28,7 @@ const ContentList = forwardRef(
       saveToLocalStorage,
       selectedStyle,
       selectedElement,
+      generateUniqueId,
     } = useContext(EditableContext);
 
     // Use useDragLayer to determine if any drag is active.
@@ -46,8 +48,34 @@ const ContentList = forwardRef(
       calculateScale();
     }, [contentListWidth, canvasWidth]);
 
+    // Helper function to recursively create flex elements
+    function createFlexElement(config, addNewElement, parentId = null) {
+      const id = addNewElement(config.parentType || config.type, 1, 0, parentId, {
+        styles: { gap: '12px', padding: '12px', display: 'flex', flexDirection: config.direction }
+      });
+      if (config.children && config.children.length > 0) {
+        config.children.forEach(child => {
+          if (child.children) {
+            createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflex' ? 'column' : 'row' }, addNewElement, id);
+          } else {
+            addNewElement(child.type, 1, 0, id, {
+              styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflex' ? 'column' : 'row' }
+            });
+          }
+        });
+      }
+      return id;
+    }
+
     const handleDrop = (item, index) => {
       if (!item) return;
+
+      // Handle flex config drop
+      if (item.isFlexConfig && item.flexConfig) {
+        // Use the parentId if provided (for nested drops)
+        createFlexElement(item.flexConfig, addNewElement, item.parentId || null);
+        return;
+      }
 
       if (item.id) {
         // If the item has an id, it's an existing element being moved
@@ -59,14 +87,33 @@ const ContentList = forwardRef(
         if (item.type === 'button' || item.type === 'image') {
           newId = addNewElement(item.type, 1, index);
         } else if (
-          item.type === 'hero' ||
           item.type === 'navbar' ||
+          item.type === 'hero' ||
           item.type === 'cta' ||
           item.type === 'mintingSection' ||
           item.type === 'ContentSection' ||
-          item.type === 'footer'
+          item.type === 'defiSection' ||
+          item.type === 'footer' ||
+          item.type === 'section'
         ) {
-          newId = addNewElement(item.type, 1, index, null, item.structure);
+          // Handle all section types with their full configuration
+          console.log('Adding section with data:', item);
+          
+          // Ensure children have unique IDs
+          const processedChildren = item.children?.map(child => ({
+            ...child,
+            id: generateUniqueId(child.type || 'element')
+          })) || [];
+
+          newId = addNewElement(item.type, 1, index, null, {
+            type: item.type,
+            configuration: item.configuration || item.type,
+            structure: item.structure || item.type,
+            styles: item.styles || {},
+            settings: item.settings || {},
+            label: item.label,
+            children: processedChildren
+          });
         } else {
           newId = addNewElement(item.type, 1, index);
         }
@@ -95,18 +142,20 @@ const ContentList = forwardRef(
         }}
       >
         {!isPreviewMode && elements.length === 0 ? (
-          <DropZone
-            index={0}
-            onDrop={(item) => handleDrop(item, 0)}
-            text="Add layout"
-            className="first-dropzone"
-            scale={scale}
-            isDragging={isDragging}
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            onPanelToggle={handlePanelToggle}
-          />
+          <DropZoneErrorBoundary>
+            <UnifiedDropZone
+              index={0}
+              onDrop={(item) => handleDrop(item, 0)}
+              text="Add layout"
+              className="first-dropzone"
+              scale={scale}
+              isDragging={isDragging}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onPanelToggle={handlePanelToggle}
+            />
+          </DropZoneErrorBoundary>
         ) : (
           <>
             {elements
@@ -114,16 +163,18 @@ const ContentList = forwardRef(
               .map((element, index) => (
                 <React.Fragment key={element.id}>
                   {!isPreviewMode && (
-                    <DropZone
-                      index={index}
-                      onDrop={(item) => handleDrop(item, index)}
-                      text=""
-                      className="between-dropzone"
-                      isDragging={isDragging}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    />
+                    <DropZoneErrorBoundary>
+                      <UnifiedDropZone
+                        index={index}
+                        onDrop={(item) => handleDrop(item, index)}
+                        text=""
+                        className="between-dropzone"
+                        isDragging={isDragging}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      />
+                    </DropZoneErrorBoundary>
                   )}
                   {renderElement(
                     element,
@@ -141,17 +192,19 @@ const ContentList = forwardRef(
               ))}
 
             {!isPreviewMode && (
-              <DropZone
-                index={elements.length}
-                onDrop={(item) => handleDrop(item, elements.length)}
-                text="Click or Drop items here to add to the page"
-                className="default-dropzone"
-                isDragging={isDragging}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedElement('');
-                }}
-              />
+              <DropZoneErrorBoundary>
+                <UnifiedDropZone
+                  index={elements.length}
+                  onDrop={(item) => handleDrop(item, elements.length)}
+                  text="Click or Drop items here to add to the page"
+                  className="default-dropzone"
+                  isDragging={isDragging}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedElement('');
+                  }}
+                />
+              </DropZoneErrorBoundary>
             )}
           </>
         )}

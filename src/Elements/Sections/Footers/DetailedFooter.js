@@ -71,8 +71,8 @@ const DetailedFooter = ({
       onClick={(e) => handleSelect(e)}
     >
       {/* Render ALL Spans */}
-      {children
-        .filter((child) => child.type === 'span')
+      {(children || [])
+        .filter((child) => child && child.type === 'span')
         .map((child) => (
           <Span
             key={child.id}
@@ -86,8 +86,8 @@ const DetailedFooter = ({
         ))}
 
       {/* Render ALL Buttons */}
-      {children
-        .filter((child) => child.type === 'button')
+      {(children || [])
+        .filter((child) => child && child.type === 'button')
         .map((child) => (
           <Button
             key={child.id}
@@ -101,8 +101,8 @@ const DetailedFooter = ({
         ))}
 
       {/* Render ALL Images (droppable) */}
-      {children
-        .filter((child) => child.type === 'image')
+      {(children || [])
+        .filter((child) => child && child.type === 'image')
         .map((child) => (
           <Image
             key={child.id}

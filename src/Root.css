@@ -1,0 +1,16 @@
+:root {
+
+  /* Colors */
+  --purple: #5C4EFA;
+  --purple-hover: #4a3afa;
+  --dark-gray: #57575B;
+  --white: #FFF;
+  --editor-text: #D9D9D9;
+  --not-selected: #838389;
+  --builder-bg: #313031;
+  
+}
+
+* {
+  margin: 0;
+}

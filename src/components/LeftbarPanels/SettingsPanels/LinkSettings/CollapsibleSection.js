@@ -11,9 +11,9 @@ const CollapsibleSection = ({ title, children }) => {
         style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', justifyContent: 'space-between' }}
       >
         {title}
-        <span>{isCollapsed ? <span class="material-symbols-outlined">
+        <span>{isCollapsed ? <span className="material-symbols-outlined">
           keyboard_arrow_down
-        </span> : <span class="material-symbols-outlined">
+        </span> : <span className="material-symbols-outlined">
           chevron_right
         </span>}</span>
       </h3>

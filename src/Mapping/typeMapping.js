@@ -1,4 +1,3 @@
-
 export const typeToTagMap = {
   div: 'div',
   section: 'section',
@@ -51,5 +50,9 @@ export const typeToTagMap = {
   linkblock: 'div',
   youtube: 'iframe',
   icon:'img',
+  defiSection: 'section',
+  title: 'h2',
+  description: 'p',
+  defiModule: 'div'
 };
 

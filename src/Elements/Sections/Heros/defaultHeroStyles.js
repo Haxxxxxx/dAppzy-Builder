@@ -11,6 +11,7 @@ export const defaultHeroStyles = {
     padding: '20px',
     backgroundColor: '#ffffff',
     gap: '1rem',
+    margin: '0',
   },
   heroContent: {
     flex: '1',
@@ -86,6 +87,7 @@ export const CustomTemplateHeroStyles = {
     padding: '40px',
     backgroundColor: '#ffffff',
     gap: '10vw',
+    margin: '0',
   },
   heroContent: {
     flex: 1,
@@ -180,6 +182,7 @@ export const heroTwoStyles = {
     alignItems: 'center',
     textAlign: 'center',
     borderRadius: '8px',
+    margin: '0',
   },
   heroLeftContent: {
     flex: 1,

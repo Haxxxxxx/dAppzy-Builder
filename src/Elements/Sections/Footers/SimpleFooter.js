@@ -1,118 +1,287 @@
-import React, { useContext, useRef, useEffect } from 'react';
+import React, { useRef, useContext, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
+import { Span, Button, Image, LinkBlock, Anchor, Paragraph, Heading, List, ListItem, Blockquote, Code, Pre, Caption, Legend } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
-import { SimplefooterStyles } from './defaultFooterStyles';
-import { Span, Button, Image } from '../../SelectableElements';
 
 const SimpleFooter = ({
-  uniqueId,
-  children = [],
   handleSelect,
+  uniqueId,
+  contentListWidth,
+  children,
   onDropItem,
   handleOpenMediaPanel,
 }) => {
-  const footerRef = useRef(null);
+  const navRef = useRef(null);
+  const { elements, updateStyles, findElementById } = useContext(EditableContext);
 
-  // Access elements & updateStyles from context
-  const { elements, updateStyles } = useContext(EditableContext);
-
-  // Make footer droppable
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
-    elementRef: footerRef,
+    elementRef: navRef,
     onDropItem,
   });
 
-  // Find the footer element in global state
-  const footerElement = elements.find((el) => el.id === uniqueId);
+  const footerElement = findElementById(uniqueId, elements);
 
-  // Apply default styles if none exist
   useEffect(() => {
     if (!footerElement) return;
-    const noCustomStyles =
-      !footerElement.styles || Object.keys(footerElement.styles).length === 0;
-
+    const noCustomStyles = !footerElement.styles || Object.keys(footerElement.styles).length === 0;
     if (noCustomStyles) {
       updateStyles(footerElement.id, {
-        ...SimplefooterStyles.simpleFooter,
+        backgroundColor: '#1a1a1a',
+        color: '#fff',
+        padding: '24px',
+        borderTop: '1px solid #333',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       });
     }
   }, [footerElement, updateStyles]);
 
-  // Handle drag-and-drop image replacement
-  const handleImageDrop = (droppedItem, imageId) => {
-    if (droppedItem.mediaType === 'image') {
-      onDropItem(imageId, droppedItem.src);
-    }
-  };
-
-  // Merge local + custom + highlight if dragging
-  const footerStyles = {
-    ...SimplefooterStyles.simpleFooter,
-    ...(footerElement?.styles || {}),
-    border: isOverCurrent
-      ? '2px solid blue'
-      : SimplefooterStyles.simpleFooter.border,
-  };
+  // Always resolve children from state
+  const resolvedChildren = (footerElement?.children || [])
+    .map(childId => findElementById(childId, elements))
+    .filter(Boolean);
 
   return (
     <footer
       ref={(node) => {
-        footerRef.current = node;
+        navRef.current = node;
         drop(node);
       }}
-      style={footerStyles}
-      onClick={(e) => {
-        e.stopPropagation();
-        handleSelect(e);
+      style={{
+        ...(footerElement?.styles || {}),
+        borderTop: isOverCurrent ? '2px solid blue' : '1px solid #333',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+        flexWrap: 'wrap',
+        padding: '24px',
+        backgroundColor: '#1a1a1a',
+        color: '#fff',
       }}
+      onClick={(e) => handleSelect(e)}
     >
-      {/* Render ALL Spans */}
-      {children
-        .filter((child) => child.type === 'span')
-        .map((child) => (
-          <Span
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{
-              ...SimplefooterStyles.companyInfo,
-              ...(child.styles || {}),
-            }}
-          />
-        ))}
+      {resolvedChildren.map((child, index) => {
+        if (!child) return null;
 
-      {/* Render ALL Buttons */}
-      {children
-        .filter((child) => child.type === 'button')
-        .map((child) => (
-          <Button
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{
-              ...SimplefooterStyles.subscribeButton,
-              ...(child.styles || {}),
-            }}
-          />
-        ))}
+        const commonStyles = {
+          cursor: 'text',
+          border: 'none',
+          outline: 'none',
+          color: '#fff',
+          flex: '0 0 auto',
+        };
 
-      {/* Render ALL Images (droppable) */}
-      {children
-        .filter((child) => child.type === 'image')
-        .map((child) => (
-          <Image
-            key={child.id}
-            id={child.id}
-            src={child.content}
-            styles={{
-              ...SimplefooterStyles.socialButton,
-              ...(child.styles || {}),
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-          />
-        ))}
+        switch (child.type) {
+          case 'span':
+            return (
+              <Span
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                }}
+              />
+            );
+          case 'button':
+            return (
+              <Button
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  backgroundColor: '#334155',
+                  padding: '12px 24px',
+                  fontWeight: 'bold',
+                  borderRadius: '4px',
+                }}
+              />
+            );
+          case 'image':
+            return (
+              <Image
+                key={child.id}
+                id={child.id}
+                src={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  width: '100%',
+                  maxWidth: '100px',
+                  height: '100px',
+                  objectFit: 'cover',
+                  borderRadius: '4px',
+                  aspectRatio: '1/1',
+                }}
+                handleOpenMediaPanel={handleOpenMediaPanel}
+                settings={child.settings || {}}
+              />
+            );
+          case 'link':
+          case 'linkBlock':
+            return (
+              <LinkBlock
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  color: '#60a5fa',
+                  textDecoration: 'underline',
+                }}
+              />
+            );
+          case 'anchor':
+            return (
+              <Anchor
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  color: '#60a5fa',
+                  textDecoration: 'underline',
+                }}
+              />
+            );
+          case 'paragraph':
+            return (
+              <Paragraph
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                }}
+              />
+            );
+          case 'heading':
+            return (
+              <Heading
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  fontSize: '1.25rem',
+                  fontWeight: 'bold',
+                }}
+              />
+            );
+          case 'list':
+            return (
+              <List
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                }}
+              />
+            );
+          case 'listItem':
+            return (
+              <ListItem
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                }}
+              />
+            );
+          case 'blockquote':
+            return (
+              <Blockquote
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  borderLeft: '4px solid #334155',
+                  paddingLeft: '16px',
+                  marginLeft: '0',
+                }}
+              />
+            );
+          case 'code':
+            return (
+              <Code
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  backgroundColor: '#334155',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                }}
+              />
+            );
+          case 'pre':
+            return (
+              <Pre
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  backgroundColor: '#334155',
+                  padding: '16px',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  whiteSpace: 'pre-wrap',
+                }}
+              />
+            );
+          case 'caption':
+            return (
+              <Caption
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  fontSize: '0.875rem',
+                  color: '#9ca3af',
+                }}
+              />
+            );
+          case 'legend':
+            return (
+              <Legend
+                key={child.id}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...commonStyles,
+                  ...child.styles,
+                  fontSize: '0.875rem',
+                  color: '#9ca3af',
+                }}
+              />
+            );
+          default:
+            return null;
+        }
+      })}
     </footer>
   );
 };

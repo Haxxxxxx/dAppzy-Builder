@@ -56,12 +56,7 @@ const ThreeColumnNavbar = ({
               key={child.id}
               id={child.id}
               src={child.content || 'Default Logo'}
-              styles={{
-                ...child.styles,
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-              }}
+              styles={child.styles}
               handleOpenMediaPanel={handleOpenMediaPanel}
               handleDrop={handleImageDrop}
             />
@@ -81,8 +76,8 @@ const ThreeColumnNavbar = ({
             <div style={defaultNavbarStyles.compactMenu}>
               {children.map((child) => (
                 <>
-                  {child.type === 'span' && <Span id={child.id} content={child.content} />}
-                  {child.type === 'button' && <Button id={child.id} content={child.content} />}
+                  {child.type === 'span' && <Span id={child.id} content={child.content} styles={child.styles} />}
+                  {child.type === 'button' && <Button id={child.id} content={child.content} styles={child.styles} />}
                   {child.type === 'connectWalletButton' && (
                     <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   )}
@@ -95,16 +90,32 @@ const ThreeColumnNavbar = ({
 
       {/* Standard Menu */}
       {!isCompact && (
-        <div style={defaultNavbarStyles.standardMenuContainer}>
-          <ul style={defaultNavbarStyles.navList} className="threeColumnCenter">
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flex: 1,
+          gap: '16px'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flex: 1,
+            gap: '16px'
+          }}>
             {children
               .filter((child) => child?.type === 'span')
               .map((child) => (
-                <Span key={child.id} id={child.id} content={child.content} />
+                <Span key={child.id} id={child.id} content={child.content} styles={child.styles} />
               ))}
-          </ul>
+          </div>
 
-          <div style={defaultNavbarStyles.buttonContainer}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
             {children
               .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
@@ -112,7 +123,7 @@ const ThreeColumnNavbar = ({
                   {child.type === 'connectWalletButton' ? (
                     <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
                   ) : (
-                    <Button id={child.id} content={child.content} />
+                    <Button id={child.id} content={child.content} styles={child.styles} />
                   )}
                 </>
               ))}

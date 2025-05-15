@@ -6,8 +6,8 @@ const CTAPanel = ({ contentListWidth, searchQuery }) => {
     const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand
   
     const CTAConfigurations = [
-      { imgSrc: './img/previewcomponent.png', configuration: 'ctaOne', label: 'CTA One' },
-      { imgSrc: './img/previewcomponent.png', configuration: 'ctaTwo', label: 'CTA Two' },
+      { imgSrc: './img/previsu-advanced-cta.png', configuration: 'ctaOne', label: 'Advanced CTA' },
+      { imgSrc: './img/previsu-quick-cta.png', configuration: 'ctaTwo', label: 'Quick CTA' },
     ];
   
     // Filter hero configurations based on search query

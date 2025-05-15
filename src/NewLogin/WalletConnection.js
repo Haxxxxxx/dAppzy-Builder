@@ -111,7 +111,7 @@ function WalletConnection({ onUserLogin }) {
   const getPhantomCustomTokenFromServer = async (publicKey, signature) => {
     const body = { publicKey, signature: Array.from(signature) };
     const response = await fetch(
-      "https://us-central1-third--space.cloudfunctions.net/verifyPhantom",
+      "https://us-central1-third--space.cloudfunctions.net/verifyPhantomV2",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

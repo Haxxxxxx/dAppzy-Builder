@@ -1,10 +1,49 @@
-import React, { useContext, useRef, useEffect, useState } from 'react';
+import React, { useContext, useRef, useEffect, useState, useCallback, useMemo, forwardRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { useWalletContext } from '../../context/WalletContext';
+import { useDappWallet } from '../../context/DappWalletContext';
+import { useWeb3 } from '../../context/Web3Provider';
 import { structureConfigurations } from '../../configs/structureConfigurations';
-import { db, doc, getDoc, setDoc } from '../../firebase';
-import { useWeb3React } from '@web3-react/core';
 import { validateEthAddress } from '../../utils/securityUtils';
+import { Button } from '../SelectableElements';
+
+// Create a forwardRef wrapper for the Button component
+const ButtonWithRef = forwardRef(({ content, styles, onClick, onMouseDown, ...props }, ref) => {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onMouseDown) {
+      onMouseDown(e);
+    }
+  };
+
+  return (
+    <div
+      ref={ref}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      style={{
+        ...styles,
+        cursor: 'pointer',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none',
+      }}
+      {...props}
+    >
+      {content}
+    </div>
+  );
+});
 
 const ConnectWalletButton = ({
   id,
@@ -12,17 +51,32 @@ const ConnectWalletButton = ({
   handlePanelToggle = () => {},
   content: propContent,
   styles: propStyles,
+  handleSelect
 }) => {
   const { selectedElement, setSelectedElement, updateContent, updateStyles, elements, findElementById } =
     useContext(EditableContext);
-  const { walletAddress, isConnected, disconnect } = useWalletContext();
+  
+  // Determine if we're in builder mode or dapp mode
+  const isBuilderMode = !window.location.pathname.includes('/preview') && !window.location.pathname.includes('/export');
+  
+  // Always call hooks at the top level
+  const builderWallet = useWalletContext();
+  const dappWallet = useDappWallet();
+  const { account, connect, isConnected: isWeb3Connected, provider } = useWeb3();
+  
+  // Select the appropriate wallet context based on mode
+  const walletContext = isBuilderMode ? builderWallet : dappWallet;
+  const { walletAddress, isConnected, disconnect, isLoading: contextIsLoading, walletId, connectWallet, disconnectWallet, error: walletError } = walletContext || {};
+
   const buttonRef = useRef(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showWalletPopup, setShowWalletPopup] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState(null);
-  const { account, library, activate } = useWeb3React();
+  const [isTestConnected, setIsTestConnected] = useState(false);
+  const [localError, setLocalError] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Default settings for wallets
   const defaultSettings = {
@@ -63,224 +117,214 @@ const ConnectWalletButton = ({
   const content = elementData.content || "Connect Wallet";
   const styles = elementData.styles || defaultStyles;
 
-  // Save wallet info to Firestore
-  const saveWalletToFirestore = async (walletId, walletType) => {
-    const walletRef = doc(db, "wallets", walletId);
-    const walletSnap = await getDoc(walletRef);
-    const timestamp = new Date().toISOString();
-
-    if (!walletSnap.exists()) {
-      await setDoc(walletRef, {
-        walletId,
-        lastLogin: timestamp,
-        walletType,
-      });
-      console.log("Wallet ID saved to Firestore:", walletId);
-    } else {
-      console.log("Wallet data retrieved:", walletSnap.data());
+  // Handle wallet connection
+  const handleConnect = useCallback(async () => {
+    try {
+      setLocalError(null);
+      await connectWallet();
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      setLocalError(error.message || 'Failed to connect wallet');
     }
-  };
+  }, [connectWallet]);
 
-  // Process login by saving session data
-  const processLogin = (userId, walletType) => {
-    sessionStorage.setItem("isLoggedIn", "true");
-    sessionStorage.setItem("userAccount", userId);
-  };
-
-  // Handle Solana wallet connection
-  const handleSolanaWalletConnection = async (walletName) => {
-    console.log(`Attempting ${walletName} connection...`);
-    if ("solana" in window && window.solana) {
-      try {
-        console.log(`${walletName} wallet found, connecting...`);
-        const response = await window.solana.connect();
-        console.log(`${walletName} connect response:`, response);
-        const publicKey = response.publicKey.toString();
-        console.log(`Connected to ${walletName}:`, publicKey);
-
-        console.log("Requesting signature...");
-        const message = "Testing signature in builder mode";
-        const encodedMessage = new TextEncoder().encode(message);
-        const signedMessage = await window.solana.signMessage(encodedMessage, "utf8");
-        
-        console.log(`${walletName} signature test successful:`, {
-          publicKey,
-          signature: signedMessage.signature,
-        });
-        setErrorMessage(`${walletName} connection and signature successful!`);
-      } catch (error) {
-        console.error(`Error connecting to ${walletName}:`, error);
-        setErrorMessage(`${walletName} connection failed: ${error.message}`);
-      }
-    } else {
-      console.log(`${walletName} wallet not found`);
-      setErrorMessage(`${walletName} wallet not found. Please install it.`);
+  // Handle wallet disconnection
+  const handleDisconnect = useCallback(async () => {
+    try {
+      setLocalError(null);
+      await disconnectWallet();
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+      setLocalError(error.message || 'Failed to disconnect wallet');
     }
-  };
+  }, [disconnectWallet]);
 
-  // Handle button click
-  const handleClick = async (e) => {
-    console.log("Main button clicked");
+  // Handle button click with combined functionality
+  const handleButtonClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Check if we're in editor mode
-    const isEditorMode = !window.location.pathname.includes('/preview') && !window.location.pathname.includes('/export');
-    
-    if (isEditorMode) {
-      // If Ctrl is pressed and we're in edit mode, show wallet selection popup
-      if (e.ctrlKey && isEditing) {
-        console.log("Ctrl+Click detected in editor mode");
-        const enabledWallets = wallets.filter(wallet => wallet && wallet.enabled);
-        
-        if (enabledWallets.length > 0) {
-          console.log("Showing wallet popup with enabled wallets:", enabledWallets);
+    if (isBuilderMode) {
+      // Check if Ctrl/Cmd key is pressed for wallet testing
+      if (e.ctrlKey || e.metaKey) {
+        // Show wallet popup for testing
           setShowWalletPopup(true);
-        } else {
-          console.log("No enabled wallets found");
-          setErrorMessage("Please enable at least one wallet to test the connection.");
-        }
+        setIsEditing(false);
+        // Don't select the button when testing wallet
         return;
-      }
-
-      // Normal editor mode behavior
-      if (selectedElement?.id === id) {
-        setIsEditing(true);
-        if (buttonRef.current) {
-          buttonRef.current.focus();
-        }
       } else {
-    setSelectedElement({ id, type: 'connectWalletButton', styles, settings });
+        // Normal click for editing
         setIsEditing(true);
+        setShowWalletPopup(false);
+        if (handleSelect) {
+          handleSelect(e);
+        }
+        setSelectedElement({ id, type: 'connectWalletButton', styles });
       }
-      return;
-    }
-
-    // Live mode behavior
+    } else {
+      // In dapp mode, handle actual wallet connection
     if (isConnected) {
-      disconnect();
-      return;
-    }
-
-    const enabledWallets = wallets.filter(wallet => wallet && wallet.enabled);
-    
-    if (enabledWallets.length === 0) {
-      setErrorMessage("No wallets are enabled. Please enable at least one wallet in the settings.");
-      return;
-    }
-
-    if (enabledWallets.length > 1) {
-      setShowWalletPopup(true);
-    } else if (enabledWallets.length === 1) {
-      const wallet = enabledWallets[0];
-      if (wallet.name === 'Phantom') {
-        await handleSolanaWalletConnection(wallet.name);
-      } else if (wallet.name === 'MetaMask') {
-        await handleSolanaWalletConnection(wallet.name);
+        handleDisconnect();
+      } else {
+        handleConnect();
       }
     }
-  };
+  }, [handleSelect, id, setSelectedElement, styles, isBuilderMode, isConnected, handleDisconnect, handleConnect]);
+
+  // Handle mouse down to prevent event bubbling
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
   // Handle wallet selection from popup
-  const handleWalletSelect = async (wallet, e) => {
-    console.log("handleWalletSelect called with wallet:", wallet);
-    
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    setSelectedWallet(wallet);
+  const handleWalletSelect = async (wallet) => {
+    console.log('Selected wallet:', wallet);
     setIsLoading(true);
-    setErrorMessage("");
-
+    setErrorMessage(null);
+    
     try {
-      if (wallet.type === 'solana') {
-        await handleSolanaWalletConnection(wallet.name);
-        // After successful connection, update the wallet context
-        if (window.solana && window.solana.publicKey) {
-          const publicKey = window.solana.publicKey.toString();
-          console.log('Setting wallet context with public key:', publicKey);
-          // Force a re-render of components using the wallet context
-          window.dispatchEvent(new CustomEvent('walletConnected', { 
-            detail: { 
-              publicKey,
-              walletType: wallet.type,
-              walletName: wallet.name
-            } 
-          }));
-        }
-      } else if (wallet.name === 'MetaMask') {
-        console.log("Attempting MetaMask connection...");
-        if (window.ethereum) {
-          console.log("MetaMask found, connecting...");
-          const accounts = await window.ethereum.request({
-            method: "eth_requestAccounts",
-          });
-          console.log("MetaMask accounts:", accounts);
-          const account = accounts[0];
-          console.log("Connected to MetaMask:", account);
-          
-          console.log("Requesting signature...");
-          const message = "Testing signature in builder mode";
-          const signature = await window.ethereum.request({
-            method: "personal_sign",
-            params: [message, account],
-          });
-          
-          console.log("MetaMask signature test successful:", {
-            account,
-            signature,
-          });
-          setErrorMessage("MetaMask connection and signature successful!");
-        } else {
-          console.log("MetaMask not found");
-          setErrorMessage("MetaMask is not installed. Install it and try again");
-        }
-      } else if (wallet.name === 'Freighter') {
-        console.log("Attempting Freighter connection...");
-        if (window.freighter) {
-          try {
-            const publicKey = await window.freighter.getPublicKey();
-            console.log("Connected to Freighter:", publicKey);
-            
-            const message = "Testing signature in builder mode";
-            const signature = await window.freighter.signMessage(message);
-            
-            console.log("Freighter signature test successful:", {
-              publicKey,
-              signature,
-            });
-            setErrorMessage("Freighter connection and signature successful!");
-          } catch (error) {
-            console.error("Error with Freighter connection:", error);
-            setErrorMessage("Freighter connection failed: " + error.message);
-          }
-        } else {
-          console.log("Freighter not found");
-          setErrorMessage("Freighter wallet not found. Please install it.");
-        }
+      // Keep the button selected while testing wallet
+      if (handleSelect) {
+        handleSelect();
       }
-    } catch (error) {
-      console.error(`Error with ${wallet.name} signature:`, error);
-      setErrorMessage(`${wallet.name} signature test failed: ${error.message}`);
+      setSelectedElement({ id, type: 'connectWalletButton', styles });
+      
+      switch (wallet.type) {
+        case 'ethereum':
+          if (window.ethereum) {
+            console.log('Connecting to Ethereum wallet');
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            if (accounts && accounts.length > 0) {
+              const signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: ['Please sign this message to verify your wallet connection.', accounts[0]]
+              });
+              if (signature) {
+                console.log('Ethereum wallet connected successfully');
+                setIsTestConnected(true);
+                setSelectedWallet(wallet);
+                setShowWalletPopup(false);
+                // Update wallet context
+                if (walletContext) {
+                  walletContext.setWalletAddress(accounts[0]);
+                  walletContext.setIsConnected(true);
+                }
+              }
+            }
+          } else {
+            throw new Error('MetaMask is not installed');
+          }
+          break;
+          
+        case 'solana':
+          if (window.solana) {
+            try {
+              console.log('Connecting to Solana wallet');
+              // Request wallet connection
+              const { publicKey } = await window.solana.connect();
+              if (publicKey) {
+                // Request signature for verification
+                const message = new TextEncoder().encode("Please sign this message to verify your wallet connection.");
+                const { signature } = await window.solana.signMessage(message);
+                
+                if (signature) {
+                  console.log('Solana wallet connected successfully');
+                  setIsTestConnected(true);
+                  setSelectedWallet(wallet);
+                  setShowWalletPopup(false);
+                  // Update wallet context
+                  walletContext.setWalletAddress(publicKey.toString());
+                  walletContext.setIsConnected(true);
+                }
+              }
+            } catch (err) {
+              console.error('Solana wallet connection error:', err);
+              throw new Error(`Failed to connect to Solana wallet: ${err.message}`);
+            }
+          } else {
+            throw new Error('Solana wallet is not installed');
+          }
+          break;
+          
+        case 'stellar':
+          if (window.freighter) {
+            console.log('Connecting to Stellar wallet');
+            const publicKey = await window.freighter.getPublicKey();
+            if (publicKey) {
+              const signature = await window.freighter.signMessage('Please sign this message to verify your wallet connection.');
+              if (signature) {
+                console.log('Stellar wallet connected successfully');
+                setIsTestConnected(true);
+                setSelectedWallet(wallet);
+                setShowWalletPopup(false);
+                // Update wallet context
+                if (walletContext) {
+                  walletContext.setWalletAddress(publicKey);
+                  walletContext.setIsConnected(true);
+                }
+              }
+            }
+          } else {
+            throw new Error('Freighter wallet is not installed');
+          }
+          break;
+          
+        default:
+          throw new Error(`Unsupported wallet type: ${wallet.type}`);
+      }
+    } catch (err) {
+      console.error('Wallet connection error:', err);
+      setErrorMessage(err.message || 'Failed to connect wallet');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Close popup when clicking outside
+  // Handle test disconnect
+  const handleTestDisconnect = async () => {
+    try {
+      setIsLoading(true);
+      // Reset all connection states
+      setIsTestConnected(false);
+      setSelectedWallet(null);
+      setErrorMessage("");
+      setShowWalletPopup(false);
+      
+      // Reset wallet context
+      if (walletContext) {
+        walletContext.setWalletAddress("");
+        walletContext.setIsConnected(false);
+        // Reset other wallet context data
+        if (walletContext.setBalance) walletContext.setBalance(0);
+        if (walletContext.setWalletId) walletContext.setWalletId("");
+      }
+      
+      // Force a re-render by updating the content
+      if (content === "Disconnect") {
+        updateContent(id, "Connect Wallet");
+      }
+      console.log("Successfully disconnected test wallet and reset dashboard data");
+    } catch (error) {
+      console.error('Error disconnecting test wallet:', error);
+      setErrorMessage(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Prevent selection when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (buttonRef.current && !buttonRef.current.contains(event.target)) {
+    const handleGlobalClick = (e) => {
+      if (buttonRef.current && !buttonRef.current.contains(e.target)) {
         setShowWalletPopup(false);
-        setErrorMessage(""); // Clear error message when closing popup
+        setErrorMessage("");
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleGlobalClick);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleGlobalClick);
     };
   }, []);
 
@@ -316,63 +360,76 @@ const ConnectWalletButton = ({
     ...styles,
     ...propStyles,
     cursor: isEditing ? 'text' : 'pointer',
-    outline: isEditing ? '2px solid #3b82f6' : 'none', // Add visual feedback when editing
+    outline: isEditing ? '2px solid #3b82f6' : 'none',
   };
 
-  const handleSignMessage = async (message) => {
-    try {
-      if (!account) {
-        throw new Error('No account connected');
-      }
-
-      if (!validateEthAddress(account)) {
-        throw new Error('Invalid wallet address');
-      }
-
-      const signer = library.getSigner();
-      const signature = await signer.signMessage(message);
-      
-      // Verify the signature
-      const recoveredAddress = await library.verifyMessage(message, signature);
-      
-      if (recoveredAddress.toLowerCase() !== account.toLowerCase()) {
-        throw new Error('Signature verification failed');
-      }
-
-      return signature;
-    } catch (error) {
-      setErrorMessage(error.message);
-      console.error('Message signing failed:', error);
-      return null;
+  // Determine button text based on mode and connection state
+  const getButtonText = () => {
+    if (isLoading || contextIsLoading) return "Connecting...";
+    if (isBuilderMode) {
+      if (isTestConnected) return "Disconnect";
+      return content || "Connect Wallet";
     }
+    if (isConnected) return "Disconnect";
+    return content || "Connect Wallet";
   };
 
-  const handleConnect = async () => {
-    try {
-      await activate();
-    } catch (error) {
-      setErrorMessage(error.message);
-      console.error('Wallet connection failed:', error);
+  // Get button text based on connection state
+  const buttonText = useMemo(() => {
+    if (isLoading || contextIsLoading) return 'Connecting...';
+    if (isConnected && walletAddress) {
+      return `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
     }
-  };
+    return content;
+  }, [isLoading, contextIsLoading, isConnected, walletAddress, content]);
+
+  // Get button styles based on state
+  const buttonStyles = useMemo(() => ({
+    ...styles,
+    position: 'relative',
+    transition: 'all 0.2s ease',
+    opacity: isLoading || contextIsLoading ? 0.7 : 1,
+    cursor: isLoading || contextIsLoading ? 'wait' : 'pointer',
+    transform: isHovered ? 'translateY(-1px)' : 'none',
+    boxShadow: isHovered ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+    backgroundColor: isConnected ? '#4CAF50' : styles.backgroundColor || '#2196F3',
+    color: styles.color || '#ffffff',
+    padding: styles.padding || '10px 20px',
+    borderRadius: styles.borderRadius || '8px',
+    border: styles.border || 'none',
+    fontSize: styles.fontSize || '16px',
+    fontWeight: styles.fontWeight || '600',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px'
+  }), [styles, isLoading, contextIsLoading, isHovered, isConnected]);
 
   return (
-    <>
-      <div style={{ position: 'relative' }}>
-    <button
-      id={id}
-      ref={buttonRef}
-          onClick={handleClick}
+    <div 
+      style={{ position: 'relative' }}
+      onMouseDown={handleMouseDown}
+    >
+      <ButtonWithRef
+          id={id}
+          ref={buttonRef}
+        content={buttonText}
+        styles={buttonStyles}
+        onClick={handleButtonClick}
+        onMouseDown={handleMouseDown}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onFocus={() => setIsHovered(false)}
+        disabled={isLoading || contextIsLoading}
+        aria-label={isConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
+        role="button"
+        tabIndex={0}
           contentEditable={isEditing}
-      onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-      suppressContentEditableWarning={true}
-          style={combinedStyles}
-          disabled={isLoading}
-        >
-          {isLoading ? "Connecting..." : (isConnected ? "Disconnect" : (propContent || content || "Connect Wallet"))}
-        </button>
-        {isEditing && (
+          suppressContentEditableWarning={true}
+      />
+        {isEditing && !isTestConnected && (
           <div style={{
             position: 'absolute',
             top: '100%',
@@ -389,7 +446,7 @@ const ConnectWalletButton = ({
             maxWidth: '300px',
             wordWrap: 'break-word',
           }}>
-            Press Ctrl + Click to test wallet connections
+          Click to edit text, Ctrl/Cmd + Click to test wallet connections
           </div>
         )}
         {showWalletPopup && (
@@ -408,10 +465,7 @@ const ConnectWalletButton = ({
               minWidth: '200px',
               maxWidth: '300px',
             }}
-            onMouseDown={(e) => {
-              console.log("Popup clicked");
-              e.stopPropagation();
-            }}
+          onMouseDown={handleMouseDown}
           >
             <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Test Wallet Connections</h4>
             {wallets
@@ -421,25 +475,26 @@ const ConnectWalletButton = ({
                   key={index}
                   onMouseDown={(e) => {
                     console.log("Wallet button clicked:", wallet.name);
+                  e.preventDefault();
                     e.stopPropagation();
-                    handleWalletSelect(wallet, e);
+                    handleWalletSelect(wallet);
                   }}
-                  disabled={isLoading}
-      style={{
+                disabled={isLoading || contextIsLoading}
+                  style={{
                     display: 'block',
                     width: '100%',
                     padding: '8px',
                     marginBottom: '5px',
-                    backgroundColor: isLoading ? '#e0e0e0' : '#f5f5f5',
+                  backgroundColor: isLoading || contextIsLoading ? '#e0e0e0' : '#f5f5f5',
                     border: '1px solid #ddd',
                     borderRadius: '4px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                  cursor: isLoading || contextIsLoading ? 'not-allowed' : 'pointer',
                     textAlign: 'left',
-                    opacity: isLoading ? 0.7 : 1,
-      }}
-    >
+                  opacity: isLoading || contextIsLoading ? 0.7 : 1,
+                  }}
+                >
                   {isLoading && selectedWallet?.name === wallet.name ? "Connecting..." : wallet.name}
-    </button>
+                </button>
               ))}
             {errorMessage && (
               <div style={{ 
@@ -457,24 +512,53 @@ const ConnectWalletButton = ({
             )}
           </div>
         )}
-      </div>
-      {!showWalletPopup && errorMessage && (
-        <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
-          {errorMessage}
+      {(localError || walletError) && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#ff4444',
+            color: '#ffffff',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            marginTop: '8px',
+            whiteSpace: 'nowrap',
+            zIndex: 1000,
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          {localError || walletError}
         </div>
       )}
-      {!account ? (
-        <button onClick={handleConnect}>Connect Wallet</button>
-      ) : (
-        <div>
-          <p>Connected: {account}</p>
-          <button onClick={() => handleSignMessage('Sign in to Dappzy')}>
-            Sign Message
-          </button>
-        </div>
+      {(isLoading || contextIsLoading) && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '20px',
+            height: '20px',
+            border: '2px solid #ffffff',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}
+        />
       )}
-    </>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
   );
 };
 
-export default ConnectWalletButton;
+export default React.memo(ConnectWalletButton);

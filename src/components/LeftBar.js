@@ -8,7 +8,9 @@ const LeftBar = ({
   onShowSidebar, 
   onShowStructurePanel, 
   onShowMediaPanel, 
-  onShowSettingsPanel 
+  onShowSettingsPanel,
+  aiChatStarted,
+  onShowAIPanel
 }) => {
   // Track whether SupportPopup is visible
   const [showSupportPopup, setShowSupportPopup] = useState(false);
@@ -44,6 +46,15 @@ const LeftBar = ({
           className={`icon-button ${openPanel === 'settings' ? 'active' : ''}`}
         >
           <span className="material-symbols-outlined">settings</span>
+        </button>
+
+        {/* AI Agent Button */}
+        <button
+          onClick={onShowAIPanel}
+          className={`icon-button ${openPanel === 'ai' ? 'active' : ''}`}
+          title="AI Assistant"
+        >
+          <span className="material-symbols-outlined">smart_toy</span>
         </button>
       </div>
 

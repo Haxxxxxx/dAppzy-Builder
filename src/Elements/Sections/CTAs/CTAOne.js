@@ -5,7 +5,7 @@ import useReorderDrop from '../../../utils/useReorderDrop';
 import { ctaOneStyles } from './defaultCtaStyles';
 import { Button, Span, Section, Div, Image } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { registerContainer, injectDefaultContent, mergeStyles } from '../../../utils/htmlRenderUtils/containerHelpers';
+import { mergeStyles } from '../../../utils/htmlRenderUtils/containerHelpers';
 import { CtaConfigurations } from '../../../configs/ctasections/CtaConfigurations';
 
 const CTAOne = ({
@@ -26,92 +26,151 @@ const CTAOne = ({
     addNewElement,
   } = useContext(EditableContext);
 
-  // Locate the CTA element in state.
   const ctaElement = useMemo(
     () => elements.find((el) => el.id === uniqueId),
     [elements, uniqueId]
   );
 
-  // Register three containers: "text", "buttons", and "image".
   useEffect(() => {
-    registerContainer(
-      uniqueId,
-      'text',
-      ctaOneStyles.ctaContent,
-      elements,
-      setElements,
-      findElementById
-    );
-    registerContainer(
-      uniqueId,
-      'buttons',
-      ctaOneStyles.buttonContainer,
-      elements,
-      setElements,
-      findElementById
-    );
-    registerContainer(
-      uniqueId,
-      'image',
-      ctaOneStyles.ctaImage,
-      elements,
-      setElements,
-      findElementById
-    );
-  }, [uniqueId, elements, setElements, findElementById]);
+    if (defaultInjectedRef.current || !ctaElement) return;
 
-  // Inject default custom content only once.
-  useEffect(() => {
-    if (defaultInjectedRef.current) return;
-    // Use fallback key "ctaOne" if configuration isn't set on the CTA element.
-    const configKey = (ctaElement && ctaElement.configuration) || 'ctaOne';
-    const defaultContent = CtaConfigurations[configKey]?.children || [];
+    // First, ensure the CTA has the default styles
+    const mergedCtaStyles = mergeStyles(ctaOneStyles.cta, ctaElement?.styles);
+    updateStyles(ctaElement.id, mergedCtaStyles);
+
     const textContainer = findElementById(`${uniqueId}-text`, elements);
     const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
     const imageContainer = findElementById(`${uniqueId}-image`, elements);
-    if (
-      defaultContent.length > 0 &&
-      textContainer &&
-      buttonsContainer &&
-      imageContainer &&
-      textContainer.children.length === 0 &&
-      buttonsContainer.children.length === 0 &&
-      imageContainer.children.length === 0
-    ) {
-      // Define a mapping for which container each type goes to.
-      const mapping = {
-        image: 'image',
-        button: 'buttons',
-        default: 'text',
-      };
-      injectDefaultContent(
-        defaultContent,
-        mapping,
-        uniqueId,
-        elements,
-        addNewElement,
-        setElements,
-        findElementById
-      );
+    const defaultContent = ctaElement?.configuration ? 
+      CtaConfigurations[ctaElement.configuration].children : [];
+
+    // Create a batch of updates
+    const updates = [];
+
+    // Add containers if they don't exist
+    if (!textContainer) {
+      updates.push({
+        id: `${uniqueId}-text`,
+        type: 'div',
+        styles: ctaOneStyles.ctaContent,
+        children: [],
+        parentId: uniqueId,
+      });
+    }
+    if (!buttonsContainer) {
+      updates.push({
+        id: `${uniqueId}-buttons`,
+        type: 'div',
+        styles: ctaOneStyles.buttonContainer,
+        children: [],
+        parentId: uniqueId,
+      });
+    }
+    if (!imageContainer) {
+      updates.push({
+        id: `${uniqueId}-image`,
+        type: 'div',
+        styles: ctaOneStyles.ctaImage,
+        children: [],
+        parentId: uniqueId,
+      });
+    }
+
+    // Only inject content if we have default content and the containers are empty
+    if (defaultContent.length > 0 && 
+        (!textContainer || textContainer.children.length === 0) &&
+        (!buttonsContainer || buttonsContainer.children.length === 0) &&
+        (!imageContainer || imageContainer.children.length === 0)) {
+      
+      const newChildren = defaultContent.map(child => {
+        const newId = `${uniqueId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+        let parentId;
+        if (child.type === 'image') {
+          parentId = `${uniqueId}-image`;
+        } else if (child.type === 'button') {
+          parentId = `${uniqueId}-buttons`;
+        } else {
+          parentId = `${uniqueId}-text`;
+        }
+        
+        return {
+          id: newId,
+          type: child.type,
+          content: child.content,
+          styles: mergeStyles(
+            child.type === 'title' ? ctaOneStyles.ctaTitle :
+            child.type === 'paragraph' ? ctaOneStyles.ctaDescription :
+            child.type === 'button' ? ctaOneStyles.primaryButton :
+            child.type === 'image' ? ctaOneStyles.ctaImage :
+            {},
+            child.styles || {}
+          ),
+          parentId
+        };
+      });
+
+      // Add all new children to updates
+      updates.push(...newChildren);
+
+      // Update containers with their respective children
+      const textChildren = newChildren
+        .filter(child => child.parentId === `${uniqueId}-text`)
+        .map(child => child.id);
+      const buttonChildren = newChildren
+        .filter(child => child.parentId === `${uniqueId}-buttons`)
+        .map(child => child.id);
+      const imageChildren = newChildren
+        .filter(child => child.parentId === `${uniqueId}-image`)
+        .map(child => child.id);
+
+      if (textContainer) {
+        updates.push({
+          ...textContainer,
+          children: textChildren
+        });
+      } else {
+        updates[0].children = textChildren;
+      }
+
+      if (buttonsContainer) {
+        updates.push({
+          ...buttonsContainer,
+          children: buttonChildren
+        });
+      } else {
+        updates[1].children = buttonChildren;
+      }
+
+      if (imageContainer) {
+        updates.push({
+          ...imageContainer,
+          children: imageChildren
+        });
+      } else {
+        updates[2].children = imageChildren;
+      }
+    }
+
+    // Apply all updates in a single state change
+    if (updates.length > 0) {
+      setElements(prev => {
+        const existingIds = new Set(prev.map(el => el.id));
+        const newElements = updates.filter(el => !existingIds.has(el.id));
+        return [...prev, ...newElements];
+      });
       defaultInjectedRef.current = true;
     }
-  }, [ctaElement, elements, uniqueId, addNewElement, setElements, findElementById, children]);
+  }, [ctaElement, elements, findElementById, uniqueId, updateStyles, setElements]);
 
-  // Generic drop handler – rely on addNewElement updating parent's children.
   const handleCTADrop = (droppedItem, parentId = uniqueId) => {
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
-  // Enable drop functionality on the entire CTA section.
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: ctaRef,
     onDropItem: (item) => handleCTADrop(item, uniqueId),
   });
-
-  // Use the reorder hook.
-  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } =
-    useReorderDrop(findElementById, elements, setElements);
 
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
@@ -119,145 +178,46 @@ const CTAOne = ({
     setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
-  // Helper function to render children within a container.
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-    const childrenElements = container.children.map((childId, index) => {
+
+    return container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-      let childContent;
-      if (child.type === 'heading' || child.type === 'title') {
-        childContent = (
-          <Span
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...ctaOneStyles.ctaTitle, ...(child.styles || {}) }}
-          />
-        );
-      } else if (child.type === 'paragraph') {
-        childContent = (
-          <Span
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...ctaOneStyles.ctaDescription, ...(child.styles || {}) }}
-          />
-        );
-      } else if (child.type === 'button') {
-        childContent = (
-          <Button
-            key={child.id}
-            id={child.id}
-            content={child.content}
-            styles={{ ...ctaOneStyles.primaryButton, ...(child.styles || {}) }}
-          />
-        );
-      } else if (child.type === 'image') {
-        childContent = (
-          <Image
-            key={child.id}
-            id={child.id}
-            src={child.content}
-            styles={{ ...ctaOneStyles.ctaImage, ...(child.styles || {}) }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={(item) => handleCTADrop(item, child.id)}
-          />
-        );
-      } else {
-        childContent = renderElement(
-          child,
-          elements,
-          null,
-          setSelectedElement,
-          setElements,
-          null,
-          undefined,
-          handleOpenMediaPanel
-        );
-      }
-      return (
-        <React.Fragment key={child.id}>
-          {activeDrop.containerId === containerId && activeDrop.index === index && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-              }}
-              onDragOver={(e) => onDragOver(e, containerId, index)}
-              onDrop={(e) => onDrop(e, containerId)}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragOver={(e) => onDragOver(e, containerId, index)}
-            onDragEnd={onDragEnd}
-            style={{ display: 'inline-block' }}
-          >
-            {childContent}
-          </span>
-        </React.Fragment>
+      return renderElement(
+        child,
+        elements,
+        null,
+        setSelectedElement,
+        setElements,
+        null,
+        undefined,
+        handleOpenMediaPanel
       );
     });
-    // Render the bottom drop zone only if there’s an active drop on this container.
-    if (activeDrop && activeDrop.containerId === containerId) {
-      childrenElements.push(
-        <div
-          key="drop-zone-bottom"
-          style={{ height: '40px', width: '100%' }}
-          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-          onDrop={(e) => onDrop(e, containerId)}
-        >
-          {activeDrop.index === container.children.length && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-              }}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-        </div>
-      );
-    }
-    return childrenElements;
   };
 
-  // Merge overall CTA styles.
-  useEffect(() => {
-    if (ctaElement) {
-      const merged = mergeStyles(ctaOneStyles.cta, ctaElement.styles);
-      if (ctaElement.styles.display !== merged.display) {
-        updateStyles(ctaElement.id, merged);
-      }
-    }
-  }, [ctaElement, updateStyles]);
+  // Get the container elements
+  const textContainer = findElementById(`${uniqueId}-text`, elements);
+  const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
+  const imageContainer = findElementById(`${uniqueId}-image`, elements);
 
-  const mergedCtaStyles = mergeStyles(ctaOneStyles.cta, ctaElement?.styles);
+  // Merge styles for containers
+  const textContainerStyles = mergeStyles(ctaOneStyles.ctaContent, textContainer?.styles || {});
+  const buttonsContainerStyles = mergeStyles(ctaOneStyles.buttonContainer, buttonsContainer?.styles || {});
+  const imageContainerStyles = mergeStyles(ctaOneStyles.ctaImage, imageContainer?.styles || {});
+
+  // Merge styles for CTA section
+  const mergedCtaStyles = mergeStyles(ctaOneStyles.cta, ctaElement?.styles || {});
 
   return (
     <Section
       id={uniqueId}
-      style={{ ...mergedCtaStyles, ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}) }}
+      style={{
+        ...mergedCtaStyles,
+        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+      }}
       onClick={(e) => {
         e.stopPropagation();
         handleSelect(e, uniqueId);
@@ -270,7 +230,7 @@ const CTAOne = ({
       <Div
         id={`${uniqueId}-text`}
         parentId={`${uniqueId}-text`}
-        styles={{ ...ctaOneStyles.ctaContent }}
+        styles={textContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleCTADrop(item, `${uniqueId}-text`)}
         onClick={(e) => handleInnerDivClick(e, `${uniqueId}-text`)}
@@ -280,7 +240,7 @@ const CTAOne = ({
       <Div
         id={`${uniqueId}-buttons`}
         parentId={`${uniqueId}-buttons`}
-        styles={{ ...ctaOneStyles.buttonContainer }}
+        styles={buttonsContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleCTADrop(item, `${uniqueId}-buttons`)}
         onClick={(e) => handleInnerDivClick(e, `${uniqueId}-buttons`)}
@@ -290,7 +250,7 @@ const CTAOne = ({
       <Div
         id={`${uniqueId}-image`}
         parentId={`${uniqueId}-image`}
-        styles={{ ...ctaOneStyles.ctaImage }}
+        styles={imageContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleCTADrop(item, `${uniqueId}-image`)}
         onClick={(e) => handleInnerDivClick(e, `${uniqueId}-image`)}

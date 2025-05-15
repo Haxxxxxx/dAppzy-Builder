@@ -1,13 +1,3 @@
-// src/utils/RenderUtils.js
-import { typeToTagMap } from '../Mapping/typeMapping';
-import { renderNavbar } from './htmlRenderUtils/RenderNavbars/renderNavbar';
-import { renderHero } from './htmlRenderUtils/RenderHeros/renderHero';
-import { renderFooter } from './htmlRenderUtils/RenderFooters/renderFooter';
-import { renderCta } from './htmlRenderUtils/RenderCtas/renderCta';
-import { renderSection } from './htmlRenderUtils/RenderSection/renderSection.js';
-import { renderMintingSection } from './htmlRenderUtils/RenderWeb3/renderMintingSection';
-import { DropdownStyles } from '../Elements/DefaultStyles/DropdownStyles';
-
 export function buildAttributesString(type, attributes, src, settings = {}) {
   let attributesString = '';
 
@@ -77,120 +67,184 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
   return attributesString;
 }
 
-export function renderElementToHtml(element, collectedStyles) {
+/**
+ * Renders an element to HTML with all its properties and styles
+ */
+export function renderElementToHtml(element, collectedStyles = []) {
   const {
-    id,
     type,
-    styles = {},
     content,
-    attributes = {},
     children = [],
-    settings = {}
+    style = '',
+    className = '',
+    attributes = {},
+    dataAttributes = {},
+    events = {},
+    configuration = {},
+    styles = {},
+    inlineStyles = {},
+    id
   } = element;
-  function cleanStyles(styles = {}) {
-    const { outline, boxShadow, ...productionStyles } = styles;
-    return productionStyles;
+
+  // Helper to convert camelCase to kebab-case
+  function camelToKebab(str) {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
   }
-  // Compute the initial source.
-  let finalSrc = element.src || (styles && styles.src) || '';
-  console.log(`Rendering element ${id} with src:`, finalSrc);
-  
-  // If the element is a media type, update the URL if the project folder name is outdated.
-  if (finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
-    // We assume the URL contains a segment like: .../projects/{oldProjectName}/{fileName}...
-    const parts = finalSrc.split('/o/');
-    if (parts.length > 1) {
-      const [basePart, pathAndQuery] = parts;
-      const [encodedPath, query] = pathAndQuery.split('?');
-      const decodedPath = decodeURIComponent(encodedPath);
-      // Look for the segment "projects" – the next segment is the old project name.
-      const segments = decodedPath.split('/');
-      const projIndex = segments.indexOf('projects');
-      if (projIndex !== -1 && segments.length > projIndex + 1) {
-        const oldProjectName = segments[projIndex + 1];
-        // Use the current project name from settings.siteTitle.
-        const currentProjectName = (settings.siteTitle || '').trim();
-        if (currentProjectName && oldProjectName !== currentProjectName) {
-          // Replace old project name with the current one.
-          const newDecodedPath = decodedPath.replace(`/projects/${oldProjectName}/`, `/projects/${currentProjectName}/`);
-          const newEncodedPath = encodeURIComponent(newDecodedPath);
-          finalSrc = `${basePart}/o/${newEncodedPath}${query ? '?' + query : ''}`;
-          console.log(`Updated src for element ${id}:`, finalSrc);
-        }
-      }
+
+  // Helper to generate attributes string
+  function getAttributesString(attrs) {
+    return Object.entries(attrs)
+      .map(([k, v]) => `${camelToKebab(k)}="${v}"`)
+      .join(' ');
+  }
+
+  // Helper to generate data attributes string
+  function getDataAttributesString(attrs) {
+    return Object.entries(attrs)
+      .map(([k, v]) => `data-${camelToKebab(k)}="${v}"`)
+      .join(' ');
+  }
+
+  // Helper to generate event handlers string
+  function getEventsString(events) {
+    return Object.entries(events)
+      .map(([k, v]) => `on${k}="${v}"`)
+      .join(' ');
+  }
+
+  // Helper to merge and stringify all styles (inline + styles + configuration)
+  function getAllStyles(element) {
+    let merged = {};
+    if (element.configuration && element.configuration.styles) {
+      merged = { ...merged, ...element.configuration.styles };
     }
-  }
-  
-  if (!finalSrc && ['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
-    console.warn(`No valid source found for element ${id} of type ${type}.`);
-  }
-
-  // Handle custom renderers.
-  if (type === 'navbar') {
-    return renderNavbar(element, collectedStyles);
-  }
-  if (type === 'hero') {
-    return renderHero(element, collectedStyles);
-  }
-  if (type === 'footer') {
-    return renderFooter(element, collectedStyles);
-  }
-  if (type === 'cta') {
-    return renderCta(element, collectedStyles);
-  }
-  if (type === 'section') {
-    return renderSection(element, collectedStyles);
-  }
-
-  if (type === 'mintingSection') {
-    return renderMintingSection(element, collectedStyles);
+    if (element.styles) {
+      merged = { ...merged, ...element.styles };
+    }
+    if (element.inlineStyles) {
+      merged = { ...merged, ...element.inlineStyles };
+    }
+    if (typeof element.style === 'string' && element.style.trim()) {
+      // Parse style string into object
+      element.style.split(';').forEach(pair => {
+        const [k, v] = pair.split(':');
+        if (k && v) merged[k.trim()] = v.trim();
+      });
+    }
+    // Remove editor-specific styles
+    delete merged.outline;
+    delete merged.boxShadow;
+    // Convert to style string
+    return Object.entries(merged)
+      .filter(([k, v]) => k && v)
+      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+      .join('; ');
   }
 
-  const tag = typeToTagMap[type];
-  if (!tag) {
-    console.warn(`No HTML tag mapping found for type: ${type}`);
-    return '';
+  // Tag mapping for common builder types
+  const tagMap = {
+    navbar: 'nav',
+    defisection: 'section',
+    module: 'div',
+    connectwalletbutton: 'button',
+    span: 'span',
+    image: 'img',
+    link: 'a',
+    value: 'div',
+    chart: 'div',
+    heading: 'h3',
+    title: 'h1',
+    description: 'p',
+    footer: 'footer',
+    input: 'input',
+    textarea: 'textarea',
+    select: 'select',
+    option: 'option',
+    form: 'form',
+    div: 'div',
+    section: 'section',
+    nav: 'nav',
+    button: 'button',
+    a: 'a',
+    img: 'img',
+    h1: 'h1',
+    h2: 'h2',
+    h3: 'h3',
+    h4: 'h4',
+    h5: 'h5',
+    h6: 'h6',
+    p: 'p',
+    ul: 'ul',
+    li: 'li',
+    ol: 'ol',
+    table: 'table',
+    tr: 'tr',
+    td: 'td',
+    th: 'th',
+    tbody: 'tbody',
+    thead: 'thead',
+    tfoot: 'tfoot',
+    label: 'label',
+    strong: 'strong',
+    em: 'em',
+    b: 'b',
+    i: 'i',
+    u: 'u',
+    small: 'small',
+    pre: 'pre',
+    code: 'code',
+    blockquote: 'blockquote',
+    hr: 'hr',
+    br: 'br',
+    // fallback
+    default: 'div',
+  };
+
+  // Determine tag
+  const tag = tagMap[type] || tagMap.default;
+  const styleString = getAllStyles(element);
+  const classString = className ? ` ${className}` : '';
+  const idString = id ? ` id="${id}"` : '';
+  const attrString = getAttributesString(attributes);
+  const dataAttrString = getDataAttributesString(dataAttributes);
+  const eventString = getEventsString(events);
+
+  // Special handling for img, input, textarea, select, option, br, hr (self-closing)
+  if (tag === 'img') {
+    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${element.src || content}" alt="${element.alt || ''}" ${attrString} ${dataAttrString} ${eventString}/>`;
+  }
+  if (tag === 'input') {
+    return `<input${idString} class="${classString.trim()}" style="${styleString}" value="${content || ''}" ${attrString} ${dataAttrString} ${eventString}/>`;
+  }
+  if (tag === 'textarea') {
+    return `<textarea${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}</textarea>`;
+  }
+  if (tag === 'select') {
+    return `<select${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</select>`;
+  }
+  if (tag === 'option') {
+    return `<option${idString} class="${classString.trim()}" style="${styleString}" value="${element.value || ''}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}</option>`;
+  }
+  if (tag === 'br' || tag === 'hr') {
+    return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
 
-  const className = `element-${id}`;
-  let styleForCSS = { ...styles };
-  if (['img', 'video', 'audio', 'iframe', 'source'].includes(type)) {
-    delete styleForCSS.src;
+  // For a, button, label, etc. with content and children
+  if (tag === 'a') {
+    return `<a${idString} class="${classString.trim()}" style="${styleString}" href="${element.href || '#'}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</a>`;
   }
-  const cleanedStyles = cleanStyles(styleForCSS);
-  collectedStyles.push({ className, styles: cleanedStyles });
-  
-  let attributesString = `id="${id}" class="${className}"`;
-  attributesString += buildAttributesString(type, attributes, finalSrc, settings);
-
-  const selfClosingTags = ['img', 'input', 'hr', 'br', 'meta', 'link', 'source'];
-  const childrenHtml = children
-    .map(childElement => renderElementToHtml(childElement, collectedStyles))
-    .join('');
-
-  if (
-    type === 'button' &&
-    settings.actionType === 'Dropdown' &&
-    Array.isArray(settings.dropdownLinks) &&
-    settings.dropdownLinks.length > 0
-  ) {
-    const toggleOnClick = "var dropdown = this.nextElementSibling; dropdown.style.display = (dropdown.style.display==='block' ? 'none' : 'block');";
-    attributesString += ` onclick="${toggleOnClick}"`;
-    const buttonHtml = `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
-    let dropdownHtml = `<div class="dropdown-menu" style="${DropdownStyles.dropdownMenu}; display: none;">`;
-    dropdownHtml += settings.dropdownLinks.map(link => {
-      const linkOnClick = link.openInNewTab
-        ? `window.open('${link.targetValue}', '_blank')`
-        : `window.location.href='${link.targetValue}'`;
-      return `<a href="#" style="${DropdownStyles.dropdownItem}" onclick="${linkOnClick}">${link.content || link.targetValue}</a>`;
-    }).join('');
-    dropdownHtml += `</div>`;
-    return buttonHtml + dropdownHtml;
+  if (tag === 'button') {
+    return `<button${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</button>`;
+  }
+  if (tag === 'label') {
+    return `<label${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</label>`;
   }
 
-  if (selfClosingTags.includes(tag)) {
-    return `<${tag} ${attributesString} />`;
-  } else {
-    return `<${tag} ${attributesString}>${content || ''}${childrenHtml}</${tag}>`;
-  }
+  // Default: generic tag with content and children
+  return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</${tag}>`;
+}
+
+function cleanStyles(styles = {}) {
+  const { outline, boxShadow, ...productionStyles } = styles;
+  return productionStyles;
 }

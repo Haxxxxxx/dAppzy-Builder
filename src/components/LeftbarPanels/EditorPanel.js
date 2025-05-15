@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import TypographyEditor from '../../Editors/TypographyEditor';
 import BorderEditor from '../../Editors/BorderEditor';
@@ -18,174 +18,228 @@ import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
 import BackgroundSettings from './SettingsPanels/BackgroundSettings';
 import FormSettings from './SettingsPanels/FormSettings';
+import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 
-const EditorPanel = ({pageSettings, viewMode, setViewMode, searchQuery }) => {
+const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setElements, elements } = useContext(EditableContext);
 
-  // Reset editor view mode to 'style' whenever the selected element changes.
-  useEffect(() => {
-    // Only reset to 'style' if no element is selected,
-    // or if you want to reset only on initial mount.
-    if (!selectedElement) {
-      setViewMode('style');
-    }
-  }, [selectedElement, setViewMode]);
-  const renderSettingsView = () => {
-    if (
-      selectedElement?.type === 'title' ||
-      selectedElement?.type === 'paragraph' ||
-      selectedElement?.type === 'blockquote' ||
-      selectedElement?.type === 'code' ||
-      selectedElement?.type === 'pre' ||
-      selectedElement?.type === 'caption'
-    ) {
-      return (
-        <TextualSettings
-          settings={selectedElement.settings || {}}
-        />
+  const getRelevantEditors = (element) => {
+    if (!element) return [];
+
+    const editors = [];
+
+    // Common editors for all elements
+    editors.push({
+      title: "Typography",
+      component: <TypographyEditor />
+    });
+
+    // Container elements (div, section, etc.)
+    const containerElements = ['div', 'section', 'navbar', 'footer', 'header', 'main',
+      'article', 'aside', 'form', 'ul', 'ol', 'defiSection', 'defiNavbar', 'defiFooter'];
+
+    if (containerElements.includes(element.type)) {
+      editors.push(
+        {
+          title: "Background & Global Settings",
+          component: <BackgroundEditor pageSettings={pageSettings} />
+        },
+        {
+          title: "Borders",
+          component: <BorderEditor />
+        },
+        {
+          title: "Size",
+          component: <SizeEditor />
+        }
       );
     }
-    if (selectedElement?.type === 'connectWalletButton') {
-      return (
-        <WalletSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }    
-    if (selectedElement?.type === 'div' || selectedElement?.type === 'section') {
-      return (
-        <BackgroundSettings
-          settings={selectedElement.settings || {}}
-        />
+
+    // Text elements
+    const textElements = ['title', 'paragraph', 'blockquote', 'code', 'pre', 'caption', 'span', 'p'];
+    if (textElements.includes(element.type)) {
+      editors.push(
+        {
+          title: "Background & Global Settings",
+          component: <BackgroundEditor pageSettings={pageSettings} />
+        }
       );
     }
-    if (selectedElement?.type === 'image') {
-      return (
-        <ImageSettings
-          settings={selectedElement.settings || {}}
-        />
+
+    // Media elements
+    const mediaElements = ['image', 'video'];
+    if (mediaElements.includes(element.type)) {
+      editors.push(
+        {
+          title: "Size",
+          component: <SizeEditor />
+        }
       );
     }
-    if (selectedElement?.type === 'video') {
-      return (
-        <VideoSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (selectedElement?.type === 'mintingSection') {
-      return (
-        <CandyMachineSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (selectedElement?.type === 'defiSection') {
-      return (
-        <DeFiSectionSettings
-          selectedElement={selectedElement}
-        />
-      );
-    }
-    if (
-      (selectedElement?.type === 'anchor' ||
-        selectedElement?.type === 'span' ||
-        selectedElement?.type === 'button' ||
-        selectedElement?.type === 'icon') &&
-      selectedElement.label !== 'title'
-    ) {
-      return (
-        <LinkSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (
-      selectedElement?.type === 'list' ||
-      selectedElement?.type === 'list-item'
-    ) {
-      return (
-        <ListSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    if (
-      selectedElement?.type === 'form' 
-    ) {
-      return (
-        <FormSettings
-          settings={selectedElement.settings || {}}
-        />
-      );
-    }
-    return <p>No settings available for this element yet.</p>;
+
+    return editors;
   };
 
-  return (
-    <>
-      {/* <div className="sidebar-toggle-buttons">
-        <button
-          onClick={() => setViewMode('style')}
-          className={viewMode === 'style' ? 'active' : ''}
-        >
-          Style Editor
-        </button>
-        <button
-          onClick={() => setViewMode('settings')}
-          className={viewMode === 'settings' ? 'active' : ''}
-        >
-          Element Setting
-        </button>
-      </div> */}
-      <div className="editor-panel">
-        {viewMode === 'style' ? (
-          <div className="style-editor">
-            <CollapsibleSection title="Typography">
-              <TypographyEditor />
-            </CollapsibleSection>
-            <CollapsibleSection title="Background & Global Settings">
-              <BackgroundEditor pageSettings={pageSettings} />
-            </CollapsibleSection>
-            <CollapsibleSection title="Borders">
-              <BorderEditor />
-            </CollapsibleSection>
-            <CollapsibleSection title="Size">
-              <SizeEditor />
-            </CollapsibleSection>
-            <CollapsibleSection title="Spacing">
-              <SpacingEditor />
-            </CollapsibleSection>
-            {/* <CollapsibleSection title="Display">
-              <DisplayEditor />
-            </CollapsibleSection> */}
+  const isTextualElement = (element) => {
+    if (!element || !element.type) return false;
+
+    const textualElements = [
+      // Basic text elements
+      'title', 'description', 'paragraph', 'p', 'blockquote',
+      'code', 'pre', 'caption', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      // Link elements
+      'a', 'link', 'linkblock', 'anchor',
+      // Other text containers
+      'label', 'legend', 'figcaption', 'cite', 'q', 'em', 'strong', 'mark',
+      'small', 'sub', 'sup', 'time', 'abbr', 'dfn', 'kbd', 'samp', 'var'
+    ];
+
+    return textualElements.includes(element.type);
+  };
+
+  const renderSettingsView = () => {
+    if (!selectedElement) return <p>Select an element to edit its settings.</p>;
+
+    // Check if the element has content that can be edited
+    const hasEditableContent = selectedElement.content !== undefined;
+    const hasDisplaySettings = selectedElement.type === 'defiNavbar' || 
+                             selectedElement.type === 'defiFooter' || 
+                             selectedElement.type === 'video' || 
+                             selectedElement.type === 'mintingSection' || 
+                             selectedElement.type === 'defiSection' ||
+                             selectedElement.type === 'defiModule';
+
+    // Handle DeFi elements first
+    if (selectedElement.type === 'defiSection') {
+      return <DeFiSectionSettings selectedElement={selectedElement} />;
+    }
+    if (selectedElement.type === 'defiModule') {
+      return <DeFiModuleSettings selectedElement={selectedElement} />;
+    }
+
+    // Handle link elements (including buttons)
+    if (selectedElement.type === 'a' || selectedElement.type === 'link' || 
+        selectedElement.type === 'linkblock' || selectedElement.type === 'anchor' ||
+        selectedElement.type === 'button') {
+      return <LinkSettings settings={selectedElement.settings || {}} />;
+    }
+
+    // Handle text elements
+    if (isTextualElement(selectedElement)) {
+      return <TextualSettings settings={selectedElement.settings || {}} />;
+    }
+
+    switch (selectedElement.type) {
+      case 'connectWalletButton':
+        return <WalletSettings settings={selectedElement.settings || {}} />;
+      case 'video':
+        return <VideoSettings settings={selectedElement.settings || {}} />;
+      case 'mintingSection':
+        return <CandyMachineSettings settings={selectedElement.settings || {}} />;
+      case 'defiNavbar':
+      case 'defiFooter':
+        return (
+          <>
+            <BackgroundEditor pageSettings={pageSettings} />
+            <BorderEditor />
+            <SizeEditor />
+            <TypographyEditor />
+          </>
+        );
+      case 'list':
+      case 'list-item':
+        return <ListSettings settings={selectedElement.settings || {}} />;
+      case 'form':
+        return <FormSettings settings={selectedElement.settings || {}} />;
+      default:
+        return (
+          <div className="no-settings-message">
+            {hasEditableContent && !hasDisplaySettings ? (
+              <>
+                <p>This element can be edited directly.</p>
+                <button 
+                  className="edit-content-button"
+                  onClick={() => {
+                    setViewMode('content');
+                    // Find and expand the content editor section
+                    const contentEditor = document.querySelector('.content-editor-section');
+                    if (contentEditor) {
+                      contentEditor.classList.add('expanded');
+                    }
+                  }}
+                >
+                  <span className="button-icon">✏️</span>
+                  Edit Content
+                </button>
+              </>
+            ) : (
+              <>
+                <p>No specific settings available for this element.</p>
+                <p>Check back later for more customization options!</p>
+              </>
+            )}
           </div>
-        ) : (
+        );
+    }
+  };
+
+  const renderContent = () => {
+    if (!selectedElement) {
+      return <p>Select an element to edit.</p>;
+    }
+
+    switch (viewMode) {
+      case 'style':
+        return (
+          <div className="style-editor">
+            {getRelevantEditors(selectedElement).map((editor, index) => (
+              <CollapsibleSection key={index} title={editor.title}>
+                {editor.component}
+              </CollapsibleSection>
+            ))}
+          </div>
+        );
+      case 'settings':
+        return (
           <div className="settings-view">
             {renderSettingsView()}
           </div>
-        )}
-        {elements.length > 0 && (
-          <button
-            onClick={() => {
-              localStorage.removeItem('editableElements');
-              setElements([]);
-            }}
-            style={{
-              marginTop: '16px',
-              padding: '8px',
-              cursor: 'pointer',
-              background: '#d9534f',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-            }}
-          >
-            Clear All Elements
-          </button>
-        )}
-      </div>
-    </>
+        );
+      case 'content':
+      case 'display':
+        return (
+          <div className="content-view">
+            {renderSettingsView()}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="editor-panel">
+      {renderContent()}
+      {elements.length > 0 && (
+        <button
+          onClick={() => {
+            localStorage.removeItem('editableElements');
+            setElements([]);
+          }}
+          style={{
+            marginTop: '16px',
+            padding: '8px',
+            cursor: 'pointer',
+            background: '#d9534f',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+          }}
+        >
+          Clear All Elements
+        </button>
+      )}
+    </div>
   );
 };
 

@@ -18,13 +18,7 @@ export const ELEMENTS_VERSION = '1.0.0'; // Define the version constant
 
 export const EditableProvider = ({ children, userId }) => {
   // Initialize state first
-  const [elements, setElements] = useState(() => {
-    const savedVersion = localStorage.getItem('elementsVersion');
-    const savedElements = JSON.parse(localStorage.getItem('editableElements') || '[]');
-    return savedVersion === ELEMENTS_VERSION && Array.isArray(savedElements)
-      ? savedElements
-      : [];
-  });
+  const [elements, setElements] = useState([]); // Start with empty array instead of loading from localStorage
 
   const [selectedElement, setSelectedElement] = useState(null);
   const [history, setHistory] = useState([]);
@@ -55,98 +49,76 @@ export const EditableProvider = ({ children, userId }) => {
   }, [pushToHistory]);
 
   const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
+    // Generate unique ID for parent element
     let newId = generateUniqueId(type);
     while (elements.some((el) => el.id === newId)) {
-      console.warn(`Duplicate ID detected: ${newId}. Regenerating ID.`);
       newId = generateUniqueId(type);
     }
   
-    // Determine if config is a structure (string) or a configuration (object)
     let configuration = null;
     let structure = null;
     if (typeof config === 'string' && structureConfigurations[config]) {
       structure = config;
-      configuration = config; // (or you might want to leave configuration null in this case)
-    } else if (config && typeof config === 'object') {
       configuration = config;
+    } else if (config && typeof config === 'object') {
+      configuration = config.configuration || config;
+      structure = config.structure || config.configuration || config;
+      type = config.type || type;
     }
   
+    const configStyles = structure && structureConfigurations[structure]?.styles || {};
+    const elementStyles = config?.styles || {};
+
+    // Recursively create children if present
+    let childrenIds = [];
+    if (config && config.children && Array.isArray(config.children)) {
+      childrenIds = config.children.map(childConfig => {
+        // Generate unique ID for each child
+        const childId = generateUniqueId(childConfig.type);
+        const childWithId = {
+          ...childConfig,
+          id: childId
+        };
+        return addNewElement(childConfig.type, 1, 0, newId, childWithId);
+      });
+    }
+    
     const baseElement = {
       id: newId,
       type,
-      styles: {},
-      level,
-      children: [],
-      // Optional label property (could be redundant if in configuration)
-      label: '',
-      parentId: parentId || null,
-      content: (() => {
-        switch (type) {
-          case 'paragraph':
-            return 'New Paragraph';
-          case 'anchor':
-            return 'Click here';
-          case 'blockquote':
-            return 'Blockquote text...';
-          case 'code':
-            return 'Code snippet...';
-          case 'pre':
-            return 'Preformatted text...';
-          case 'list-item':
-            return 'Editable Item';
-          case 'button':
-            return 'Click Me';
-          default:
-            return '';
-        }
-      })(),
-      structure: structure || null,
-      configuration: configuration || null,
-      settings: {},
+      configuration,
+      structure,
+      styles: { ...configStyles, ...elementStyles },
+      content: config?.content || '',
+      label: config?.label || '',
+      parentId,
+      settings: config?.settings || {},
+      children: childrenIds,
     };
-  
-    if (type === 'image') {
-      baseElement.src = 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7';
-    }
-  
-    // If a structure was provided and exists in structureConfigurations, create children accordingly.
-    if (structure && structureConfigurations[structure]) {
-      baseElement.styles = structureConfigurations[structure].styles || {};
-      const childrenElements = structureConfigurations[structure].children.map((child) => ({
-        id: generateUniqueId(child.type),
-        type: child.type,
-        content: child.content || '',
-        styles: child.styles || {},
-        label: child.label || '',
-        parentId: newId,
-      }));
-      baseElement.children = childrenElements.map((child) => child.id);
-  
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index, 0, baseElement, ...childrenElements);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement, ...childrenElements]);
-      }
+
+    if (!parentId) {
+      recordElementsUpdate((prev) => {
+        const newElements = [...prev];
+        newElements.splice(index || 0, 0, baseElement);
+        return newElements;
+      });
     } else {
-      // No structure configuration provided, so just add the base element.
-      if (!parentId) {
-        recordElementsUpdate((prev) => {
-          const newElements = [...prev];
-          newElements.splice(index, 0, baseElement);
-          return newElements;
-        });
-      } else {
-        recordElementsUpdate((prev) => [...prev, baseElement]);
-      }
+      recordElementsUpdate((prev) => [...prev, baseElement]);
     }
   
-    console.log('Added new element:', baseElement);
+    // After adding the new element, if it has a parentId, update the parent's children array
+    if (parentId) {
+      setElements(prev =>
+        prev.map(el =>
+          el.id === parentId
+            ? { ...el, children: [...(el.children || []), newId] }
+            : el
+        )
+      );
+    }
+  
     return newId;
-  }, [recordElementsUpdate]);
+  }, [recordElementsUpdate, setElements, elements]);
 
   const moveElement = useCallback((id, newIndex) => {
     recordElementsUpdate((prevElements) => {
@@ -172,20 +144,36 @@ export const EditableProvider = ({ children, userId }) => {
   }, [recordElementsUpdate]);
 
   const updateStyles = useCallback((id, newStyles) => {
-    console.log(`Updating styles for ${id}:`, newStyles);
-    recordElementsUpdate((prev) =>
-      prev.map((el) =>
-        el.id === id ? { ...el, styles: { ...el.styles, ...newStyles } } : el
-      )
-    );
-    // Also update the selected element if it's the one being updated.
-    if (selectedElement && selectedElement.id === id) {
-      setSelectedElement((prevSelected) => ({
-        ...prevSelected,
-        styles: { ...prevSelected.styles, ...newStyles },
-      }));
-    }
-  }, [recordElementsUpdate]);
+    setElements(prev => {
+      const element = findElementById(id, prev);
+      if (!element) return prev;
+
+      // Get the configuration styles if available
+      const configStyles = element.configuration && structureConfigurations[element.configuration]?.styles;
+      
+      // Merge styles in the correct order: base styles -> config styles -> new styles
+      const mergedStyles = {
+        ...(configStyles?.[element.type] || {}), // Base styles from configuration
+        ...(element.styles || {}), // Existing styles
+        ...newStyles // New styles override everything
+      };
+
+      // Handle nested styles (like img styles for images)
+      if (element.type === 'image' && configStyles?.image?.img) {
+        mergedStyles.img = {
+          ...(configStyles.image.img || {}), // Base img styles from configuration
+          ...(element.styles?.img || {}), // Existing img styles
+          ...(newStyles?.img || {}) // New img styles override everything
+        };
+      }
+
+      return prev.map(el =>
+        el.id === id
+          ? { ...el, styles: mergedStyles }
+          : el
+      );
+    });
+  }, [findElementById]);
 
   const updateElementProperties = useCallback((id, newProperties) => {
     recordElementsUpdate((prev) =>
@@ -266,6 +254,217 @@ export const EditableProvider = ({ children, userId }) => {
     }
   }, [currentIndex, history]);
 
+  const handleAICommand = useCallback((command) => {
+    if (!command || !command.action) {
+      console.warn('Invalid AI command:', command);
+      return;
+    }
+
+    // Helper function to merge styles with proper inheritance
+    const mergeStyles = (baseStyles, existingStyles, newStyles) => {
+      const merged = {
+        ...baseStyles,
+        ...existingStyles,
+        ...newStyles
+      };
+
+      // Handle hover states separately
+      if (newStyles?.hover || existingStyles?.hover) {
+        merged.hover = {
+          ...(baseStyles?.hover || {}),
+          ...(existingStyles?.hover || {}),
+          ...(newStyles?.hover || {})
+        };
+      }
+
+      // Remove undefined values
+      Object.keys(merged).forEach(key => {
+        if (merged[key] === undefined) {
+          delete merged[key];
+        }
+      });
+
+      return merged;
+    };
+
+    // Helper function to handle style inheritance for children
+    const applyChildStyles = (parentId, parentStyles, children, config) => {
+      const parent = findElementById(parentId, elements);
+      if (!parent?.children) return;
+
+      parent.children.forEach((childId, index) => {
+        const child = elements.find(el => el.id === childId);
+        const childConfig = config?.children?.[index];
+        
+        if (child && childConfig) {
+          const baseStyles = {
+            color: parentStyles?.color || config?.styles?.color
+          };
+
+          const mergedStyles = mergeStyles(
+            baseStyles,
+            child.styles,
+            childConfig.styles
+          );
+
+          updateStyles(childId, mergedStyles);
+        }
+      });
+    };
+
+    switch (command.action) {
+      case 'add': {
+        // Handle structured elements (navbar, footer)
+        if ((command.elementType === 'navbar' || command.elementType === 'footer') && command.properties?.configuration) {
+          const structureConfig = structureConfigurations[command.properties.configuration];
+          if (!structureConfig) {
+            console.warn(`Configuration not found for ${command.properties.configuration}`);
+            return;
+          }
+
+          const newId = addNewElement(
+            command.elementType,
+            1,
+            command.position?.index || 0,
+            command.position?.parentId || null,
+            command.properties
+          );
+
+          // Apply parent styles
+          const baseStyles = mergeStyles(
+            structureConfig.styles,
+            {},
+            command.properties.styles
+          );
+          updateStyles(newId, baseStyles);
+
+          // Apply child styles
+          applyChildStyles(newId, baseStyles, structureConfig.children, structureConfig);
+          
+          return newId;
+        }
+
+        // Handle other elements
+          const newId = addNewElement(
+            command.elementType,
+            1,
+            command.position?.index || 0,
+            command.position?.parentId || null,
+          command.properties
+          );
+
+          if (command.properties?.styles) {
+            updateStyles(newId, command.properties.styles);
+          }
+
+          return newId;
+      }
+
+      case 'edit': {
+        const { children, styles, ...otherProps } = command.properties || {};
+        const targetElement = findElementById(command.targetId, elements);
+        
+        if (!targetElement) {
+          console.warn(`Element not found: ${command.targetId}`);
+          return;
+        }
+        
+        // Update element properties
+        if (Object.keys(otherProps).length > 0) {
+          updateElementProperties(command.targetId, otherProps);
+        }
+
+        // Update styles if provided
+        if (styles) {
+          const structureConfig = targetElement.configuration ? 
+            structureConfigurations[targetElement.configuration] : null;
+
+          const mergedStyles = mergeStyles(
+            structureConfig?.styles || {},
+            targetElement.styles,
+            styles
+          );
+
+          updateStyles(command.targetId, mergedStyles);
+
+          // Update child styles if this is a structured element
+          if (structureConfig) {
+            applyChildStyles(command.targetId, mergedStyles, children, structureConfig);
+          }
+        }
+
+        // Handle child updates
+        if (children && targetElement.children) {
+          children.forEach((childEdit, index) => {
+            if (!childEdit?.type) return;
+
+            const childId = targetElement.children[index];
+            if (!childId) return;
+
+            const child = elements.find(el => el.id === childId);
+            if (!child) return;
+
+            // Update child content
+                if (childEdit.content !== undefined) {
+              updateContent(childId, childEdit.content);
+                }
+                
+            // Update child styles
+                if (childEdit.styles) {
+              const structureConfig = targetElement.configuration ? 
+                structureConfigurations[targetElement.configuration] : null;
+              const childConfig = structureConfig?.children?.[index];
+
+              const mergedStyles = mergeStyles(
+                childConfig?.styles || {},
+                child.styles,
+                childEdit.styles
+              );
+
+              updateStyles(childId, mergedStyles);
+              }
+            });
+        }
+        break;
+      }
+
+      case 'updateContent':
+        updateContent(command.targetId, command.content);
+        break;
+
+      case 'updateStyles': {
+        const targetElement = findElementById(command.targetId, elements);
+        if (!targetElement) {
+          console.warn(`Element not found: ${command.targetId}`);
+          return;
+        }
+
+        const structureConfig = targetElement.configuration ? 
+          structureConfigurations[targetElement.configuration] : null;
+
+        const mergedStyles = mergeStyles(
+          structureConfig?.styles || {},
+          targetElement.styles,
+          command.styles
+        );
+
+        updateStyles(command.targetId, mergedStyles);
+        break;
+      }
+
+      case 'delete':
+        handleRemoveElement(command.targetId);
+        break;
+
+      case 'move':
+        moveElement(command.targetId, command.newIndex);
+        break;
+
+      default:
+        console.warn('Unknown AI command:', command);
+    }
+  }, [elements, addNewElement, updateStyles, findElementById]);
+
   // Memoize context value after all state and functions are defined
   const contextValue = useMemo(() => ({
     elements,
@@ -282,10 +481,14 @@ export const EditableProvider = ({ children, userId }) => {
     undo,
     redo,
     forceBorder,
+    setForceBorder,
     selectedStyle,
+    setSelectedStyle,
+    handleAICommand,
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
-    findElementById
+    findElementById,
+    generateUniqueId
   }), [
     elements,
     selectedElement,
@@ -301,6 +504,7 @@ export const EditableProvider = ({ children, userId }) => {
     moveElement,
     undo,
     redo,
+    handleAICommand,
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
     findElementById

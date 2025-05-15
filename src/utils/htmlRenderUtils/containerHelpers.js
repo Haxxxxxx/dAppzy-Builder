@@ -20,9 +20,35 @@ export const registerContainer = (
 ) => {
   const containerId = `${sectionId}-${containerKey}`;
 
-  // Only add the container if it does not exist.
+  // Check if container already exists
   if (findElementById(containerId, elements)) {
-    return; // Container already exists, skip.
+    return; // Container already exists, skip
+  }
+
+  // Define required containers based on section type
+  const sectionType = elements.find(el => el.id === sectionId)?.type;
+  let requiredContainers = [];
+
+  if (sectionType === 'cta') {
+    requiredContainers = ['text', 'buttons'];
+    if (elements.find(el => el.id === sectionId)?.configuration === 'ctaOne') {
+      requiredContainers.push('image');
+    }
+  } else if (sectionType === 'hero') {
+    requiredContainers = ['content'];
+    if (elements.find(el => el.id === sectionId)?.configuration !== 'heroTwo') {
+      requiredContainers.push('image');
+    }
+  } else if (sectionType === 'section') {
+    requiredContainers = ['content', 'buttons'];
+    if (elements.find(el => el.id === sectionId)?.configuration?.includes('image')) {
+      requiredContainers.push('image');
+    }
+  }
+
+  // Only create container if it's required for this section type
+  if (!requiredContainers.includes(containerKey)) {
+    return;
   }
 
   setElements((prev) => [

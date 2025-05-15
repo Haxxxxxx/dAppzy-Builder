@@ -1,12 +1,12 @@
 import React from 'react';
 import DraggableHero from '../../Elements/DraggableLayout/DraggableHero';
 import '../css/Sidebar.css'
-const HeroPanel = ({ contentListWidth, searchQuery }) => {
+const HeroPanel = ({ contentListWidth, searchQuery, handlePanelToggle, handleOpenMediaPanel }) => {
 
   const heroConfigurations = [
-    { imgSrc: './img/previewcomponent.png', configuration: 'heroOne', label: 'Hero One' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'heroTwo', label: 'Hero Two' },
-    { imgSrc: './img/previewcomponent.png', configuration: 'heroThree', label: 'Hero Three' },
+    { imgSrc: './img/previsu-basic-hero.png', configuration: 'heroOne', label: 'Basic Hero' },
+    { imgSrc: './img/previsu-small-hero.png', configuration: 'heroTwo', label: 'Small Hero' },
+    { imgSrc: './img/previsu-advanced-hero.png', configuration: 'heroThree', label: 'Advanced Hero' },
   ];
 
   // Filter hero configurations based on search query
@@ -15,7 +15,6 @@ const HeroPanel = ({ contentListWidth, searchQuery }) => {
   );
 
   return (
-
     <div className="bento-display-elements" style={{ marginTop: '16px' }}>
       {filteredHeroes.map(({ configuration, label, imgSrc }) => (
         <DraggableHero
@@ -25,7 +24,9 @@ const HeroPanel = ({ contentListWidth, searchQuery }) => {
           isEditing={false}
           showDescription={true}
           contentListWidth={contentListWidth}
-          imgSrc={imgSrc} // Pass the image source correctly
+          imgSrc={imgSrc}
+          handlePanelToggle={handlePanelToggle}
+          handleOpenMediaPanel={handleOpenMediaPanel}
         />
       ))}
       {filteredHeroes.length === 0 && <p>No heroes found.</p>}

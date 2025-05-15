@@ -2,7 +2,6 @@ import React, { useState, useContext, useEffect, useRef } from "react";
 import { EditableContext } from "../../../context/EditableContext";
 import "./css/ImageSettings.css";
 import CollapsibleSection from "./LinkSettings/CollapsibleSection";
-
 // Firebase imports
 import { storage, db } from "../../../firebase";
 import {

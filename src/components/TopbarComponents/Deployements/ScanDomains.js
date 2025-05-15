@@ -22,6 +22,8 @@ const ScanDomains = ({
   const [domains, setDomains] = useState([]);
   const [status, setStatus] = useState('Scanning your wallet for Unstoppable Domains...');
   const [selectedDomain, setSelectedDomain] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [enabledDomains, setEnabledDomains] = useState({});
 
   // -----------------------------------------------------
   // 1) Fetch UD domains from your Cloud Function
@@ -30,9 +32,11 @@ const ScanDomains = ({
     const fetchUDDomains = async () => {
       if (!walletAddress) {
         setStatus('No wallet address provided.');
+        setIsLoading(false);
         return;
       }
       setStatus('Scanning your wallet for Unstoppable Domains...');
+      setIsLoading(true);
 
       try {
         // Replace with your actual function URL
@@ -59,6 +63,8 @@ const ScanDomains = ({
       } catch (error) {
         console.error('Error fetching UD domains:', error);
         setStatus(`Error scanning wallet for UD domains: ${error.message}`);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -177,34 +183,69 @@ const ScanDomains = ({
     }
   };
 
+  const handleDomainToggle = (domainName) => {
+    setEnabledDomains(prev => {
+      const newState = {};
+      // Disable all other domains
+      Object.keys(prev).forEach(key => {
+        newState[key] = false;
+      });
+      // Toggle the clicked domain
+      newState[domainName] = !prev[domainName];
+      return newState;
+    });
+
+    // Update selected domain
+    setSelectedDomain(prev => prev === domainName ? null : domainName);
+  };
+
   // -----------------------------------------------------
   // 6) Render domain cards
   // -----------------------------------------------------
   const renderDomainCards = () => {
+    if (isLoading) {
+      return (
+        <div className="domain-selection-modal-content-fetching-domains">
+          <p className="domain-selection-modal-content-fetching-domains-text">
+            Fetching domains...
+          </p>
+          <div className="domain-selection-modal-content-fetching-domains-loader" />
+        </div>
+      );
+    }
+
     // Start with UD domains from the user's wallet
     const domainCards = [...domains];
-
-    // Add your default provided domain (if you like)
-    const defaultDomain = websiteSettings.defaultDomain || 'myProvidedDomain.x';
-    domainCards.push(defaultDomain);
 
     // Add IPFS fallback
     domainCards.push('Use IPFS fallback');
 
     if (domainCards.length === 0) return null;
 
-    return domainCards.map((domainName, index) => (
+    return domainCards.map((domainName, index) => {
+      const isEnabled = enabledDomains[domainName] || false;
+
+      return (
       <div
         key={index}
-        className={`domain-card ${selectedDomain === domainName ? 'selected' : ''}`}
-        onClick={() => setSelectedDomain(domainName)}
+          className={`domain-card ${isEnabled ? 'selected' : ''}`}
+          onClick={() => handleDomainToggle(domainName)}
       >
-        <div className="radio-circle">
-          {selectedDomain === domainName && <div className="radio-circle-inner" />}
+          <div className="toggle-domain-container">
+            <div 
+              className={`toggle-switch ${isEnabled ? 'active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDomainToggle(domainName);
+              }}
+            >
+              <div className="toggle-switch-inner" />
+            </div>
         </div>
         <p className="domain-text">{domainName}</p>
       </div>
-    ));
+      );
+    });
   };
 
   // -----------------------------------------------------
@@ -212,12 +253,14 @@ const ScanDomains = ({
   // -----------------------------------------------------
   if (deploymentStage === 'DEPLOYING') {
     return (
-      <div className="domain-selection-modal">
+      <div className="domain-selection-modal-bg">
+        <div className="domain-selection-modal deployment-modal">
         <button className="close-btn" onClick={onCancel}>×</button>
         <div className="deployment-status">
           <div className="spinner" />
           <h2>Deployment in Progress</h2>
           <p>Your project is currently being deployed. This may take a few moments.</p>
+          </div>
         </div>
       </div>
     );
@@ -225,12 +268,14 @@ const ScanDomains = ({
 
   if (deploymentStage === 'COMPLETE') {
     return (
-      <div className="domain-selection-modal">
+      <div className="domain-selection-modal-bg">
+        <div className="domain-selection-modal deployment-modal">
         <button className="close-btn" onClick={onCancel}>×</button>
         <div className="deployment-status">
           <div className="check-circle" />
           <h2>Deployment Complete</h2>
           <p>Your project has been successfully deployed and is now live.</p>
+          </div>
         </div>
       </div>
     );
@@ -238,33 +283,40 @@ const ScanDomains = ({
 
   // Otherwise, "SELECTING"
   return (
+    <div className="domain-selection-modal-bg">
     <div className="domain-selection-modal">
       <button className="close-btn" onClick={onCancel}>×</button>
 
       <h2>Choose a Domain</h2>
       <p className="subtitle">
-        Select your Unstoppable Domain, a default domain, or IPFS fallback to deploy on IPFS.
+          Select your Unstoppable Domain or IPFS fallback to deploy on IPFS.
       </p>
 
       <p className="status">{status}</p>
 
-      <div className="domain-grid">{renderDomainCards()}</div>
+        {renderDomainCards()}
 
       <div className="buttons">
         <button className="cancel-btn" onClick={onCancel}>
           Cancel
         </button>
-        <button className="select-btn" onClick={handleSelectDomain}>
+          <button 
+            className="select-btn" 
+            onClick={handleSelectDomain}
+            disabled={!selectedDomain}
+          >
           Select Domain
         </button>
       </div>
+
         <p className="no-domains-message">
-          If you don’t own any Unstoppable Domains NFTs in your wallet. Please visit{' '}
+          If you don't own any Unstoppable Domains NFTs in your wallet. Please visit{' '}
           <a href="https://unstoppabledomains.com/" target="_blank" rel="noopener noreferrer">
             Unstoppable Domains
           </a>{' '}
           to purchase a domain.
         </p>
+      </div>
     </div>
   );
 };

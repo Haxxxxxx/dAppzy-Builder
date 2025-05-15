@@ -2,6 +2,7 @@ import React, { useContext, useRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
+import '../Basic/css/EmptyState.css';
 
 const Section = ({
   id,
@@ -61,6 +62,22 @@ const Section = ({
     }
   };
 
+  const handleAddElement = (e) => {
+    e.stopPropagation();
+    // Deselect the current element
+    setSelectedElement(null);
+    
+    // Switch back to elements view
+    const switchToElementsEvent = new CustomEvent('switchToElementsView');
+    window.dispatchEvent(switchToElementsEvent);
+    
+    // Trigger element panel opening
+    const openPanelEvent = new CustomEvent('openElementPanel', {
+      detail: { parentId: id }
+    });
+    window.dispatchEvent(openPanelEvent);
+  };
+
   const backgroundContent =
     styles.backgroundType === 'video' && styles.backgroundUrl ? (
       <video
@@ -106,15 +123,29 @@ const Section = ({
         ...styles,
         position: 'relative',
         padding: styles.padding || '10px',
-        margin: styles.margin || '10px 0',
+        margin: styles.margin || '0',
         backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
       }}
     >
       {backgroundContent}
       {(!childrenToRender ||
         (Array.isArray(childrenToRender) && childrenToRender.length === 0)) ? (
-        <div className="empty-placeholder" style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', fontFamily:'Montserrat' }}>
-          Empty Section – Drop items here
+        <div
+          className="empty-state-container"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100px',
+            background: isOverCurrent ? '#f0f0f0' : 'transparent',
+          }}
+        >
+          <button
+            className="add-element-button"
+            onClick={handleAddElement}
+          >
+            <span className="plus-icon">+</span>
+          </button>
         </div>
       ) : Array.isArray(childrenToRender) ? (
         childrenToRender.map((child, index) => {

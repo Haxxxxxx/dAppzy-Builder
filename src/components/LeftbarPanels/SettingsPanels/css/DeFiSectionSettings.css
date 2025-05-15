@@ -8,21 +8,21 @@
   color: #fff;
 }
 
-.module-settings {
+.defi-section-settings  .module-settings {
   background-color: #f5f5f5;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
 }
 
-.module-header {
+.defi-section-settings .module-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.title-input {
+.defi-section-settings .title-input {
   flex: 1;
   padding: 0.5rem;
   border: 1px solid #ddd;
@@ -30,25 +30,25 @@
   font-size: 1rem;
 }
 
-.stats-container {
+.defi-section-settings .stats-container {
   background-color: white;
   border-radius: 4px;
   padding: 1rem;
 }
 
-.stats-container h4 {
+.defi-section-settings .stats-container h4 {
   margin-bottom: 1rem;
   color: #a0aec0;
   font-size: 0.875rem;
 }
 
-.stat-inputs {
+.defi-section-settings .stat-inputs {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.stat-input {
+.defi-section-settings .stat-input {
   flex: 1;
   padding: 0.5rem;
   border: 1px solid #ddd;
@@ -57,20 +57,20 @@
 }
 
 /* Switch styles */
-.switch {
+.defi-section-settings .switch {
   position: relative;
   display: inline-block;
   width: 60px;
   height: 34px;
 }
 
-.switch input {
+.defi-section-settings .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.slider {
+.defi-section-settings .slider {
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -81,7 +81,7 @@
   transition: .4s;
 }
 
-.slider:before {
+.defi-section-settings .slider:before {
   position: absolute;
   content: "";
   height: 26px;
@@ -92,44 +92,145 @@
   transition: .4s;
 }
 
-input:checked + .slider {
+.defi-section-settings input:checked + .slider {
   background-color: #2196F3;
 }
 
-input:focus + .slider {
+.defi-section-settings input:focus + .slider {
   box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked + .slider:before {
+.defi-section-settings input:checked + .slider:before {
   transform: translateX(26px);
 }
 
-.slider.round {
+.defi-section-settings .slider.round {
   border-radius: 34px;
 }
 
-.slider.round:before {
+.defi-section-settings .slider.round:before {
   border-radius: 50%;
 }
 
 /* Input focus styles */
-.title-input:focus,
-.stat-input:focus {
+.defi-section-settings .title-input:focus,
+.defi-section-settings .stat-input:focus {
   outline: none;
   border-color: #4facfe;
 }
 
 /* Hover effects */
-.module-settings:hover {
+.defi-section-settings .module-settings:hover {
   border-color: #4facfe;
 }
 
-.stat-inputs:hover .stat-input {
+.defi-section-settings .stat-inputs:hover .stat-input {
   border-color: #2a2a4a;
 }
 
 /* Disabled state */
-.module-settings.disabled {
+.defi-section-settings .module-settings.disabled {
   opacity: 0.7;
   pointer-events: none;
+}
+
+.defi-section-settings .settings-panel {
+  padding: 16px;
+}
+
+.defi-section-settings .settings-title {
+  margin-bottom: 24px;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.defi-section-settings .module-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  cursor: move;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.defi-section-settings .module-item:hover {
+  background-color: #e8e8e8;
+}
+
+.defi-section-settings .module-item .ant-space {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.defi-section-settings .module-item .ant-switch {
+  margin: 0 8px;
+}
+
+.defi-section-settings .module-item .ant-btn {
+  padding: 0;
+}
+
+.defi-section-settings .settings-group {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.defi-section-settings .settings-group.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.defi-section-settings .settings-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.defi-section-settings .settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.defi-section-settings .settings-input {
+  width: 150px;
+  padding: 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+.defi-section-settings .settings-input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Drag and drop styles */
+.defi-section-settings .draggable-item {
+  user-select: none;
+  padding: 8px;
+  margin: 0 0 8px 0;
+  min-height: 50px;
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+}
+
+.defi-section-settings .draggable-item.dragging {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.defi-section-settings .droppable-area {
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  min-height: 100px;
 } 

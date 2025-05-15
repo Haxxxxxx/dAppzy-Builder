@@ -1,0 +1,236 @@
+/* Minimal AI Panel CSS for easy hand editing */
+.ai-panel {
+  width: 280px;
+  height: 100vh;
+  background: var(--builder-bg);
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  color: #d9d9d9;
+  padding: 15px 10px;
+}
+
+.ai-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 15px;
+}
+.ai-panel-title-box {
+  display: flex;
+padding: 2px 5px;
+justify-content: center;
+align-items: center;
+gap: 10px;
+border-radius: 4px;
+background: rgba(255, 255, 255, 0.10);
+}
+.ai-panel-title {
+  color: #FFF;
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.ai-panel-controls button {
+  background: none;
+  border: none;
+  color: #bdbdbd;
+  font-size: 16px;
+  margin-left: 4px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.ai-panel-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 25px;
+  height: 100%;
+}
+
+.ai-message {
+  color: rgba(255, 255, 255, 0.70);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  border-radius: 8px;
+  max-width: 250px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.ai-message.typing {
+  opacity: 0.7;
+}
+
+.ai-message-user {
+  display: flex;
+width: 264px;
+padding: 10px;
+flex-direction: column;
+align-items: flex-start;
+gap: 15px;
+border-radius: 5px;
+border: 0.5px solid rgba(255, 255, 255, 0.10);
+background: rgba(255, 255, 255, 0.10);
+}
+
+.ai-panel-right-input {
+  width: 100%;
+}
+.ai-panel-right-input-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.ai-panel-right-input-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  
+}
+
+.ai-panel-right-input-btn {
+  display: flex;
+  padding: 4px 10px;
+  align-items: center;
+  gap: 5px;
+  border-radius: 5px;
+border: 0.5px solid rgba(255, 255, 255, 0.10);
+background: #4D4D4D;
+color: #FFF;
+font-family: Inter;
+font-size: 12px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+cursor: pointer;
+}
+
+.ai-panel-right-input-btn span {
+  font-size: 14px;
+}
+.ai-panel-right-input-prompt-box {
+  display: flex;
+  width: 280px;
+  justify-content: space-between;
+  align-items: center;
+}
+.ai-panel-right-text-input {
+width: 100%;
+padding: 5px 5px;
+background: none;
+border: none;
+color: #FFF;
+font-family: Inter;
+font-size: 12px;
+font-style: normal;
+font-weight: 400;
+line-height: normal;
+}
+.ai-panel-right-text-input:focus-visible {
+  outline: none;
+}
+.ai-panel-right-text-input:placeholder {
+  color: rgba(255, 255, 255, 0.70);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+.ai-panel-right-send-btn {
+  display: flex;
+  width: 30px;
+  height: 30px;
+    justify-content: center;
+  align-items: center;
+  border-radius: 125px;
+background: #FFF;
+cursor: pointer;
+border: none;
+}
+.ai-panel-right-send-btn span {
+  display: flex;
+justify-content: center;
+align-items: center;
+color: var(--builder-bg);
+font-size: 18px;
+}
+
+
+/* History */
+.ai-panel-history {
+  background: #232323;
+  border-bottom: 1px solid #292929;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.ai-panel-history-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #bdbdbd;
+}
+.ai-panel-history-item.active {
+  background: #292929;
+  color: #fff;
+}
+.ai-panel-history-item:hover {
+  background: #292929;
+  color: #fff;
+}
+
+.ai-compilation-status {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  color: #666;
+}
+
+.compilation-spinner {
+  margin-top: 15px;
+  width: 10px;
+  height: 10px;
+  border: 1px solid #f3f3f3;
+  border-top: 1px solid var(--builder-bg);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-message-typing::after {
+  content: '▋';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.ai-compilation-text {
+  color: rgba(255, 255, 255, 0.70);
+  font-family: Inter;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}

@@ -1,216 +1,194 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { Form } from 'antd';
+import { Form, Input, Button, Select, Switch, Space, Divider, Alert } from 'antd';
+import { PlusOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { useWalletContext } from '../../../context/WalletContext';
 import './css/DeFiSectionSettings.css';
 
 const DeFiSectionSettings = ({ selectedElement }) => {
-  const { elements, updateContent } = React.useContext(EditableContext);
+  const { elements, updateContent } = useContext(EditableContext);
+  const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
+  
+  // Wallet connection state
+  const [isSigned, setIsSigned] = useState(false);
+  const [requireSignature, setRequireSignature] = useState(true);
+  const [simulateConnected, setSimulateConnected] = useState(false);
+  const [simulateSigned, setSimulateSigned] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
+
+  // Track last loaded element id to avoid resetting state on every render
+  const lastElementId = useRef(null);
+
+  // Helper to deeply merge settings
+  const mergeSettings = (oldSettings, newSettings) => ({
+    ...oldSettings,
+    ...newSettings
+  });
+
+  // Only set local state from the element when the element actually changes
+  useEffect(() => {
+    if (selectedElement && selectedElement.id !== lastElementId.current) {
+      try {
+        const element = elements.find(el => el.id === selectedElement.id);
+        if (element) {
+          let content = element.content;
+          if (typeof content === 'string') {
+            try {
+              content = JSON.parse(content);
+            } catch (e) {
+              content = {};
+            }
+          }
+          const settings = content.settings || {};
+          setRequireSignature(settings.requireSignature ?? true);
+          setSimulateConnected(settings.simulateConnected ?? false);
+          setSimulateSigned(settings.simulateSigned ?? false);
+          setIsSigned(settings.isSigned ?? false);
+          lastElementId.current = selectedElement.id;
+        }
+      } catch (error) {
+        console.error('Error loading wallet settings:', error);
+        setConnectionError('Failed to load wallet settings');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElement, elements]);
+
+  // Save wallet settings with deep merge into content.settings
+  const saveWalletSettings = (newSettings = {}) => {
+    if (!selectedElement) return;
+    try {
+      const element = elements.find(el => el.id === selectedElement.id);
+      if (element) {
+        let content = element.content;
+        if (typeof content === 'string') {
+          try {
+            content = JSON.parse(content);
+          } catch (e) {
+            content = {};
+          }
+        }
+        const updatedSettings = mergeSettings(content.settings || {}, {
+          requireSignature,
+          simulateConnected,
+          simulateSigned,
+          isSigned,
+          ...newSettings
+        });
+        const updatedContent = {
+          ...content,
+          settings: updatedSettings
+        };
+        updateContent(selectedElement.id, JSON.stringify(updatedContent));
+        setConnectionError(null);
+      }
+    } catch (error) {
+      console.error('Error saving wallet settings:', error);
+      setConnectionError('Failed to save wallet settings');
+    }
+  };
+
+  // Handlers for each control, update both local state and element settings
+  const handleRequireSignatureChange = (checked) => {
+    setRequireSignature(checked);
+    saveWalletSettings({ requireSignature: checked });
+  };
+
+  const handleSimulateConnection = (checked) => {
+    setSimulateConnected(checked);
+    if (!checked) {
+      setSimulateSigned(false);
+      saveWalletSettings({ simulateConnected: checked, simulateSigned: false });
+    } else {
+      saveWalletSettings({ simulateConnected: checked });
+    }
+  };
+
+  const handleSimulateSignature = (checked) => {
+    if (!simulateConnected) {
+      setConnectionError('Must be connected to simulate signature');
+      return;
+    }
+    setSimulateSigned(checked);
+    saveWalletSettings({ simulateSigned: checked });
+  };
+
+  // Use simulation in builder, otherwise use context
+  const isConnected = simulateConnected || contextConnected;
+  const effectiveIsSigned = requireSignature ? (simulateSigned || isSigned) : true;
+
   const [moduleSettings, setModuleSettings] = useState({
     aggregator: { 
       enabled: true, 
       showStats: true, 
       showButton: true, 
       customColor: '#2A2A3C',
-      stats: {
-        totalPools: 'Loading...',
-        totalValueLocked: '$0',
-        bestAPY: 'Not Connected'
-      }
+      stats: []
     },
     simulation: { 
       enabled: true, 
       showStats: true, 
       showButton: true, 
       customColor: '#2A2A3C',
-      stats: {
-        investmentRange: '$10,000',
-        supportedAssets: '20+',
-        historicalData: '5 Years'
-      }
+      stats: []
     },
     bridge: { 
       enabled: true, 
       showStats: true, 
       showButton: true, 
       customColor: '#2A2A3C',
-      stats: {
-        supportedChains: 'Select Chain',
-        transferTime: 'Select Chain',
-        securityScore: '0.1%'
-      }
+      stats: []
     }
   });
 
+  const [moduleOrder, setModuleOrder] = useState(['aggregator', 'simulation', 'bridge']);
+  const [form] = Form.useForm();
+
   useEffect(() => {
     if (selectedElement) {
-      console.log('Selected element:', selectedElement);
       const element = elements.find(el => el.id === selectedElement.id);
       if (element) {
-        console.log('Found element:', element);
-        // Get modules from children instead of content
         const modules = element.children
           ?.map(childId => elements.find(el => el.id === childId))
           ?.filter(module => module?.type === 'defiModule') || [];
-        console.log('Modules:', modules);
         
         const newSettings = { ...moduleSettings };
+        const newOrder = [];
+        
         modules.forEach(module => {
           if (module.content) {
             try {
               const moduleData = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-              console.log('Module data:', moduleData);
               const moduleType = moduleData.functionality?.type || module.functionality?.type;
               if (moduleType) {
-                // Convert stats to object format for settings panel
-                const statsObject = Array.isArray(moduleData.stats) 
-                  ? moduleData.stats.reduce((acc, stat) => {
-                      acc[stat.label] = stat.value;
-                      return acc;
-                    }, {})
-                  : moduleData.stats || {};
-
+                newOrder.push(moduleType);
                 newSettings[moduleType] = {
                   enabled: moduleData.enabled ?? true,
                   showStats: moduleData.settings?.showStats ?? true,
                   showButton: moduleData.settings?.showButton ?? true,
                   customColor: moduleData.settings?.customColor ?? '#2A2A3C',
-                  stats: statsObject
+                  stats: moduleData.stats || []
                 };
               }
             } catch (e) {
               console.error('Error parsing module content:', e);
-              const moduleType = module.functionality?.type;
-              if (moduleType) {
-                newSettings[moduleType] = {
-                  enabled: true,
-                  showStats: true,
-                  showButton: true,
-                  customColor: '#2A2A3C',
-                  stats: moduleSettings[moduleType]?.stats || {}
-                };
-              }
-            }
-          } else {
-            console.log(`Module ${module.id} has no content, using default settings`);
-            const moduleType = module.functionality?.type;
-            if (moduleType) {
-              newSettings[moduleType] = {
-                enabled: true,
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C',
-                stats: moduleSettings[moduleType]?.stats || {}
-              };
             }
           }
         });
-        console.log('New settings:', newSettings);
+        
         setModuleSettings(newSettings);
+        setModuleOrder(newOrder);
       }
     }
   }, [selectedElement, elements]);
 
   const handleModuleToggle = (moduleType, value) => {
-    console.log('Toggling module:', moduleType, value);
     const element = elements.find(el => el.id === selectedElement.id);
     if (element) {
-      let modules = element.content ? JSON.parse(element.content) : [];
-      
-      // If modules array is empty, initialize it with default modules
-      if (modules.length === 0) {
-        modules = [
-          {
-            id: 'aggregator-module',
-            type: 'defiModule',
-            parentId: element.id,
-            content: JSON.stringify({
-              id: 'aggregator-module',
-              moduleType: 'aggregator',
-              title: 'Pool Aggregator',
-              enabled: true,
-              stats: {
-                totalPools: 'Loading...',
-                totalValueLocked: '$0',
-                bestAPY: 'Not Connected'
-              },
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: 'aggregator',
-                actions: []
-              }
-            }),
-            styles: {},
-            configuration: {
-              moduleType: 'aggregator',
-              enabled: true
-            }
-          },
-          {
-            id: 'simulation-module',
-            type: 'defiModule',
-            parentId: element.id,
-            content: JSON.stringify({
-              id: 'simulation-module',
-              moduleType: 'simulation',
-              title: 'Investment Simulator',
-              enabled: true,
-              stats: {
-                investmentRange: '$10,000',
-                supportedAssets: '20+',
-                historicalData: '5 Years'
-              },
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: 'simulation',
-                actions: []
-              }
-            }),
-            styles: {},
-            configuration: {
-              moduleType: 'simulation',
-              enabled: true
-            }
-          },
-          {
-            id: 'bridge-module',
-            type: 'defiModule',
-            parentId: element.id,
-            content: JSON.stringify({
-              id: 'bridge-module',
-              moduleType: 'bridge',
-              title: 'Cross-Chain Bridge',
-              enabled: true,
-              stats: {
-                supportedChains: 'Select Chain',
-                transferTime: 'Select Chain',
-                securityScore: '0.1%'
-              },
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: 'bridge',
-                actions: []
-              }
-            }),
-            styles: {},
-            configuration: {
-              moduleType: 'bridge',
-              enabled: true
-            }
-          }
-        ];
-      }
+      const modules = element.children
+        ?.map(childId => elements.find(el => el.id === childId))
+        ?.filter(module => module?.type === 'defiModule') || [];
 
       const moduleIndex = modules.findIndex(m => {
         const moduleContent = m.content ? JSON.parse(m.content) : {};
@@ -231,11 +209,7 @@ const DeFiSectionSettings = ({ selectedElement }) => {
               title: moduleType === 'aggregator' ? 'Pool Aggregator' :
                      moduleType === 'simulation' ? 'Investment Simulator' :
                      moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-              stats: moduleSettings[moduleType]?.stats || {
-                totalPools: 'Loading...',
-                totalValueLocked: '$0',
-                bestAPY: 'Not Connected'
-              },
+              stats: [],
               settings: {
                 showStats: true,
                 showButton: true,
@@ -248,29 +222,6 @@ const DeFiSectionSettings = ({ selectedElement }) => {
               enabled: value
             };
           }
-        } else {
-          moduleContent = {
-            id: module.id,
-            moduleType: moduleType,
-            title: moduleType === 'aggregator' ? 'Pool Aggregator' :
-                   moduleType === 'simulation' ? 'Investment Simulator' :
-                   moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-            stats: moduleSettings[moduleType]?.stats || {
-              totalPools: 'Loading...',
-              totalValueLocked: '$0',
-              bestAPY: 'Not Connected'
-            },
-            settings: {
-              showStats: true,
-              showButton: true,
-              customColor: '#2A2A3C'
-            },
-            functionality: {
-              type: moduleType,
-              actions: []
-            },
-            enabled: value
-          };
         }
         moduleContent.enabled = value;
         modules[moduleIndex].content = JSON.stringify(moduleContent);
@@ -278,7 +229,7 @@ const DeFiSectionSettings = ({ selectedElement }) => {
         setModuleSettings(prev => ({
           ...prev,
           [moduleType]: {
-            ...(prev[moduleType] || {}),
+            ...prev[moduleType],
             enabled: value
           }
         }));
@@ -286,374 +237,200 @@ const DeFiSectionSettings = ({ selectedElement }) => {
     }
   };
 
-  const handleStatChange = (moduleType, statKey, value) => {
-    console.log('Updating stat:', moduleType, statKey, value);
+  const handleModuleAdd = (type) => {
     const element = elements.find(el => el.id === selectedElement.id);
     if (element) {
-      let modules = element.content ? JSON.parse(element.content) : [];
-      
-      // If modules array is empty, initialize it with default modules
-      if (modules.length === 0) {
-        modules = [
-          {
-            id: 'aggregator-module',
-            type: 'defiModule',
-            parentId: element.id,
-            content: JSON.stringify({
-              id: 'aggregator-module',
-              moduleType: 'aggregator',
-              title: 'Pool Aggregator',
-              enabled: true,
-              stats: [
-                { label: 'Total Pools', value: 'Loading...' },
-                { label: 'Total Value Locked', value: '$0' },
-                { label: 'Best APY', value: 'Not Connected' }
-              ],
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: 'aggregator',
-                actions: []
-              }
-            }),
-            styles: {},
-            configuration: {
-              moduleType: 'aggregator',
-              enabled: true
-            }
+      const newModule = {
+        id: `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        type: 'defiModule',
+        parentId: element.id,
+        content: JSON.stringify({
+          id: `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          moduleType: type,
+          title: type === 'aggregator' ? 'Pool Aggregator' :
+                 type === 'simulation' ? 'Investment Simulator' :
+                 type === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
+          enabled: true,
+          stats: [],
+          settings: {
+            showStats: true,
+            showButton: true,
+            customColor: '#2A2A3C'
           },
-          {
-            id: 'simulation-module',
-            type: 'defiModule',
-            parentId: element.id,
-            content: JSON.stringify({
-              id: 'simulation-module',
-              moduleType: 'simulation',
-              title: 'Investment Simulator',
-              enabled: true,
-              stats: [
-                { label: 'Investment Range', value: '$10,000' },
-                { label: 'Supported Assets', value: '20+' },
-                { label: 'Historical Data', value: '5 Years' }
-              ],
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: 'simulation',
-                actions: []
-              }
-            }),
-            styles: {},
-            configuration: {
-              moduleType: 'simulation',
-              enabled: true
-            }
-          },
-          {
-            id: 'bridge-module',
-            type: 'defiModule',
-            parentId: element.id,
-            content: JSON.stringify({
-              id: 'bridge-module',
-              moduleType: 'bridge',
-              title: 'Cross-Chain Bridge',
-              enabled: true,
-              stats: [
-                { label: 'Supported Chains', value: 'Select Chain' },
-                { label: 'Transfer Time', value: 'Select Chain' },
-                { label: 'Security Score', value: '0.1%' }
-              ],
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: 'bridge',
-                actions: []
-              }
-            }),
-            styles: {},
-            configuration: {
-              moduleType: 'bridge',
-              enabled: true
-            }
+          functionality: {
+            type: type,
+            actions: []
           }
-        ];
-      }
+        }),
+        styles: {},
+        configuration: {
+          moduleType: type,
+          enabled: true
+        }
+      };
 
-      const moduleIndex = modules.findIndex(m => {
-        const moduleContent = m.content ? JSON.parse(m.content) : {};
-        return moduleContent.functionality?.type === moduleType;
+      const modules = element.children
+        ?.map(childId => elements.find(el => el.id === childId))
+        ?.filter(module => module?.type === 'defiModule') || [];
+
+      modules.push(newModule);
+      updateContent(selectedElement.id, JSON.stringify(modules));
+      setModuleOrder(prev => [...prev, type]);
+    }
+  };
+
+  const handleModuleRemove = (type) => {
+    const element = elements.find(el => el.id === selectedElement.id);
+    if (element) {
+      const modules = element.children
+        ?.map(childId => elements.find(el => el.id === childId))
+        ?.filter(module => module?.type === 'defiModule') || [];
+
+      const updatedModules = modules.filter(module => {
+        const moduleContent = module.content ? JSON.parse(module.content) : {};
+        return moduleContent.functionality?.type !== type;
       });
 
-      if (moduleIndex !== -1) {
-        const module = modules[moduleIndex];
-        let moduleContent;
-        if (module.content) {
-          try {
-            moduleContent = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-          } catch (e) {
-            console.error('Error parsing module content:', e);
-            moduleContent = {
-              id: module.id,
-              moduleType: moduleType,
-              title: moduleType === 'aggregator' ? 'Pool Aggregator' :
-                     moduleType === 'simulation' ? 'Investment Simulator' :
-                     moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-              stats: [
-                { label: 'Total Pools', value: 'Loading...' },
-                { label: 'Total Value Locked', value: '$0' },
-                { label: 'Best APY', value: 'Not Connected' }
-              ],
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: moduleType,
-                actions: []
-              },
-              enabled: true
-            };
-          }
-        } else {
-          moduleContent = {
-            id: module.id,
-            moduleType: moduleType,
-            title: moduleType === 'aggregator' ? 'Pool Aggregator' :
-                   moduleType === 'simulation' ? 'Investment Simulator' :
-                   moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-            stats: [
-              { label: 'Total Pools', value: 'Loading...' },
-              { label: 'Total Value Locked', value: '$0' },
-              { label: 'Best APY', value: 'Not Connected' }
-            ],
-            settings: {
-              showStats: true,
-              showButton: true,
-              customColor: '#2A2A3C'
-            },
-            functionality: {
-              type: moduleType,
-              actions: []
-            },
-            enabled: true
-          };
-        }
-
-        // Ensure stats is an array
-        if (!Array.isArray(moduleContent.stats)) {
-          moduleContent.stats = Object.entries(moduleContent.stats || {}).map(([label, value]) => ({
-            label,
-            value
-          }));
-        }
-
-        // Update the specific stat value
-        const statIndex = moduleContent.stats.findIndex(stat => stat.label === statKey);
-        if (statIndex !== -1) {
-          moduleContent.stats[statIndex].value = value;
-        } else {
-          // If stat doesn't exist, add it
-          moduleContent.stats.push({ label: statKey, value });
-        }
-
-        // Update the module's content
-        modules[moduleIndex].content = JSON.stringify(moduleContent);
-
-        // Update the module's configuration
-        modules[moduleIndex].configuration = {
-          ...modules[moduleIndex].configuration,
-          enabled: moduleContent.enabled
-        };
-
-        // Update the element's content
-        const updatedElement = {
-          ...element,
-          content: JSON.stringify(modules)
-        };
-
-        // Update the context
-        updateContent(selectedElement.id, JSON.stringify(modules));
-
-        // Update local state
-        setModuleSettings(prev => {
-          const updatedStats = { ...(prev[moduleType]?.stats || {}) };
-          updatedStats[statKey] = value;
-          
-          return {
-            ...prev,
-            [moduleType]: {
-              ...(prev[moduleType] || {}),
-              stats: updatedStats
-            }
-          };
-        });
-
-        console.log('Updated module content:', moduleContent);
-        console.log('Updated modules:', modules);
-      }
+      updateContent(selectedElement.id, JSON.stringify(updatedModules));
+      setModuleOrder(prev => prev.filter(t => t !== type));
     }
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(moduleOrder);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setModuleOrder(items);
   };
 
   return (
     <div className="settings-panel">
-      <h3 className="settings-title">DeFi Section Settings</h3>
+      <h3 className="settings-title">DeFi Dashboard Settings</h3>
       
-      {/* Aggregateur Pool Settings */}
-      <div className={`settings-group ${!moduleSettings?.aggregator?.enabled ? 'disabled' : ''}`}>
-        <div className="settings-row">
-          <span className="settings-subtitle">Aggregateur Pool</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={moduleSettings?.aggregator?.enabled ?? false}
-              onChange={(e) => handleModuleToggle('aggregator', e.target.checked)}
-            />
-            <span className="slider round"></span>
-          </label>
-        </div>
-        {moduleSettings?.aggregator?.enabled && (
-          <div className="settings-subgroup">
-            <div className="settings-row">
-              <span>Total Pools</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.aggregator?.stats?.['Total Pools'] ?? ''}
-                onChange={(e) => handleStatChange('aggregator', 'Total Pools', e.target.value)}
-                disabled={!moduleSettings?.aggregator?.enabled}
-              />
-            </div>
-            <div className="settings-row">
-              <span>Total Value Locked</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.aggregator?.stats?.['Total Value Locked'] ?? ''}
-                onChange={(e) => handleStatChange('aggregator', 'Total Value Locked', e.target.value)}
-                disabled={!moduleSettings?.aggregator?.enabled}
-              />
-            </div>
-            <div className="settings-row">
-              <span>Best APY Available</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.aggregator?.stats?.['Best APY'] ?? ''}
-                onChange={(e) => handleStatChange('aggregator', 'Best APY', e.target.value)}
-                disabled={!moduleSettings?.aggregator?.enabled}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      {connectionError && (
+        <Alert
+          message="Connection Error"
+          description={connectionError}
+          type="error"
+          showIcon
+          style={{ marginBottom: '1rem' }}
+        />
+      )}
 
-      {/* Simulation Invest Settings */}
-      <div className={`settings-group ${!moduleSettings?.simulation?.enabled ? 'disabled' : ''}`}>
-        <div className="settings-row">
-          <span className="settings-subtitle">Simulation Invest</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={moduleSettings?.simulation?.enabled ?? false}
-              onChange={(e) => handleModuleToggle('simulation', e.target.checked)}
-            />
-            <span className="slider round"></span>
-          </label>
+      <Divider orientation="left">Wallet Connection</Divider>
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <div>
+          <span style={{ marginRight: 8 }}>Require Signature to Unlock</span>
+          <Switch 
+            checked={requireSignature} 
+            onChange={handleRequireSignatureChange}
+          />
         </div>
-        {moduleSettings?.simulation?.enabled && (
-          <div className="settings-subgroup">
-            <div className="settings-row">
-              <span>Investment Range</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.simulation?.stats?.['Investment Range'] ?? ''}
-                onChange={(e) => handleStatChange('simulation', 'Investment Range', e.target.value)}
-                disabled={!moduleSettings?.simulation?.enabled}
-              />
-            </div>
-            <div className="settings-row">
-              <span>Supported Assets</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.simulation?.stats?.['Supported Assets'] ?? ''}
-                onChange={(e) => handleStatChange('simulation', 'Supported Assets', e.target.value)}
-                disabled={!moduleSettings?.simulation?.enabled}
-              />
-            </div>
-            <div className="settings-row">
-              <span>Historical Data Range</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.simulation?.stats?.['Historical Data'] ?? ''}
-                onChange={(e) => handleStatChange('simulation', 'Historical Data', e.target.value)}
-                disabled={!moduleSettings?.simulation?.enabled}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+        
+        <div>
+          <span style={{ marginRight: 8 }}>Simulate Connected</span>
+          <Switch 
+            checked={simulateConnected} 
+            onChange={handleSimulateConnection}
+            disabled={isLoading}
+          />
+        </div>
 
-      {/* Bridge Settings */}
-      <div className={`settings-group ${!moduleSettings?.bridge?.enabled ? 'disabled' : ''}`}>
-        <div className="settings-row">
-          <span className="settings-subtitle">Bridge</span>
-          <label className="switch">
-            <input
-              type="checkbox"
-              checked={moduleSettings?.bridge?.enabled ?? false}
-              onChange={(e) => handleModuleToggle('bridge', e.target.checked)}
+        {simulateConnected && (
+          <div>
+            <span style={{ marginRight: 8 }}>Simulate Signed</span>
+            <Switch 
+              checked={simulateSigned} 
+              onChange={handleSimulateSignature}
+              disabled={isLoading}
             />
-            <span className="slider round"></span>
-          </label>
-        </div>
-        {moduleSettings?.bridge?.enabled && (
-          <div className="settings-subgroup">
-            <div className="settings-row">
-              <span>Supported Chains</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.bridge?.stats?.['Supported Chains'] ?? ''}
-                onChange={(e) => handleStatChange('bridge', 'Supported Chains', e.target.value)}
-                disabled={!moduleSettings?.bridge?.enabled}
-              />
-            </div>
-            <div className="settings-row">
-              <span>Average Transfer Time</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.bridge?.stats?.['Transfer Time'] ?? ''}
-                onChange={(e) => handleStatChange('bridge', 'Transfer Time', e.target.value)}
-                disabled={!moduleSettings?.bridge?.enabled}
-              />
-            </div>
-            <div className="settings-row">
-              <span>Security Score</span>
-              <input
-                type="text"
-                className="settings-input"
-                value={moduleSettings?.bridge?.stats?.['Security Score'] ?? ''}
-                onChange={(e) => handleStatChange('bridge', 'Security Score', e.target.value)}
-                disabled={!moduleSettings?.bridge?.enabled}
-              />
-            </div>
           </div>
         )}
-      </div>
+
+        <div>
+          <span>Current Status: </span>
+          <span style={{ 
+            color: isConnected ? '#52c41a' : '#ff4d4f',
+            fontWeight: 'bold'
+          }}>
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </span>
+          {isConnected && (
+            <span style={{ marginLeft: '1rem' }}>
+              {effectiveIsSigned ? '(Signed)' : '(Not Signed)'}
+            </span>
+          )}
+        </div>
+      </Space>
+
+      <Form form={form} layout="vertical">
+        <Divider orientation="left">Module Management</Divider>
+        
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="modules">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {moduleOrder.map((type, index) => (
+                  <Draggable key={type} draggableId={type} index={index}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="module-item"
+                      >
+                        <Space>
+                          <DragOutlined />
+                          <span>{type === 'aggregator' ? 'Pool Aggregator' :
+                                type === 'simulation' ? 'Investment Simulator' :
+                                type === 'bridge' ? 'Cross-Chain Bridge' : type}</span>
+                          <Switch
+                            checked={moduleSettings[type]?.enabled}
+                            onChange={(checked) => handleModuleToggle(type, checked)}
+                          />
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleModuleRemove(type)}
+                          />
+                        </Space>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+
+        <Divider orientation="left">Add New Module</Divider>
+        <Space>
+          <Select
+            style={{ width: 200 }}
+            placeholder="Select module type"
+            options={[
+              { value: 'aggregator', label: 'Pool Aggregator' },
+              { value: 'simulation', label: 'Investment Simulator' },
+              { value: 'bridge', label: 'Cross-Chain Bridge' }
+            ]}
+          />
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              const type = form.getFieldValue('newModuleType');
+              if (type) handleModuleAdd(type);
+            }}
+          >
+            Add Module
+          </Button>
+        </Space>
+      </Form>
     </div>
   );
 };
