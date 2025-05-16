@@ -155,23 +155,8 @@ const HeroOne = forwardRef(({
   }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
-    if (droppedItem.id) {
-      return;
-    }
-
-    const newId = addNewElement(
-      droppedItem.type,
-      droppedItem.level || 1,
-      null,
-      parentId
-    );
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === parentId
-          ? { ...el, children: [...el.children, newId] }
-          : el
-      )
-    );
+    // Simple drop handler that just adds the element
+    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
   const { isOverCurrent, drop } = useElementDrop({
@@ -183,11 +168,7 @@ const HeroOne = forwardRef(({
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
     const element = findElementById(divId, elements);
-    if (element) {
-      setSelectedElement(element);
-    } else {
-      setSelectedElement({ id: divId, type: 'div', styles: {} });
-    }
+    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
   const {
@@ -205,6 +186,7 @@ const HeroOne = forwardRef(({
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
+
     return container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
@@ -255,18 +237,26 @@ const HeroOne = forwardRef(({
         }
       }}
     >
-      <div
-        style={leftContainerStyles}
+      <Div
+        id={leftContainerId}
+        parentId={leftContainerId}
+        styles={leftContainerStyles}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        onDropItem={(item) => handleHeroDrop(item, leftContainerId)}
         onClick={(e) => handleInnerDivClick(e, leftContainerId)}
       >
         {renderContainerChildren(leftContainerId)}
-      </div>
-      <div
-        style={rightContainerStyles}
+      </Div>
+      <Div
+        id={rightContainerId}
+        parentId={rightContainerId}
+        styles={rightContainerStyles}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        onDropItem={(item) => handleHeroDrop(item, rightContainerId)}
         onClick={(e) => handleInnerDivClick(e, rightContainerId)}
       >
         {renderContainerChildren(rightContainerId)}
-      </div>
+      </Div>
     </SectionWithRef>
   );
 });

@@ -47,7 +47,8 @@ import {
   DraggableContentSections,
   Icon,
   DeFiModule,
-  DraggableDeFi
+  DraggableDeFi,
+  DraggableMinting
 } from '../../Elements/SelectableElements';
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
@@ -64,7 +65,8 @@ export const renderElement = (
   selectedElement,
   selectedStyle,
   isPreviewMode = true,
-  handleOpenMediaPanel = () => {}
+  handleOpenMediaPanel = () => {},
+  forwardedRef = null
 ) => {
   if (!element || !element.id || !element.type) {
     return null;
@@ -198,7 +200,14 @@ export const renderElement = (
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(children) : null}
+        children={children ? renderChildren(
+          children.filter((child, index, self) => 
+            index === self.findIndex(c => 
+              c.type === child.type && 
+              c.content === child.content
+            )
+          )
+        ) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
@@ -273,86 +282,48 @@ export const renderElement = (
     pre: <Pre id={id} key={id} content={element.content} styles={mergedStyles} />,
     hr: <Hr id={id} key={id} styles={mergedStyles} />,
     caption: <Caption id={id} key={id} content={element.content} styles={mergedStyles} />,
-    mintingSection: (
-      <DraggableWeb3Elements
-        id={id}
-        key={id}
-        type={'candyMachine'}
-        configuration={configuration}
-        children={children ? renderChildren(children) : null}
-        setElements={setElements}
-        setSelectedElement={setSelectedElement}
-        handlePanelToggle={handlePanelToggle}
-        isPreviewMode={isPreviewMode}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-      />
-    ),
-    date: <DateComponent id={id} key={id} styles={mergedStyles} />,
-    connectWalletButton: (
-      <ConnectWalletButton
-        id={id}
-        key={id}
-        type={'connectWalletButton'}
-        content={element.content}
-        styles={mergedStyles}
-        handlePanelToggle={handlePanelToggle}
-      />
-    ),
-    bgVideo: (
-      <BGVideo
-        id={id}
-        key={id}
-        type={'connectWalletButton'}
-        content={element.content}
-        styles={mergedStyles}
-        handlePanelToggle={handlePanelToggle}
-      />
-    ),
-    container: (
-      <Container id={id} key={id} styles={mergedStyles}>
-        {children ? renderChildren(children) : null}
-      </Container>
-    ),
-    grid: (
-      <GridLayout id={id} key={id} styles={mergedStyles}>
-        {children ? renderChildren(children) : null}
-      </GridLayout>
-    ),
-    hflex: (
-      <HFlexLayout id={id} key={id} styles={mergedStyles}>
-        {children ? renderChildren(children) : null}
-      </HFlexLayout>
-    ),
-    vflex: (
-      <VFlexLayout id={id} key={id} styles={mergedStyles}>
-        {children ? renderChildren(children) : null}
-      </VFlexLayout>
-    ),
-    line: <Line id={id} key={id} styles={mergedStyles} />,
-    linkblock: <LinkBlock id={id} key={id} content={element.content} styles={mergedStyles} />,
-    youtube: <YouTubeVideo id={id} key={id} styles={mergedStyles} />,
-    icon: <Icon id={id} key={id} styles={mergedStyles} handleOpenMediaPanel={handleOpenMediaPanel} />,
     defiSection: (
       <DraggableDeFi
         id={id}
         key={id}
-        configuration={configuration || 'defiSection'}
+        type={'defiSection'}
+        configuration={configuration}
         children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
-        isEditing={false}
         styles={mergedStyles}
-        uniqueId={id}
+        settings={element.settings}
+      />
+    ),
+    mintingSection: (
+      <DraggableMinting
+        id={id}
+        key={id}
+        type={'mintingSection'}
+        configuration={configuration}
+        children={children ? renderChildren(children) : null}
+        contentListWidth={contentListWidth}
+        handlePanelToggle={handlePanelToggle}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        styles={mergedStyles}
+        settings={element.settings}
       />
     ),
     defiModule: (
       <DeFiModule
         id={id}
         key={id}
-        content={typeof element.content === 'string' ? element.content : JSON.stringify(element.content)}
+        content={element.content}
         styles={mergedStyles}
         configuration={element.configuration || configuration}
+        settings={element.settings}
+        moduleType={element.moduleType}
+        handleSelect={setSelectedElement}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        isConnected={false}
+        isSigned={false}
+        requireSignature={true}
       />
     ),
   };

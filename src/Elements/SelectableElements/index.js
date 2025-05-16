@@ -19,4 +19,6 @@ export const DeFiModule = forwardRef(({ id, type, content, styles, children, han
       {children}
     </div>
   );
-}); 
+});
+
+export { default as MintingModule } from '../Sections/Web3Related/MintingModule'; 

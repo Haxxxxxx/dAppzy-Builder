@@ -6,6 +6,7 @@ const useReorderDrop = (findElementById, elements, setElements) => {
     const [draggedId, setDraggedId] = useState(null);
     const [isInternalDrag, setIsInternalDrag] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [dragSource, setDragSource] = useState(null);
 
     // Cleanup function to reset drag state
     const resetDrag = useCallback(() => {
@@ -13,6 +14,7 @@ const useReorderDrop = (findElementById, elements, setElements) => {
         setDraggedId(null);
         setIsInternalDrag(false);
         setIsDragging(false);
+        setDragSource(null);
     }, []);
 
     // Add cleanup on unmount
@@ -22,11 +24,12 @@ const useReorderDrop = (findElementById, elements, setElements) => {
         };
     }, [resetDrag]);
 
-    const onDragStart = useCallback((e, id) => {
+    const onDragStart = useCallback((e, id, sourceContainerId) => {
         e.stopPropagation();
         setDraggedId(id);
         setIsInternalDrag(true);
         setIsDragging(true);
+        setDragSource(sourceContainerId);
         e.dataTransfer.setData("text/plain", id);
     }, []);
 
@@ -53,26 +56,49 @@ const useReorderDrop = (findElementById, elements, setElements) => {
             return;
         }
 
-        const oldContainer = elements.find(el => el.children?.includes(id));
-        if (!oldContainer) {
+        // Find the source container (where the element is currently)
+        const sourceContainer = elements.find(el => el.children?.includes(id));
+        if (!sourceContainer) {
+            resetDrag();
+            return;
+        }
+
+        // Find the target container (where we're dropping)
+        const targetContainer = elements.find(el => el.id === containerId);
+        if (!targetContainer) {
             resetDrag();
             return;
         }
 
         // Only proceed with the drop if we're actually over a valid target
         if (activeDrop.containerId === containerId) {
-            const newContainer = elements.find(el => el.id === containerId);
-            if (newContainer) {
-                const oldIndex = oldContainer.children.indexOf(id);
-                oldContainer.children.splice(oldIndex, 1);
+            const oldIndex = sourceContainer.children.indexOf(id);
+            
+            // Remove from source container
+            sourceContainer.children.splice(oldIndex, 1);
 
-                if (dropIndex >= newContainer.children.length) {
-                    newContainer.children.push(id);
-                } else {
-                    newContainer.children.splice(dropIndex, 0, id);
-                }
+            // Add to target container at the specified index
+            if (dropIndex >= targetContainer.children.length) {
+                targetContainer.children.push(id);
+            } else {
+                targetContainer.children.splice(dropIndex, 0, id);
+            }
 
-                setElements([...elements]);
+            // Update the elements state
+            setElements([...elements]);
+
+            // If the element was moved within the same container, update its position
+            if (sourceContainer.id === targetContainer.id) {
+                const updatedElements = elements.map(el => {
+                    if (el.id === containerId) {
+                        return {
+                            ...el,
+                            children: [...el.children]
+                        };
+                    }
+                    return el;
+                });
+                setElements(updatedElements);
             }
         }
 
@@ -115,6 +141,7 @@ const useReorderDrop = (findElementById, elements, setElements) => {
     return {
         activeDrop,
         isDragging,
+        dragSource,
         onDragStart,
         onDragOver,
         onDrop,

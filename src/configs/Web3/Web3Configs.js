@@ -2,80 +2,217 @@ export const Web3Configs = {
     mintingSection: {
         id: 'minting-section',
         type: 'mintingSection',
+        styles: {
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '10px',
+            margin: '0',
+            backgroundColor: 'rgba(42, 42, 60, 0.5)',
+            outline: '2px solid var(--purple, #5C4EFA)',
+            borderInline: '0.5px solid var(--purple, #5C4EFA)',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)'
+        },
         children: [
-          { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Logo
-          { type: 'title', content: 'Mint {Collection Name}', label: 'title' }, // Title
-          { type: 'description', content: 'Lorem ipsum dolor sit amet...' }, // Description
-          { type: 'timer', label: 'Time before minting', content: '17d 5h 38m 34s' }, // Timer
-          { type: 'remaining', label: 'Remaining', content: '1000/1000' }, // Remaining
-          { type: 'value', label: 'Price', content: '1.5' }, // Price Value
-          { type: 'currency', content: 'SOL' }, // Currency
-          { type: 'quantity', label: 'Quantity', content: '2' }, // Quantity Value
-          { type: 'price', label: 'Total Price', content: '3 SOL' }, // Total Price
-          { type: 'button', content: 'Mint', label: 'mintButton' }, // Mint Button
-          { type: 'rareItemsTitle', content: 'Rarest Items' }, // Rarest Items
-          { type: 'docItemsTitle', content: 'Document Items' }, // Document Items
-          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Rare Items
-          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-          { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-          { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }, // Document Items
-          { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-          { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-        ],
-      },
+          { 
+            type: 'mintingModule',
+            moduleType: 'minting',
+            styles: {
+                position: 'relative',
+                boxSizing: 'border-box',
+                padding: '10px',
+                margin: '10px 0',
+                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+            },
+            content: {
+              title: 'Mint {Collection Name}',
+              description: 'Lorem ipsum dolor sit amet...',
+              stats: [
+                { label: 'Total Supply', value: '10,000' },
+                { label: 'Minted', value: '0' },
+                { label: 'Price', value: '1.5 SOL' },
+                { label: 'Time Left', value: '24:00:00' }
+              ],
+              settings: {
+                showStats: true,
+                showButton: true,
+                customColor: '#2A2A3C'
+              }
+            }
+          },
+          { 
+            type: 'mintingModule',
+            moduleType: 'gallery',
+            styles: {
+                position: 'relative',
+                boxSizing: 'border-box',
+                padding: '10px',
+                margin: '10px 0',
+                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+            },
+            content: {
+              title: 'Rarest Items',
+              items: [
+                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }
+              ],
+              settings: {
+                showTitle: true,
+                showDescription: true,
+                customColor: '#2A2A3C'
+              }
+            }
+          },
+          { 
+            type: 'mintingModule',
+            moduleType: 'documents',
+            styles: {
+                position: 'relative',
+                boxSizing: 'border-box',
+                padding: '10px',
+                margin: '10px 0',
+                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+            },
+            content: {
+              title: 'Document Items',
+              items: [
+                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }
+              ],
+              settings: {
+                showTitle: true,
+                showDescription: true,
+                customColor: '#2A2A3C'
+              }
+            }
+          }
+        ]
+    },
     defiSection: {
         id: 'defi-dashboard',
         type: 'defiSection',
+        styles: {
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '10px',
+            margin: '0',
+            backgroundColor: 'rgba(42, 42, 60, 0.5)',
+            outline: '2px solid var(--purple, #5C4EFA)',
+            borderInline: '0.5px solid var(--purple, #5C4EFA)',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)'
+        },
         children: [
           { 
-            type: 'image', 
-            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7', 
-            label: 'logo' 
-          },
-          { 
-            type: 'title', 
-            content: 'DeFi Dashboard', 
-            label: 'title' 
-          },
-          { 
-            type: 'description', 
-            content: 'Swap, stake, and lend your assets with ease' 
+            type: 'defiModule',
+            moduleType: 'aggregator',
+            styles: {
+                position: 'relative',
+                boxSizing: 'border-box',
+                padding: '10px',
+                margin: '10px 0',
+                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+            },
+            content: {
+              title: 'DeFi Aggregator',
+              description: 'Access multiple DeFi protocols through a single interface',
+              stats: [
+                { label: 'Connected Wallet', value: 'Not Connected' },
+                { label: 'Total Pools', value: 'Loading...' },
+                { label: 'Total Value Locked', value: '$0' },
+                { label: 'Best APY', value: 'Not Connected' }
+              ],
+              settings: {
+                showStats: true,
+                showButton: true,
+                customColor: '#2A2A3C'
+              }
+            }
           },
           { 
             type: 'defiModule',
-            moduleType: 'swap',
-            title: 'Token Swap',
-            stats: [
-              { label: '24h Volume', value: '$1.2M' },
-              { label: 'Available Pairs', value: '24' },
-              { label: 'Swap Fee', value: '0.3%' }
-            ],
-            enabled: true
+            moduleType: 'simulation',
+            styles: {
+                position: 'relative',
+                boxSizing: 'border-box',
+                padding: '10px',
+                margin: '10px 0',
+                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+            },
+            content: {
+              title: 'Investment Simulator',
+              description: 'Simulate different investment strategies',
+              stats: [
+                { label: 'Investment Range', value: '$10,000' },
+                { label: 'Supported Assets', value: '20+' },
+                { label: 'Historical Data', value: '5 Years' }
+              ],
+              settings: {
+                showStats: true,
+                showButton: true,
+                customColor: '#2A2A3C'
+              }
+            }
           },
           { 
             type: 'defiModule',
-            moduleType: 'stake',
-            title: 'Staking',
-            stats: [
-              { label: 'Total Value Locked', value: '$890K' },
-              { label: 'APY', value: '12.5%' },
-              { label: 'Lock Period', value: '30 days' }
-            ],
-            enabled: true
-          },
-          { 
-            type: 'defiModule',
-            moduleType: 'lend',
-            title: 'Lending',
-            stats: [
-              { label: 'Total Supplied', value: '$450K' },
-              { label: 'Borrow APR', value: '3.2%' },
-              { label: 'Utilization', value: '65%' }
-            ],
-            enabled: true
+            moduleType: 'bridge',
+            styles: {
+                position: 'relative',
+                boxSizing: 'border-box',
+                padding: '10px',
+                margin: '10px 0',
+                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease'
+            },
+            content: {
+              title: 'Cross-Chain Bridge',
+              description: 'Transfer assets between different blockchains',
+              stats: [
+                { label: 'Supported Chains', value: 'Select Chain' },
+                { label: 'Transfer Time', value: 'Select Chain' },
+                { label: 'Security Score', value: '0.1%' }
+              ],
+              settings: {
+                showStats: true,
+                showButton: true,
+                customColor: '#2A2A3C'
+              }
+            }
           }
-        ],
+        ]
     },
     connectWalletButton: {
         type: 'connectWalletButton',

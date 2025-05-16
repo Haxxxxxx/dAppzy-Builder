@@ -31,7 +31,7 @@ const DraggableCTA = ({
   imgSrc,
   label,
 }) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
 
@@ -76,71 +76,119 @@ const DraggableCTA = ({
     },
   }), [configuration, isEditing, elements]);
 
-  // Handle dropping items inside this CTA with improved error handling
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
+  // Handle drop events within the CTA section with improved error handling
+  const onDropItem = (item, index, dropInfo) => {
+    if (!item || !dropInfo?.isWithinBounds) return;
 
-    const parentElement = findElementById(parentId, elements);
-    if (!parentElement) return;
+    // Get the current CTA section element
+    const currentSection = findElementById(id, elements);
+    if (!currentSection) {
+      console.warn('CTA section not found');
+      return;
+    }
 
-    // Check if the item being dropped is a CTA
-    if (item.type === 'cta') {
-      // Check if a CTA with this configuration already exists in the parent section
-      const sectionElement = findElementById(parentElement.parentId, elements);
-      const existingCTA = sectionElement?.children
-        ?.map(childId => findElementById(childId, elements))
-        ?.find(el => el?.type === 'cta' && el?.configuration === item.configuration);
+    // Check if we're trying to add a CTA section inside another CTA section
+    if (item.type === 'ctaSection') {
+      console.warn('Cannot add a CTA section inside another CTA section');
+      return;
+    }
 
-      if (existingCTA) {
-        // If a CTA with this configuration exists, don't create a new one
+    // Check for duplicate elements
+    const existingElements = currentSection.children
+      ?.map(childId => findElementById(childId, elements))
+      .filter(Boolean);
+
+    // For specific elements, check for duplicates
+    if (item.type === 'button' || item.type === 'heading' || item.type === 'paragraph') {
+      const hasDuplicate = existingElements?.some(el => 
+        el.type === item.type && el.content === item.content
+      );
+      if (hasDuplicate) {
+        console.warn(`A ${item.type} with this content already exists in the CTA section`);
         return;
       }
     }
 
-    // Special handling for CTAs with wrappers (example: content/button split)
-    let newElement = {
-      type: item.type,
-      content: item.content || '',
-      styles: item.styles || {},
-      configuration: item.configuration,
-      settings: item.settings || {}
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Create base styles based on element type
+    const baseStyles = {
+      button: {
+        backgroundColor: '#4F46E5',
+        color: 'white',
+        padding: '1rem 2rem',
+        borderRadius: '8px',
+        fontSize: '1.1rem',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: '#4338CA'
+        }
+      },
+      heading: {
+        color: '#1A1A1A',
+        fontSize: '2.5rem',
+        fontWeight: 'bold',
+        marginBottom: '1.5rem',
+        lineHeight: '1.2'
+      },
+      paragraph: {
+        color: '#4A4A4A',
+        fontSize: '1.2rem',
+        lineHeight: '1.6',
+        marginBottom: '2rem'
+      }
     };
 
-    // If the configuration requires wrappers, add them (example: main and button)
-    if (item.configuration === 'defaultCTA' || item.configuration === 'customCTA') {
-      newElement = {
-        ...newElement,
-        children: [
-          {
-            type: 'div',
-            styles: { display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', flex: 1 },
-            children: []
-          },
-          {
-            type: 'div',
-            styles: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1 },
-            children: []
-          }
-        ]
-      };
-    }
-
-    const newId = addNewElement(item.type, 1, null, parentId, newElement);
-
-    // Update the parent element's children with unique values
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId
-          ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-          : el
-      )
+    // Create the new element with proper configuration
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      id,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: {
+          ...baseStyles[item.type],
+          ...item.styles
+        },
+        configuration: item.configuration || {},
+        children: item.children || []
+      }
     );
 
-    // Select the newly created element
-    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === id) {
+          // Create a new array for the children, maintaining existing ones
+          const updatedChildren = [...(el.children || [])];
+          
+          // Insert the new element ID at the specified index
+          updatedChildren.splice(index, 0, elementId);
+
+          return {
+            ...el,
+            children: updatedChildren
+          };
+        }
+        return el;
+      });
+
+      return updatedElements;
+    });
+
+    // Select the new element
+    setSelectedElement({ 
+      id: elementId, 
+      type: item.type,
+      parentId: id,
+      index: index
+    });
   };
 
   // Find the current CTA and its children with improved error handling

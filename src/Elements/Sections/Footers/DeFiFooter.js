@@ -1,104 +1,206 @@
-import React, { useContext } from 'react';
-import { useDrop } from 'react-dnd';
-import { Span, Image, LinkBlock } from '../../SelectableElements';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
+import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
+import useElementDrop from '../../../utils/useElementDrop';
+import useReorderDrop from '../../../utils/useReorderDrop';
+import { DeFiFooterStyles } from './defaultFooterStyles';
+import { Image, Button, Heading, Paragraph, Section, Div, Link, Span } from '../../SelectableElements';
+import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
+import { FooterConfigurations } from '../../../configs/footers/FooterConfigurations';
 
-const DeFiFooter = ({ id, children, styles: customStyles, onDropItem }) => {
-  const { findElementById, elements } = useContext(EditableContext);
-  const footerElement = findElementById(id, elements);
+// Create a forwardRef wrapper for Section
+const SectionWithRef = forwardRef((props, ref) => (
+  <Section {...props} ref={ref} />
+));
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ['image', 'span', 'link'],
-    drop: (item, monitor) => {
-      if (monitor.didDrop()) {
-        return;
+const DeFiFooter = forwardRef(({
+  handleSelect,
+  uniqueId,
+  children,
+  onDropItem,
+  handleOpenMediaPanel,
+}, ref) => {
+  const footerRef = useRef(null);
+  const defaultInjectedRef = useRef(false);
+  const {
+    elements,
+    setElements,
+    setSelectedElement,
+    findElementById,
+    updateStyles,
+    addNewElement,
+  } = useContext(EditableContext);
+
+  const footerElement = useMemo(
+    () => elements.find((el) => el.id === uniqueId),
+    [elements, uniqueId]
+  );
+
+  useEffect(() => {
+    if (defaultInjectedRef.current || !footerElement) return;
+
+    // First, ensure the footer has the default styles
+    const mergedFooterStyles = merge({}, DeFiFooterStyles.footerSection, footerElement?.styles);
+    updateStyles(footerElement.id, mergedFooterStyles);
+
+    const contentContainer = findElementById(`${uniqueId}-content`, elements);
+    const footerConfig = FooterConfigurations[footerElement?.configuration || 'defiFooter'] || {};
+    const defaultContent = footerConfig.children || [];
+
+    // Create a batch of updates
+    const updates = [];
+
+    // Add content container if it doesn't exist
+    if (!contentContainer) {
+      updates.push({
+        id: `${uniqueId}-content`,
+        type: 'div',
+        styles: DeFiFooterStyles.footerContent,
+        children: [],
+        parentId: uniqueId,
+      });
+    }
+
+    // Only inject content if we have default content and the container is empty
+    if (defaultContent.length > 0 && (!contentContainer || contentContainer.children.length === 0)) {
+      const newChildren = defaultContent.map(child => {
+        const newId = `${uniqueId}-content-${Math.random().toString(36).substr(2, 9)}`;
+        return {
+          id: newId,
+          type: child.type,
+          content: child.content,
+          styles: merge(
+            child.type === 'span' ? DeFiFooterStyles.footerText :
+            child.type === 'button' ? DeFiFooterStyles.footerButton :
+            child.type === 'linkblock' ? DeFiFooterStyles.footerLink :
+            child.type === 'heading' ? DeFiFooterStyles.footerHeading :
+            child.type === 'icon' ? DeFiFooterStyles.footerIcon :
+            child.type === 'image' ? DeFiFooterStyles.footerLogo :
+            child.type === 'connectWalletButton' ? DeFiFooterStyles.connectWalletButton :
+            {},
+            child.styles || {}
+          ),
+          parentId: `${uniqueId}-content`
+        };
+      });
+
+      // Add all new children to updates
+      updates.push(...newChildren);
+
+      // Update content container with new children
+      if (contentContainer) {
+        updates.push({
+          ...contentContainer,
+          children: newChildren.map(child => child.id)
+        });
+      } else {
+        updates[0].children = newChildren.map(child => child.id);
       }
-      onDropItem(item, id);
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver({ shallow: true }),
-    }),
-  }));
+    }
 
-  // Find children
-  const imageChild = children?.find(child => child.type === 'image');
-  const spanChild = children?.find(child => child.type === 'span');
-  const linkChildren = children?.filter(child => child.type === 'link') || [];
+    // Apply all updates in a single state change
+    if (updates.length > 0) {
+      setElements(prev => {
+        const existingIds = new Set(prev.map(el => el.id));
+        const newElements = updates.filter(el => !existingIds.has(el.id));
+        return [...prev, ...newElements];
+      });
+      defaultInjectedRef.current = true;
+    }
+  }, [footerElement, elements, findElementById, uniqueId, updateStyles, setElements]);
+
+  const handleFooterDrop = (droppedItem, parentId = uniqueId) => {
+    // Simple drop handler that just adds the element
+    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
+  };
+
+  const { isOverCurrent, drop } = useElementDrop({
+    id: uniqueId,
+    elementRef: footerRef,
+    onDropItem: (item) => handleFooterDrop(item, uniqueId),
+  });
+
+  const handleInnerDivClick = (e, divId) => {
+    e.stopPropagation();
+    const element = findElementById(divId, elements);
+    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
+  };
+
+  const {
+    activeDrop,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+    draggedId,
+  } = useReorderDrop(findElementById, elements, setElements);
+
+  const renderContainerChildren = (containerId) => {
+    const container = findElementById(containerId, elements);
+    if (!container || !container.children) return null;
+
+    return container.children.map((childId) => {
+      const child = findElementById(childId, elements);
+      if (!child) return null;
+      return renderElement(
+        child,
+        elements,
+        null,
+        setSelectedElement,
+        setElements,
+        null,
+        undefined,
+        handleOpenMediaPanel
+      );
+    });
+  };
+
+  // Get the content container element
+  const contentContainer = findElementById(`${uniqueId}-content`, elements);
+
+  // Merge styles for container
+  const contentContainerStyles = merge({}, DeFiFooterStyles.footerContent, contentContainer?.styles || {});
+
+  // Merge styles for footer section
+  const mergedFooterStyles = merge({}, DeFiFooterStyles.footerSection, footerElement?.styles || {});
 
   return (
-    <div style={{ position: 'relative', boxSizing: 'border-box' }}>
-    <footer
-        ref={drop}
+    <SectionWithRef
+      id={uniqueId}
       style={{
-        ...(footerElement?.styles || {}),
-          ...Object.fromEntries(Object.entries(customStyles || {}).filter(([k]) => !(footerElement?.styles && k in footerElement.styles))),
-          borderTop: (footerElement?.styles && footerElement.styles.borderTop) || (customStyles && customStyles.borderTop) || 'none',
-          position: 'relative',
-          padding: (footerElement?.styles && footerElement.styles.padding) || (customStyles && customStyles.padding) || '1rem',
-          backgroundColor: (footerElement?.styles && footerElement.styles.backgroundColor) || (customStyles && customStyles.backgroundColor) || '#ffffff',
-          color: (footerElement?.styles && footerElement.styles.color) || (customStyles && customStyles.color) || '#1a1a1a',
-          width: '100%',
-          boxSizing: 'border-box',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        ...mergedFooterStyles,
+        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e, uniqueId);
+      }}
+      ref={(node) => {
+        footerRef.current = node;
+        drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
+      }}
+    >
+      <Div
+        id={`${uniqueId}-content`}
+        parentId={`${uniqueId}-content`}
+        styles={contentContainerStyles}
+        handleOpenMediaPanel={handleOpenMediaPanel}
+        onDropItem={(item) => handleFooterDrop(item, `${uniqueId}-content`)}
+        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
       >
-        {/* Left section wrapper */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {imageChild && (
-            <div style={{ position: 'relative', boxSizing: 'border-box' }}>
-          <Image
-                id={imageChild.id}
-                content={imageChild.content}
-            styles={{
-                  ...imageChild.styles,
-                  width: '32px',
-                  height: '32px',
-                  objectFit: 'cover',
-                  borderRadius: '8px'
-            }}
-          />
-      </div>
-          )}
-          {spanChild && (
-            <div style={{ position: 'relative', boxSizing: 'border-box' }}>
-              <Span
-                id={spanChild.id}
-                content={spanChild.content}
-            styles={{
-                  ...spanChild.styles,
-                  color: 'inherit',
-                  fontSize: '0.875rem',
-                  fontWeight: '400'
-            }}
-          />
-            </div>
-        )}
-      </div>
-
-        {/* Right section wrapper */}
-        <div style={{ display: 'flex', gap: '24px' }}>
-          {linkChildren.map((child) => (
-            <div key={child.id} style={{ position: 'relative', boxSizing: 'border-box' }}>
-              <LinkBlock
-                id={child.id}
-                content={child.content}
-                styles={{
-                  ...child.styles,
-                  color: 'inherit',
-                  textDecoration: 'none',
-                  fontSize: '0.875rem',
-                  fontWeight: '400',
-                  display: 'inline-block'
-                }}
-              />
-            </div>
-          ))}
-      </div>
-    </footer>
-    </div>
+        {renderContainerChildren(`${uniqueId}-content`)}
+      </Div>
+    </SectionWithRef>
   );
-};
+});
+
+DeFiFooter.displayName = 'DeFiFooter';
 
 export default DeFiFooter; 

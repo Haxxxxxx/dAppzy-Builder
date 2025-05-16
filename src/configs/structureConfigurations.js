@@ -22,9 +22,9 @@ export const structureConfigurations = {
   ctaTwo: CtaConfigurations.ctaTwo,
 
   // Footer configs
-  customTemplateFooter: FooterConfigurations.customTemplate,
+  simpleFooter: FooterConfigurations.simpleFooter,
   detailedFooter: FooterConfigurations.detailedFooter,
-  templateFooter: FooterConfigurations.templateFooter,
+  advancedFooter: FooterConfigurations.advancedFooter,
   defiFooter: FooterConfigurations.defiFooter,
 
   // Web3 configs

@@ -9,6 +9,7 @@ import StructurePanel from '../../components/LeftbarPanels/StructurePanel';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
 import { mergeStyles } from '../../utils/htmlRenderUtils/containerHelpers';
 import { defaultSectionStyles } from '../Sections/ContentSections/defaultSectionStyles';
+import { merge } from 'lodash';
 
 /**
  * DraggableContentSections component for rendering and managing content sections.
@@ -24,17 +25,20 @@ import { defaultSectionStyles } from '../Sections/ContentSections/defaultSection
  * @param {Function} props.handleOpenMediaPanel - Function to handle media panel opening
  * @param {string} props.imgSrc - Image source for the section preview
  * @param {string} props.label - Label for the section
+ * @param {string} props.description - Description for the section
  */
 const DraggableContentSections = ({
   id,
   configuration,
+  type,
+  label,
+  description,
   isEditing,
   showDescription,
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
   imgSrc,
-  label,
 }) => {
   const {
     addNewElement,
@@ -43,11 +47,143 @@ const DraggableContentSections = ({
     findElementById,
     setSelectedElement,
     updateStyles,
+    generateUniqueId
   } = useContext(EditableContext);
 
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
   const defaultInjectedRef = useRef(false);
+
+  // Initialize the Content Section structure with containers
+  useEffect(() => {
+    if (!id || defaultInjectedRef.current) return;
+
+    // First, ensure the section has the default styles
+    const mergedSectionStyles = merge({}, defaultSectionStyles.section, findElementById(id, elements)?.styles);
+    updateStyles(id, mergedSectionStyles);
+
+    // Create default containers
+    const containers = [
+      {
+        id: `${id}-content`,
+        type: 'div',
+        part: 'content',
+        layout: 'content',
+        styles: defaultSectionStyles.contentWrapper,
+        children: [],
+        parentId: id,
+        configuration: configuration
+      },
+      {
+        id: `${id}-buttons`,
+        type: 'div',
+        part: 'buttons',
+        layout: 'buttons',
+        styles: defaultSectionStyles.buttonContainer,
+        children: [],
+        parentId: id,
+        configuration: configuration
+      },
+      {
+        id: `${id}-image`,
+        type: 'div',
+        part: 'image',
+        layout: 'image',
+        styles: defaultSectionStyles.imageContainer,
+        children: [],
+        parentId: id,
+        configuration: configuration
+      }
+    ];
+
+    // Add containers if they don't exist
+    containers.forEach(container => {
+      if (!findElementById(container.id, elements)) {
+        setElements(prev => [...prev, container]);
+      }
+    });
+
+    // Update section's children to include all containers
+    setElements(prev => prev.map(el => {
+      if (el.id === id) {
+        return {
+          ...el,
+          children: containers.map(c => c.id),
+          configuration: configuration
+        };
+      }
+      return el;
+    }));
+
+    defaultInjectedRef.current = true;
+  }, [id, elements, findElementById, setElements, updateStyles, configuration]);
+
+  // Standardized container creation helper
+  const createContainerStructure = (parentId, type, config) => {
+    const containers = [
+      {
+        id: `${parentId}-content`,
+        type: 'div',
+        part: 'content',
+        layout: 'content',
+        styles: defaultSectionStyles.contentWrapper,
+        children: [],
+        parentId: parentId,
+        configuration: config
+      },
+      {
+        id: `${parentId}-buttons`,
+        type: 'div',
+        part: 'buttons',
+        layout: 'buttons',
+        styles: defaultSectionStyles.buttonContainer,
+        children: [],
+        parentId: parentId,
+        configuration: config
+      },
+      {
+        id: `${parentId}-image`,
+        type: 'div',
+        part: 'image',
+        layout: 'image',
+        styles: defaultSectionStyles.imageContainer,
+        children: [],
+        parentId: parentId,
+        configuration: config
+      }
+    ];
+    return containers;
+  };
+
+  // Standardized style management
+  const applyStyles = (element, type) => {
+    return {
+      ...defaultSectionStyles[type],
+      ...element.styles,
+      position: 'relative',
+      boxSizing: 'border-box'
+    };
+  };
+
+  // Standardized configuration handling
+  const createElementConfig = (type, config) => {
+    return {
+      type,
+      configuration: config.type,
+      styles: applyStyles({}, type),
+      content: '',
+      label: config.label || '',
+      description: config.description || '',
+      settings: config.settings || {},
+      children: [],
+      layout: ['left', 'right']
+    };
+  };
+
+  // Standardized ID generation
+  const generateElementIds = (type, count) => {
+    return Array(count).fill(null).map(() => generateUniqueId(type));
+  };
 
   // Setup drag behavior with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -63,189 +199,193 @@ const DraggableContentSections = ({
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        const sectionConfig = structureConfigurations[item.configuration];
-        if (sectionConfig) {
-          const dropResult = monitor.getDropResult();
-          const targetSectionId = dropResult?.sectionId;
-          
-          if (targetSectionId) {
-            const sectionElement = findElementById(targetSectionId, elements);
-            const existingSection = sectionElement?.children
-              ?.map(childId => findElementById(childId, elements))
-              ?.find(el => el?.type === 'section' && el?.configuration === item.configuration);
+        const dropResult = monitor.getDropResult();
+        const targetSectionId = dropResult?.sectionId;
+        
+        if (targetSectionId) {
+          const sectionElement = findElementById(targetSectionId, elements);
+          const existingSection = sectionElement?.children
+            ?.map(childId => findElementById(childId, elements))
+            ?.find(el => el?.type === 'section' && el?.configuration === item.configuration);
 
-            if (!existingSection) {
-              // Create a new section with the proper configuration and styles
-              const newSectionId = addNewElement('section', 1, null, targetSectionId, {
-                type: 'section',
-                configuration: item.configuration,
-                styles: sectionConfig.styles?.section || {},
-                content: '',
-                label: sectionConfig.label || '',
-                settings: sectionConfig.settings || {},
-                children: [],
-                layout: sectionConfig.layout || ['left', 'right']
-              });
+          if (!existingSection) {
+            // Generate unique ID for the section
+            const newSectionId = generateUniqueId('section');
+            
+            // Create the new section with standardized configuration
+            const newSection = createElementConfig('section', {
+              type: 'section',
+              label: label || '',
+              description: description || '',
+              settings: {}
+            });
+            newSection.id = newSectionId;
 
-              // Create default containers for the section based on its layout
-              const layout = sectionConfig.layout || ['left', 'right'];
-              const containerUpdates = layout.map(part => ({
-                id: `${newSectionId}-${part}`,
-                type: 'div',
-                part: part,
-                layout: part,
-                styles: sectionConfig.styles?.[part] || {},
-                children: [],
-                parentId: newSectionId,
-                configuration: item.configuration
-              }));
+            // Create default containers
+            const containers = createContainerStructure(newSectionId, 'section', item.configuration);
+            newSection.children = containers.map(container => container.id);
 
-              // Add all containers in a single update
-              setElements(prev => {
-                const newElements = [...prev];
-                containerUpdates.forEach(container => {
-                  newElements.push(container);
-                });
-                // Update the section's children array
-                const sectionIndex = newElements.findIndex(el => el.id === newSectionId);
-                if (sectionIndex !== -1) {
-                  newElements[sectionIndex] = {
-                    ...newElements[sectionIndex],
-                    children: containerUpdates.map(container => container.id)
-                  };
-                }
-                return newElements;
-              });
+            // Add all elements in a single update
+            setElements(prev => {
+              const newElements = [...prev];
+              newElements.push(newSection, ...containers);
+              return newElements;
+            });
 
-              // Apply configuration styles
-              if (sectionConfig.styles) {
-                // Apply section styles
-                updateStyles(newSectionId, sectionConfig.styles.section || {});
+            // Apply styles to all containers
+            containers.forEach(container => {
+              updateStyles(container.id, container.styles);
+            });
 
-                // Apply container styles
-                containerUpdates.forEach(container => {
-                  if (sectionConfig.styles[container.part]) {
-                    updateStyles(container.id, sectionConfig.styles[container.part]);
-                  }
-                });
-
-                // Create and apply styles for content elements
-                sectionConfig.children?.forEach(child => {
-                  const containerType = child.type === 'button' ? 'buttons' : 
-                                      child.type === 'image' ? 'image' : 'content';
-                  const containerId = `${newSectionId}-${containerType}`;
-                  const newId = `${newSectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
-
-                  // Get the appropriate styles for this element type
-                  let elementStyles = {};
-                  if (child.type === 'button') {
-                    elementStyles = child.content === 'Primary Action' ? 
-                      sectionConfig.styles.primaryButton : 
-                      sectionConfig.styles.secondaryButton;
-                  } else if (child.type === 'image') {
-                    // Get both image container and image element styles
-                    elementStyles = {
-                      ...sectionConfig.styles.image,
-                      img: sectionConfig.styles.image?.img || {}
-                    };
-                  } else {
-                    elementStyles = sectionConfig.styles[child.type] || {};
-                  }
-
-                  // Create the element with its styles
-                  const newElement = {
-                    id: newId,
-                    type: child.type,
-                    content: child.content,
-                    styles: elementStyles,
-                    parentId: containerId,
-                    configuration: item.configuration
-                  };
-
-                  // Add the element
-                  setElements(prev => [...prev, newElement]);
-
-                  // Update container's children array
-                  setElements(prev => prev.map(el => 
-                    el.id === containerId
-                      ? { ...el, children: [...(el.children || []), newId] }
-                      : el
-                  ));
-
-                  // Apply the element's styles
-                  updateStyles(newId, elementStyles);
-                });
-              }
-            }
+            setSelectedElement({ id: newSectionId, type: 'section', configuration: item.configuration });
           }
         }
-        setSelectedElement({ id: item.id, type: 'section', configuration: item.configuration });
       }
     },
-  }), [configuration, isEditing, elements]);
+  }), [configuration, isEditing, elements, label, description]);
 
-  // Handle drop events within the section with improved error handling
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
+  // Handle drop events within the content section with improved error handling
+  const onDropItem = (item, index, dropInfo) => {
+    if (!item || !dropInfo?.isWithinBounds) return;
 
-    const parentElement = findElementById(parentId, elements);
-    if (!parentElement) return;
-
-    // Check if the item being dropped is a section
-    if (item.type === 'ContentSection') {
-      const sectionElement = findElementById(parentElement.parentId, elements);
-      const existingSection = sectionElement?.children
-        ?.map(childId => findElementById(childId, elements))
-        ?.find(el => el?.type === 'ContentSection' && el?.configuration === item.configuration);
-
-      if (existingSection) return;
+    // Get the current content section element
+    const currentSection = findElementById(id, elements);
+    if (!currentSection) {
+      console.warn('Content section not found');
+      return;
     }
 
-    // Create new element with proper configuration
-    const newElement = {
-      type: item.type,
-      content: item.content || '',
-      styles: mergeStyles(item.styles || {}, {}),
-      configuration: item.configuration,
-      settings: item.settings || {},
-      children: []
+    // Check if we're trying to add a content section inside another content section
+    if (item.type === 'contentSection') {
+      console.warn('Cannot add a content section inside another content section');
+      return;
+    }
+
+    // Check for duplicate elements
+    const existingElements = currentSection.children
+      ?.map(childId => findElementById(childId, elements))
+      .filter(Boolean);
+
+    // For specific elements, check for duplicates
+    if (item.type === 'heading' || item.type === 'paragraph' || item.type === 'image') {
+      const hasDuplicate = existingElements?.some(el => 
+        el.type === item.type && el.content === item.content
+      );
+      if (hasDuplicate) {
+        console.warn(`A ${item.type} with this content already exists in the content section`);
+        return;
+      }
+    }
+
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Create base styles based on element type
+    const baseStyles = {
+      heading: {
+        color: '#1A1A1A',
+        fontSize: '2rem',
+        fontWeight: 'bold',
+        marginBottom: '1rem',
+        lineHeight: '1.2'
+      },
+      paragraph: {
+        color: '#4A4A4A',
+        fontSize: '1.1rem',
+        lineHeight: '1.6',
+        marginBottom: '1.5rem'
+      },
+      image: {
+        width: '100%',
+        height: 'auto',
+        borderRadius: '12px',
+        objectFit: 'cover',
+      }
     };
 
-    // Add wrappers for specific configurations
-    if (item.configuration === 'defaultContentSection' || item.configuration === 'customContentSection') {
-      newElement.children = [
-          {
-            type: 'div',
-            styles: { display: 'flex', flexDirection: 'column', flex: 3, gap: '16px' },
-            children: []
-          },
-          {
-            type: 'div',
-            styles: { display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' },
-            children: []
-          }
-      ];
-    }
+    // Create the new element with proper configuration
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      id,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: {
+          ...baseStyles[item.type],
+          ...item.styles
+        },
+        children: item.children || []
+      }
+    );
 
-    const newId = addNewElement(item.type, 1, null, parentId, newElement);
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === id) {
+          // Create a new array for the children, maintaining existing ones
+          const updatedChildren = [...(el.children || [])];
+          
+          // Insert the new element ID at the specified index
+          updatedChildren.splice(index, 0, elementId);
 
-    // Update parent's children array
-    setElements(prev => prev.map(el => 
-        el.id === parentId
-        ? { ...el, children: [...new Set([...el.children, newId])] }
-          : el
-    ));
+          return {
+            ...el,
+            children: updatedChildren
+          };
+        }
+        return el;
+      });
 
-    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
+      return updatedElements;
+    });
+
+    // Select the new element
+    setSelectedElement({ 
+      id: elementId, 
+      type: item.type,
+      parentId: id,
+      index: index
+    });
   };
 
   // Find the current section and its children
   const sectionElement = findElementById(id, elements);
-  const configChildren = structureConfigurations[configuration]?.children || [];
-  const resolvedChildren = (sectionElement?.children || [])
-    .map(childId => findElementById(childId, elements))
-    .filter(Boolean);
-  const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
+  const containers = sectionElement?.children
+    ?.map(childId => findElementById(childId, elements))
+    .filter(Boolean) || [];
+
+  // Get the appropriate section component
+  const getSectionComponent = () => {
+    const props = {
+      uniqueId: id,
+      contentListWidth,
+      onDropItem,
+      handlePanelToggle,
+      handleOpenMediaPanel,
+      handleSelect: (e) => {
+        e.stopPropagation();
+        const element = findElementById(id, elements);
+        setSelectedElement(element || { id, type: 'section', styles: {} });
+      },
+      containers: containers
+    };
+
+    switch (configuration) {
+      case 'sectionOne':
+        return <SectionOne {...props} />;
+      case 'sectionTwo':
+        return <SectionTwo {...props} />;
+      case 'sectionThree':
+        return <SectionThree {...props} />;
+      case 'sectionFour':
+        return <SectionFour {...props} />;
+      default:
+        return null;
+    }
+  };
 
   // Toggle modal state
   const toggleModal = () => setModalOpen(prev => !prev);
@@ -269,27 +409,10 @@ const DraggableContentSections = ({
     };
   }, [isModalOpen]);
 
-  // Handle element selection
-  const handleSelect = (e) => {
-    e.stopPropagation();
-    setSelectedElement({ id, type: 'ContentSection', styles: sectionElement?.styles });
-  };
-
   // Render preview with description
   if (showDescription) {
     return (
-      <div 
-        className="bento-extract-display" 
-        ref={drag} 
-        style={{ 
-          opacity: isDragging ? 0.5 : 1,
-          cursor: 'pointer'
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
-        aria-label={`${label} preview`}
-      >
+      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
         <img
           src={imgSrc}
           alt={label}
@@ -299,38 +422,12 @@ const DraggableContentSections = ({
             marginBottom: '8px',
             borderRadius: '4px',
           }}
-          loading="lazy"
         />
         <strong className='element-name'>{label}</strong>
+        {description && <p className='element-description'>{description}</p>}
       </div>
     );
   }
-
-  // Get the appropriate section component
-  const getSectionComponent = () => {
-    const props = {
-      uniqueId: id,
-      contentListWidth,
-      children: childrenToRender,
-      onDropItem,
-      handlePanelToggle,
-      handleOpenMediaPanel,
-      handleSelect,
-    };
-
-    switch (configuration) {
-      case 'sectionOne':
-        return <SectionOne {...props} />;
-      case 'sectionTwo':
-        return <SectionTwo {...props} />;
-      case 'sectionThree':
-        return <SectionThree {...props} />;
-      case 'sectionFour':
-        return <SectionFour {...props} />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <>

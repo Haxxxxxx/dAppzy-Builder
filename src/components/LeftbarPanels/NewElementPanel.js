@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import FooterPanel from '../SectionsPanels/FooterPanel';
 import NavbarPanel from '../SectionsPanels/NavbarPanel';
 import DraggableElement from '../../Elements/DraggableElements/DraggableElement';
@@ -16,15 +16,15 @@ import MediaElements from './ElementsMapping/MediaElements';
 import ContentSectionsPanel from '../SectionsPanels/ContentSectionsPanel';
 
 const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelToggle, handleOpenMediaPanel }) => {
-  // Define default expanded state based on view mode.
-  const defaultExpanded =
-       {
+  // Define default expanded state based on view mode
+  const defaultExpanded = {
           Navbar: true,
           Hero: true,
-          cta: true,
+          CTA: true,
           Footer: true,
-          ContentSection: true,
+          'Content Sections': true,
           'Web3 Sections': true,
+          Footer: true,
           Structure: true,
           Basic: true,
           Typography: true,
@@ -34,9 +34,11 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelT
         };
 
   const [expandedSections, setExpandedSections] = useState(defaultExpanded);
+  
   useEffect(() => {
     console.log("Expanded sections:", expandedSections);
-  }, []);
+  }, [expandedSections]);
+
   const toggleSection = (sectionName) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -44,34 +46,60 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelT
     }));
   };
 
-  // Elements categories
+  // Elements categories with their respective configurations
   const elements = {
     Structure: StructureElements,
     Basic: BasicElements,
     'Web 3 Blocks': Web3Elements,
     Typography: TypographyElements,
     Media: MediaElements,
-    // Advanced: AdvancedElements,
     Forms: FormElements,
+  };
+
+  // Common props for all panels
+  const commonPanelProps = {
+    contentListWidth,
+    searchQuery,
+    handlePanelToggle,
+    handleOpenMediaPanel
   };
 
   // Layout-based panels if viewMode is 'layout'
   const layoutSections = [
-    { name: 'Navbar', component: <NavbarPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'Hero', component: <HeroPanel contentListWidth={contentListWidth} searchQuery={searchQuery} handlePanelToggle={handlePanelToggle} handleOpenMediaPanel={handleOpenMediaPanel} /> },
-    { name: 'cta', component: <CTAPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'ContentSection', component: <ContentSectionsPanel contentListWidth={contentListWidth} searchQuery={searchQuery}/>},
-    { name: 'Web3 Sections', component: <Web3SectionPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
-    { name: 'Footer', component: <FooterPanel contentListWidth={contentListWidth} searchQuery={searchQuery} /> },
+    { 
+      name: 'Navbar', 
+      component: <NavbarPanel {...commonPanelProps} />
+    },
+    { 
+      name: 'Hero', 
+      component: <HeroPanel {...commonPanelProps} />
+    },
+    { 
+      name: 'CTA', 
+      component: <CTAPanel {...commonPanelProps} />
+    },
+    { 
+      name: 'Content Sections', 
+      component: <ContentSectionsPanel {...commonPanelProps} />
+    },
+    { 
+      name: 'Web3 Sections', 
+      component: <Web3SectionPanel {...commonPanelProps} />
+    },
+    { 
+      name: 'Footer', 
+      component: <FooterPanel {...commonPanelProps} />
+    },
   ];
 
+  // Filter elements based on search query
   const filteredElements = Object.entries(elements)
     .map(([category, items]) => ({
       category,
       items: items.filter(
         (item) =>
           item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchQuery.toLowerCase())
+          (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
       ),
     }))
     .filter((section) => section.items.length > 0);
@@ -111,6 +139,10 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelT
                   label={item.label}
                   description={item.description}
                   icon={item.icon}
+                  configuration={item.configuration}
+                  styles={item.styles}
+                  content={item.content}
+                  children={item.children}
                 />
               ))}
             </div>

@@ -2,32 +2,43 @@ import React, { useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import '../../components/css/LeftBar.css';
 
-const DraggableElement = ({ type, label, level = null, description = '' }) => {
-  const [{ isDragging }, drag, preview] = useDrag(() => ({
-    type: 'ELEMENT',
-    item: { type, level },
+const DraggableElement = ({
+  type,
+  label,
+  description,
+  icon,
+  configuration,
+  styles,
+  content,
+  children
+}) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: type,
+    item: () => {
+      document.body.style.cursor = 'grabbing';
+      return {
+        type,
+        label,
+        configuration,
+        styles,
+        content,
+        children
+      };
+    },
+    end: () => {
+      document.body.style.cursor = 'default';
+    },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
-    }),
-  }));
+    })
+  }), [type, label, configuration, styles, content, children]);
 
-  // Disable default browser drag image
+  // Clean up cursor style when component unmounts
   useEffect(() => {
-    preview(null); // Disable default drag preview
-  }, [preview]);
-
-  // Force custom cursor globally
-  useEffect(() => {
-    if (isDragging) {
-      document.body.style.cursor = 'grab'; // Custom grab cursor
-    } else {
-      document.body.style.cursor = 'default'; // Reset cursor
-    }
-
     return () => {
-      document.body.style.cursor = 'default'; // Clean up on unmount
+      document.body.style.cursor = 'default';
     };
-  }, [isDragging]);
+  }, []);
 
   // Build the icon path based on the element type
   // e.g., type = 'paragraph' => "/icons/icon-paragraph.svg"
@@ -36,15 +47,15 @@ const DraggableElement = ({ type, label, level = null, description = '' }) => {
     <div className='bento-extract-display'>
       <div
         ref={drag}
-        className={`draggable-element ${isDragging ? 'dragging' : ''}`}
         style={{
-          cursor: isDragging ? 'grab' : 'grab', // Consistent cursor
+          cursor: 'grab',
           opacity: isDragging ? 0.5 : 1,
           padding: '8px',
-          margin: '8px 0',
+          margin: '4px',
           borderRadius: '4px',
-          color: '#686868',
-          position:'relative',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
         }}
       >
         {/* Icon display */}

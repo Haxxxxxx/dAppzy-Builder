@@ -32,7 +32,7 @@ const DraggableHero = ({
   imgSrc,
   label,
 }) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
 
@@ -77,71 +77,119 @@ const DraggableHero = ({
     },
   }), [configuration, isEditing, elements]);
 
-  // Handle dropping items inside this hero with improved error handling
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
+  // Handle drop events within the hero section with improved error handling
+  const onDropItem = (item, index, dropInfo) => {
+    if (!item || !dropInfo?.isWithinBounds) return;
 
-    const parentElement = findElementById(parentId, elements);
-    if (!parentElement) return;
+    // Get the current hero section element
+    const currentSection = findElementById(id, elements);
+    if (!currentSection) {
+      console.warn('Hero section not found');
+      return;
+    }
 
-    // Check if the item being dropped is a hero
-    if (item.type === 'hero') {
-      // Check if a hero with this configuration already exists in the parent section
-      const sectionElement = findElementById(parentElement.parentId, elements);
-      const existingHero = sectionElement?.children
-        ?.map(childId => findElementById(childId, elements))
-        ?.find(el => el?.type === 'hero' && el?.configuration === item.configuration);
+    // Check if we're trying to add a hero section inside another hero section
+    if (item.type === 'heroSection') {
+      console.warn('Cannot add a hero section inside another hero section');
+      return;
+    }
 
-      if (existingHero) {
-        // If a hero with this configuration exists, don't create a new one
+    // Check for duplicate elements
+    const existingElements = currentSection.children
+      ?.map(childId => findElementById(childId, elements))
+      .filter(Boolean);
+
+    // For specific elements, check for duplicates
+    if (item.type === 'heading' || item.type === 'subheading' || item.type === 'button') {
+      const hasDuplicate = existingElements?.some(el => 
+        el.type === item.type && el.content === item.content
+      );
+      if (hasDuplicate) {
+        console.warn(`A ${item.type} with this content already exists in the hero section`);
         return;
       }
     }
 
-    // Special handling for heros with wrappers (example: content/image split)
-    let newElement = {
-      type: item.type,
-      content: item.content || '',
-      styles: item.styles || {},
-      configuration: item.configuration,
-      settings: item.settings || {}
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Create base styles based on element type
+    const baseStyles = {
+      heading: {
+        color: '#1A1A1A',
+        fontSize: '3.5rem',
+        fontWeight: 'bold',
+        marginBottom: '1.5rem',
+        lineHeight: '1.2'
+      },
+      subheading: {
+        color: '#4A4A4A',
+        fontSize: '1.5rem',
+        lineHeight: '1.6',
+        marginBottom: '2rem'
+      },
+      button: {
+        backgroundColor: '#4F46E5',
+        color: 'white',
+        padding: '1rem 2rem',
+        borderRadius: '8px',
+        fontSize: '1.1rem',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: '#4338CA'
+        }
+      }
     };
 
-    // If the configuration requires wrappers, add them (example: main and side)
-    if (item.configuration === 'defaultHero' || item.configuration === 'customHero') {
-      newElement = {
-        ...newElement,
-        children: [
-          {
-            type: 'div',
-            styles: { display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, gap: '16px' },
-            children: []
-          },
-          {
-            type: 'div',
-            styles: { display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 },
-            children: []
-          }
-        ]
-      };
-    }
-
-    const newId = addNewElement(item.type, 1, null, parentId, newElement);
-
-    // Update the parent element's children with unique values
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId
-          ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-          : el
-      )
+    // Create the new element with proper configuration
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      id,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: {
+          ...baseStyles[item.type],
+          ...item.styles
+        },
+        configuration: item.configuration || {},
+        children: item.children || []
+      }
     );
 
-    // Select the newly created element
-    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === id) {
+          // Create a new array for the children, maintaining existing ones
+          const updatedChildren = [...(el.children || [])];
+          
+          // Insert the new element ID at the specified index
+          updatedChildren.splice(index, 0, elementId);
+
+          return {
+            ...el,
+            children: updatedChildren
+          };
+        }
+        return el;
+      });
+
+      return updatedElements;
+    });
+
+    // Select the new element
+    setSelectedElement({ 
+      id: elementId, 
+      type: item.type,
+      parentId: id,
+      index: index
+    });
   };
 
   // Find the current hero and its children with improved error handling

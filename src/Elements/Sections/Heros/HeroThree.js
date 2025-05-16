@@ -140,6 +140,7 @@ const HeroThree = forwardRef(({
   }, [heroElement, elements, findElementById, uniqueId, updateStyles, setElements]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
+    // Simple drop handler that just adds the element
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
@@ -152,11 +153,7 @@ const HeroThree = forwardRef(({
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
     const element = findElementById(divId, elements);
-    if (element) {
-      setSelectedElement(element);
-    } else {
-      setSelectedElement({ id: divId, type: 'div', styles: {} });
-    }
+    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
   const {
@@ -176,14 +173,14 @@ const HeroThree = forwardRef(({
       const child = findElementById(childId, elements);
       if (!child) return null;
       return renderElement(
-            child,
-            elements,
-            null,
-            setSelectedElement,
-            setElements,
-            null,
-            undefined,
-            handleOpenMediaPanel
+        child,
+        elements,
+        null,
+        setSelectedElement,
+        setElements,
+        null,
+        undefined,
+        handleOpenMediaPanel
       );
     });
   };

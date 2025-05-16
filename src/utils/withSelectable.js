@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
+import React, { useContext, forwardRef } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 const withSelectable = (WrappedComponent) => {
-  return (props) => {
-    const { id } = props;
+  const WithSelectable = forwardRef((props, ref) => {
+    const { id, type } = props;
     const {
       selectedElement,
       setSelectedElement,
@@ -14,8 +14,7 @@ const withSelectable = (WrappedComponent) => {
 
     const handleSelect = (e) => {
       e.stopPropagation();
-      // When selected, we set the selected element.
-      setSelectedElement({ id, type: props.type });
+      setSelectedElement({ id, type });
     };
 
     const handleRemove = (e) => {
@@ -25,11 +24,18 @@ const withSelectable = (WrappedComponent) => {
 
     // When selected, force a blue outline border.
     const forcedSelectedStyle = isSelected
-      ? { outline: '2px solid var(----purple, #5C4EFA)', borderInline:'0.5px solid var(----purple, #5C4EFA)'}
+      ? { outline: '2px solid var(--purple, #5C4EFA)', borderInline: '0.5px solid var(--purple, #5C4EFA)' }
       : {};
 
     return (
-      <>
+      <div
+        onClick={handleSelect}
+        style={{
+          position: 'relative',
+          ...forcedSelectedStyle,
+          boxSizing: 'border-box',
+        }}
+      >
         {isSelected && (
           <div
             style={{
@@ -77,19 +83,14 @@ const withSelectable = (WrappedComponent) => {
             </span>
           </div>
         )}
-        <div
-          onClick={handleSelect}
-          style={{
-            position: 'relative',
-            ...forcedSelectedStyle,
-            boxSizing: 'border-box',
-          }}
-        >
-          <WrappedComponent {...props} />
-        </div>
-      </>
+        <WrappedComponent {...props} ref={ref} />
+      </div>
     );
-  };
+  });
+
+  WithSelectable.displayName = `WithSelectable(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return WithSelectable;
 };
 
 export default withSelectable;

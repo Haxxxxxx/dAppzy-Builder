@@ -72,7 +72,6 @@ const ContentList = forwardRef(
 
       // Handle flex config drop
       if (item.isFlexConfig && item.flexConfig) {
-        // Use the parentId if provided (for nested drops)
         createFlexElement(item.flexConfig, addNewElement, item.parentId || null);
         return;
       }
@@ -99,7 +98,7 @@ const ContentList = forwardRef(
           // Handle all section types with their full configuration
           console.log('Adding section with data:', item);
           
-          // Ensure children have unique IDs
+          // For all section types, process children normally
           const processedChildren = item.children?.map(child => ({
             ...child,
             id: generateUniqueId(child.type || 'element')
@@ -115,7 +114,26 @@ const ContentList = forwardRef(
             children: processedChildren
           });
         } else {
-          newId = addNewElement(item.type, 1, index);
+          // For individual elements, check if we're dropping onto a layout element
+          const targetElement = elements[index];
+          if (targetElement && (
+            targetElement.type === 'navbar' ||
+            targetElement.type === 'hero' ||
+            targetElement.type === 'cta' ||
+            targetElement.type === 'section' ||
+            targetElement.type === 'footer' ||
+            targetElement.type === 'defiSection'
+          )) {
+            // Add the element as a child of the layout element
+            newId = addNewElement(item.type, 1, null, targetElement.id, {
+              type: item.type,
+              content: item.content || '',
+              styles: item.styles || {}
+            });
+          } else {
+            // Add as a regular element
+            newId = addNewElement(item.type, 1, index);
+          }
         }
         setSelectedElement({ id: newId, type: item.type, structure: item.structure });
       }

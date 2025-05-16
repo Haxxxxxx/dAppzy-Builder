@@ -49,8 +49,14 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
 
   // Helper function to determine if element is a DeFi element
   const isDeFiElement = (element) => {
-    const defiElements = ['defiSection', 'defiModule', 'mintingSection', 'defiNavbar', 'defiFooter'];
+    const defiElements = ['defiSection', 'defiModule', 'mintingSection'];
     return defiElements.includes(element.type?.toLowerCase());
+  };
+
+  // Helper function to determine if element is a layout element
+  const isLayoutElement = (element) => {
+    const layoutElements = ['navbar', 'hero', 'cta', 'section', 'footer', 'defiSection', 'mintingSection'];
+    return layoutElements.includes(element.type?.toLowerCase());
   };
 
   const isTextualElement = (element) => {
@@ -81,7 +87,7 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
       // Layout & Structure Elements
       layout: [
         'div', 'section', 'container', 'gridlayout', 'hflexlayout', 'vflexlayout',
-        'navbar', 'footer', 'hero', 'cta', 'contentsections', 'defiNavbar', 'defiFooter',
+        'navbar', 'footer', 'hero', 'cta', 'contentsections', 'defiSection', 'mintingSection',
       ],
       // Form Elements
       form: [
@@ -97,7 +103,7 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
       ],
       // Web3 Elements
       web3: [
-        'defisection', 'defimodule', 'mintingsection'
+        'defiSection', 'defiModule', 'mintingSection'
       ],
       // Media Containers
       media: [
@@ -128,10 +134,48 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
     // Handle DeFi elements first
     if (isDeFiElement(selectedElement)) {
       if (selectedElement.type === 'defiSection') {
-        return <DeFiSectionSettings selectedElement={selectedElement} />;
+        return (
+          <>
+            <CollapsibleSection title="Layout Settings">
+              <DisplayEditor />
+              <SpacingEditor />
+            </CollapsibleSection>
+            <DeFiSectionSettings selectedElement={selectedElement} />
+          </>
+        );
       } else if (selectedElement.type === 'defiModule') {
         return <DeFiModuleSettings selectedElement={selectedElement} />;
+      } else if (selectedElement.type === 'mintingSection') {
+        return (
+          <>
+            <CollapsibleSection title="Layout Settings">
+              <DisplayEditor />
+              <SpacingEditor />
+            </CollapsibleSection>
+            <DeFiSectionSettings selectedElement={selectedElement} />
+          </>
+        );
       }
+    }
+
+    // Handle layout elements
+    if (isLayoutElement(selectedElement)) {
+      return (
+        <>
+          <CollapsibleSection title="Layout Settings">
+            <DisplayEditor />
+            <SpacingEditor />
+          </CollapsibleSection>
+          <CollapsibleSection title="Content Settings">
+            {selectedElement.children?.map((childId, index) => (
+              <div key={childId} className="child-element-settings">
+                <h4>Element {index + 1}</h4>
+                <TextualSettings elementId={childId} />
+              </div>
+            ))}
+          </CollapsibleSection>
+        </>
+      );
     }
 
     // Always show TextualSettings for textual elements

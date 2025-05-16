@@ -107,6 +107,7 @@ const HeroTwo = forwardRef(({
   }, [heroElement, elements, findElementById, uniqueId, updateStyles, setElements]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
+    // Simple drop handler that just adds the element
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
@@ -119,11 +120,7 @@ const HeroTwo = forwardRef(({
   const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
     const element = findElementById(divId, elements);
-    if (element) {
-      setSelectedElement(element);
-    } else {
-      setSelectedElement({ id: divId, type: 'div', styles: {} });
-    }
+    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
   const {

@@ -20,7 +20,7 @@ const RPC_ENDPOINTS = Web3Configs.rpc.getEndpoints();
 
 // Add devnet configuration for transactions
 const DEVNET_CONFIG = {
-  endpoint: 'https://api.devnet.solana.com',
+  endpoint: Web3Configs.rpc.public.endpoint,
   commitment: 'confirmed',
   wsEndpoint: 'wss://api.devnet.solana.com',
   confirmTransactionInitialTimeout: 60000
@@ -28,10 +28,55 @@ const DEVNET_CONFIG = {
 
 // Add mainnet configuration for domain operations
 const MAINNET_CONFIG = {
-  endpoint: RPC_ENDPOINTS[0] || 'https://api.mainnet-beta.solana.com',
-  commitment: 'confirmed',
+  endpoint: Web3Configs.rpc.helius.getUrl() || RPC_ENDPOINTS[0],
+  commitment: Web3Configs.rpc.helius.snsConfig.commitment,
   wsEndpoint: Web3Configs.rpc.helius.snsConfig.wsEndpoint(),
-  confirmTransactionInitialTimeout: 30000
+  confirmTransactionInitialTimeout: Web3Configs.rpc.helius.snsConfig.confirmTransactionInitialTimeout
+};
+
+// Add fallback RPC endpoints with Helius priority
+const FALLBACK_ENDPOINTS = {
+  devnet: [
+    Web3Configs.rpc.public.endpoint,
+    'https://api.devnet.solana.com',
+    'https://devnet.solana.com'
+  ].filter(Boolean), // Remove any undefined endpoints
+  mainnet: [
+    Web3Configs.rpc.helius.getUrl(),
+    RPC_ENDPOINTS[0],
+    'https://api.mainnet-beta.solana.com'
+  ].filter(Boolean) // Remove any undefined endpoints
+};
+
+// Add connection retry configuration
+const CONNECTION_RETRY_CONFIG = {
+  maxRetries: Web3Configs.sns.settings.maxRetries,
+  retryDelay: Web3Configs.sns.settings.retryDelay,
+  timeout: Web3Configs.sns.settings.timeout
+};
+
+// Add Helius-specific error handling
+const HELIUS_ERROR_CODES = {
+  RATE_LIMIT: 429,
+  INVALID_API_KEY: 401,
+  FORBIDDEN: 403
+};
+
+// Function to handle Helius-specific errors
+const handleHeliusError = (error) => {
+  if (!Web3Configs.rpc.helius.apiKey) {
+    return new Error('Helius API key is not configured. Please add your API key to the environment variables.');
+  }
+  if (error?.response?.status === HELIUS_ERROR_CODES.RATE_LIMIT) {
+    return new Error('Helius rate limit exceeded. Please try again in a few moments.');
+  }
+  if (error?.response?.status === HELIUS_ERROR_CODES.INVALID_API_KEY) {
+    return new Error('Invalid Helius API key. Please check your configuration.');
+  }
+  if (error?.response?.status === HELIUS_ERROR_CODES.FORBIDDEN) {
+    return new Error('Access forbidden. Please check your Helius API key and permissions.');
+  }
+  return error;
 };
 
 // SNS API endpoints and configuration
@@ -490,28 +535,47 @@ const SnsDomainSelector = ({
       try {
         setConnectionStatus(CONNECTION_STATUS.CONNECTING);
 
-        // Initialize mainnet connection for domain operations
-        const mainnetConn = new Connection(MAINNET_CONFIG.endpoint, {
-          commitment: MAINNET_CONFIG.commitment,
-          confirmTransactionInitialTimeout: MAINNET_CONFIG.confirmTransactionInitialTimeout,
-          wsEndpoint: MAINNET_CONFIG.wsEndpoint
-        });
+        // Function to try multiple endpoints
+        const tryEndpoints = async (endpoints, isDevnet = false) => {
+          let lastError = null;
+          
+          for (const endpoint of endpoints) {
+            try {
+              const conn = new Connection(endpoint, {
+                commitment: isDevnet ? DEVNET_CONFIG.commitment : MAINNET_CONFIG.commitment,
+                confirmTransactionInitialTimeout: isDevnet ? 
+                  DEVNET_CONFIG.confirmTransactionInitialTimeout : 
+                  MAINNET_CONFIG.confirmTransactionInitialTimeout,
+                wsEndpoint: isDevnet ? DEVNET_CONFIG.wsEndpoint : MAINNET_CONFIG.wsEndpoint
+              });
 
-        // Initialize devnet connection for transactions
-        const devnetConn = new Connection(DEVNET_CONFIG.endpoint, {
-          commitment: DEVNET_CONFIG.commitment,
-          confirmTransactionInitialTimeout: DEVNET_CONFIG.confirmTransactionInitialTimeout,
-          wsEndpoint: DEVNET_CONFIG.wsEndpoint
-        });
+              // Test connection with timeout
+              const versionPromise = conn.getVersion();
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Connection timeout')), CONNECTION_RETRY_CONFIG.timeout)
+              );
 
-        // Test both connections
-        await Promise.all([
-          mainnetConn.getVersion(),
-          devnetConn.getVersion()
-        ]);
+              await Promise.race([versionPromise, timeoutPromise]);
+              return conn;
+            } catch (error) {
+              console.warn(`Failed to connect to ${endpoint}:`, error);
+              lastError = handleHeliusError(error);
+              continue;
+            }
+          }
+          throw lastError || new Error('All endpoints failed');
+        };
 
+        // Try mainnet endpoints
+        const mainnetEndpoints = [MAINNET_CONFIG.endpoint, ...FALLBACK_ENDPOINTS.mainnet];
+        const mainnetConn = await tryEndpoints(mainnetEndpoints, false);
         setMainnetConnection(mainnetConn);
+
+        // Try devnet endpoints
+        const devnetEndpoints = [DEVNET_CONFIG.endpoint, ...FALLBACK_ENDPOINTS.devnet];
+        const devnetConn = await tryEndpoints(devnetEndpoints, true);
         setDevnetConnection(devnetConn);
+
         setConnectionStatus(CONNECTION_STATUS.CONNECTED);
         setStatus('Connected to Solana networks. Scanning for domains...');
         setConnectionError(null);
@@ -522,11 +586,20 @@ const SnsDomainSelector = ({
         setLastError(error);
         setConnectionStatus(CONNECTION_STATUS.ERROR);
         setStatus('Error: Unable to connect to Solana networks. Please try again.');
+        
+        // Implement retry logic
+        if (retryCount < CONNECTION_RETRY_CONFIG.maxRetries) {
+          setConnectionStatus(CONNECTION_STATUS.RETRYING);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            initializeConnections();
+          }, CONNECTION_RETRY_CONFIG.retryDelay);
+        }
       }
     };
 
     initializeConnections();
-  }, []);
+  }, [retryCount]); // Add retryCount as dependency
 
   // Fetch domains using mainnet connection
   useEffect(() => {

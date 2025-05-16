@@ -1,10 +1,89 @@
-import React, { useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useRef, forwardRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import { useWalletContext } from '../../context/WalletContext';
 import DeFiSection from '../Sections/Web3Related/DeFiSection';
 import { Web3Configs } from '../../configs/Web3/Web3Configs';
+import { defaultDeFiStyles } from '../Sections/Web3Related/defaultDeFiStyles';
 import '../../components/css/LeftBar.css';
+import { merge } from 'lodash';
+
+// Default modules with specific functionality
+const defaultModules = [
+  {
+    id: 'defiModule1',
+    type: 'defiModule',
+    moduleType: 'aggregator',
+    content: {
+      title: 'DeFi Aggregator',
+      description: 'Access multiple DeFi protocols through a single interface',
+      stats: [
+        { label: 'Connected Wallet', value: 'Not Connected' },
+        { label: 'Total Pools', value: 'Loading...' },
+        { label: 'Total Value Locked', value: '$0' },
+        { label: 'Best APY', value: 'Not Connected' }
+      ],
+      settings: {
+        showStats: true,
+        showButton: true,
+        customColor: '#2A2A3C'
+      },
+      functionality: {
+        type: 'aggregator',
+        actions: []
+      },
+      enabled: true
+    }
+  },
+  {
+    id: 'defiModule2',
+    type: 'defiModule',
+    moduleType: 'simulation',
+    content: {
+      title: 'Investment Simulator',
+      description: 'Simulate different investment strategies',
+      stats: [
+        { label: 'Investment Range', value: '$10,000' },
+        { label: 'Supported Assets', value: '20+' },
+        { label: 'Historical Data', value: '5 Years' }
+      ],
+      settings: {
+        showStats: true,
+        showButton: true,
+        customColor: '#2A2A3C'
+      },
+      functionality: {
+        type: 'simulation',
+        actions: []
+      },
+      enabled: true
+    }
+  },
+  {
+    id: 'defiModule3',
+    type: 'defiModule',
+    moduleType: 'bridge',
+    content: {
+      title: 'Cross-Chain Bridge',
+      description: 'Transfer assets between different blockchains',
+      stats: [
+        { label: 'Supported Chains', value: 'Select Chain' },
+        { label: 'Transfer Time', value: 'Select Chain' },
+        { label: 'Security Score', value: '0.1%' }
+      ],
+      settings: {
+        showStats: true,
+        showButton: true,
+        customColor: '#2A2A3C'
+      },
+      functionality: {
+        type: 'bridge',
+        actions: []
+      },
+      enabled: true
+    }
+  }
+];
 
 /**
  * DraggableDeFi component for rendering and managing DeFi sections.
@@ -21,8 +100,9 @@ import '../../components/css/LeftBar.css';
  * @param {string} props.imgSrc - Image source for the DeFi section preview
  * @param {string} props.label - Label for the DeFi section
  * @param {string} props.description - Description of the DeFi section
+ * @param {Object} props.structure - Structure of the DeFi section
  */
-const DraggableDeFi = ({
+const DraggableDeFi = forwardRef(({
   id,
   configuration,
   isEditing,
@@ -32,211 +112,322 @@ const DraggableDeFi = ({
   handleOpenMediaPanel,
   imgSrc,
   label,
-  description
-}) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+}, ref) => {
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId, updateStyles } = useContext(EditableContext);
   const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
+  const defaultInjectedRef = useRef(false);
 
-  // Setup drag behavior with improved configuration handling
+  // Generate a unique ID if none is provided
+  const sectionId = id || `defi-section-${Date.now()}`;
+
+  // Helper functions
+  const generateElementIds = (type, count) => {
+    return Array(count).fill(null).map(() => generateUniqueId(type));
+  };
+
+  const createContainerStructure = (parentId, type) => {
+    const contentContainerId = `${parentId}-content`;
+    return {
+      id: contentContainerId,
+      type: 'div',
+      styles: defaultDeFiStyles[type].content,
+      children: [],
+      parentId: parentId
+    };
+  };
+
+  const createElementConfig = (type, config) => {
+    return {
+      type,
+      configuration: config.type,
+      structure: config.structure,
+      styles: defaultDeFiStyles[type],
+      settings: config.settings || {},
+      children: []
+    };
+  };
+
+  const applyStyles = (element, type) => {
+    return {
+      ...defaultDeFiStyles[type],
+      ...element.styles,
+      position: 'relative',
+      boxSizing: 'border-box'
+    };
+  };
+
+  // Initialize the DeFi structure with content container
+  useEffect(() => {
+    if (!sectionId || defaultInjectedRef.current) return;
+
+    // First, ensure the DeFi section has the default styles
+    const mergedDeFiStyles = merge({}, defaultDeFiStyles.defiSection, findElementById(sectionId, elements)?.styles);
+    updateStyles(sectionId, mergedDeFiStyles);
+
+    const contentContainerId = `${sectionId}-content`;
+
+    // Create content container if it doesn't exist
+    if (!findElementById(contentContainerId, elements)) {
+      const contentContainer = {
+        id: contentContainerId,
+        type: 'div',
+        styles: defaultDeFiStyles.defiContent,
+        children: [],
+        parentId: sectionId,
+      };
+      setElements(prev => [...prev, contentContainer]);
+
+      // Add default modules to content container
+      const moduleIds = defaultModules.map(module => {
+        const newId = addNewElement('defiModule', 1, null, contentContainerId);
+        // Update the module with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
+            return {
+              ...el,
+              moduleType: module.moduleType,
+              content: module.content,
+              styles: merge(defaultDeFiStyles.defiModule, module.styles || {}),
+              configuration: {
+                enabled: true,
+                ...module.content.functionality
+              },
+              settings: {
+                ...module.content.settings,
+                enabled: true
+              }
+            };
+          }
+          return el;
+        }));
+        return newId;
+      });
+
+      // Update content container with all module IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === contentContainerId) {
+          return {
+            ...el,
+            children: moduleIds
+          };
+        }
+        return el;
+      }));
+    }
+
+    // Update DeFi section's children to only include the content container
+    setElements(prev => prev.map(el => {
+      if (el.id === sectionId) {
+        return {
+          ...el,
+          children: [contentContainerId],
+          configuration: configuration
+        };
+      }
+      return el;
+    }));
+
+    defaultInjectedRef.current = true;
+  }, [sectionId, elements, findElementById, setElements, addNewElement, updateStyles, configuration]);
+
+  // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { 
-      id, 
+      id: sectionId, 
       type: 'defiSection', 
       configuration,
-      structure: configuration 
+      structure: Web3Configs[configuration]
     },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        // Check if a DeFi section with this configuration already exists in the current section
-        const dropResult = monitor.getDropResult();
-        const targetSectionId = dropResult?.sectionId;
-        
-        if (targetSectionId) {
-          const sectionElement = findElementById(targetSectionId, elements);
-          const existingDeFi = sectionElement?.children
-            ?.map(childId => findElementById(childId, elements))
-            ?.find(el => el?.type === 'defiSection' && el?.configuration === item.configuration);
+        const defiConfig = Web3Configs[item.configuration];
+        if (defiConfig) {
+          const dropResult = monitor.getDropResult();
+          const targetSectionId = dropResult?.sectionId;
+          
+          if (targetSectionId) {
+            const sectionElement = findElementById(targetSectionId, elements);
+            const existingDeFi = sectionElement?.children
+              ?.map(childId => findElementById(childId, elements))
+              ?.find(el => el?.type === 'defiSection' && el?.configuration === item.configuration);
 
-          if (!existingDeFi) {
-            // Create a unique ID for the new DeFi section
-            const newId = `defiSection-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-            
-            // Get the current number of elements to determine the index
-            const currentElements = elements.filter(el => !el.parentId);
-            const index = currentElements.length;
-            
-            // Add the main DeFi section element at the end
-            addNewElement('defiSection', 1, index, targetSectionId, {
-              ...Web3Configs.defiSection,
-              configuration: item.configuration,
-              structure: item.configuration,
-              settings: {
-                requireSignature: true,
-                simulateConnected: false,
-                simulateSigned: false,
-                isSigned: false
-              }
-            }, newId);
-
-            // Initialize default module content with wallet integration
-            const defaultModuleContent = {
-              aggregator: {
-                title: 'DeFi Aggregator',
-                description: 'Access multiple DeFi protocols through a single interface',
-                stats: [
-                  { label: 'Connected Wallet', value: contextConnected ? `${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}` : 'Not Connected' },
-                  { label: 'Total Pools', value: 'Loading...' },
-                  { label: 'Total Value Locked', value: '$0' },
-                  { label: 'Best APY', value: contextConnected ? 'Loading...' : 'Not Connected' }
-                ],
-                settings: {
-                  showStats: true,
-                  showButton: true,
-                  customColor: '#2A2A3C',
-                  requireWallet: true
-                }
-              },
-              simulation: {
-                title: 'Investment Simulator',
-                description: 'Simulate different investment strategies',
-                stats: [
-                  { label: 'Investment Range', value: '$10,000' },
-                  { label: 'Supported Assets', value: '20+' },
-                  { label: 'Historical Data', value: '5 Years' }
-                ],
-                settings: {
-                  showStats: true,
-                  showButton: true,
-                  customColor: '#2A2A3C',
-                  requireWallet: false
-                }
-              },
-              bridge: {
-                title: 'Cross-Chain Bridge',
-                description: 'Transfer assets between different blockchains',
-                stats: [
-                  { label: 'Supported Chains', value: 'Select Chain' },
-                  { label: 'Transfer Time', value: 'Select Chain' },
-                  { label: 'Security Score', value: '0.1%' }
-                ],
-                settings: {
-                  showStats: true,
-                  showButton: true,
-                  customColor: '#2A2A3C',
-                  requireWallet: true
-                }
-              }
-            };
-
-            // Add all child elements from the configuration with proper content initialization
-            Web3Configs.defiSection.children.forEach((child, index) => {
-              const childId = `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-              const moduleType = index === 0 ? 'aggregator' : index === 1 ? 'simulation' : 'bridge';
-              const moduleContent = defaultModuleContent[moduleType];
+            if (!existingDeFi) {
+              // Generate unique IDs for the section and its modules
+              const newSectionId = generateUniqueId('defiSection');
+              const moduleIds = generateElementIds('defiModule', defaultModules.length);
               
-              const childElement = {
-                ...child,
-                id: childId,
-                content: moduleContent,
-                styles: {
-                  backgroundColor: '#2A2A3C',
-                  padding: '1.5rem',
-                  borderRadius: '12px',
-                  color: '#fff'
+              // Create the content container first
+              const contentContainer = createContainerStructure(newSectionId, 'defiSection');
+
+              // Create the new DeFi section with standardized configuration
+              const newDeFiSection = createElementConfig('defiSection', {
+                type: 'defiSection',
+                structure: defiConfig,
+                settings: {
+                  simulateConnected: false,
+                  requireSignature: true,
+                  simulateSigned: false
+                }
+              });
+              newDeFiSection.id = newSectionId;
+              newDeFiSection.children = [contentContainer.id];
+
+              // Create default modules with standardized structure
+              const modules = defaultModules.map((module, index) => ({
+                id: moduleIds[index],
+                type: 'defiModule',
+                moduleType: module.moduleType,
+                content: {
+                  title: module.content.title,
+                  description: module.content.description,
+                  stats: module.content.stats,
+                  settings: {
+                    showStats: true,
+                    showButton: true,
+                    customColor: '#2A2A3C',
+                    ...module.content.settings
+                  }
                 },
+                styles: applyStyles(module, 'defiModule'),
                 configuration: {
-                  moduleType,
                   enabled: true,
-                  customColor: '#2A2A3C',
-                  requireWallet: moduleContent.settings.requireWallet
+                  ...module.content.functionality
+                },
+                settings: {
+                  ...module.content.settings,
+                  enabled: true
                 }
-              };
-              
-              addNewElement(
-                child.type,
-                1,
-                childElement,
-                newId,
-                childElement.configuration,
-                childId
-              );
-            });
+              }));
+
+              // Add all elements in a single update
+              setElements(prev => {
+                const newElements = [...prev];
+                newElements.push(newDeFiSection, contentContainer, ...modules);
+                return newElements;
+              });
+
+              setSelectedElement({ id: newSectionId, type: 'defiSection', configuration: item.configuration });
+            }
           }
         }
-        setSelectedElement({ id: item.id, type: 'defiSection', configuration: item.configuration });
       }
     },
-  }), [configuration, isEditing, elements, contextConnected, walletAddress]);
+  }), [configuration, isEditing, elements, sectionId]);
 
-  // Handle drop events within the DeFi section with improved error handling
-  const onDropItem = useCallback((item, parentId) => {
-    if (!item || !parentId) return;
+  // Handle drop events within the DeFi section
+  const onDropItem = (item, index, dropInfo) => {
+    if (!item || !dropInfo?.isWithinBounds) return;
 
-    const parentElement = findElementById(parentId, elements);
-    if (!parentElement) return;
-
-    // Check if the item being dropped is a DeFi section
-    if (item.type === 'defiSection') {
-      // Check if a DeFi section with this configuration already exists in the parent section
-      const sectionElement = findElementById(parentElement.parentId, elements);
-      const existingDeFi = sectionElement?.children
-        ?.map(childId => findElementById(childId, elements))
-        ?.find(el => el?.type === 'defiSection' && el?.configuration === item.configuration);
-
-      if (existingDeFi) {
-        // If a DeFi section with this configuration exists, don't create a new one
-        return;
-      }
+    // Get the current DeFi section element
+    const currentSection = findElementById(sectionId, elements);
+    if (!currentSection) {
+      console.warn('DeFi section not found');
+      return;
     }
 
-    // Create a new element with the same type and configuration as the dropped item
-    const newId = addNewElement(item.type, 1, null, parentId, {
-      content: item.content || '',
-      styles: item.styles || {},
-      configuration: item.configuration,
-      settings: item.settings || {}
-    });
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
 
-    // Update the parent element's children with unique values
-    setElements((prevElements) =>
-      prevElements.map((el) =>
-        el.id === parentId
-          ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-          : el
-      )
+    // Create the new element with proper configuration
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      sectionId,
+      {
+        id: newId,
+        type: item.type,
+        content: item.content || '',
+        styles: item.styles || {},
+        configuration: item.configuration || {},
+        settings: item.settings || {},
+        children: item.children || []
+      }
     );
 
-    // Select the newly created element
-    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
-  }, [addNewElement, findElementById, elements, setElements, setSelectedElement]);
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === sectionId) {
+          const updatedChildren = [...(el.children || [])];
+          updatedChildren.splice(index, 0, elementId);
+          return {
+            ...el,
+            children: updatedChildren
+          };
+        }
+        return el;
+      });
+      return updatedElements;
+    });
 
-  // Find the current DeFi section and its children with improved error handling
-  const defi = useMemo(() => findElementById(id, elements), [id, elements, findElementById]);
-  const configChildren = useMemo(() => Web3Configs.defiSection?.children || [], []);
+    // Select the new element
+    setSelectedElement({ 
+      id: elementId, 
+      type: item.type,
+      parentId: sectionId,
+      index: index
+    });
+  };
 
-  // Handle modal interactions
-  const handleModalToggle = useCallback(() => {
-    setModalOpen(prev => !prev);
-  }, []);
+  // Find the current DeFi section and its children
+  const defiElement = findElementById(sectionId, elements);
+  const contentContainer = defiElement?.children?.[0] ? findElementById(defiElement.children[0], elements) : null;
+  const resolvedChildren = contentContainer?.children
+    ?.map((childId) => findElementById(childId, elements))
+    .filter(Boolean) || [];
 
-  // Handle section selection
-  const handleSelect = useCallback((e) => {
-    e.stopPropagation();
-    setSelectedElement({ id, type: 'defiSection', configuration });
-  }, [id, configuration, setSelectedElement]);
+  // Toggle the modal state
+  const toggleModal = () => setModalOpen((prev) => !prev);
 
+  // Close modal if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModalOpen]);
+
+  // Handle element selection
+  const handleSelect = (id, e) => {
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    setSelectedElement({ id, type: 'defiModule', styles: findElementById(id, elements)?.styles });
+  };
+
+  // Handle preview display with description
   if (showDescription) {
     return (
-      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
+      <div 
+        className="bento-extract-display" 
+        ref={drag} 
+        style={{ 
+          opacity: isDragging ? 0.5 : 1,
+          cursor: 'pointer'
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
+        aria-label={`${label} preview`}
+      >
         <img
           src={imgSrc}
           alt={label}
@@ -246,13 +437,14 @@ const DraggableDeFi = ({
             marginBottom: '8px',
             borderRadius: '4px',
           }}
+          loading="lazy"
         />
         <strong className='element-name'>{label}</strong>
-        <p className='element-description'>{description}</p>
       </div>
     );
   }
 
+  // Render the draggable DeFi component
   return (
     <div
       ref={drag}
@@ -264,23 +456,25 @@ const DraggableDeFi = ({
         display: 'flex',
         flexDirection: 'column',
       }}
-      onClick={handleSelect}
+      onClick={toggleModal}
+      role="button"
+      tabIndex={0}
+      onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
+      aria-label={`${label} component`}
     >
       <strong>{label}</strong>
       <DeFiSection
-        id={id}
-        handleSelect={handleSelect}
-        uniqueId={id}
+        id={sectionId}
+        contentListWidth={contentListWidth}
+        children={resolvedChildren}
         onDropItem={onDropItem}
+        handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
-        type="defiSection"
-        styles={defi?.styles}
-        isConnected={contextConnected}
-        walletAddress={walletAddress}
-        isLoading={isLoading}
+        handleSelect={handleSelect}
+        ref={ref}
       />
     </div>
   );
-};
+});
 
-export default React.memo(DraggableDeFi); 
+export default DraggableDeFi; 

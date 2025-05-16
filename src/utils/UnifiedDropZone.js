@@ -25,13 +25,14 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
 
     // Web3 section configurations
     defiSection: { name: 'DeFi Dashboard', previewImage: './img/previsu-defi-dashboard.png' },
+    mintingSection: { name: 'NFT Minting', previewImage: './img/previsu-minting.png' },
   
-      // Footer configurations
-      customTemplateFooter: { name: 'Simple Footer', previewImage: './img/previsu-simple-footer.png' },
-      detailedFooter: { name: 'Detailed Footer', previewImage: './img/previsu-detailed-footer.png' },
-      templateFooter: { name: 'Advanced Footer', previewImage: './img/previsu-advanced-footer.png' },
-      defiFooter: { name: 'DeFi Footer', previewImage: './img/previsu-defi-footer.png' },
-    };
+    // Footer configurations
+    simpleFooter: { name: 'Simple Footer', previewImage: './img/previsu-simple-footer.png' },
+    detailedFooter: { name: 'Detailed Footer', previewImage: './img/previsu-detailed-footer.png' },
+    advancedFooter: { name: 'Advanced Footer', previewImage: './img/previsu-advanced-footer.png' },
+    defiFooter: { name: 'DeFi Footer', previewImage: './img/previsu-defi-footer.png' },
+  };
 
   const sections = Object.entries(structureConfigurations)
     .filter(([key]) => sectionConfigurations[key]) // Only include sections with configurations
@@ -240,7 +241,7 @@ const UnifiedDropZone = React.memo(({
   isDragging,
   index,
   onPanelToggle,
-  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION', 'defiSection']
+  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION', 'defiSection', 'mintingSection', 'footer', 'navbar', 'hero', 'cta']
 }) => {
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -281,143 +282,38 @@ const UnifiedDropZone = React.memo(({
         return;
       }
 
-      // Determine the correct type based on the section ID
-      let type = 'section';
-      if (section.id.toLowerCase().includes('navbar')) {
-        type = 'navbar';
-      } else if (section.id.toLowerCase().includes('hero')) {
-        type = 'hero';
-      } else if (section.id.toLowerCase().includes('cta')) {
-        type = 'cta';
-      } else if (section.id.toLowerCase().includes('footer')) {
-        type = 'footer';
-      }
-
-      console.log('Determined section type:', type); // Debug log
-
-      // Get base styles based on section type and configuration
-      let baseStyles = {};
-      if (type === 'section') {
-        // Apply section-specific styles based on the section ID
-        if (section.id === 'sectionOne') {
-          baseStyles = {
-            position: 'relative',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '40px',
-            backgroundColor: '#f9f9f9',
-            flexDirection: 'column',
-          };
-        } else if (section.id === 'sectionTwo') {
-          baseStyles = {
-            backgroundColor: '#FFFFFF',
-            padding: '60px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-          };
-        } else if (section.id === 'sectionThree') {
-          baseStyles = {
-            backgroundColor: '#FFFFFF',
-            padding: '60px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-          };
-        } else if (section.id === 'sectionFour') {
-          baseStyles = {
-            backgroundColor: '#FFFFFF',
-            padding: '60px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-          };
-        }
-      } else if (type === 'hero') {
-        if (section.id === 'heroThree') {
-          baseStyles = {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-            padding: '40px',
-            backgroundColor: '#ffffff',
-            gap: '10vw',
-            margin: '0',
-          };
-        } else if (section.id === 'heroTwo') {
-          baseStyles = {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '40px',
-            backgroundColor: '#ffffff',
-            textAlign: 'center',
-          };
-        } else {
-          baseStyles = {
-            display: 'flex',
-            position: 'relative',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            backgroundColor: '#ffffff',
-            gap: '1rem',
-            margin: '0',
-          };
-        }
-      } else if (type === 'cta') {
-        if (section.id === 'ctaTwo') {
-          baseStyles = {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '40px',
-            backgroundColor: '#ffffff',
-            textAlign: 'center',
-          };
-        } else {
-          baseStyles = {
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '48px 24px',
-            gap: '32px',
-            backgroundColor: '#FFFFFF',
-          };
-        }
-      }
-
       // Create a properly structured section object that matches the EditableContext expectations
       const sectionData = {
-        type,
+        type: sectionConfig.type || 'section',
         configuration: section.id,
         structure: section.id,
         styles: {
-          ...baseStyles,
-          ...(sectionConfig.styles || {})
+          ...sectionConfig.styles,
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          boxSizing: 'border-box'
         },
         children: sectionConfig.children.map(child => ({
           type: child.type,
-          content: child.content || '',
-          styles: child.styles || {},
-          settings: child.settings || {},
-          children: child.children || []
+          content: child.content || {},
+          styles: {
+            ...child.styles,
+            position: 'relative',
+            boxSizing: 'border-box'
+          },
+          settings: child.content?.settings || {},
+          configuration: {
+            ...child.content?.settings,
+            enabled: true
+          }
         })),
         settings: sectionConfig.settings || {},
         label: sectionConfig.label || section.name
       };
 
-      console.log('Sending section data:', sectionData); // Debug log
+      console.log('Sending section data:', sectionData);
       onDrop(sectionData, parentId);
     }
     setShowSectionPopup(false);
@@ -441,7 +337,7 @@ const UnifiedDropZone = React.memo(({
       }
       if (onDrop) {
         // For sections, ensure we pass the full configuration
-        if (item.type === 'section' || item.type === 'navbar' || item.type === 'hero' || item.type === 'cta' || item.type === 'footer') {
+        if (item.type === 'section' || item.type === 'navbar' || item.type === 'hero' || item.type === 'cta' || item.type === 'footer' || item.type === 'defiSection' || item.type === 'mintingSection') {
           // Get the section configuration from structureConfigurations
           const sectionConfig = structureConfigurations[item.configuration];
           if (!sectionConfig) {
@@ -457,10 +353,11 @@ const UnifiedDropZone = React.memo(({
             type = 'hero';
           } else if (item.configuration.includes('cta')) {
             type = 'cta';
-          
-          }  else if (item.configuration.includes('defiSection')) {
+          } else if (item.configuration.includes('defiSection')) {
             type = 'defiSection';
-          }else if (item.configuration.includes('footer')) {
+          } else if (item.configuration.includes('mintingSection')) {
+            type = 'mintingSection';
+          } else if (item.configuration.includes('footer')) {
             type = 'footer';
           }
 
@@ -468,11 +365,22 @@ const UnifiedDropZone = React.memo(({
             type,
             configuration: item.configuration,
             structure: item.configuration,
-            styles: sectionConfig.styles || {},
+            styles: {
+              ...sectionConfig.styles,
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              boxSizing: 'border-box'
+            },
             children: sectionConfig.children.map(child => ({
               type: child.type,
               content: child.content || '',
-              styles: child.styles || {},
+              styles: {
+                ...child.styles,
+                position: 'relative',
+                boxSizing: 'border-box'
+              },
               settings: child.settings || {},
               children: child.children || []
             })),
@@ -490,7 +398,7 @@ const UnifiedDropZone = React.memo(({
       // Don't show dropzone if:
       // 1. Dragging a section or configured div
       // 2. Dragging a section into another section's content area
-      const isDraggingSection = item.type === 'section' || item.type === 'navbar' || item.type === 'hero' || item.type === 'cta' || item.type === 'footer';
+      const isDraggingSection = item.type === 'section' || item.type === 'navbar' || item.type === 'hero' || item.type === 'cta' || item.type === 'footer' || item.type === 'defiSection' || item.type === 'mintingSection';
       const isDraggingConfiguredDiv = item.type === 'div' && item.configuration;
       const isContentSection = parentId && parentId.includes('-content');
 

@@ -1,40 +1,56 @@
 // CTAPanel.js
-import React, { useState } from 'react';
+import React from 'react';
 import DraggableCTA from '../../Elements/DraggableLayout/DraggableCTA';
 
-const CTAPanel = ({ contentListWidth, searchQuery }) => {
-    const [isExpanded, setIsExpanded] = useState(false); // State to manage collapse/expand
-  
-    const CTAConfigurations = [
-      { imgSrc: './img/previsu-advanced-cta.png', configuration: 'ctaOne', label: 'Advanced CTA' },
-      { imgSrc: './img/previsu-quick-cta.png', configuration: 'ctaTwo', label: 'Quick CTA' },
-    ];
-  
-    // Filter hero configurations based on search query
-    const filteredCTA = CTAConfigurations.filter((CTA) =>
-      CTA.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  
+const CTAPanel = ({ contentListWidth, searchQuery, handlePanelToggle, handleOpenMediaPanel }) => {
+  const CTAConfigurations = [
+    { 
+      imgSrc: './img/previsu-advanced-cta.png', 
+      configuration: 'ctaOne', 
+      type: 'cta',
+      id: 'advanced-cta',
+      label: 'Advanced CTA',
+      description: 'A sophisticated call-to-action section with multiple elements and animations',
+      category: 'cta'
+    },
+    { 
+      imgSrc: './img/previsu-quick-cta.png', 
+      configuration: 'ctaTwo', 
+      type: 'cta',
+      id: 'quick-cta',
+      label: 'Quick CTA',
+      description: 'A streamlined call-to-action section for immediate user engagement',
+      category: 'cta'
+    }
+  ];
+
+  // Filter CTA configurations based on search query
+  const filteredCTA = CTAConfigurations.filter((cta) =>
+    cta.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (cta.description && cta.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
-    <div>
-      
-        <div className="bento-display-elements" style={{ marginTop: '16px' }}>
-          {filteredCTA.map(({ configuration, label, imgSrc }) => (
-            <DraggableCTA
-              key={configuration}
-              configuration={configuration}
-              label={label}
-              isEditing={false}
-              showDescription={true}
-              contentListWidth={contentListWidth}
-              imgSrc={imgSrc} // Pass the image source correctly
-            />
-          ))}
-          {filteredCTA.length === 0 && <p>No heroes found.</p>}
-        </div>
+    <div className="bento-display-elements" style={{ marginTop: '16px' }}>
+      {filteredCTA.map((config) => (
+        <DraggableCTA
+          key={config.id}
+          configuration={config.configuration}
+          type={config.type}
+          id={config.id}
+          label={config.label}
+          description={config.description}
+          isEditing={false}
+          showDescription={true}
+          contentListWidth={contentListWidth}
+          imgSrc={config.imgSrc}
+          handlePanelToggle={handlePanelToggle}
+          handleOpenMediaPanel={handleOpenMediaPanel}
+        />
+      ))}
+      {filteredCTA.length === 0 && <p>No CTAs found.</p>}
     </div>
   );
 };
-
 
 export default CTAPanel;

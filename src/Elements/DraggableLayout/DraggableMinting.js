@@ -1,9 +1,43 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import MintingSection from '../Sections/Web3Related/MintingSection';
 import { Web3Configs } from '../../configs/Web3/Web3Configs';
+import { merge } from 'lodash';
 import '../../components/css/LeftBar.css';
+
+// Default styles for Minting components
+const defaultMintingStyles = {
+  mintingSection: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '2rem',
+    backgroundColor: '#f8f9fa'
+  },
+  mintingContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem',
+    width: '100%',
+    maxWidth: '1200px',
+    margin: '0 auto'
+  },
+  mintingModule: {
+    position: 'relative',
+    boxSizing: 'border-box',
+    padding: '20px',
+    margin: '10px 0',
+    backgroundColor: 'rgba(42, 42, 60, 0.5)',
+    borderRadius: '8px',
+    backdropFilter: 'blur(10px)',
+    width: '100%',
+    minHeight: '200px'
+  }
+};
 
 /**
  * DraggableMinting component for rendering and managing minting sections.
@@ -20,6 +54,7 @@ import '../../components/css/LeftBar.css';
  * @param {string} props.imgSrc - Image source for the minting section preview
  * @param {string} props.label - Label for the minting section
  * @param {string} props.description - Description of the minting section
+ * @param {Object} props.structure - Structure of the minting section
  */
 const DraggableMinting = ({
   id,
@@ -31,206 +66,340 @@ const DraggableMinting = ({
   handleOpenMediaPanel,
   imgSrc,
   label,
-  description
 }) => {
-  const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId, updateStyles } = useContext(EditableContext);
   const [isModalOpen, setModalOpen] = useState(false);
   const modalRef = useRef(null);
+  const defaultInjectedRef = useRef(false);
 
-  // Setup drag behavior with improved configuration handling
+  // Generate a unique ID if none is provided
+  const sectionId = id || `minting-section-${Date.now()}`;
+
+  // Initialize the Minting structure with content container
+  useEffect(() => {
+    if (!sectionId || defaultInjectedRef.current) return;
+
+    // First, ensure the Minting section has the default styles
+    const mergedMintingStyles = merge({}, defaultMintingStyles.mintingSection, findElementById(sectionId, elements)?.styles);
+    updateStyles(sectionId, mergedMintingStyles);
+
+    const contentContainerId = `${sectionId}-content`;
+
+    // Create content container if it doesn't exist
+    if (!findElementById(contentContainerId, elements)) {
+      const contentContainer = {
+        id: contentContainerId,
+        type: 'div',
+        styles: defaultMintingStyles.mintingContent,
+        children: [],
+        parentId: sectionId,
+      };
+      setElements(prev => [...prev, contentContainer]);
+
+      // Add default modules to content container
+      const mintingConfig = Web3Configs[configuration];
+      if (mintingConfig?.children) {
+        const moduleIds = mintingConfig.children.map(module => {
+          const newId = addNewElement('mintingModule', 1, null, contentContainerId);
+          // Update the module with content and styles
+          setElements(prev => prev.map(el => {
+            if (el.id === newId) {
+              return {
+                ...el,
+                content: module.content,
+                styles: merge(defaultMintingStyles.mintingModule, module.styles || {}),
+                settings: {
+                  ...module.settings,
+                  enabled: true
+                }
+              };
+            }
+            return el;
+          }));
+          return newId;
+        });
+
+        // Update content container with all module IDs
+        setElements(prev => prev.map(el => {
+          if (el.id === contentContainerId) {
+            return {
+              ...el,
+              children: moduleIds
+            };
+          }
+          return el;
+        }));
+      }
+    }
+
+    // Update Minting section's children to only include the content container
+    setElements(prev => prev.map(el => {
+      if (el.id === sectionId) {
+        return {
+          ...el,
+          children: [contentContainerId],
+          configuration: configuration
+        };
+      }
+      return el;
+    }));
+
+    defaultInjectedRef.current = true;
+  }, [sectionId, elements, findElementById, setElements, addNewElement, updateStyles, configuration]);
+
+  // Standardized container creation helper
+  const createContainerStructure = (parentId, type) => {
+    const contentContainerId = `${parentId}-content`;
+    return {
+      id: contentContainerId,
+      type: 'div',
+      styles: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '1rem',
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto'
+      },
+      children: [],
+      parentId: parentId
+    };
+  };
+
+  // Standardized style management
+  const applyStyles = (element, type) => {
+    const baseStyles = {
+      mintingSection: {
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        boxSizing: 'border-box'
+      },
+      mintingModule: {
+        position: 'relative',
+        boxSizing: 'border-box',
+        padding: '20px',
+        margin: '10px 0',
+        backgroundColor: 'rgba(42, 42, 60, 0.5)',
+        borderRadius: '8px',
+        backdropFilter: 'blur(10px)',
+        width: '100%',
+        minHeight: '200px'
+      }
+    };
+    return {
+      ...baseStyles[type],
+      ...element.styles,
+      position: 'relative',
+      boxSizing: 'border-box'
+    };
+  };
+
+  // Standardized configuration handling
+  const createElementConfig = (type, config) => {
+    return {
+      type,
+      configuration: config.type,
+      structure: config.structure,
+      styles: applyStyles({}, type),
+      settings: config.settings || {},
+      children: []
+    };
+  };
+
+  // Standardized ID generation
+  const generateElementIds = (type, count) => {
+    return Array(count).fill(null).map(() => generateUniqueId(type));
+  };
+
+  // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { 
-      id, 
+      id: sectionId, 
       type: 'mintingSection', 
       configuration,
-      structure: configuration 
+      structure: Web3Configs[configuration]
     },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
     end: (item, monitor) => {
       if (monitor.didDrop() && !isEditing) {
-        // Check if a minting section with this configuration already exists in the current section
-        const dropResult = monitor.getDropResult();
-        const targetSectionId = dropResult?.sectionId;
-        
-        if (targetSectionId) {
-          const sectionElement = findElementById(targetSectionId, elements);
-          const existingMinting = sectionElement?.children
-            ?.map(childId => findElementById(childId, elements))
-            ?.find(el => el?.type === 'mintingSection' && el?.configuration === item.configuration);
+        const mintingConfig = Web3Configs[item.configuration];
+        if (mintingConfig) {
+          const dropResult = monitor.getDropResult();
+          const targetSectionId = dropResult?.sectionId;
+          
+          if (targetSectionId) {
+            const sectionElement = findElementById(targetSectionId, elements);
+            const existingMinting = sectionElement?.children
+              ?.map(childId => findElementById(childId, elements))
+              ?.find(el => el?.type === 'mintingSection' && el?.configuration === item.configuration);
 
-          if (!existingMinting) {
-            // Create a unique ID for the new minting section
-            const newId = `mintingSection-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-            
-        // Get the current number of elements to determine the index
-        const currentElements = elements.filter(el => !el.parentId);
-        const index = currentElements.length;
-        
-            // Add the main minting section element at the end
-            addNewElement('mintingSection', 1, index, targetSectionId, {
-              ...Web3Configs.mintingSection,
-              configuration: item.configuration,
-              structure: item.configuration
-            }, newId);
+            if (!existingMinting) {
+              // Generate unique IDs for the section and its modules
+              const newSectionId = generateUniqueId('mintingSection');
+              const moduleIds = generateElementIds('mintingModule', mintingConfig.children?.length || 0);
+              
+              // Create the content container first
+              const contentContainer = createContainerStructure(newSectionId, 'mintingSection');
 
-            // Initialize default module content
-            const defaultModuleContent = {
-              logo: {
-                content: '',
-                label: 'NFT Logo',
-                styles: {
-                  width: '160px',
-                  height: '160px',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }
-              },
-              timer: {
-                content: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                label: 'Minting starts in',
-                styles: {
-                  fontSize: '1.2rem',
-                  color: '#fff'
-                }
-              },
-              remaining: {
-                content: '1000/1000',
-                label: 'Remaining',
-                styles: {
-                  fontSize: '1rem',
-                  color: '#ccc'
-                }
-              },
-              value: {
-                content: '1',
-                label: 'Price',
-                styles: {
-                  fontSize: '1rem',
-                  color: '#ccc'
-                }
-              },
-              currency: {
-                content: 'SOL',
-                label: 'Currency',
-                styles: {
-                  fontSize: '1rem',
-                  color: '#ccc'
-                }
-              },
-              quantity: {
-                content: '1',
-                label: 'Quantity',
-                styles: {
-                  fontSize: '1rem',
-                  color: '#ccc'
-                }
-              },
-              price: {
-                content: '1 SOL',
-                label: 'Total Price',
-                styles: {
-                  fontSize: '1rem',
-                  color: '#ccc'
-                }
-              },
-              mintButton: {
-                content: 'MINT',
-                label: 'Mint Button',
-                styles: {
-                  width: '100%',
-                  padding: '1rem',
-                  border: '1px solid #fff',
-                  borderRadius: '8px',
-                  color: '#fff',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer'
-                }
-              }
-            };
+              // Create the new Minting section with standardized configuration
+              const newMintingSection = createElementConfig('mintingSection', {
+                type: 'mintingSection',
+                structure: mintingConfig,
+                settings: mintingConfig.settings || {}
+              });
+              newMintingSection.id = newSectionId;
+              newMintingSection.children = [contentContainer.id];
 
-            // Add all child elements from the configuration with proper content initialization
-            Object.entries(defaultModuleContent).forEach(([type, content]) => {
-              const childId = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-              addNewElement(
-                type,
-                1,
-                {
-                  ...content,
-                  id: childId,
-                  parentId: newId
-                },
-                newId,
-                {
-                  type,
-                  enabled: true
-                },
-                childId
-              );
-            });
+              // Create default modules with standardized structure
+              const modules = mintingConfig.children?.map((child, index) => ({
+                id: moduleIds[index],
+                type: 'mintingModule',
+                content: child.content,
+                settings: child.settings || {},
+                styles: applyStyles(child, 'mintingModule')
+              })) || [];
+
+              // Add all elements in a single update
+              setElements(prev => {
+                const newElements = [...prev];
+                newElements.push(newMintingSection, contentContainer, ...modules);
+                return newElements;
+              });
+
+              setSelectedElement({ id: newSectionId, type: 'mintingSection', configuration: item.configuration });
+            }
           }
         }
-        setSelectedElement({ id: item.id, type: 'mintingSection', configuration: item.configuration });
       }
     },
-  }), [configuration, isEditing, elements]);
+  }), [configuration, isEditing, elements, sectionId]);
 
   // Handle drop events within the minting section with improved error handling
-  const onDropItem = (item, parentId) => {
-    if (!item || !parentId) return;
+  const onDropItem = (item, index, dropInfo) => {
+    if (!item || !dropInfo?.isWithinBounds) return;
 
-    const parentElement = findElementById(parentId, elements);
-    if (!parentElement) return;
+    // Get the current minting section element
+    const currentSection = findElementById(sectionId, elements);
+    if (!currentSection) {
+      console.warn('Minting section not found');
+      return;
+    }
 
-    // Check if the item being dropped is a minting section
+    // Check if we're trying to add a minting section inside another minting section
     if (item.type === 'mintingSection') {
-      // Check if a minting section with this configuration already exists in the parent section
-      const sectionElement = findElementById(parentElement.parentId, elements);
-      const existingMinting = sectionElement?.children
-        ?.map(childId => findElementById(childId, elements))
-        ?.find(el => el?.type === 'mintingSection' && el?.configuration === item.configuration);
+      console.warn('Cannot add a minting section inside another minting section');
+      return;
+    }
 
-      if (existingMinting) {
-        // If a minting section with this configuration exists, don't create a new one
+    // Check for duplicate elements
+    const existingElements = currentSection.children
+        ?.map(childId => findElementById(childId, elements))
+      .filter(Boolean);
+
+    // For specific elements, check for duplicates
+    if (item.type === 'mintButton' || item.type === 'priceDisplay' || item.type === 'countdownTimer') {
+      const hasDuplicate = existingElements?.some(el => 
+        el.type === item.type && el.configuration?.id === item.configuration?.id
+      );
+      if (hasDuplicate) {
+        console.warn(`A ${item.type} with this configuration already exists in the minting section`);
         return;
       }
     }
 
-    // Create a new element with the same type and configuration as the dropped item
-    const newId = addNewElement(item.type, 1, null, parentId, {
+    // Generate a unique ID for the new element
+    const newId = generateUniqueId(item.type || 'element');
+
+    // Create base styles based on element type
+    const baseStyles = {
+      mintButton: {
+        backgroundColor: '#4F46E5',
+        color: 'white',
+        padding: '1rem 2rem',
+        borderRadius: '8px',
+        fontSize: '1.1rem',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+      },
+      priceDisplay: {
+        fontSize: '2rem',
+        fontWeight: 'bold',
+        color: '#1A1A1A',
+        marginBottom: '1rem'
+      },
+      countdownTimer: {
+        fontSize: '1.5rem',
+        color: '#4A4A4A',
+        marginBottom: '1rem'
+      }
+    };
+
+    // Create the new element with proper configuration and unique ID
+    const elementId = addNewElement(
+      item.type,
+      1,
+      index,
+      sectionId,
+      {
+        id: newId,
+        type: item.type,
       content: item.content || '',
-      styles: item.styles || {},
-      configuration: item.configuration,
-      settings: item.settings || {}
+        styles: {
+          ...baseStyles[item.type],
+          ...item.styles
+        },
+        configuration: {
+          ...item.configuration,
+          id: newId
+        },
+        settings: item.settings || {},
+        children: item.children?.map(child => ({
+          ...child,
+          id: generateUniqueId(child.type || 'element'),
+          settings: child.settings || {},
+          styles: child.styles || {}
+        })) || []
+      }
+    );
+
+    // Update the parent element's children array
+    setElements(prevElements => {
+      const updatedElements = prevElements.map(el => {
+        if (el.id === sectionId) {
+          const updatedChildren = [...(el.children || [])];
+          updatedChildren.splice(index, 0, elementId);
+          return {
+            ...el,
+            children: updatedChildren
+          };
+        }
+        return el;
+      });
+      return updatedElements;
     });
 
-    // Update the parent element's children with unique values
-      setElements((prevElements) =>
-        prevElements.map((el) =>
-          el.id === parentId
-            ? {
-              ...el,
-              children: [...new Set([...el.children, newId])], // Ensure unique children
-            }
-            : el
-        )
-      );
-
-    // Select the newly created element
-    setSelectedElement({ id: newId, type: item.type, configuration: item.configuration });
+    // Select the new element
+    setSelectedElement({ 
+      id: elementId, 
+      type: item.type,
+      parentId: sectionId,
+      index: index
+    });
   };
 
-  // Find the current minting section and its children with improved error handling
-  const minting = findElementById(id, elements);
-  const configChildren = Web3Configs.mintingSection?.children || [];
-  const resolvedChildren = (minting?.children || [])
-    .map((childId) => findElementById(childId, elements))
-    .filter(Boolean);
-  const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
+  // Find the current Minting section and its children
+  const mintingElement = findElementById(sectionId, elements);
+  const contentContainer = mintingElement?.children?.[0] ? findElementById(mintingElement.children[0], elements) : null;
+  const resolvedChildren = contentContainer?.children
+    ?.map((childId) => findElementById(childId, elements))
+    .filter(Boolean) || [];
 
   // Toggle the modal state
   const toggleModal = () => setModalOpen((prev) => !prev);
@@ -256,8 +425,8 @@ const DraggableMinting = ({
 
   // Handle element selection
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent parent selections
-    setSelectedElement({ id, type: 'mintingSection', styles: minting?.styles });
+    e.stopPropagation();
+    setSelectedElement({ id: sectionId, type: 'mintingSection', styles: mintingElement?.styles });
   };
 
   // Handle preview display with description
@@ -287,17 +456,15 @@ const DraggableMinting = ({
           loading="lazy"
         />
         <strong className='element-name'>{label}</strong>
-        <p className='element-description'>{description}</p>
       </div>
     );
   }
 
-  // Render the draggable minting section component
+  // Render the draggable Minting component
   return (
     <div
       ref={drag}
       style={{
-        position: 'relative',
         cursor: 'pointer',
         border: isDragging ? '1px dashed #000' : 'none',
         backgroundColor: '#f9f9f9',
@@ -313,9 +480,9 @@ const DraggableMinting = ({
     >
       <strong>{label}</strong>
       <MintingSection
-        uniqueId={id}
+        id={sectionId}
         contentListWidth={contentListWidth}
-        children={childrenToRender}
+        children={resolvedChildren}
         onDropItem={onDropItem}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}

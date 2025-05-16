@@ -26,6 +26,7 @@ const SectionOne = ({
     findElementById,
     updateStyles,
     addNewElement,
+    generateUniqueId,
   } = useContext(EditableContext);
 
   // Locate the section element from global state
@@ -42,14 +43,15 @@ const SectionOne = ({
     const configStyles = sectionElement?.configuration?.styles || {};
 
     // First, ensure the section has the default styles
-    updateStyles(sectionElement.id, configStyles.section || {});
+    const mergedSectionStyles = mergeStyles(defaultSectionStyles.section, configStyles.section || {});
+    updateStyles(sectionElement.id, mergedSectionStyles);
 
     // Create containers if they don't exist
     const containers = [
       {
         id: `${uniqueId}-content`,
         type: 'div',
-        styles: configStyles.content || {},
+        styles: mergeStyles(defaultSectionStyles.contentWrapper, configStyles.content || {}),
         children: [],
         parentId: uniqueId,
         configuration: sectionElement.configuration
@@ -57,7 +59,7 @@ const SectionOne = ({
       {
         id: `${uniqueId}-buttons`,
         type: 'div',
-        styles: configStyles.buttons || {},
+        styles: mergeStyles(defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
         children: [],
         parentId: uniqueId,
         configuration: sectionElement.configuration
@@ -65,7 +67,7 @@ const SectionOne = ({
       {
         id: `${uniqueId}-image`,
         type: 'div',
-        styles: configStyles.image || {},
+        styles: mergeStyles(defaultSectionStyles.imageContainer, configStyles.image || {}),
         children: [],
         parentId: uniqueId,
         configuration: sectionElement.configuration
@@ -105,7 +107,7 @@ const SectionOne = ({
         defaultContent.forEach(item => {
           const containerType = mapping[item.type] || mapping.default;
           const containerId = `${uniqueId}-${containerType}`;
-          const newId = `${uniqueId}-${item.type}-${Math.random().toString(36).substr(2, 9)}`;
+          const newId = generateUniqueId(item.type || 'element');
           
           // Get the appropriate styles for this element type
           let elementStyles = {};
@@ -114,7 +116,6 @@ const SectionOne = ({
               configStyles.primaryButton : 
               configStyles.secondaryButton;
           } else if (item.type === 'image') {
-            // Get both image container and image element styles
             elementStyles = {
               ...configStyles.image,
               img: configStyles.image?.img || {}
@@ -152,31 +153,111 @@ const SectionOne = ({
       });
       defaultInjectedRef.current = true;
     }
-  }, [sectionElement, elements, findElementById, uniqueId, updateStyles, setElements, children]);
+  }, [sectionElement, elements, findElementById, uniqueId, updateStyles, setElements, children, generateUniqueId]);
 
   // Generic drop handler for new items
   const handleSectionDrop = (droppedItem, parentId = uniqueId) => {
-    if (droppedItem.id) return;
+    if (droppedItem.id) {
+      return;
+    }
 
+    // Get the container
+    const container = findElementById(parentId, elements);
+    if (!container) {
+      console.warn(`Container ${parentId} not found`);
+      return;
+    }
+
+    // Define base styles for different element types
+    const baseStyles = {
+      heading: {
+        fontSize: '2.5rem',
+        fontWeight: 'bold',
+        marginBottom: '16px',
+        color: '#334155'
+      },
+      paragraph: {
+        fontSize: '1rem',
+        lineHeight: '1.5',
+        marginBottom: '24px',
+        color: '#64748b'
+      },
+      button: {
+        backgroundColor: '#334155',
+        color: '#ffffff',
+        padding: '12px 24px',
+        fontWeight: 'bold',
+        border: 'none',
+        cursor: 'pointer',
+        borderRadius: '4px',
+        transition: 'all 0.2s ease',
+        fontSize: '1rem'
+      },
+      image: {
+        maxWidth: '100%',
+        height: '400px',
+        backgroundColor: '#334155',
+        objectFit: 'cover',
+        borderRadius: '8px'
+      }
+    };
+
+    // Generate a unique ID for the new element
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const uniqueElementId = `${droppedItem.type}-${timestamp}-${randomStr}`;
+
+    // Create new element with proper configuration
     const newId = addNewElement(
       droppedItem.type,
       droppedItem.level || 1,
       null,
-      parentId
+      parentId,
+      {
+        id: uniqueElementId,
+        type: droppedItem.type,
+        content: droppedItem.content || '',
+        styles: {
+          ...baseStyles[droppedItem.type],
+          ...droppedItem.styles,
+          position: 'relative',
+          boxSizing: 'border-box'
+        },
+        configuration: sectionElement.configuration
+      }
     );
 
-    setElements(prev => prev.map(el =>
-        el.id === parentId
-          ? { ...el, children: [...(el.children || []), newId] }
-          : el
-    ));
+    // Update parent's children array
+    setElements(prev => {
+      return prev.map(el => {
+        if (el.id === parentId) {
+          return {
+            ...el,
+            children: [...(el.children || []), newId]
+          };
+        }
+        return el;
+      });
+    });
+
+    // Select the newly created element
+    setSelectedElement({
+      id: newId,
+      type: droppedItem.type,
+      parentId,
+      index: container ? container.children.length : 0
+    });
   };
 
   // Drop and reorder hooks
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
-    onDropItem: handleSectionDrop,
+    onDropItem: (item) => {
+      if (!item.id) {
+        handleSectionDrop(item, uniqueId);
+      }
+    },
   });
 
   const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
@@ -202,7 +283,7 @@ const SectionOne = ({
       if (!child) return null;
 
       return (
-        <React.Fragment key={child.id}>
+        <React.Fragment key={`${child.id}-${index}`}>
           {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
             <div
               className="drop-placeholder"
@@ -215,6 +296,8 @@ const SectionOne = ({
                 width: '100%',
                 margin: '5px',
                 fontFamily: 'Montserrat',
+                position: 'relative',
+                boxSizing: 'border-box'
               }}
               onDragOver={(e) => onDragOver(e, containerId, index)}
               onDrop={(e) => onDrop(e, containerId)}
@@ -226,7 +309,12 @@ const SectionOne = ({
             draggable
             onDragStart={(e) => onDragStart(e, child.id)}
             onDragEnd={onDragEnd}
-            style={{ display: 'block' }}
+            style={{ 
+              display: 'block',
+              position: 'relative',
+              boxSizing: 'border-box'
+            }}
+            key={`${child.id}-wrapper-${index}`}
           >
             {renderElement(
               child,
@@ -251,12 +339,7 @@ const SectionOne = ({
 
   // Merge styles for containers
   const contentStyles = mergeStyles(defaultSectionStyles.contentWrapper, contentContainer?.styles || {});
-  const buttonsStyles = mergeStyles(defaultSectionStyles.buttonContainer || {
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '12px',
-    marginTop: '10px',
-  }, buttonsContainer?.styles || {});
+  const buttonsStyles = mergeStyles(defaultSectionStyles.buttonContainer, buttonsContainer?.styles || {});
   const imageStyles = mergeStyles(defaultSectionStyles.imageContainer, imageContainer?.styles || {});
 
   // Merge styles for section
@@ -268,6 +351,8 @@ const SectionOne = ({
       style={{
         ...mergedSectionStyles,
         ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+        position: 'relative',
+        boxSizing: 'border-box'
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -298,6 +383,7 @@ const SectionOne = ({
             >
               {renderContainerChildren(`${uniqueId}-buttons`)}
             </Div>
+      {imageContainer && (
           <Div
             id={`${uniqueId}-image`}
             parentId={`${uniqueId}-image`}
@@ -308,6 +394,7 @@ const SectionOne = ({
           >
             {renderContainerChildren(`${uniqueId}-image`)}
           </Div>
+      )}
     </Section>
   );
 };

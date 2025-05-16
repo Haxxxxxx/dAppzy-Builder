@@ -1,64 +1,53 @@
 // defaultSectionStyles.js
 export const defaultSectionStyles = {
-  sectionContainer: {
+  section: {
     position: 'relative',
     display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '40px',
-    backgroundColor: '#f9f9f9',
     flexDirection: 'column',
-  },
-  labelContainer: {
-    alignSelf: 'flex-start',
-    marginBottom: '1rem',
-    // or position absolutely if you prefer top-left corner
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '40px',
+    backgroundColor: '#ffffff',
+    gap: '24px'
   },
   contentWrapper: {
-    flex: '1',
-    minWidth: '300px',
-    maxWidth: '600px',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-  heading: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    marginBottom: '0',
-    marginTop: '0',
-  },
-  paragraph: {
-    fontSize: '1rem',
-    lineHeight: '1.5',
-    marginBottom: '24px',
-    textAlign: 'center',
-    maxWidth:'800px',
-  },
-  primaryButton: {
-    backgroundColor: '#0F62FE',
-    color: '#ffffff',
-    padding: '12px 24px',
-    fontWeight: 'bold',
-    border: 'none',
-    cursor: 'pointer',
-    border: '2px solid #0F62FE',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    color: '#0F62FE',
-    padding: '12px 24px',
-    border: '2px solid #0F62FE',
-    fontWeight: 'bold',
-    cursor: 'pointer',
+    gap: '16px',
+    width: '100%',
+    boxSizing: 'border-box',
+    maxWidth: '800px',
+    margin: '0 auto'
   },
   buttonContainer: {
+    position: 'relative',
     display: 'flex',
     flexDirection: 'row',
     gap: '12px',
     marginTop: '10px',
+    boxSizing: 'border-box',
+    flexWrap: 'wrap',
+    justifyContent: 'center'
+  },
+  imageContainer: {
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    boxSizing: 'border-box',
+    maxWidth: '100%',
+    margin: '0 auto'
+  },
+  labelContainer: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    width: '100%',
+    boxSizing: 'border-box',
+    textAlign: 'center'
   },
   label: {
     color: '#001D6C',
@@ -66,13 +55,6 @@ export const defaultSectionStyles = {
     fontSize: '20px',
     fontWeight: '700',
     textTransform: 'uppercase',
-  },
-  imageContainer: {
-    flex: '1',
-    minWidth: '300px',
-    maxWidth: '600px',
-    textAlign: 'center',
-    marginTop: '20px',
   },
   image: {
     maxWidth: '100%',
@@ -84,13 +66,26 @@ export const defaultSectionStyles = {
 
 // sectionThreeStyles.js
 export const sectionThreeStyles = {
-  sectionContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: '60px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
+  section: {
+    ...defaultSectionStyles.section,
+    backgroundColor: '#ffffff',
+    padding: '60px 40px'
+  },
+  contentWrapper: {
+    ...defaultSectionStyles.contentWrapper,
+    textAlign: 'center'
+  },
+  buttonContainer: {
+    ...defaultSectionStyles.buttonContainer,
+    justifyContent: 'center'
+  },
+  imageContainer: {
+    ...defaultSectionStyles.imageContainer,
+    maxWidth: '600px'
+  },
+  labelContainer: {
+    ...defaultSectionStyles.labelContainer,
+    textAlign: 'center'
   },
   // "Caption" style
   caption: {
@@ -116,13 +111,26 @@ export const sectionThreeStyles = {
 
 // sectionTwoStyles.js
 export const sectionTwoStyles = {
-  sectionContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: '60px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
+  section: {
+    ...defaultSectionStyles.section,
+    backgroundColor: '#f9f9f9',
+    padding: '60px 40px'
+  },
+  contentWrapper: {
+    ...defaultSectionStyles.contentWrapper,
+    textAlign: 'center'
+  },
+  buttonContainer: {
+    ...defaultSectionStyles.buttonContainer,
+    justifyContent: 'center'
+  },
+  imageContainer: {
+    ...defaultSectionStyles.imageContainer,
+    maxWidth: '600px'
+  },
+  labelContainer: {
+    ...defaultSectionStyles.labelContainer,
+    textAlign: 'center'
   },
   // "Caption" style
   caption: {
@@ -144,13 +152,6 @@ export const sectionTwoStyles = {
     lineHeight: '1.5',
     margin: '0 0 24px 0',
     maxWidth: '600px',
-  },
-  buttonContainer: {
-    display: 'flex',
-    gap: '12px',
-    marginTop: '24px',
-    justifyContent:'center',
-
   },
   primaryButton: {
     backgroundColor: '#334155',
@@ -174,16 +175,27 @@ export const sectionTwoStyles = {
 
 // sectionFourStyles.js
 export const sectionFourStyles = {
-  // Outer container for the entire section
-  sectionContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: '60px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center',
+  section: {
+    ...defaultSectionStyles.section,
+    backgroundColor: '#f9f9f9',
+    padding: '60px 40px'
   },
-
+  contentWrapper: {
+    ...defaultSectionStyles.contentWrapper,
+    textAlign: 'center'
+  },
+  buttonContainer: {
+    ...defaultSectionStyles.buttonContainer,
+    justifyContent: 'center'
+  },
+  imageContainer: {
+    ...defaultSectionStyles.imageContainer,
+    maxWidth: '600px'
+  },
+  labelContainer: {
+    ...defaultSectionStyles.labelContainer,
+    textAlign: 'center'
+  },
   // Top label (span)
   caption: {
     textTransform: 'uppercase',
@@ -192,7 +204,6 @@ export const sectionFourStyles = {
     fontWeight: 700,
     marginBottom: '8px',
   },
-
   // Main heading
   heading: {
     color: '#1F2937',
@@ -200,7 +211,6 @@ export const sectionFourStyles = {
     fontWeight: 'bold',
     margin: '0 0 24px 0',
   },
-
   // Container for the 4 feature items
   featuresContainer: {
     display: 'flex',
@@ -210,7 +220,6 @@ export const sectionFourStyles = {
     marginBottom: '24px',
     maxWidth: '1000px',
   },
-
   // Each feature item (icon + text)
   featureItem: {
     flex: '0 1 calc(25% - 24px)',
@@ -221,14 +230,12 @@ export const sectionFourStyles = {
     alignItems: 'center',
     gap: '8px',
   },
-
   // Icon/image inside each feature
   featureIcon: {
     width: '40px',
     height: '40px',
     marginBottom: '8px',
   },
-
   // Optional sub-heading inside each feature
   featureHeading: {
     fontSize: '1rem',
@@ -236,7 +243,6 @@ export const sectionFourStyles = {
     margin: '0 0 8px 0',
     color: '#1F2937',
   },
-
   // Text inside each feature
   featureText: {
     fontSize: '0.875rem',
@@ -244,7 +250,6 @@ export const sectionFourStyles = {
     color: '#4B5563',
     margin: '0',
   },
-
   // Single primary button at the bottom
   primaryButton: {
     backgroundColor: '#334155',

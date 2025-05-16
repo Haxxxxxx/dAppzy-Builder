@@ -1,12 +1,14 @@
-import React, { useContext, useRef, useEffect, useState } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef, useState } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { useWalletContext } from '../../../context/WalletContext';
-import { Image, Span, Button, DeFiModule } from '../../SelectableElements';
-import { mintingSectionStyles } from './DefaultWeb3Styles';
+import { Image, Span, Button, DeFiModule, Section, Div } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import useReorderDrop from '../../../utils/useReorderDrop';
 import merge from 'lodash/merge';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
+import { Web3Configs } from '../../../configs/Web3/Web3Configs';
+import { defaultDeFiStyles } from './defaultDeFiStyles';
+
 // Default modules with specific functionality
 const defaultModules = [
   {
@@ -185,1236 +187,310 @@ const fallbackBridgeData = {
   }
 };
 
-export const defaultDeFiStyles = {
-  section: {
-    backgroundColor: '#1A1A1A',
-    backgroundImage: 'none',
-    padding: '40px 20px',
-    borderRadius: '0',
-    margin: '0',
-    color: '#FFFFFF',
-    backgroundType: 'dark'
-  },
-  logo: {
-    width: '40px',
-    height: '40px',
-    marginRight: '12px'
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '600',
-    marginBottom: '12px'
-  },
-  description: {
-    fontSize: '16px',
-    lineHeight: '1.5',
-    marginBottom: '24px'
-  },
-  module: {
-    backgroundColor: '#2A2A2A',
-    borderRadius: '12px',
-    padding: '20px',
-    marginBottom: '16px'
-  }
-};
+// Create a forwardRef wrapper for Section
+const SectionWithRef = forwardRef(({ children, ...props }, ref) => (
+  <Section {...props} ref={ref}>
+    {children}
+  </Section>
+));
 
-const DeFiSection = ({
-  handleSelect,
-  uniqueId,
+const DeFiSection = forwardRef(({
+  id,
+  contentListWidth,
+  children,
   onDropItem,
+  handlePanelToggle,
   handleOpenMediaPanel,
-  type = 'defiSection',
-  styles
-}) => {
-  const { elements, setSelectedElement, updateContent, addNewElement, updateStyles, setElements, findElementById } = useContext(EditableContext);
-  const { walletAddress, balance, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
-  
-  // Get settings from the element's content
-  const defiElement = elements?.find(el => el.id === uniqueId);
-  let content = defiElement?.content;
-  if (typeof content === 'string') {
-    try {
-      content = JSON.parse(content);
-    } catch (e) {
-      content = {};
-    }
-  }
-  const settings = content?.settings || {};
-  
-  // Debug logging
-  console.log('DeFiSection settings:', settings, 'uniqueId:', uniqueId, 'defiElement:', defiElement);
+  handleSelect,
+}, ref) => {
+  const { 
+    elements, 
+    findElementById, 
+    setElements, 
+    generateUniqueId,
+    selectedElement,
+    handleRemoveElement 
+  } = useContext(EditableContext);
+  const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Memoize the DeFi element to prevent unnecessary re-renders
+  const defiElement = useMemo(() => {
+    return findElementById(id, elements);
+  }, [id, elements, findElementById]);
+  
+  // Initialize DeFi section structure
   useEffect(() => {
-    console.log('Settings changed in DeFiSection:', settings, 'uniqueId:', uniqueId);
-  }, [settings, uniqueId]);
-
-  // Use settings from content
-  const isConnected = settings.simulateConnected || contextConnected;
-  const effectiveIsSigned = settings.requireSignature ? (settings.simulateSigned || settings.isSigned) : true;
-
-  const [defiData, setDefiData] = useState({
-    totalPools: 'Loading...',
-    totalValueLocked: '$0',
-    bestAPY: 'Not Connected',
-    investmentRange: '$10,000',
-    supportedAssets: '20+',
-    historicalData: '5 Years',
-    supportedChains: 'Select Chain',
-    transferTime: 'Select Chain',
-    securityScore: '0.1%'
-  });
-  const sectionRef = useRef(null);
-  const { isOverCurrent, drop } = useElementDrop({
-    id: uniqueId,
-    elementRef: sectionRef,
-    onDropItem,
-  });
-
-  // Add useReorderDrop hook
-  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
-    findElementById,
-    elements,
-    setElements
-  );
-
-  // Initialize styles only once when the component mounts
-  React.useEffect(() => {
-    if (defiElement && (!defiElement.styles || Object.keys(defiElement.styles).length === 0)) {
-      updateStyles(uniqueId, defaultDeFiStyles.section);
-    }
-  }, [defiElement, uniqueId, updateStyles]);
-
-  // Get current styles with proper fallbacks
-  const currentStyles = React.useMemo(() => {
-    if (!defiElement?.styles) return defaultDeFiStyles.section;
-    
-    return {
-      backgroundColor: defiElement.styles.backgroundColor || defaultDeFiStyles.section.backgroundColor,
-      backgroundImage: defiElement.styles.backgroundImage || defaultDeFiStyles.section.backgroundImage,
-      padding: defiElement.styles.padding || defaultDeFiStyles.section.padding,
-      borderRadius: defiElement.styles.borderRadius || defaultDeFiStyles.section.borderRadius,
-      margin: defiElement.styles.margin || defaultDeFiStyles.section.margin,
-      color: defiElement.styles.color || defaultDeFiStyles.section.color,
-      backgroundType: defiElement.styles.backgroundType || defaultDeFiStyles.section.backgroundType
-    };
-  }, [defiElement?.styles]);
-
-  // Handle style updates
-  const handleStyleUpdate = React.useCallback((newStyles) => {
+    console.log('Initializing DeFi section:', defiElement);
     if (!defiElement) return;
 
-    // Ensure color values are in correct format
-    const processedStyles = {
-      ...newStyles,
-      backgroundColor: newStyles.backgroundColor || defaultDeFiStyles.section.backgroundColor,
-      color: newStyles.color || defaultDeFiStyles.section.color,
-      backgroundType: newStyles.backgroundType || defaultDeFiStyles.section.backgroundType
-    };
-
-    updateStyles(uniqueId, processedStyles);
-  }, [defiElement, uniqueId, updateStyles]);
-
-  // Memoize child elements
-  const childElements = React.useMemo(() => {
-    const filtered = elements?.filter((el) => el.parentId === uniqueId) || [];
-    return filtered;
-  }, [elements, uniqueId]);
-
-  // Memoize helper functions
-  const getChildByType = React.useCallback((type) => {
-    return childElements?.find((child) => child.type === type) || null;
-  }, [childElements]);
-
-  const getChildrenByType = React.useCallback((type) => {
-    return childElements?.filter((child) => child.type === type) || [];
-  }, [childElements]);
-
-  // Memoize retrieved elements
-  const logo = React.useMemo(() => getChildByType('logo'), [getChildByType]);
-  const title = React.useMemo(() => getChildByType('title'), [getChildByType]);
-  const description = React.useMemo(() => getChildByType('description'), [getChildByType]);
-  const modules = React.useMemo(() => getChildrenByType('defiModule') || [], [getChildrenByType]);
-
-  // Memoize parseModuleContent
-  const parseModuleContent = React.useCallback((module) => {
-    try {
-      if (!module?.content) {
-        const moduleIndex = modules?.findIndex(m => m.id === module.id) || -1;
-        const moduleType = ['aggregator', 'simulation', 'bridge'][moduleIndex] || 'default';
-        const defaultModule = defaultModules.find(m => m.moduleType === moduleType);
-        
-        if (defaultModule) {
-          return defaultModule.content;
-        }
-      }
-
-      const parsedContent = typeof module.content === 'string' 
-        ? JSON.parse(module.content) 
-        : module.content;
-      
-      // Ensure stats is in array format
-      if (parsedContent.stats && !Array.isArray(parsedContent.stats)) {
-        parsedContent.stats = Object.entries(parsedContent.stats).map(([label, value]) => ({
-          label,
-          value
-        }));
-      }
-      
-      return parsedContent;
-    } catch (e) {
-      console.error('Error parsing module content:', e);
-      const moduleIndex = modules?.findIndex(m => m.id === module.id) || -1;
-      const moduleType = ['aggregator', 'simulation', 'bridge'][moduleIndex] || 'default';
-      const defaultModule = defaultModules.find(m => m.moduleType === moduleType);
-      
-      return defaultModule ? defaultModule.content : {
-        title: moduleType === 'aggregator' ? 'DeFi Aggregator' :
-               moduleType === 'simulation' ? 'Investment Simulator' :
-               moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-        stats: moduleType === 'aggregator' ? [
-          { label: 'Connected Wallet', value: 'Not Connected' },
-          { label: 'Total Pools', value: 'Loading...' },
-          { label: 'Total Value Locked', value: '$0' },
-          { label: 'Best APY', value: 'Not Connected' }
-        ] : moduleType === 'simulation' ? [
-          { label: 'Investment Range', value: '$10,000' },
-          { label: 'Supported Assets', value: '20+' },
-          { label: 'Historical Data', value: '5 Years' }
-        ] : moduleType === 'bridge' ? [
-          { label: 'Supported Chains', value: 'Select Chain' },
-          { label: 'Transfer Time', value: 'Select Chain' },
-          { label: 'Security Score', value: '0.1%' }
-        ] : [],
-        settings: {
-          showStats: true,
-          showButton: true,
-          customColor: '#2A2A3C'
-        },
-        functionality: {
-          type: moduleType,
-          actions: []
-        },
-        enabled: true
-      };
-    }
-  }, [modules]);
-
-  // Debug logs for wallet connection changes
-  useEffect(() => {
-    console.log('Wallet connection state changed:', { isConnected, walletId, walletAddress });
-  }, [isConnected, walletId, walletAddress]);
-
-  // Update DeFi data when wallet connection changes
-  useEffect(() => {
-    console.log('Checking wallet connection for data fetch:', { isConnected, walletId, walletAddress });
+    // Create content container if it doesn't exist
+    const contentContainerId = `${defiElement.id}-content`;
+    const existingContainer = findElementById(contentContainerId, elements);
     
-    if (isConnected && walletId && walletAddress) {
-      console.log('Wallet connected, fetching DeFi data for:', { walletId, walletAddress });
-      fetchDefiData(walletId);
-    } else {
-      console.log('Resetting DeFi data - wallet not connected or missing data:', { isConnected, walletId, walletAddress });
-      // Reset to default values when disconnected
-      setDefiData({
-        totalPools: 'Not Connected',
-        totalValueLocked: '$0',
-        bestAPY: 'Not Connected',
-        investmentRange: '$10,000',
-        supportedAssets: '20+',
-        historicalData: '5 Years',
-        supportedChains: 'Select Chain',
-        transferTime: 'Select Chain',
-        securityScore: '0.1%'
-      });
-    }
-  }, [isConnected, walletId, walletAddress]);
-
-  const fetchDefiData = async (walletId) => {
-    console.log('Starting DeFi data fetch for wallet:', walletId);
-    try {
-      // Fetch real data from various sources
-      const [
-        aggregatorData,
-        simulationData,
-        bridgeData
-      ] = await Promise.all([
-        fetchAggregatorData(walletId),
-        fetchSimulationData(walletId),
-        fetchBridgeData(walletId)
-      ]);
-
-      const newDefiData = {
-        // Aggregator Module Data
-        totalPools: aggregatorData.totalPools,
-        totalValueLocked: aggregatorData.totalValueLocked,
-        bestAPY: aggregatorData.bestAPY,
-        userStakedAmount: aggregatorData.userStakedAmount,
-        userEarnings: aggregatorData.userEarnings,
-        topPerformingPools: aggregatorData.topPools,
-        
-        // Simulation Module Data
-        investmentRange: simulationData.investmentRange,
-        supportedAssets: simulationData.supportedAssets,
-        historicalData: simulationData.historicalData,
-        userPortfolio: simulationData.portfolio,
-        recommendedStrategies: simulationData.strategies,
-        
-        // Bridge Module Data
-        supportedChains: bridgeData.supportedChains,
-        transferTime: bridgeData.transferTime,
-        securityScore: bridgeData.securityScore,
-        recentTransfers: bridgeData.recentTransfers,
-        bridgeFees: bridgeData.fees
-      };
-
-      console.log('Updating DeFi data with real data:', newDefiData);
-      setDefiData(newDefiData);
-
-      // Update module content with new data
-      const modules = elements?.filter(el => el.type === 'defiModule') || [];
-      if (modules.length > 0) {
-        console.log('Updating module content with new data for modules:', modules);
-        modules.forEach(module => {
-          try {
-            // Initialize default content if empty
-            let moduleContent;
-            if (!module.content || module.content === '') {
-              const moduleIndex = modules.indexOf(module);
-              const moduleType = ['aggregator', 'simulation', 'bridge'][moduleIndex] || 'default';
-              
-              moduleContent = {
-                id: module.id,
-                moduleType: moduleType,
-                title: moduleType === 'aggregator' ? 'DeFi Aggregator' :
-                       moduleType === 'simulation' ? 'Investment Simulator' :
-                       moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-                stats: [],
-                settings: {
-                  showStats: true,
-                  showButton: true,
-                  customColor: '#2A2A3C'
-                },
-                functionality: {
-                  type: moduleType,
-                  actions: []
-                }
-              };
-            } else {
-              moduleContent = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-            }
-            
-            const moduleType = moduleContent.moduleType || 'default';
-            
-            let updatedContent = {
-              ...moduleContent,
-              stats: []
-            };
-
-            // Customize stats based on module type
-            switch (moduleType) {
-              case 'aggregator':
-                updatedContent.stats = [
-                  { label: 'Connected Wallet', value: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` },
-                  { label: 'Total Pools', value: newDefiData.totalPools },
-                  { label: 'Total Value Locked', value: newDefiData.totalValueLocked },
-                  { label: 'Best APY', value: newDefiData.bestAPY },
-                  { label: 'Your Staked Amount', value: newDefiData.userStakedAmount },
-                  { label: 'Your Earnings', value: newDefiData.userEarnings }
-                ];
-                updatedContent.topPools = newDefiData.topPerformingPools;
-                break;
-
-              case 'simulation':
-                updatedContent.stats = [
-                  { label: 'Portfolio Value', value: newDefiData.userPortfolio.totalValue },
-                  { label: '24h Change', value: newDefiData.userPortfolio.dailyChange },
-                  { label: '7d Change', value: newDefiData.userPortfolio.weeklyChange },
-                  { label: '30d Change', value: newDefiData.userPortfolio.monthlyChange },
-                  { label: 'Supported Assets', value: newDefiData.supportedAssets },
-                  { label: 'Historical Data', value: newDefiData.historicalData }
-                ];
-                updatedContent.strategies = newDefiData.recommendedStrategies;
-                break;
-
-              case 'bridge':
-                updatedContent.stats = [
-                  { label: 'Supported Chains', value: newDefiData.supportedChains },
-                  { label: 'Transfer Time', value: newDefiData.transferTime },
-                  { label: 'Security Score', value: newDefiData.securityScore },
-                  { label: 'ETH Bridge Fee', value: newDefiData.bridgeFees.ethereum },
-                  { label: 'SOL Bridge Fee', value: newDefiData.bridgeFees.solana },
-                  { label: 'MATIC Bridge Fee', value: newDefiData.bridgeFees.polygon }
-                ];
-                updatedContent.recentTransfers = newDefiData.recentTransfers;
-                break;
-
-              default:
-                updatedContent.stats = moduleContent.stats || [];
-            }
-
-            updateContent(module.id, JSON.stringify(updatedContent));
-            console.log('Updated module content for:', module.id);
-          } catch (error) {
-            console.error('Error updating module content:', error);
-            // Set error state for the module
-            const errorContent = {
-              id: module.id,
-              moduleType: module.configuration?.moduleType || 'default',
-              title: 'Error Module',
-              stats: [
-                { label: 'Error', value: 'Failed to load module data' }
-              ],
-              settings: {
-                showStats: true,
-                showButton: false,
-                customColor: '#ff0000'
-              }
-            };
-            updateContent(module.id, JSON.stringify(errorContent));
-          }
-        });
-      } else {
-        console.log('No DeFi modules found to update');
-      }
-    } catch (error) {
-      console.error('Error fetching DeFi data:', error);
-      // Set error states
-      setDefiData({
-        totalPools: 'Error',
-        totalValueLocked: 'Error',
-        bestAPY: 'Error',
-        investmentRange: 'Error',
-        supportedAssets: 'Error',
-        historicalData: 'Error',
-        supportedChains: 'Error',
-        transferTime: 'Error',
-        securityScore: 'Error'
-      });
-    }
-  };
-
-  // Helper function to fetch aggregator data
-  const fetchAggregatorData = async (walletId) => {
-    try {
-      // Fetch data from various DeFi protocols
-      const [raydiumData, orcaData, saberData] = await Promise.all([
-        fetchRaydiumData(walletId),
-        fetchOrcaData(walletId),
-        fetchSaberData(walletId)
-      ]);
-
-      // Combine and process data from different protocols
-      const allPools = [...raydiumData.pools, ...orcaData.pools, ...saberData.pools];
-      const userPositions = [...raydiumData.positions, ...orcaData.positions, ...saberData.positions];
-
-      return {
-        totalPools: allPools.length.toString(),
-        totalValueLocked: formatUSD(calculateTotalValueLocked(allPools)),
-        bestAPY: findBestAPY(allPools),
-        userStakedAmount: formatUSD(calculateUserStakedAmount(userPositions)),
-        userEarnings: formatUSD(calculateUserEarnings(userPositions)),
-        topPools: getTopPerformingPools(allPools)
-      };
-    } catch (error) {
-      console.error('Error fetching aggregator data:', error);
-      throw error;
-    }
-  };
-
-  // Helper function to fetch simulation data
-  const fetchSimulationData = async (walletId) => {
-    try {
-      // Fetch historical data and market analysis
-      const [historicalData, marketAnalysis] = await Promise.all([
-        fetchHistoricalData(walletId),
-        fetchMarketAnalysis()
-      ]);
-
-      return {
-        investmentRange: calculateInvestmentRange(historicalData),
-        supportedAssets: getSupportedAssets(marketAnalysis),
-        historicalData: formatHistoricalDataRange(historicalData),
-        portfolio: calculatePortfolioMetrics(historicalData),
-        strategies: generateRecommendedStrategies(marketAnalysis, historicalData)
-      };
-    } catch (error) {
-      console.error('Error fetching simulation data:', error);
-      throw error;
-    }
-  };
-
-  // Helper function to fetch bridge data
-  const fetchBridgeData = async (walletId) => {
-    try {
-      // Fetch data from various bridge protocols
-      const [wormholeData, allbridgeData] = await Promise.all([
-        fetchWormholeData(walletId),
-        fetchAllbridgeData(walletId)
-      ]);
-
-      return {
-        supportedChains: getSupportedChains([wormholeData, allbridgeData]),
-        transferTime: calculateAverageTransferTime([wormholeData, allbridgeData]),
-        securityScore: calculateSecurityScore([wormholeData, allbridgeData]),
-        recentTransfers: getRecentTransfers(walletId, [wormholeData, allbridgeData]),
-        fees: calculateBridgeFees([wormholeData, allbridgeData])
-      };
-    } catch (error) {
-      console.error('Error fetching bridge data:', error);
-      throw error;
-    }
-  };
-
-  // Helper function to fetch data with retry and timeout
-  const fetchWithRetry = async (url, options = {}, retries = 3, timeout = 5000) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-        
-        const response = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            ...options.headers
-          }
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error(`Attempt ${i + 1} failed:`, error);
-        if (i === retries - 1) throw error;
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-      }
-    }
-  };
-
-  // Protocol-specific data fetching functions
-  const fetchRaydiumData = async (walletId) => {
-    try {
-      const [poolsData, positionsData] = await Promise.all([
-        fetchWithRetry(`${RAYDIUM_API}/pools`),
-        fetchWithRetry(`${RAYDIUM_API}/positions/${walletId}`)
-      ]);
-
-      return {
-        pools: poolsData.pools.map(pool => ({
-          name: pool.name,
-          apy: pool.apy,
-          tvl: pool.tvl,
-          tokenA: pool.tokenA,
-          tokenB: pool.tokenB
-        })),
-        positions: positionsData.positions.map(pos => ({
-          poolId: pos.poolId,
-          amount: pos.amount,
-          earnings: pos.earnings
-        }))
-      };
-    } catch (error) {
-      console.error('Error fetching Raydium data:', error);
-      return {
-        pools: fallbackPools,
-        positions: fallbackPositions
-      };
-    }
-  };
-
-  const fetchOrcaData = async (walletId) => {
-    try {
-      const [poolsData, positionsData] = await Promise.all([
-        fetchWithRetry(`${ORCA_API}/pools`),
-        fetchWithRetry(`${ORCA_API}/positions/${walletId}`)
-      ]);
-
-      return {
-        pools: poolsData.pools.map(pool => ({
-          name: pool.name,
-          apy: pool.apy,
-          tvl: pool.tvl,
-          tokenA: pool.tokenA,
-          tokenB: pool.tokenB
-        })),
-        positions: positionsData.positions.map(pos => ({
-          poolId: pos.poolId,
-          amount: pos.amount,
-          earnings: pos.earnings
-        }))
-      };
-    } catch (error) {
-      console.error('Error fetching Orca data:', error);
-      return {
-        pools: fallbackPools,
-        positions: fallbackPositions
-      };
-    }
-  };
-
-  const fetchSaberData = async (walletId) => {
-    try {
-      const [poolsData, positionsData] = await Promise.all([
-        fetchWithRetry(`${SABER_API}/pools`),
-        fetchWithRetry(`${SABER_API}/positions/${walletId}`)
-      ]);
-
-      return {
-        pools: poolsData.pools.map(pool => ({
-          name: pool.name,
-          apy: pool.apy,
-          tvl: pool.tvl,
-          tokenA: pool.tokenA,
-          tokenB: pool.tokenB
-        })),
-        positions: positionsData.positions.map(pos => ({
-          poolId: pos.poolId,
-          amount: pos.amount,
-          earnings: pos.earnings
-        }))
-      };
-    } catch (error) {
-      console.error('Error fetching Saber data:', error);
-      return {
-        pools: fallbackPools,
-        positions: fallbackPositions
-      };
-    }
-  };
-
-  const fetchHistoricalData = async (walletId) => {
-    try {
-      const data = await fetchWithRetry(`${DEFI_HISTORY_API}/wallet/${walletId}`);
-      return data;
-    } catch (error) {
-      console.error('Error fetching historical data:', error);
-      return fallbackHistoricalData;
-    }
-  };
-
-  const fetchMarketAnalysis = async () => {
-    try {
-      const data = await fetchWithRetry(`${DEFI_MARKET_API}/analysis`);
-      return data;
-    } catch (error) {
-      console.error('Error fetching market analysis:', error);
-      return fallbackMarketAnalysis;
-    }
-  };
-
-  const fetchWormholeData = async (walletId) => {
-    try {
-      const data = await fetchWithRetry(`${WORMHOLE_API}/transfers/${walletId}`);
-      return data;
-    } catch (error) {
-      console.error('Error fetching Wormhole data:', error);
-      return fallbackBridgeData;
-    }
-  };
-
-  const fetchAllbridgeData = async (walletId) => {
-    try {
-      const data = await fetchWithRetry(`${ALLBRIDGE_API}/transfers/${walletId}`);
-      return data;
-    } catch (error) {
-      console.error('Error fetching Allbridge data:', error);
-      return fallbackBridgeData;
-    }
-  };
-
-  // Data processing helper functions
-  const formatUSD = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const calculateTotalValueLocked = (pools) => {
-    return pools.reduce((total, pool) => total + pool.tvl, 0);
-  };
-
-  const findBestAPY = (pools) => {
-    const bestPool = pools.reduce((best, pool) => 
-      pool.apy > best.apy ? pool : best
-    );
-    return `${bestPool.apy.toFixed(2)}%`;
-  };
-
-  const calculateUserStakedAmount = (positions) => {
-    return positions.reduce((total, position) => total + position.amount, 0);
-  };
-
-  const calculateUserEarnings = (positions) => {
-    return positions.reduce((total, position) => total + position.earnings, 0);
-  };
-
-  const getTopPerformingPools = (pools) => {
-    return pools
-      .sort((a, b) => b.apy - a.apy)
-      .slice(0, 3)
-      .map(pool => ({
-        name: pool.name,
-        apy: `${pool.apy.toFixed(2)}%`,
-        tvl: formatUSD(pool.tvl)
-      }));
-  };
-
-  const calculateInvestmentRange = (historicalData) => {
-    const minInvestment = Math.min(...historicalData.investments);
-    const maxInvestment = Math.max(...historicalData.investments);
-    return `${formatUSD(minInvestment)} - ${formatUSD(maxInvestment)}`;
-  };
-
-  const getSupportedAssets = (marketAnalysis) => {
-    return marketAnalysis.supportedAssets.length.toString();
-  };
-
-  const formatHistoricalDataRange = (historicalData) => {
-    const startDate = new Date(historicalData.startDate);
-    const endDate = new Date(historicalData.endDate);
-    const years = (endDate - startDate) / (1000 * 60 * 60 * 24 * 365);
-    return `${Math.round(years)} Years`;
-  };
-
-  const calculatePortfolioMetrics = (historicalData) => {
-    const portfolio = historicalData.portfolio;
-    return {
-      totalValue: formatUSD(portfolio.currentValue),
-      dailyChange: `${portfolio.dailyChange.toFixed(2)}%`,
-      weeklyChange: `${portfolio.weeklyChange.toFixed(2)}%`,
-      monthlyChange: `${portfolio.monthlyChange.toFixed(2)}%`
-    };
-  };
-
-  const generateRecommendedStrategies = (marketAnalysis, historicalData) => {
-    return marketAnalysis.strategies.map(strategy => ({
-      name: strategy.name,
-      apy: `${strategy.minApy.toFixed(2)}-${strategy.maxApy.toFixed(2)}%`,
-      risk: strategy.riskLevel
-    }));
-  };
-
-  const getSupportedChains = (bridgeData) => {
-    const chains = new Set();
-    bridgeData.forEach(data => {
-      data.supportedChains.forEach(chain => chains.add(chain));
-    });
-    return Array.from(chains).join(', ');
-  };
-
-  const calculateAverageTransferTime = (bridgeData) => {
-    const times = bridgeData.flatMap(data => data.transferTimes);
-    const average = times.reduce((sum, time) => sum + time, 0) / times.length;
-    return `${Math.round(average)} minutes`;
-  };
-
-  const calculateSecurityScore = (bridgeData) => {
-    const scores = bridgeData.map(data => data.securityScore);
-    const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-    return `${(average * 100).toFixed(1)}%`;
-  };
-
-  const getRecentTransfers = (walletId, bridgeData) => {
-    const transfers = bridgeData.flatMap(data => data.transfers)
-      .filter(transfer => transfer.walletId === walletId)
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-      .slice(0, 5);
-
-    return transfers.map(transfer => ({
-      from: transfer.sourceChain,
-      to: transfer.destinationChain,
-      amount: formatUSD(transfer.amount),
-      status: transfer.status
-    }));
-  };
-
-  const calculateBridgeFees = (bridgeData) => {
-    const fees = {};
-    bridgeData.forEach(data => {
-      Object.entries(data.fees).forEach(([chain, fee]) => {
-        fees[chain.toLowerCase()] = `${(fee * 100).toFixed(2)}%`;
-      });
-    });
-    return fees;
-  };
-
-  // Handle module actions
-  const handleModuleAction = async (moduleType, action, params = {}) => {
-    if (!isConnected || !walletId) {
-      console.error('Wallet not connected');
-      return;
-    }
-
-    try {
-      switch (moduleType) {
-        case 'aggregator':
-          await handleAggregatorAction(action, params);
-          break;
-        case 'simulation':
-          await handleSimulationAction(action, params);
-          break;
-        case 'bridge':
-          await handleBridgeAction(action, params);
-          break;
-        default:
-          console.error('Unknown module type:', moduleType);
-      }
-    } catch (error) {
-      console.error(`Error executing ${action} on ${moduleType}:`, error);
-    }
-  };
-
-  // Handle aggregator module actions
-  const handleAggregatorAction = async (action, params) => {
-    switch (action) {
-      case 'viewPools':
-        // Implement view pools logic
-        console.log('Viewing pools for wallet:', walletId);
-        break;
-      case 'stake':
-        // Implement stake logic
-        console.log('Staking for wallet:', walletId);
-        break;
-      case 'unstake':
-        // Implement unstake logic
-        console.log('Unstaking for wallet:', walletId);
-        break;
-      case 'claimRewards':
-        // Implement claim rewards logic
-        console.log('Claiming rewards for wallet:', walletId);
-        break;
-      default:
-        console.error('Unknown aggregator action:', action);
-    }
-  };
-
-  // Handle simulation module actions
-  const handleSimulationAction = async (action, params) => {
-    switch (action) {
-      case 'buy':
-        // Implement buy logic
-        console.log('Buying assets for wallet:', walletId);
-        break;
-      case 'sell':
-        // Implement sell logic
-        console.log('Selling assets for wallet:', walletId);
-        break;
-      case 'viewPortfolio':
-        // Implement view portfolio logic
-        console.log('Viewing portfolio for wallet:', walletId);
-        break;
-      case 'analyzePerformance':
-        // Implement analyze performance logic
-        console.log('Analyzing performance for wallet:', walletId);
-        break;
-      default:
-        console.error('Unknown simulation action:', action);
-    }
-  };
-
-  // Handle bridge module actions
-  const handleBridgeAction = async (action, params) => {
-    switch (action) {
-      case 'selectSourceChain':
-        // Implement select source chain logic
-        console.log('Selecting source chain for wallet:', walletId);
-        break;
-      case 'selectDestinationChain':
-        // Implement select destination chain logic
-        console.log('Selecting destination chain for wallet:', walletId);
-        break;
-      case 'selectToken':
-        // Implement select token logic
-        console.log('Selecting token for wallet:', walletId);
-        break;
-      case 'transfer':
-        // Implement transfer logic
-        console.log('Transferring for wallet:', walletId);
-        break;
-      default:
-        console.error('Unknown bridge action:', action);
-    }
-  };
-
-  // Memoize modulesToRender
-  const modulesToRender = React.useMemo(() => {
-    console.log('Rendering modules:', { modules, defaultModules });
-    
-    // If no modules exist or modules array is empty, create them from defaultModules
-    if (!modules || modules.length === 0) {
-      console.log('No modules found, creating default modules');
-      return defaultModules.map(defaultModule => ({
-        id: defaultModule.id,
-        type: 'defiModule',
-        content: {
-          title: defaultModule.moduleType === 'aggregator' ? 'DeFi Aggregator' :
-                 defaultModule.moduleType === 'simulation' ? 'Investment Simulator' :
-                 defaultModule.moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-          description: defaultModule.moduleType === 'aggregator' ? 'Access multiple DeFi protocols through a single interface' :
-                      defaultModule.moduleType === 'simulation' ? 'Simulate different investment strategies' :
-                      defaultModule.moduleType === 'bridge' ? 'Transfer assets between different blockchains' : '',
-          stats: defaultModule.moduleType === 'aggregator' ? [
-            { label: 'Connected Wallet', value: 'Not Connected' },
-            { label: 'Total Pools', value: 'Loading...' },
-            { label: 'Total Value Locked', value: '$0' },
-            { label: 'Best APY', value: 'Not Connected' }
-          ] : defaultModule.moduleType === 'simulation' ? [
-            { label: 'Investment Range', value: '$10,000' },
-            { label: 'Supported Assets', value: '20+' },
-            { label: 'Historical Data', value: '5 Years' }
-          ] : defaultModule.moduleType === 'bridge' ? [
-            { label: 'Supported Chains', value: 'Select Chain' },
-            { label: 'Transfer Time', value: 'Select Chain' },
-            { label: 'Security Score', value: '0.1%' }
-          ] : []
-        },
+    if (!existingContainer) {
+      console.log('Creating content container:', contentContainerId);
+      const contentContainer = {
+        id: contentContainerId,
+        type: 'div',
         styles: {
-          backgroundColor: '#2A2A3C',
-          padding: '1.5rem',
-          borderRadius: '12px',
-          color: '#fff'
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '32px',
+          maxWidth: '1200px',
+          margin: '0 auto',
+          width: '100%',
+          padding: '20px'
         },
-        configuration: {
-          moduleType: defaultModule.moduleType,
-          enabled: true,
+        children: [],
+        parentId: defiElement.id
+      };
+
+      // Get default modules from Web3Configs
+      const defaultModules = Web3Configs.defiSection.children || [];
+      console.log('Default modules:', defaultModules);
+
+      // Create module elements
+      const moduleElements = defaultModules.map(module => {
+        const moduleId = generateUniqueId('defiModule');
+        console.log('Creating module with ID:', moduleId);
+        return {
+          id: moduleId,
+          type: 'defiModule',
+          moduleType: module.moduleType || 'aggregator',
+          content: module.content,
+          styles: module.styles,
+          configuration: module.configuration,
+          settings: module.settings,
+          parentId: contentContainerId
+        };
+      });
+
+      // Update content container with module IDs
+      contentContainer.children = moduleElements.map(module => module.id);
+
+      // Add all elements in a single state update
+      setElements(prev => [...prev, contentContainer, ...moduleElements]);
+    }
+  }, [defiElement, elements, findElementById, setElements]);
+
+  // Handle dropping items into the DeFi section
+  const handleDeFiDrop = (item, index) => {
+    if (item.type === 'defiModule') {
+      const moduleId = generateUniqueId('defiModule');
+      const newModule = {
+        id: moduleId,
+        type: 'defiModule',
+        moduleType: item.moduleType || 'aggregator',
+        content: {
+          title: item.content?.title || 'New DeFi Module',
+          description: item.content?.description || 'Module description',
+          stats: item.content?.stats || [],
+          settings: {
+            showStats: true,
+            showButton: true,
           customColor: '#2A2A3C'
         }
-      }));
-    }
+        },
+          styles: {
+          ...defaultDeFiStyles.defiModule,
+          position: 'relative',
+          boxSizing: 'border-box',
+          padding: '10px',
+          margin: '10px 0',
+          backgroundColor: 'rgba(42, 42, 60, 0.5)',
+          borderRadius: '8px',
+          backdropFilter: 'blur(10px)'
+        },
+        settings: item.settings || {},
+        children: []
+      };
 
-    // Process existing modules
-    return modules.map((module) => {
-      try {
-        let parsedContent;
-        
-        // Handle content based on its type
-        if (typeof module.content === 'string') {
-          try {
-            parsedContent = JSON.parse(module.content);
-          } catch (e) {
-            console.log('Module content is string but not JSON:', module.content);
-            parsedContent = { title: module.content };
-          }
-        } else if (module.content && typeof module.content === 'object') {
-          parsedContent = module.content;
-        } else {
-          parsedContent = {};
+      // Add the new module to elements
+      setElements(prev => [...prev, newModule]);
+
+      // Update the content container's children
+      const contentContainerId = `${id}-content`;
+      setElements(prev => prev.map(el => {
+        if (el.id === contentContainerId) {
+      return {
+            ...el,
+            children: [...(el.children || []), moduleId]
+          };
         }
-
-        const moduleType = module.configuration?.moduleType || 'aggregator';
-        
-        // Ensure we have valid content structure
-        const content = {
-          title: parsedContent.title || (moduleType === 'aggregator' ? 'DeFi Aggregator' :
-                 moduleType === 'simulation' ? 'Investment Simulator' :
-                 moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title'),
-          description: parsedContent.description || (moduleType === 'aggregator' ? 'Access multiple DeFi protocols through a single interface' :
-                      moduleType === 'simulation' ? 'Simulate different investment strategies' :
-                      moduleType === 'bridge' ? 'Transfer assets between different blockchains' : ''),
-          stats: Array.isArray(parsedContent.stats) ? parsedContent.stats : moduleType === 'aggregator' ? [
-            { label: 'Connected Wallet', value: isConnected ? `${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}` : 'Not Connected' },
-            { label: 'Total Pools', value: defiData?.totalPools || 'Loading...' },
-            { label: 'Total Value Locked', value: defiData?.totalValueLocked || '$0' },
-            { label: 'Best APY', value: defiData?.bestAPY || 'Not Connected' }
-          ] : moduleType === 'simulation' ? [
-            { label: 'Investment Range', value: defiData?.investmentRange || '$10,000' },
-            { label: 'Supported Assets', value: defiData?.supportedAssets || '20+' },
-            { label: 'Historical Data', value: defiData?.historicalData || '5 Years' }
-          ] : moduleType === 'bridge' ? [
-            { label: 'Supported Chains', value: defiData?.supportedChains || 'Select Chain' },
-            { label: 'Transfer Time', value: defiData?.transferTime || 'Select Chain' },
-            { label: 'Security Score', value: defiData?.securityScore || '0.1%' }
-          ] : []
-        };
-
-        return {
-          ...module,
-          content,
-          styles: {
-            ...module.styles,
-            backgroundColor: parsedContent?.settings?.customColor || '#2A2A3C',
-            padding: '1.5rem',
-            borderRadius: '12px',
-            color: '#fff'
-          },
-          configuration: {
-            ...module.configuration,
-            moduleType,
-            enabled: parsedContent?.enabled ?? true,
-            customColor: parsedContent?.settings?.customColor || '#2A2A3C'
-          }
-        };
-      } catch (error) {
-        console.error('Error processing module:', error);
-        const moduleType = module.configuration?.moduleType || 'aggregator';
-        
-        return {
-          ...module,
-          content: {
-            title: moduleType === 'aggregator' ? 'DeFi Aggregator' :
-                   moduleType === 'simulation' ? 'Investment Simulator' :
-                   moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-            description: moduleType === 'aggregator' ? 'Access multiple DeFi protocols through a single interface' :
-                        moduleType === 'simulation' ? 'Simulate different investment strategies' :
-                        moduleType === 'bridge' ? 'Transfer assets between different blockchains' : '',
-            stats: moduleType === 'aggregator' ? [
-              { label: 'Connected Wallet', value: 'Not Connected' },
-              { label: 'Total Pools', value: 'Loading...' },
-              { label: 'Total Value Locked', value: '$0' },
-              { label: 'Best APY', value: 'Not Connected' }
-            ] : moduleType === 'simulation' ? [
-              { label: 'Investment Range', value: '$10,000' },
-              { label: 'Supported Assets', value: '20+' },
-              { label: 'Historical Data', value: '5 Years' }
-            ] : moduleType === 'bridge' ? [
-              { label: 'Supported Chains', value: 'Select Chain' },
-              { label: 'Transfer Time', value: 'Select Chain' },
-              { label: 'Security Score', value: '0.1%' }
-            ] : []
-          },
-          styles: {
-            backgroundColor: '#2A2A3C',
-            padding: '1.5rem',
-            borderRadius: '12px',
-            color: '#fff'
-          },
-          configuration: {
-            moduleType,
-            enabled: true,
-            customColor: '#2A2A3C'
-          }
-        };
-      }
-    });
-  }, [modules, defiData, isConnected, walletAddress]);
-
-  const handleSectionSelect = React.useCallback((e) => {
-    e.stopPropagation();
-    if (handleSelect) {
-      handleSelect(e);
+        return el;
+      }));
+    } else {
+      onDropItem(item, index);
     }
-    const element = elements.find(el => el.id === uniqueId);
-    setSelectedElement(element || { id: uniqueId, type: 'defiSection', styles: {} });
-  }, [handleSelect, setSelectedElement, uniqueId, elements]);
-
-  // Add handleModuleDrop function
-  const handleModuleDrop = (droppedItem, parentId = uniqueId) => {
-    if (droppedItem.id) {
-      return;
-    }
-
-    const newId = addNewElement(
-      droppedItem.type,
-      droppedItem.level || 1,
-      null,
-      parentId
-    );
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === parentId
-          ? { ...el, children: [...el.children, newId] }
-          : el
-      )
-    );
   };
 
-  // Add renderModuleChildren function
-  const renderModuleChildren = (moduleId) => {
-    const module = findElementById(moduleId, elements);
-    if (!module || !module.children) return null;
-    return module.children.map((childId, index) => {
+  // Render container children
+  const renderContainerChildren = () => {
+    console.log('Rendering container children for ID:', id);
+    if (!id) {
+      console.log('No section ID provided');
+      return null;
+    }
+
+    const container = findElementById(`${id}-content`, elements);
+    console.log('Found container:', container);
+
+    if (!container) {
+      console.log('Container not found');
+      return null;
+    }
+
+    return container.children?.map((childId) => {
       const child = findElementById(childId, elements);
-      if (!child) return null;
+      console.log('Rendering child:', child);
+
+      if (!child) {
+        console.log('Child not found:', childId);
+        return null;
+      }
+
+      const isSelected = selectedElement?.id === childId;
+
       return (
-        <React.Fragment key={child.id}>
-          {activeDrop && activeDrop.containerId === moduleId && activeDrop.index === index && (
+        <div
+          key={childId}
+          style={{
+            position: 'relative',
+            boxSizing: 'border-box',
+            ...(isSelected ? {
+              outline: '2px solid var(--purple, #5C4EFA)',
+              borderInline: '0.5px solid var(--purple, #5C4EFA)'
+            } : {})
+          }}
+        >
+          {isSelected && (
             <div
-              className="drop-placeholder"
               style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
+                position: 'absolute',
+                zIndex: 1000,
+                pointerEvents: 'none',
+                backgroundColor: 'var(--purple)',
+                color: '#fff',
+                padding: '4px 8px',
+                borderRadius: '5px',
+                fontSize: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                maxWidth: '1500px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                marginTop: '-25px',
               }}
-              onDragOver={(e) => onDragOver(e, moduleId, index)}
-              onDrop={(e) => onDrop(e, moduleId)}
             >
-              Drop here – element will be dropped here
+              <span
+                style={{
+                  flex: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                title={childId}
+              >
+                {childId}
+              </span>
+              <span
+                className="material-symbols-outlined"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveElement(childId);
+                }}
+                style={{
+                  pointerEvents: 'auto',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  fontSize: '1rem',
+                  marginLeft: '8px',
+                }}
+                title="Remove element"
+              >
+                delete
+              </span>
             </div>
           )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragOver={(e) => onDragOver(e, moduleId, index)}
-            onDragEnd={onDragEnd}
-            style={{ display: 'inline-block' }}
-          >
-            {renderElement(
-              child,
-              elements,
-              null,
-              setSelectedElement,
-              setElements,
-              null,
-              undefined,
-              handleOpenMediaPanel
-            )}
-          </span>
-        </React.Fragment>
+          <DeFiModule
+            id={childId}
+            content={child.content}
+            styles={child.styles}
+            configuration={child.configuration}
+            settings={child.settings}
+            handleSelect={handleSelect}
+            handleOpenMediaPanel={handleOpenMediaPanel}
+            isConnected={contextConnected}
+            isSigned={false}
+            requireSignature={true}
+            moduleType={child.moduleType}
+          />
+        </div>
       );
     });
   };
 
-  return (
-    <div style={{ border: 'none', outline: 'none', boxShadow: 'none', backgroundColor: 'transparent' }}>
-    <section
-      ref={(node) => {
-        sectionRef.current = node;
-        drop(node);
-      }}
-      style={{
-        backgroundColor: currentStyles.backgroundColor,
-        backgroundImage: currentStyles.backgroundImage,
-        padding: currentStyles.padding,
-        position: 'relative',
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: '2rem',
-        border: 'none',
-        outline: 'none',
-        boxShadow: 'none'
-      }}
-      onClick={handleSectionSelect}
+  // Get the content container ID
+  const contentContainerId = `${id}-content`;
+
+  // Merge styles properly
+  const sectionStyles = {
+    ...defaultDeFiStyles.defiSection,
+    ...defiElement?.styles,
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    boxSizing: 'border-box',
+    padding: '10px',
+    margin: '0',
+    backgroundColor: 'rgba(42, 42, 60, 0.5)',
+    backdropFilter: 'blur(10px)'
+  };
+
+      return (
+    <SectionWithRef
+      ref={ref}
+      id={id}
+      onDropItem={handleDeFiDrop}
+      handlePanelToggle={handlePanelToggle}
+      handleOpenMediaPanel={handleOpenMediaPanel}
+      handleSelect={handleSelect}
+      style={sectionStyles}
     >
-      {/* Header Section */}
+      <div
+        id={contentContainerId}
+              style={{
+          ...defaultDeFiStyles.defiContent,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '32px',
+          maxWidth: '1200px',
+          margin: '0 auto',
+                width: '100%',
+          padding: '20px'
+        }}
+      >
       <div style={{
         textAlign: 'center',
-        marginBottom: '2rem',
-        color: currentStyles.color
-      }}>
-        {logo && (
-          <Image
-            id={logo.id}
-            src={logo.content}
-            styles={defaultDeFiStyles.logo}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-          />
-        )}
-        {title && (
-          <Span
-            id={title.id}
-            content={title.content}
-            styles={{
-              ...defaultDeFiStyles.title,
-              color: currentStyles.color
-            }}
-          />
-        )}
-        {description && (
-          <Span
-            id={description.id}
-            content={description.content}
-            styles={{
-              ...defaultDeFiStyles.description,
-              color: `${currentStyles.color}99`
-            }}
-          />
-        )}
-      </div>
-
-      {/* DeFi Modules Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '2rem'
-      }}>
-        {modulesToRender.map((module, index) => (
-          <React.Fragment key={module.id}>
-            {activeDrop && activeDrop.containerId === uniqueId && activeDrop.index === index && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-                onDragOver={(e) => onDragOver(e, uniqueId, index)}
-                onDrop={(e) => onDrop(e, uniqueId)}
-              >
-                Drop here – element will be dropped here
+          marginBottom: '40px'
+        }}>
+          <h1 style={{
+            ...defaultDeFiStyles.defiTitle,
+          }}>
+            DeFi Dashboard
+          </h1>
+          <p style={{
+            ...defaultDeFiStyles.defiDescription,
+          }}>
+            Manage your DeFi investments and explore new opportunities
+          </p>
               </div>
-            )}
-            <span
-              draggable
-              onDragStart={(e) => onDragStart(e, module.id)}
-              onDragOver={(e) => onDragOver(e, uniqueId, index)}
-              onDragEnd={onDragEnd}
-              style={{ display: 'inline-block' }}
-            >
-              <DeFiModule
-                id={module.id}
-                content={module.content}
-                styles={{
-                  ...defaultDeFiStyles.module,
-                  backgroundColor: `${currentStyles.backgroundColor}80`,
-                  color: currentStyles.color
-                }}
-                configuration={module.configuration}
-                handleSelect={handleSectionSelect}
-                handleOpenMediaPanel={handleOpenMediaPanel}
-                isConnected={isConnected}
-                isSigned={effectiveIsSigned}
-                requireSignature={settings.requireSignature}
-              >
-                {renderModuleChildren(module.id)}
-              </DeFiModule>
-            </span>
-          </React.Fragment>
-        ))}
-        {activeDrop && activeDrop.containerId === uniqueId && (
-          <div
-            style={{ height: '40px', width: '100%' }}
-            onDragOver={(e) => onDragOver(e, uniqueId, modulesToRender.length)}
-            onDrop={(e) => onDrop(e, uniqueId)}
-          >
-            {activeDrop.index === modulesToRender.length && (
-              <div
-                className="drop-placeholder"
-                style={{
-                  padding: '8px',
-                  border: '2px dashed #5C4EFA',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  backgroundColor: 'transparent',
-                  width: '100%',
-                  margin: '5px',
-                  fontFamily: 'Montserrat',
-                }}
-              >
-                Drop here – element will be dropped here
+        {renderContainerChildren()}
               </div>
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-    </div>
+    </SectionWithRef>
   );
-};
+});
 
 export default DeFiSection; 
