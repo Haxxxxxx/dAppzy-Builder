@@ -1,15 +1,12 @@
-import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef, useCallback } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import useReorderDrop from '../../../utils/useReorderDrop.js';
 import { heroTwoStyles } from './defaultHeroStyles';
-import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
+import { Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { HeroConfiguration } from '../../../configs/heros/HeroConfigurations';
 
-// Create a forwardRef wrapper for Section
 const SectionWithRef = forwardRef((props, ref) => (
   <Section {...props} ref={ref} />
 ));
@@ -17,7 +14,6 @@ const SectionWithRef = forwardRef((props, ref) => (
 const HeroTwo = forwardRef(({
   handleSelect,
   uniqueId,
-  children,
   onDropItem,
   handleOpenMediaPanel,
 }, ref) => {
@@ -28,8 +24,8 @@ const HeroTwo = forwardRef(({
     setElements,
     setSelectedElement,
     findElementById,
-    updateStyles,
     addNewElement,
+    updateStyles,
   } = useContext(EditableContext);
 
   const heroElement = useMemo(
@@ -37,77 +33,91 @@ const HeroTwo = forwardRef(({
     [elements, uniqueId]
   );
 
+  const contentContainerId = `${uniqueId}-content`;
+
   useEffect(() => {
-    if (defaultInjectedRef.current || !heroElement) return;
+    if (!heroElement || defaultInjectedRef.current) return;
 
-    // First, ensure the hero has the default styles
-    const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement?.styles);
-    updateStyles(heroElement.id, mergedHeroStyles);
-
-    const contentContainer = findElementById(`${uniqueId}-content`, elements);
-    const defaultContent = heroElement?.configuration ? 
-      HeroConfiguration[heroElement.configuration].children : [];
-
-    // Create a batch of updates
-    const updates = [];
-
-    // Add content container if it doesn't exist
-    if (!contentContainer) {
-      updates.push({
-          id: `${uniqueId}-content`,
-          type: 'div',
-          styles: heroTwoStyles.heroLeftContent,
-          children: [],
-          parentId: uniqueId,
-      });
+    // Always ensure the hero has the correct base styles
+    const mergedHeroStyles = {
+      ...heroTwoStyles.heroSection,
+      ...heroElement.styles
+    };
+    if (typeof updateStyles === 'function') {
+      updateStyles(heroElement.id, mergedHeroStyles);
     }
 
-    // Only inject content if we have default content and the container is empty
-    if (defaultContent.length > 0 && (!contentContainer || contentContainer.children.length === 0)) {
-      const newChildren = defaultContent.map(child => {
-        const newId = `${uniqueId}-content-${Math.random().toString(36).substr(2, 9)}`;
-        return {
-          id: newId,
-          type: child.type,
-                content: child.content,
-                styles: merge(
-                  child.type === 'heading' ? heroTwoStyles.heroTitle :
+    // Create content container if it doesn't exist
+    if (!findElementById(contentContainerId, elements)) {
+      const contentContainer = {
+        id: contentContainerId,
+        type: 'div',
+        styles: {
+          ...heroTwoStyles.heroContent,
+          position: 'relative',
+          boxSizing: 'border-box'
+        },
+        children: [],
+        parentId: uniqueId,
+      };
+      setElements(prev => [...prev, contentContainer]);
+
+      // Add default content to content container from configuration
+      const defaultContent = HeroConfiguration.heroTwo.children;
+      const contentIds = defaultContent.map(child => {
+        const newId = addNewElement(child.type, 1, null, contentContainerId);
+        // Update the element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
+            const childStyles = {
+              ...(child.type === 'heading' ? heroTwoStyles.heroTitle :
                   child.type === 'paragraph' ? heroTwoStyles.heroDescription :
                   child.type === 'button' ? heroTwoStyles.primaryButton :
-                  {},
-                  child.styles || {}
-          ),
-          parentId: `${uniqueId}-content`
-        };
+                  {}),
+              ...child.styles,
+              position: 'relative',
+              boxSizing: 'border-box'
+            };
+            return {
+              ...el,
+              content: child.content,
+              styles: childStyles
+            };
+          }
+          return el;
+        }));
+        return newId;
       });
 
-      // Add all new children to updates
-      updates.push(...newChildren);
-
-      // Update content container with new children
-      if (contentContainer) {
-        updates.push({
-          ...contentContainer,
-          children: newChildren.map(child => child.id)
-        });
-      } else {
-        updates[0].children = newChildren.map(child => child.id);
-      }
+      // Update content container with all content IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === contentContainerId) {
+          return {
+            ...el,
+            children: contentIds
+          };
+        }
+        return el;
+      }));
     }
 
-    // Apply all updates in a single state change
-    if (updates.length > 0) {
-      setElements(prev => {
-        const existingIds = new Set(prev.map(el => el.id));
-        const newElements = updates.filter(el => !existingIds.has(el.id));
-        return [...prev, ...newElements];
-        });
-        defaultInjectedRef.current = true;
+    // Update hero's children to only include the content container
+    setElements(prev => prev.map(el => {
+      if (el.id === uniqueId) {
+        return {
+          ...el,
+          children: [contentContainerId],
+          configuration: 'heroTwo',
+          structure: 'heroTwo',
+        };
       }
-  }, [heroElement, elements, findElementById, uniqueId, updateStyles, setElements]);
+      return el;
+    }));
+
+    defaultInjectedRef.current = true;
+  }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
-    // Simple drop handler that just adds the element
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
@@ -122,15 +132,6 @@ const HeroTwo = forwardRef(({
     const element = findElementById(divId, elements);
     setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
-
-  const {
-    activeDrop,
-    onDragStart,
-    onDragOver,
-    onDrop,
-    onDragEnd,
-    draggedId,
-  } = useReorderDrop(findElementById, elements, setElements);
 
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
@@ -153,21 +154,31 @@ const HeroTwo = forwardRef(({
   };
 
   // Get the content container element
-  const contentContainer = findElementById(`${uniqueId}-content`, elements);
-
-  // Merge styles for container
-  const contentContainerStyles = merge({}, heroTwoStyles.heroLeftContent, {
-    backgroundColor: 'transparent'
-  }, contentContainer?.styles || {});
+  const contentContainer = findElementById(contentContainerId, elements);
+  const contentContainerStyles = {
+    ...heroTwoStyles.heroContent,
+    ...contentContainer?.styles,
+    position: 'relative',
+    boxSizing: 'border-box'
+  };
 
   // Merge styles for hero section
-  const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement?.styles || {});
+  const mergedHeroStyles = {
+    ...heroTwoStyles.heroSection,
+    ...heroElement?.styles,
+    position: 'relative',
+    boxSizing: 'border-box'
+  };
 
   return (
     <SectionWithRef
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
+        flexDirection: 'column',
+        alignItems: 'center',
+        backgroundColor: '#6B7280',
+        color: '#fff',
         ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
       }}
       onClick={(e) => {
@@ -187,14 +198,14 @@ const HeroTwo = forwardRef(({
       }}
     >
       <Div
-        id={`${uniqueId}-content`}
-        parentId={`${uniqueId}-content`}
+        id={contentContainerId}
+        parentId={contentContainerId}
         styles={contentContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
-        onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-content`)}
-        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
+        onDropItem={(item) => handleHeroDrop(item, contentContainerId)}
+        onClick={(e) => handleInnerDivClick(e, contentContainerId)}
       >
-        {renderContainerChildren(`${uniqueId}-content`)}
+        {renderContainerChildren(contentContainerId)}
       </Div>
     </SectionWithRef>
   );

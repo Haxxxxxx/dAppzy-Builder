@@ -104,14 +104,50 @@ const ContentList = forwardRef(
             id: generateUniqueId(child.type || 'element')
           })) || [];
 
-          newId = addNewElement(item.type, 1, index, null, {
-            type: item.type,
+          // Map section type to ContentSection for content sections
+          const elementType = item.configuration?.startsWith('section') ? 'ContentSection' : item.type;
+
+          newId = addNewElement(elementType, 1, index, null, {
+            type: elementType,
             configuration: item.configuration || item.type,
             structure: item.structure || item.type,
             styles: item.styles || {},
             settings: item.settings || {},
             label: item.label,
             children: processedChildren
+          });
+        } else if (
+          item.type === 'defiModule' ||
+          item.type === 'mintingModule' ||
+          item.type === 'container' ||
+          item.type === 'gridLayout' ||
+          item.type === 'hflexLayout' ||
+          item.type === 'vflexLayout' ||
+          item.type === 'hflex' ||
+          item.type === 'vflex' ||
+          item.type === 'line' ||
+          item.type === 'linkBlock' ||
+          item.type === 'youtubeVideo' ||
+          item.type === 'icon' ||
+          item.type === 'dateComponent' ||
+          item.type === 'bgVideo' ||
+          item.type === 'connectWalletButton'
+        ) {
+          // Handle unique elements
+          newId = addNewElement(item.type, 1, index, null, {
+            type: item.type,
+            content: item.content || '',
+            styles: {
+              ...item.styles,
+              display: item.type === 'gridLayout' ? 'grid' : item.styles?.display,
+              gridTemplateColumns: item.type === 'gridLayout' ? 'repeat(4, 1fr)' : item.styles?.gridTemplateColumns,
+              gap: item.styles?.gap || '1.5rem',
+              width: '100%',
+              padding: '10px'
+            },
+            configuration: item.configuration || {},
+            settings: item.settings || {},
+            children: item.children || []
           });
         } else {
           // For individual elements, check if we're dropping onto a layout element
@@ -120,7 +156,7 @@ const ContentList = forwardRef(
             targetElement.type === 'navbar' ||
             targetElement.type === 'hero' ||
             targetElement.type === 'cta' ||
-            targetElement.type === 'section' ||
+            targetElement.type === 'ContentSection' ||
             targetElement.type === 'footer' ||
             targetElement.type === 'defiSection'
           )) {

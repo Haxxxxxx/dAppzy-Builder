@@ -1,28 +1,25 @@
-import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import useReorderDrop from '../../../utils/useReorderDrop.js';
-import { sectionThreeStyles } from './defaultSectionStyles.js';
-import { Heading, Paragraph, Button, Image, Section, Div, Span } from '../../SelectableElements';
-import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import {
-  registerContainer,
-  injectDefaultContent,
-  mergeStyles,
-} from '../../../utils/htmlRenderUtils/containerHelpers';
+import { Section, Div, Heading, Paragraph, Image, Anchor } from '../../SelectableElements';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { defaultSectionStyles } from './defaultSectionStyles';
 
-const SectionThree = ({
-  uniqueId,
-  children = [],
-  onDropItem,
-  handleOpenMediaPanel,
-  handleSelect,
-  configuration,
-}) => {
+const SectionWithRef = forwardRef((props, ref) => (
+  <Section {...props} ref={ref} />
+));
+
+const getStyleFromKey = (styles, key) => {
+  if (!key) return {};
+  if (typeof key === 'string') return styles[key] || {};
+  if (typeof key === 'object' && key.key) return styles[key.key] || {};
+  return {};
+};
+
+const SectionThree = forwardRef(({ handleSelect, uniqueId, handleOpenMediaPanel }, ref) => {
   const sectionRef = useRef(null);
   const defaultInjectedRef = useRef(false);
-
   const {
     elements,
     setElements,
@@ -32,291 +29,167 @@ const SectionThree = ({
     addNewElement,
   } = useContext(EditableContext);
 
-  // Locate the section element from global state.
   const sectionElement = useMemo(
     () => elements.find((el) => el.id === uniqueId),
     [elements, uniqueId]
   );
 
-  // Register containers
+  // Get config and styles from SectionConfiguration.js
+  const config = structureConfigurations.sectionThree || {};
+  const configStyles = config.styles || {};
+  const childrenConfig = config.children || [];
+
   useEffect(() => {
-    registerContainer(
-      uniqueId,
-      'label',
-      sectionThreeStyles.labelContainer,
-      elements,
-      setElements,
-      findElementById
-    );
-    registerContainer(
-      uniqueId,
-      'content',
-      sectionThreeStyles.contentWrapper,
-      elements,
-      setElements,
-      findElementById
-    );
-    registerContainer(
-      uniqueId,
-      'buttons',
-      sectionThreeStyles.buttonContainer,
-      elements,
-      setElements,
-      findElementById
-    );
-    registerContainer(
-      uniqueId,
-      'image',
-      sectionThreeStyles.imageContainer,
-      elements,
-      setElements,
-      findElementById
-    );
-  }, [uniqueId]);
-
-  // Inject default content only once
-  useEffect(() => {
-    if (defaultInjectedRef.current) return;
-
-    const defaultContent =
-      (children && children.length > 0)
-        ? children
-        : (sectionElement &&
-            sectionElement.configuration &&
-            sectionElement.configuration.children) ||
-          [];
-
-    const mapping = {
-      span: 'label',
-      heading: 'content',
-      paragraph: 'content',
-      button: 'buttons',
-      image: 'image',
-      default: 'content',
-    };
-
-    const labelContainer = findElementById(`${uniqueId}-label`, elements);
-    const contentContainer = findElementById(`${uniqueId}-content`, elements);
-    const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
-    const imageContainer = findElementById(`${uniqueId}-image`, elements);
-
-    if (
-      defaultContent.length > 0 &&
-      labelContainer && contentContainer && buttonsContainer && imageContainer &&
-      labelContainer.children.length === 0 &&
-      contentContainer.children.length === 0 &&
-      buttonsContainer.children.length === 0 &&
-      imageContainer.children.length === 0
-    ) {
-      injectDefaultContent(
-        defaultContent,
-        mapping,
-        uniqueId,
-        elements,
-        addNewElement,
-        setElements,
-        findElementById
-      );
-      defaultInjectedRef.current = true;
+    if (!sectionElement || defaultInjectedRef.current) return;
+    // Set section styles
+    updateStyles(sectionElement.id, merge({}, configStyles.section));
+    const leftId = `${uniqueId}-left`;
+    const rightId = `${uniqueId}-right`;
+    let newElements = [];
+    let leftChildIds = [];
+    let rightCardIds = [];
+    // LEFT CONTAINER
+    if (!findElementById(leftId, elements)) {
+      const left = {
+        id: leftId,
+        type: 'div',
+        styles: merge({}, getStyleFromKey(configStyles, 'left')),
+        children: [],
+        parentId: uniqueId,
+      };
+      newElements.push(left);
+      // Add heading and paragraph
+      const leftConfig = childrenConfig[0];
+      if (leftConfig && leftConfig.children) {
+        leftConfig.children.forEach(child => {
+          const newId = addNewElement(child.type, 1, null, leftId);
+          // Merge styles: defaultSectionStyles -> section config -> inline
+          const baseStyle =
+            child.type === 'heading' ? defaultSectionStyles.heading :
+            child.type === 'paragraph' ? defaultSectionStyles.paragraph : {};
+          const sectionStyle = getStyleFromKey(configStyles, child.type === 'heading' ? 'heading' : child.type === 'paragraph' ? 'paragraph' : '');
+          setElements(prev => prev.map(el => {
+            if (el.id === newId) {
+              return {
+                ...el,
+                content: child.content,
+                styles: merge({}, baseStyle, sectionStyle, child.styles || {}),
+                href: child.href
+              };
+            }
+            return el;
+          }));
+          leftChildIds.push(newId);
+        });
+      }
     }
-  }, [children, sectionElement, elements, uniqueId, addNewElement, setElements, findElementById]);
-
-  // Generic drop handler for new items dropped onto the section
-  const handleSectionDrop = (droppedItem, parentId = uniqueId) => {
-    if (droppedItem.id) {
-      return;
+    // RIGHT CONTAINER
+    if (!findElementById(rightId, elements)) {
+      const right = {
+        id: rightId,
+        type: 'div',
+        styles: merge({}, getStyleFromKey(configStyles, 'right')),
+        children: [],
+        parentId: uniqueId,
+      };
+      newElements.push(right);
+      // Add testimonial cards
+      const rightConfig = childrenConfig[1];
+      if (rightConfig && rightConfig.children) {
+        rightConfig.children.forEach(card => {
+          const cardId = addNewElement('div', 1, null, rightId);
+          let cardChildIds = [];
+          // Add card children (image, heading, paragraph, anchor)
+          card.children.forEach(cardChild => {
+            const newId = addNewElement(cardChild.type, 1, null, cardId);
+            // Merge styles: defaultSectionStyles -> section config -> inline
+            const baseStyle =
+              cardChild.type === 'image' ? defaultSectionStyles.image :
+              cardChild.type === 'heading' ? defaultSectionStyles.heading :
+              cardChild.type === 'paragraph' ? defaultSectionStyles.paragraph : {};
+            const sectionStyle = getStyleFromKey(configStyles,
+              cardChild.type === 'image' ? 'testimonialIcon' :
+              cardChild.type === 'heading' ? 'testimonialName' :
+              cardChild.type === 'paragraph' ? 'testimonialText' :
+              cardChild.type === 'anchor' ? 'testimonialLink' : ''
+            );
+            setElements(prev => prev.map(el => {
+              if (el.id === newId) {
+                return {
+                  ...el,
+                  content: cardChild.content,
+                  href: cardChild.href,
+                  styles: merge({}, baseStyle, sectionStyle, cardChild.styles || {})
+                };
+              }
+              return el;
+            }));
+            cardChildIds.push(newId);
+          });
+          setElements(prev => prev.map(el => el.id === cardId ? { ...el, children: cardChildIds, styles: merge({}, getStyleFromKey(configStyles, 'testimonialCard'), card.styles || {}), parentId: rightId } : el));
+          rightCardIds.push(cardId);
+        });
+      }
     }
+    // Batch add all new elements
+    if (newElements.length > 0) {
+      setElements(prev => [...prev, ...newElements]);
+    }
+    // Update left and right containers with their children
+    if (leftChildIds.length > 0) {
+      setElements(prev => prev.map(el => el.id === leftId ? { ...el, children: leftChildIds } : el));
+    }
+    if (rightCardIds.length > 0) {
+      setElements(prev => prev.map(el => el.id === rightId ? { ...el, children: rightCardIds } : el));
+    }
+    // Set section children
+    setElements(prev => prev.map(el => el.id === uniqueId ? { ...el, children: [leftId, rightId] } : el));
+    defaultInjectedRef.current = true;
+  }, [sectionElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles, config, configStyles]);
 
-    const newId = addNewElement(
-      droppedItem.type,
-      droppedItem.level || 1,
-      null,
-      parentId
-    );
-    setElements((prev) =>
-      prev.map((el) =>
-        el.id === parentId
-          ? { ...el, children: [...(el.children || []), newId] }
-          : el
-      )
-    );
-  };
-
-  // Drop and reorder hooks
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
-    onDropItem: handleSectionDrop,
+    onDropItem: (item) => addNewElement(item.type, item.level || 1, null, uniqueId),
   });
 
-  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
-    findElementById,
-    elements,
-    setElements
-  );
-
-  const handleInnerDivClick = (e, containerId) => {
-    e.stopPropagation();
-    const container = findElementById(containerId, elements);
-    if (container) {
-      setSelectedElement(container);
-    }
-  };
-
+  // Helper to render children recursively
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
-
-    const childrenElements = container.children.map((childId, index) => {
+    return container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-
-      let childContent;
       switch (child.type) {
+        case 'div':
+          return (
+            <Div key={child.id} id={child.id} styles={child.styles}>
+              {renderContainerChildren(child.id)}
+            </Div>
+          );
         case 'heading':
-          childContent = (
-            <Heading
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{ ...sectionThreeStyles.heading, ...(child.styles || {}) }}
-              onClick={(e) => handleSelect(e, child.id)}
-            />
-          );
-          break;
+          return <Heading key={child.id} id={child.id} content={child.content} styles={child.styles} />;
         case 'paragraph':
-          childContent = (
-            <Paragraph
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{ ...sectionThreeStyles.paragraph, ...(child.styles || {}) }}
-              onClick={(e) => handleSelect(e, child.id)}
-            />
-          );
-          break;
-        case 'button':
-          childContent = (
-            <Button
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{ ...sectionThreeStyles.primaryButton, ...(child.styles || {}) }}
-              onClick={(e) => handleSelect(e, child.id)}
-            />
-          );
-          break;
+          return <Paragraph key={child.id} id={child.id} content={child.content} styles={child.styles} />;
         case 'image':
-          childContent = (
-            <Image
-              key={child.id}
-              id={child.id}
-              src={child.content}
-              styles={{ ...sectionThreeStyles.image, ...(child.styles || {}) }}
-              handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={(item) => handleSectionDrop(item, child.id)}
-              onClick={(e) => handleSelect(e, child.id)}
-            />
-          );
-          break;
-        case 'span':
-          childContent = (
-            <Span
-              key={child.id}
-              id={child.id}
-              content={child.content}
-              styles={{ ...sectionThreeStyles.label, ...(child.styles || {}) }}
-              onClick={(e) => handleSelect(e, child.id)}
-            />
-          );
-          break;
+          return <Image key={child.id} id={child.id} content={child.content} styles={child.styles} />;
+        case 'anchor':
+          return <Anchor key={child.id} id={child.id} content={child.content} href={child.href} styles={child.styles} />;
         default:
-          childContent = renderElement(
-            child,
-            elements,
-            null,
-            setSelectedElement,
-            setElements,
-            null,
-            undefined,
-            handleOpenMediaPanel
-          );
+          return null;
       }
-
-      return (
-        <React.Fragment key={child.id}>
-          {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-              }}
-              onDragOver={(e) => onDragOver(e, containerId, index)}
-              onDrop={(e) => onDrop(e, containerId)}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragOver={(e) => onDragOver(e, containerId, index)}
-            onDragEnd={onDragEnd}
-            style={{ display: 'inline-block' }}
-          >
-            {childContent}
-          </span>
-        </React.Fragment>
-      );
     });
-
-    // Only add bottom drop zone if we're actually dragging something
-    if (activeDrop && activeDrop.containerId === containerId) {
-      childrenElements.push(
-        <div
-          key="drop-zone-bottom"
-          style={{ height: '40px', width: '100%' }}
-          onDragOver={(e) => onDragOver(e, containerId, container.children.length)}
-          onDrop={(e) => onDrop(e, containerId)}
-        >
-          {activeDrop.index === container.children.length && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-              }}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return childrenElements;
   };
 
-  const mergedSectionStyles = mergeStyles(
-    sectionThreeStyles.section,
-    sectionElement?.styles || {}
-  );
+  // Get container elements
+  const leftContainer = findElementById(`${uniqueId}-left`, elements);
+  const rightContainer = findElementById(`${uniqueId}-right`, elements);
+
+  // Merge styles for section
+  const mergedSectionStyles = merge({}, configStyles.section, sectionElement?.styles || {});
 
   return (
-    <Section
+    <SectionWithRef
       id={uniqueId}
       style={{
         ...mergedSectionStyles,
@@ -324,65 +197,32 @@ const SectionThree = ({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        handleSelect(e, uniqueId);
+        handleSelect?.(e, uniqueId);
       }}
       ref={(node) => {
         sectionRef.current = node;
         drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {findElementById(`${uniqueId}-label`, elements) && (
-          <Div
-            id={`${uniqueId}-label`}
-            parentId={`${uniqueId}-label`}
-            styles={{ ...sectionThreeStyles.labelContainer }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-label`)}
-            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-label`)}
-          >
-            {renderContainerChildren(`${uniqueId}-label`)}
+      {leftContainer && (
+        <Div id={leftContainer.id} styles={leftContainer.styles}>
+          {renderContainerChildren(leftContainer.id)}
           </Div>
         )}
-        {findElementById(`${uniqueId}-content`, elements) && (
-          <Div
-            id={`${uniqueId}-content`}
-            parentId={`${uniqueId}-content`}
-            styles={{ ...sectionThreeStyles.contentWrapper }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-content`)}
-            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
-          >
-            {renderContainerChildren(`${uniqueId}-content`)}
+      {rightContainer && (
+        <Div id={rightContainer.id} styles={rightContainer.styles}>
+          {renderContainerChildren(rightContainer.id)}
           </Div>
         )}
-        {findElementById(`${uniqueId}-buttons`, elements) && (
-          <Div
-            id={`${uniqueId}-buttons`}
-            parentId={`${uniqueId}-buttons`}
-            styles={{ ...sectionThreeStyles.buttonContainer }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-buttons`)}
-            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-buttons`)}
-          >
-            {renderContainerChildren(`${uniqueId}-buttons`)}
-          </Div>
-        )}
-        {findElementById(`${uniqueId}-image`, elements) && (
-          <Div
-            id={`${uniqueId}-image`}
-            parentId={`${uniqueId}-image`}
-            styles={{ ...sectionThreeStyles.imageContainer }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            onDropItem={(item) => handleSectionDrop(item, `${uniqueId}-image`)}
-            onClick={(e) => handleInnerDivClick(e, `${uniqueId}-image`)}
-          >
-            {renderContainerChildren(`${uniqueId}-image`)}
-          </Div>
-        )}
-      </div>
-    </Section>
+    </SectionWithRef>
   );
-};
+});
 
 export default SectionThree;

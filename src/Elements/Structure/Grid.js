@@ -28,7 +28,7 @@ const GridLayout = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'grid', styles });
+    setSelectedElement({ id, type: 'gridLayout', styles });
   };
 
   const handleAddElement = (e) => {
@@ -58,9 +58,11 @@ const GridLayout = ({ id }) => {
       style={{
         ...styles,
         display: 'grid',
-        gridTemplateColumns: styles.gridTemplateColumns || 'repeat(3, 1fr)',
-        gridGap: styles.gridGap || '10px',
+        gridTemplateColumns: styles.gridTemplateColumns || 'repeat(4, 1fr)',
+        gridGap: styles.gridGap || '1.5rem',
         padding: styles.padding || '10px',
+        width: '100%',
+        position: 'relative'
       }}
     >
       {children.length === 0 ? (
@@ -72,6 +74,7 @@ const GridLayout = ({ id }) => {
             alignItems: 'center',
             minHeight: '100px',
             background: isOverCurrent ? '#f0f0f0' : 'transparent',
+            gridColumn: '1 / -1'
           }}
         >
           <button

@@ -36,6 +36,13 @@ const elementIconPaths = {
     button: './img/button.svg',
     progress: './img/progress.svg',
     meter: './img/meter.svg',
+
+    // Structure Elements
+    container: './img/container.svg',
+    gridLayout: './img/grid.svg',
+    hflexLayout: './img/hflex.svg',
+    vflexLayout: './img/vflex.svg',
+    line: './img/line.svg',
   };
   
   export default elementIconPaths;

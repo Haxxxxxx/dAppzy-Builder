@@ -183,7 +183,13 @@ export const renderElement = (
     ),
     button: <Button id={id} key={id} content={element.content} styles={mergedStyles} />,
     span: <Span id={id} key={id} content={element.content} styles={mergedStyles} />,
-    image: <Image id={id} key={id} styles={mergedStyles} handleOpenMediaPanel={handleOpenMediaPanel} />,
+    image: <Image 
+      id={id} 
+      key={id} 
+      styles={mergedStyles} 
+      handleOpenMediaPanel={handleOpenMediaPanel}
+      content={element.content}
+    />,
     input: <Input id={id} key={id} styles={mergedStyles} />,
     form: <Form id={id} key={id} styles={mergedStyles} />,
     list: (
@@ -195,19 +201,30 @@ export const renderElement = (
         configuration={configuration}
       />
     ),
+    hflex: (
+      <HFlexLayout
+        id={id}
+        key={id}
+        styles={mergedStyles}
+      >
+        {children ? renderChildren(children) : null}
+      </HFlexLayout>
+    ),
+    vflex: (
+      <VFlexLayout
+        id={id}
+        key={id}
+        styles={mergedStyles}
+      >
+        {children ? renderChildren(children) : null}
+      </VFlexLayout>
+    ),
     navbar: (
       <DraggableNavbar
         id={id}
         key={id}
         configuration={configuration}
-        children={children ? renderChildren(
-          children.filter((child, index, self) => 
-            index === self.findIndex(c => 
-              c.type === child.type && 
-              c.content === child.content
-            )
-          )
-        ) : null}
+        children={children ? renderChildren(children) : null}
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
@@ -261,6 +278,9 @@ export const renderElement = (
         contentListWidth={contentListWidth}
         handlePanelToggle={handlePanelToggle}
         handleOpenMediaPanel={handleOpenMediaPanel}
+        styles={mergedStyles}
+        settings={element.settings}
+        uniqueId={id}
       />
     ),
     table: <Table id={id} key={id} styles={mergedStyles} />,
@@ -326,6 +346,23 @@ export const renderElement = (
         requireSignature={true}
       />
     ),
+    container: <Container id={id} key={id} styles={mergedStyles}>{children ? renderChildren(children) : null}</Container>,
+    gridLayout: (
+      <GridLayout
+        id={id}
+        key={id}
+        styles={mergedStyles}
+      >
+        {children ? renderChildren(children) : null}
+      </GridLayout>
+    ),
+    line: <Line id={id} key={id} styles={mergedStyles} />,
+    linkblock: <LinkBlock id={id} key={id} content={element.content} styles={mergedStyles} />,
+    youtubeVideo: <YouTubeVideo id={id} key={id} styles={mergedStyles} />,
+    icon: <Icon id={id} key={id} styles={mergedStyles} />,
+    dateComponent: <DateComponent id={id} key={id} styles={mergedStyles} />,
+    bgVideo: <BGVideo id={id} key={id} styles={mergedStyles} />,
+    connectWalletButton: <ConnectWalletButton id={id} key={id} styles={mergedStyles} />
   };
 
   // Get the appropriate component or fallback

@@ -1,24 +1,28 @@
 // src/Sections/ContentSections/SectionOne.jsx
-import React, { useContext, useMemo, useRef, useEffect } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
+import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import useReorderDrop from '../../../utils/useReorderDrop.js';
+import useReorderDrop from '../../../utils/useReorderDrop';
 import { defaultSectionStyles } from './defaultSectionStyles';
-import { Heading, Paragraph, Button, Image, Section, Div } from '../../SelectableElements';
+import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { mergeStyles } from '../../../utils/htmlRenderUtils/containerHelpers';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
 
-const SectionOne = ({
+// Create a forwardRef wrapper for Section
+const SectionWithRef = forwardRef((props, ref) => (
+  <Section {...props} ref={ref} />
+));
+
+const SectionOne = forwardRef(({
   handleSelect,
   uniqueId,
   children,
   onDropItem,
   handleOpenMediaPanel,
-  configuration,
-}) => {
+}, ref) => {
   const sectionRef = useRef(null);
   const defaultInjectedRef = useRef(false);
-
   const {
     elements,
     setElements,
@@ -26,297 +30,288 @@ const SectionOne = ({
     findElementById,
     updateStyles,
     addNewElement,
-    generateUniqueId,
   } = useContext(EditableContext);
 
-  // Locate the section element from global state
   const sectionElement = useMemo(
     () => elements.find((el) => el.id === uniqueId),
     [elements, uniqueId]
   );
 
-  // Initialize containers and inject default content
+  // Initialize the section structure with containers
   useEffect(() => {
-    if (defaultInjectedRef.current || !sectionElement) return;
+    if (!sectionElement || defaultInjectedRef.current) return;
 
-    // Get configuration styles
-    const configStyles = sectionElement?.configuration?.styles || {};
+    // Get configuration from structureConfigurations
+    const config = structureConfigurations.sectionOne || {};
+    const configStyles = config.styles || {};
 
     // First, ensure the section has the default styles
-    const mergedSectionStyles = mergeStyles(defaultSectionStyles.section, configStyles.section || {});
+    const mergedSectionStyles = merge({}, defaultSectionStyles.section, configStyles.section || {});
     updateStyles(sectionElement.id, mergedSectionStyles);
 
-    // Create containers if they don't exist
-    const containers = [
-      {
-        id: `${uniqueId}-content`,
+    const contentContainerId = `${uniqueId}-content`;
+    const buttonsContainerId = `${uniqueId}-buttons`;
+    const imageContainerId = `${uniqueId}-image`;
+
+    // Create content container if it doesn't exist
+    if (!findElementById(contentContainerId, elements)) {
+      const contentContainer = {
+        id: contentContainerId,
         type: 'div',
-        styles: mergeStyles(defaultSectionStyles.contentWrapper, configStyles.content || {}),
+        styles: merge({}, 
+          defaultSectionStyles.contentWrapper,
+          {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            maxWidth: '700px',
+            textAlign: 'center',
+            boxSizing: 'border-box',
+            padding: '1rem',
+            margin: '0 auto'
+          },
+          configStyles.content || {}
+        ),
         children: [],
         parentId: uniqueId,
-        configuration: sectionElement.configuration
-      },
-      {
-        id: `${uniqueId}-buttons`,
-        type: 'div',
-        styles: mergeStyles(defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
-        children: [],
-        parentId: uniqueId,
-        configuration: sectionElement.configuration
-      },
-      {
-        id: `${uniqueId}-image`,
-        type: 'div',
-        styles: mergeStyles(defaultSectionStyles.imageContainer, configStyles.image || {}),
-        children: [],
-        parentId: uniqueId,
-        configuration: sectionElement.configuration
-      }
-    ];
+      };
+      setElements(prev => [...prev, contentContainer]);
 
-    // Add containers if they don't exist
-    const updates = [];
-    containers.forEach(container => {
-      const existingContainer = findElementById(container.id, elements);
-      if (!existingContainer) {
-        updates.push(container);
-      }
-    });
+      // Add default content to content container from configuration
+      const defaultContent = config.children || [];
 
-    // Get default content
-    const defaultContent = children?.length > 0 ? children :
-      (sectionElement?.configuration?.children || []);
+      // Filter content elements (heading and paragraph)
+      const contentElements = defaultContent.filter(child => 
+        ['heading', 'paragraph'].includes(child.type)
+      );
 
-    // Only inject content if we have default content and the containers are empty
-    if (defaultContent.length > 0) {
-      const contentContainer = findElementById(`${uniqueId}-content`, elements);
-      const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
-      const imageContainer = findElementById(`${uniqueId}-image`, elements);
-
-      if ((!contentContainer || contentContainer.children.length === 0) &&
-          (!buttonsContainer || buttonsContainer.children.length === 0) &&
-          (!imageContainer || imageContainer.children.length === 0)) {
-        
-        const mapping = {
-          image: 'image',
-          button: 'buttons',
-          default: 'content',
-        };
-
-        // Create new elements for each content item
-        defaultContent.forEach(item => {
-          const containerType = mapping[item.type] || mapping.default;
-          const containerId = `${uniqueId}-${containerType}`;
-          const newId = generateUniqueId(item.type || 'element');
-          
-          // Get the appropriate styles for this element type
-          let elementStyles = {};
-          if (item.type === 'button') {
-            elementStyles = item.content === 'Primary Action' ? 
-              configStyles.primaryButton : 
-              configStyles.secondaryButton;
-          } else if (item.type === 'image') {
-            elementStyles = {
-              ...configStyles.image,
-              img: configStyles.image?.img || {}
+      // Create all content elements first
+      const contentIds = contentElements.map(child => {
+        const newId = addNewElement(child.type, 1, null, contentContainerId);
+        // Update the element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
+            return {
+              ...el,
+              content: child.content,
+              styles: merge(
+                child.type === 'heading' ? defaultSectionStyles.heading :
+                child.type === 'paragraph' ? defaultSectionStyles.paragraph :
+                {},
+                child.styles || {}
+              )
             };
-          } else {
-            elementStyles = configStyles[item.type] || {};
           }
-
-          const newElement = {
-            id: newId,
-            type: item.type,
-            content: item.content,
-            styles: elementStyles,
-            parentId: containerId,
-            configuration: sectionElement.configuration
-          };
-
-          updates.push(newElement);
-
-          // Update container's children array
-          const containerIndex = updates.findIndex(el => el.id === containerId);
-          if (containerIndex !== -1) {
-            updates[containerIndex].children = [...(updates[containerIndex].children || []), newId];
-          }
-        });
-      }
-    }
-
-    // Apply all updates in a single state change
-    if (updates.length > 0) {
-      setElements(prev => {
-        const existingIds = new Set(prev.map(el => el.id));
-        const newElements = updates.filter(el => !existingIds.has(el.id));
-        return [...prev, ...newElements];
+          return el;
+        }));
+        return newId;
       });
-      defaultInjectedRef.current = true;
-    }
-  }, [sectionElement, elements, findElementById, uniqueId, updateStyles, setElements, children, generateUniqueId]);
 
-  // Generic drop handler for new items
-  const handleSectionDrop = (droppedItem, parentId = uniqueId) => {
-    if (droppedItem.id) {
-      return;
-    }
-
-    // Get the container
-    const container = findElementById(parentId, elements);
-    if (!container) {
-      console.warn(`Container ${parentId} not found`);
-      return;
-    }
-
-    // Define base styles for different element types
-    const baseStyles = {
-      heading: {
-        fontSize: '2.5rem',
-        fontWeight: 'bold',
-        marginBottom: '16px',
-        color: '#334155'
-      },
-      paragraph: {
-        fontSize: '1rem',
-        lineHeight: '1.5',
-        marginBottom: '24px',
-        color: '#64748b'
-      },
-      button: {
-        backgroundColor: '#334155',
-        color: '#ffffff',
-        padding: '12px 24px',
-        fontWeight: 'bold',
-        border: 'none',
-        cursor: 'pointer',
-        borderRadius: '4px',
-        transition: 'all 0.2s ease',
-        fontSize: '1rem'
-      },
-      image: {
-        maxWidth: '100%',
-        height: '400px',
-        backgroundColor: '#334155',
-        objectFit: 'cover',
-        borderRadius: '8px'
-      }
-    };
-
-    // Generate a unique ID for the new element
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const uniqueElementId = `${droppedItem.type}-${timestamp}-${randomStr}`;
-
-    // Create new element with proper configuration
-    const newId = addNewElement(
-      droppedItem.type,
-      droppedItem.level || 1,
-      null,
-      parentId,
-      {
-        id: uniqueElementId,
-        type: droppedItem.type,
-        content: droppedItem.content || '',
-        styles: {
-          ...baseStyles[droppedItem.type],
-          ...droppedItem.styles,
-          position: 'relative',
-          boxSizing: 'border-box'
-        },
-        configuration: sectionElement.configuration
-      }
-    );
-
-    // Update parent's children array
-    setElements(prev => {
-      return prev.map(el => {
-        if (el.id === parentId) {
+      // Update content container with all content IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === contentContainerId) {
           return {
             ...el,
-            children: [...(el.children || []), newId]
+            children: contentIds
           };
         }
         return el;
-      });
-    });
+      }));
+    }
 
-    // Select the newly created element
-    setSelectedElement({
-      id: newId,
-      type: droppedItem.type,
-      parentId,
-      index: container ? container.children.length : 0
-    });
+    // Create buttons container if it doesn't exist
+    if (!findElementById(buttonsContainerId, elements)) {
+      const buttonsContainer = {
+        id: buttonsContainerId,
+        type: 'div',
+        styles: merge({}, 
+          defaultSectionStyles.buttonContainer,
+          {
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '1rem',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: '700px',
+            margin: '0 auto',
+            padding: '1rem'
+          },
+          configStyles.buttons || {}
+        ),
+        children: [],
+        parentId: uniqueId,
+      };
+      setElements(prev => [...prev, buttonsContainer]);
+
+      // Add default buttons from configuration
+      const defaultContent = config.children || [];
+
+      // Filter button elements
+      const buttonElements = defaultContent.filter(child => 
+        child.type === 'button'
+      );
+
+      // Create all button elements
+      const buttonIds = buttonElements.map(child => {
+        const newId = addNewElement('button', 1, null, buttonsContainerId);
+        // Update the element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
+            const buttonStyle = child.content === 'Primary Action' ? 
+              defaultSectionStyles.primaryButton : 
+              defaultSectionStyles.secondaryButton;
+            return {
+              ...el,
+              content: child.content,
+              styles: merge(
+                buttonStyle || {},
+                child.styles || {}
+              )
+            };
+          }
+          return el;
+        }));
+        return newId;
+      });
+
+      // Update buttons container with all button IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === buttonsContainerId) {
+          return {
+            ...el,
+            children: buttonIds
+          };
+        }
+        return el;
+      }));
+    }
+
+    // Create image container if it doesn't exist
+    if (!findElementById(imageContainerId, elements)) {
+      const imageContainer = {
+        id: imageContainerId,
+        type: 'div',
+        styles: merge({}, 
+          defaultSectionStyles.imageContainer,
+          configStyles.image || {}
+        ),
+        children: [],
+        parentId: uniqueId,
+      };
+      setElements(prev => [...prev, imageContainer]);
+
+      // Add default image from configuration
+      const defaultContent = config.children || [];
+
+      const imageElement = defaultContent.find(child => child.type === 'image');
+      if (imageElement) {
+        const imageId = addNewElement('image', 1, null, imageContainerId);
+        // Update image element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === imageId) {
+            return {
+              ...el,
+              content: imageElement.content,
+              styles: merge({},
+                defaultSectionStyles.image,
+                configStyles.image?.img || {},
+                imageElement.styles || {}
+              )
+            };
+          }
+          return el;
+        }));
+        // Update image container with image ID
+        setElements(prev => prev.map(el => {
+          if (el.id === imageContainerId) {
+            return {
+              ...el,
+              children: [imageId]
+            };
+          }
+          return el;
+        }));
+      }
+    }
+
+    // Update section's children to only include the containers
+    setElements(prev => prev.map(el => {
+      if (el.id === uniqueId) {
+          return {
+            ...el,
+          children: [contentContainerId, buttonsContainerId, imageContainerId],
+          configuration: 'sectionOne'
+          };
+        }
+        return el;
+    }));
+
+    defaultInjectedRef.current = true;
+  }, [sectionElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
+
+  const handleSectionDrop = (droppedItem, parentId = uniqueId) => {
+    // Simple drop handler that just adds the element
+    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
-  // Drop and reorder hooks
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: sectionRef,
-    onDropItem: (item) => {
-      if (!item.id) {
-        handleSectionDrop(item, uniqueId);
-      }
-    },
+    onDropItem: (item) => handleSectionDrop(item, uniqueId),
   });
 
-  const { activeDrop, onDragStart, onDragOver, onDrop, onDragEnd } = useReorderDrop(
-    findElementById,
-    elements,
-    setElements
-  );
-
-  const handleInnerDivClick = (e, containerId) => {
+  const handleInnerDivClick = (e, divId) => {
     e.stopPropagation();
-    const container = findElementById(containerId, elements);
-    if (container) {
-      setSelectedElement(container);
-    }
+    const element = findElementById(divId, elements);
+    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
+
+  const {
+    activeDrop,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+  } = useReorderDrop(findElementById, elements, setElements);
 
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
 
-    return container.children.map((childId, index) => {
+    return container.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
 
-      return (
-        <React.Fragment key={`${child.id}-${index}`}>
-          {activeDrop && activeDrop.containerId === containerId && activeDrop.index === index && (
-            <div
-              className="drop-placeholder"
-              style={{
-                padding: '8px',
-                border: '2px dashed #5C4EFA',
-                textAlign: 'center',
-                fontStyle: 'italic',
-                backgroundColor: 'transparent',
-                width: '100%',
-                margin: '5px',
-                fontFamily: 'Montserrat',
-                position: 'relative',
-                boxSizing: 'border-box'
-              }}
-              onDragOver={(e) => onDragOver(e, containerId, index)}
-              onDrop={(e) => onDrop(e, containerId)}
-            >
-              Drop here – element will be dropped here
-            </div>
-          )}
-          <span
-            draggable
-            onDragStart={(e) => onDragStart(e, child.id)}
-            onDragEnd={onDragEnd}
-            style={{ 
-              display: 'block',
-              position: 'relative',
-              boxSizing: 'border-box'
-            }}
-            key={`${child.id}-wrapper-${index}`}
-          >
-            {renderElement(
+      // Get configuration from structureConfigurations
+      const config = structureConfigurations.sectionOne || {};
+      const configStyles = config.styles || {};
+
+      // For image elements, ensure proper style merging
+      if (child.type === 'image') {
+        const imageStyles = merge({},
+          defaultSectionStyles.image,
+          configStyles.image?.img || {},
+          child.styles || {}
+        );
+
+        return renderElement(
+          {
+            ...child,
+            styles: imageStyles
+          },
+          elements,
+          null,
+          setSelectedElement,
+          setElements,
+          null,
+          undefined,
+          handleOpenMediaPanel
+        );
+      }
+
+      return renderElement(
               child,
               elements,
               null,
@@ -325,9 +320,6 @@ const SectionOne = ({
               null,
               undefined,
               handleOpenMediaPanel
-            )}
-          </span>
-        </React.Fragment>
       );
     });
   };
@@ -337,32 +329,95 @@ const SectionOne = ({
   const buttonsContainer = findElementById(`${uniqueId}-buttons`, elements);
   const imageContainer = findElementById(`${uniqueId}-image`, elements);
 
+  // Get configuration from structureConfigurations
+  const config = structureConfigurations.sectionOne || {};
+  const configStyles = config.styles || {};
+
   // Merge styles for containers
-  const contentStyles = mergeStyles(defaultSectionStyles.contentWrapper, contentContainer?.styles || {});
-  const buttonsStyles = mergeStyles(defaultSectionStyles.buttonContainer, buttonsContainer?.styles || {});
-  const imageStyles = mergeStyles(defaultSectionStyles.imageContainer, imageContainer?.styles || {});
+  const contentStyles = merge({}, 
+    defaultSectionStyles.contentWrapper,
+    configStyles.content || {},
+    contentContainer?.styles || {}
+  );
+
+  const buttonsStyles = merge({}, 
+    defaultSectionStyles.buttonContainer,
+    configStyles.buttons || {},
+    buttonsContainer?.styles || {}
+  );
+
+  const imageStyles = merge({}, 
+    defaultSectionStyles.imageContainer,
+    configStyles.image || {},
+    imageContainer?.styles || {}
+  );
 
   // Merge styles for section
-  const mergedSectionStyles = mergeStyles(defaultSectionStyles.section, sectionElement?.styles || {});
+  const mergedSectionStyles = merge({}, 
+    defaultSectionStyles.section,
+    {
+      position: 'relative',
+      display: 'flex',
+      boxSizing: 'border-box',
+      padding: '2rem',
+      margin: 0,
+      backgroundColor: 'transparent',
+      flexDirection: 'column',
+      gap: '0px',
+      transition: 'none',
+      alignItems: 'center',
+      width: '100%'
+    },
+    configStyles.section || {},
+    sectionElement?.styles || {}
+  );
+
+  // Get wrapper styles from configuration
+  const wrapperStyles = merge({},
+    {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '2rem',
+      maxWidth: '1200px',
+      margin: '0 auto',
+      padding: '2rem'
+    },
+    configStyles.wrapper || {}
+  );
 
   return (
-    <Section
+    <SectionWithRef
       id={uniqueId}
       style={{
         ...mergedSectionStyles,
         ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
-        position: 'relative',
-        boxSizing: 'border-box'
       }}
       onClick={(e) => {
         e.stopPropagation();
-        handleSelect(e, uniqueId);
+        handleSelect?.(e, uniqueId);
       }}
       ref={(node) => {
         sectionRef.current = node;
         drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
       }}
     >
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '2rem',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem',
+        ...wrapperStyles
+      }}>
+        {contentContainer && (
             <Div
               id={`${uniqueId}-content`}
               parentId={`${uniqueId}-content`}
@@ -373,6 +428,8 @@ const SectionOne = ({
             >
               {renderContainerChildren(`${uniqueId}-content`)}
             </Div>
+        )}
+        {buttonsContainer && (
             <Div
               id={`${uniqueId}-buttons`}
               parentId={`${uniqueId}-buttons`}
@@ -383,6 +440,7 @@ const SectionOne = ({
             >
               {renderContainerChildren(`${uniqueId}-buttons`)}
             </Div>
+        )}
       {imageContainer && (
           <Div
             id={`${uniqueId}-image`}
@@ -395,8 +453,9 @@ const SectionOne = ({
             {renderContainerChildren(`${uniqueId}-image`)}
           </Div>
       )}
-    </Section>
+      </div>
+    </SectionWithRef>
   );
-};
+});
 
 export default SectionOne;

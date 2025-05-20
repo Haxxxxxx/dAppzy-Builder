@@ -60,11 +60,44 @@ export const HeroConfiguration = {
   heroThree: {
     type: 'hero',
     children: [
-      { type: 'span', content: 'CAPTION'},
-      { type: 'heading', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.' },
-      { type: 'paragraph', content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.' },
-      { type: 'button', content: 'Primary Action'},
-      { type: 'button', content: 'Secondary Action'},
-      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7'},
+      { 
+        type: 'span', 
+        content: 'CAPTION',
+        settings: {
+          isCaption: true
+        }
+      },
+      { 
+        type: 'heading', 
+        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        settings: {
+          level: 1
+        }
+      },
+      { 
+        type: 'paragraph', 
+        content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit.'
+      },
+      { 
+        type: 'button', 
+        content: 'Primary Action',
+        settings: {
+          isPrimary: true
+        }
+      },
+      { 
+        type: 'button', 
+        content: 'Secondary Action',
+        settings: {
+          isPrimary: false
+        }
+      },
+      { 
+        type: 'image', 
+        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        settings: {
+          alt: 'Hero image'
+        }
+      }
     ],
   },}

@@ -58,8 +58,15 @@ const DraggableContentSections = ({
   useEffect(() => {
     if (!id || defaultInjectedRef.current) return;
 
+    const sectionElement = findElementById(id, elements);
+    if (!sectionElement) return;
+
+    // Get configuration styles
+    const config = structureConfigurations[configuration] || {};
+    const configStyles = config.styles || {};
+
     // First, ensure the section has the default styles
-    const mergedSectionStyles = merge({}, defaultSectionStyles.section, findElementById(id, elements)?.styles);
+    const mergedSectionStyles = merge({}, defaultSectionStyles.section, configStyles.section || {});
     updateStyles(id, mergedSectionStyles);
 
     // Create default containers
@@ -69,7 +76,7 @@ const DraggableContentSections = ({
         type: 'div',
         part: 'content',
         layout: 'content',
-        styles: defaultSectionStyles.contentWrapper,
+        styles: merge({}, defaultSectionStyles.contentWrapper, configStyles.content || {}),
         children: [],
         parentId: id,
         configuration: configuration
@@ -79,7 +86,21 @@ const DraggableContentSections = ({
         type: 'div',
         part: 'buttons',
         layout: 'buttons',
-        styles: defaultSectionStyles.buttonContainer,
+        styles: merge({}, 
+          defaultSectionStyles.buttonContainer,
+          {
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '1rem',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: '700px',
+            margin: '0 auto',
+            padding: '1rem'
+          },
+          configStyles.buttons || {}
+        ),
         children: [],
         parentId: id,
         configuration: configuration
@@ -89,7 +110,7 @@ const DraggableContentSections = ({
         type: 'div',
         part: 'image',
         layout: 'image',
-        styles: defaultSectionStyles.imageContainer,
+        styles: merge({}, defaultSectionStyles.imageContainer, configStyles.image || {}),
         children: [],
         parentId: id,
         configuration: configuration
@@ -109,7 +130,11 @@ const DraggableContentSections = ({
         return {
           ...el,
           children: containers.map(c => c.id),
-          configuration: configuration
+          configuration: configuration,
+          styles: {
+            ...el.styles,
+            ...configStyles.section
+          }
         };
       }
       return el;
@@ -192,7 +217,9 @@ const DraggableContentSections = ({
       id, 
       type: 'section', 
       configuration,
-      structure: configuration 
+      structure: configuration,
+      styles: structureConfigurations[configuration]?.styles || {},
+      children: structureConfigurations[configuration]?.children || []
     },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
@@ -212,18 +239,56 @@ const DraggableContentSections = ({
             // Generate unique ID for the section
             const newSectionId = generateUniqueId('section');
             
+            // Get configuration styles
+            const config = structureConfigurations[item.configuration] || {};
+            const configStyles = config.styles || {};
+
             // Create the new section with standardized configuration
-            const newSection = createElementConfig('section', {
+            const newSection = {
+              id: newSectionId,
               type: 'section',
+              configuration: item.configuration,
+              structure: item.configuration,
+              styles: merge({}, defaultSectionStyles.section, configStyles.section || {}),
+              children: [],
               label: label || '',
               description: description || '',
               settings: {}
-            });
-            newSection.id = newSectionId;
+            };
 
-            // Create default containers
-            const containers = createContainerStructure(newSectionId, 'section', item.configuration);
-            newSection.children = containers.map(container => container.id);
+            // Create default containers with proper styles
+            const containers = [
+              {
+                id: `${newSectionId}-content`,
+                type: 'div',
+                part: 'content',
+                layout: 'content',
+                styles: merge({}, defaultSectionStyles.contentWrapper, configStyles.content || {}),
+                children: [],
+                parentId: newSectionId,
+                configuration: item.configuration
+              },
+              {
+                id: `${newSectionId}-buttons`,
+                type: 'div',
+                part: 'buttons',
+                layout: 'buttons',
+                styles: merge({}, defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
+                children: [],
+                parentId: newSectionId,
+                configuration: item.configuration
+              },
+              {
+                id: `${newSectionId}-image`,
+                type: 'div',
+                part: 'image',
+                layout: 'image',
+                styles: merge({}, defaultSectionStyles.imageContainer, configStyles.image || {}),
+                children: [],
+                parentId: newSectionId,
+                configuration: item.configuration
+              }
+            ];
 
             // Add all elements in a single update
             setElements(prev => {
@@ -232,10 +297,16 @@ const DraggableContentSections = ({
               return newElements;
             });
 
-            // Apply styles to all containers
-            containers.forEach(container => {
-              updateStyles(container.id, container.styles);
-            });
+            // Update section's children to include all containers
+            setElements(prev => prev.map(el => {
+              if (el.id === newSectionId) {
+                return {
+                  ...el,
+                  children: containers.map(c => c.id)
+                };
+              }
+              return el;
+            }));
 
             setSelectedElement({ id: newSectionId, type: 'section', configuration: item.configuration });
           }
@@ -360,17 +431,14 @@ const DraggableContentSections = ({
   // Get the appropriate section component
   const getSectionComponent = () => {
     const props = {
-      uniqueId: id,
-      contentListWidth,
-      onDropItem,
-      handlePanelToggle,
-      handleOpenMediaPanel,
       handleSelect: (e) => {
         e.stopPropagation();
         const element = findElementById(id, elements);
         setSelectedElement(element || { id, type: 'section', styles: {} });
       },
-      containers: containers
+      uniqueId: id,
+      onDropItem,
+      handleOpenMediaPanel,
     };
 
     switch (configuration) {

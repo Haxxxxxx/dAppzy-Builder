@@ -2,24 +2,31 @@ import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import useReorderDrop from '../../../utils/useReorderDrop';
+import { 
+  Div, 
+  Heading, 
+  Paragraph, 
+  Button, 
+  Span,
+  LinkBlock,
+  Icon
+} from '../../SelectableElements';
+import HFlexLayout from '../../Structure/HFlex';
+import { structureConfigurations } from '../../../configs/structureConfigurations';
 import { DetailedFooterStyles } from './defaultFooterStyles';
-import { Image, Button, Heading, Paragraph, Section, Div, Link, Span } from '../../SelectableElements';
-import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { FooterConfigurations } from '../../../configs/footers/FooterConfigurations';
 
-// Create a forwardRef wrapper for Section
-const SectionWithRef = forwardRef((props, ref) => (
-  <Section {...props} ref={ref} />
+const FooterWithRef = forwardRef((props, ref) => (
+  <footer {...props} ref={ref} />
 ));
 
-const DetailedFooter = forwardRef(({
-  handleSelect,
-  uniqueId,
-  children,
-  onDropItem,
-  handleOpenMediaPanel,
-}, ref) => {
+const getStyleFromKey = (styles, key) => {
+  if (!key) return {};
+  if (typeof key === 'string') return styles[key] || {};
+  if (typeof key === 'object' && key.key) return styles[key.key] || {};
+  return {};
+};
+
+const DetailedFooter = forwardRef(({ handleSelect, uniqueId, handleOpenMediaPanel }, ref) => {
   const footerRef = useRef(null);
   const defaultInjectedRef = useRef(false);
   const {
@@ -36,143 +43,133 @@ const DetailedFooter = forwardRef(({
     [elements, uniqueId]
   );
 
+  // Get config and styles from structureConfigurations
+  const config = useMemo(() => structureConfigurations.detailedFooter || {}, []);
+  const configStyles = useMemo(() => config.styles || {}, [config]);
+  const childrenConfig = config.children || [];
+
   useEffect(() => {
-    if (defaultInjectedRef.current || !footerElement) return;
+    if (!footerElement || defaultInjectedRef.current) return;
 
-    // First, ensure the footer has the default styles
-    const mergedFooterStyles = merge({}, DetailedFooterStyles.footerSection, footerElement?.styles);
-    updateStyles(footerElement.id, mergedFooterStyles);
+    updateStyles(footerElement.id, merge({}, DetailedFooterStyles.footerSection, configStyles));
 
-    const contentContainer = findElementById(`${uniqueId}-content`, elements);
-    const footerConfig = FooterConfigurations[footerElement?.configuration || 'detailedFooter'] || {};
-    const defaultContent = footerConfig.children || [];
+    // Batch creation: collect all new elements and relationships in memory
+    const newElements = [];
+    const relationships = [];
 
-    // Create a batch of updates
-    const updates = [];
-
-    // Add content container if it doesn't exist
-    if (!contentContainer) {
-      updates.push({
-        id: `${uniqueId}-content`,
-        type: 'div',
-        styles: DetailedFooterStyles.footerContent,
-        children: [],
-        parentId: uniqueId,
-      });
-    }
-
-    // Only inject content if we have default content and the container is empty
-    if (defaultContent.length > 0 && (!contentContainer || contentContainer.children.length === 0)) {
-      const processChild = (child, parentId) => {
-        const newId = `${parentId}-${Math.random().toString(36).substr(2, 9)}`;
-        const processedChild = {
-          id: newId,
-          type: child.type,
-          content: child.content,
-          styles: merge(
-            child.type === 'span' ? DetailedFooterStyles.footerText :
-            child.type === 'button' ? DetailedFooterStyles.footerButton :
-            child.type === 'linkblock' ? DetailedFooterStyles.footerLink :
-            child.type === 'heading' ? DetailedFooterStyles.footerHeading :
-            child.type === 'div' ? DetailedFooterStyles.footerContent :
-            {},
-            child.styles || {}
-          ),
-          parentId: parentId,
-          children: []
-        };
-
-        if (child.children && child.children.length > 0) {
-          processedChild.children = child.children.map(grandChild => 
-            processChild(grandChild, newId)
-          );
-        }
-
-        return processedChild;
-      };
-
-      const newChildren = defaultContent.map(child => processChild(child, `${uniqueId}-content`));
-      updates.push(...newChildren);
-
-      // Update content container with new children
-      if (contentContainer) {
-        updates.push({
-          ...contentContainer,
-          children: newChildren.map(child => child.id)
-        });
-      } else {
-        updates[0].children = newChildren.map(child => child.id);
+    // Recursive function to create elements and their children in memory
+    const createElementTree = (configNode, parentId) => {
+      const newId = addNewElement(configNode.type, 1, null, parentId, { skipState: true });
+      let baseStyle = {};
+      switch (configNode.type) {
+        case 'heading':
+          baseStyle = DetailedFooterStyles.footerTitle || {};
+          break;
+        case 'paragraph':
+          baseStyle = DetailedFooterStyles.footerText || {};
+          break;
+        case 'span':
+          baseStyle = DetailedFooterStyles.footerText || {};
+          break;
+        case 'button':
+          baseStyle = DetailedFooterStyles.footerButton || {};
+          break;
+        case 'icon':
+          baseStyle = { width: '40px', height: '40px' };
+          break;
+        case 'linkblock':
+          baseStyle = { 
+            fontSize: '1rem', 
+            color: '#1a1a1a', 
+            textDecoration: 'none' 
+          };
+          break;
+        default:
+          baseStyle = {};
       }
-    }
-
-    // Apply all updates in a single state change
-    if (updates.length > 0) {
-      setElements(prev => {
-        const existingIds = new Set(prev.map(el => el.id));
-        const newElements = updates.filter(el => !existingIds.has(el.id));
-        return [...prev, ...newElements];
+      newElements.push({
+        id: newId,
+        type: configNode.type,
+        content: configNode.content,
+        styles: merge({}, baseStyle, configNode.styles || {}),
+        src: configNode.src,
+        href: configNode.href,
+        parentId,
+        children: []
       });
-      defaultInjectedRef.current = true;
-    }
-  }, [footerElement, elements, findElementById, uniqueId, updateStyles, setElements]);
+      // Recursively create children if present
+      if (configNode.children && configNode.children.length > 0) {
+        const childIds = configNode.children.map(child => createElementTree(child, newId));
+        relationships.push({ id: newId, children: childIds });
+      }
+      return newId;
+    };
 
-  const handleFooterDrop = (droppedItem, parentId = uniqueId) => {
-    // Simple drop handler that just adds the element
-    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
-  };
+    // Start recursion for all top-level children
+    const topLevelIds = childrenConfig.map(child => createElementTree(child, uniqueId));
+    relationships.push({ id: uniqueId, children: topLevelIds });
+
+    // Batch update all new elements and relationships in a single setElements call
+    setElements(prev => {
+      // Remove any elements with ids matching newElements (to avoid duplicates)
+      const newIds = newElements.map(el => el.id);
+      let filtered = prev.filter(el => !newIds.includes(el.id));
+      // Add all new elements
+      filtered = [...filtered, ...newElements];
+      // Apply children relationships
+      relationships.forEach(rel => {
+        filtered = filtered.map(el => el.id === rel.id ? { ...el, children: rel.children } : el);
+      });
+      return filtered;
+    });
+    defaultInjectedRef.current = true;
+  }, [footerElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles, config, configStyles]);
 
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: footerRef,
-    onDropItem: (item) => handleFooterDrop(item, uniqueId),
+    onDropItem: (item) => addNewElement(item.type, item.level || 1, null, uniqueId),
   });
 
-  const handleInnerDivClick = (e, divId) => {
-    e.stopPropagation();
-    const element = findElementById(divId, elements);
-    setSelectedElement(element || { id: divId, type: 'div', styles: {} });
-  };
-
-  const {
-    activeDrop,
-    onDragStart,
-    onDragOver,
-    onDrop,
-    onDragEnd,
-    draggedId,
-  } = useReorderDrop(findElementById, elements, setElements);
-
-  const renderContainerChildren = (containerId) => {
-    const container = findElementById(containerId, elements);
-    if (!container || !container.children) return null;
-
-    return container.children.map((childId) => {
+  // Helper to render children recursively
+  const renderFooterChildren = (footerId) => {
+    const footer = findElementById(footerId, elements);
+    if (!footer || !footer.children) return null;
+    return footer.children.map((childId) => {
       const child = findElementById(childId, elements);
       if (!child) return null;
-      return renderElement(
-        child,
-        elements,
-        null,
-        setSelectedElement,
-        setElements,
-        null,
-        undefined,
-        handleOpenMediaPanel
-      );
+      switch (child.type) {
+        case 'hflex':
+          return <HFlexLayout key={child.id} id={child.id} />;
+        case 'icon':
+          return <Icon key={child.id} id={child.id} styles={child.styles} />;
+        case 'linkblock':
+          return <LinkBlock key={child.id} id={child.id} content={child.content} styles={child.styles} />;
+        case 'div':
+          return (
+            <Div key={child.id} id={child.id} styles={child.styles}>
+              {renderFooterChildren(child.id)}
+            </Div>
+          );
+        case 'heading':
+          return <Heading key={child.id} id={child.id} content={child.content} styles={child.styles} />;
+        case 'paragraph':
+          return <Paragraph key={child.id} id={child.id} content={child.content} styles={child.styles} />;
+        case 'span':
+          return <Span key={child.id} id={child.id} content={child.content} styles={child.styles} />;
+        case 'button':
+          return <Button key={child.id} id={child.id} content={child.content} styles={child.styles} />;
+        default:
+          return null;
+      }
     });
   };
 
-  // Get the content container element
-  const contentContainer = findElementById(`${uniqueId}-content`, elements);
-
-  // Merge styles for container
-  const contentContainerStyles = merge({}, DetailedFooterStyles.footerContent, contentContainer?.styles || {});
-
-  // Merge styles for footer section
-  const mergedFooterStyles = merge({}, DetailedFooterStyles.footerSection, footerElement?.styles || {});
+  // Merge styles for footer
+  const mergedFooterStyles = merge({}, DetailedFooterStyles.footerSection, configStyles, footerElement?.styles || {});
 
   return (
-    <SectionWithRef
+    <FooterWithRef
       id={uniqueId}
       style={{
         ...mergedFooterStyles,
@@ -180,7 +177,7 @@ const DetailedFooter = forwardRef(({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        handleSelect(e, uniqueId);
+        handleSelect?.(e, uniqueId);
       }}
       ref={(node) => {
         footerRef.current = node;
@@ -194,20 +191,9 @@ const DetailedFooter = forwardRef(({
         }
       }}
     >
-      <Div
-        id={`${uniqueId}-content`}
-        parentId={`${uniqueId}-content`}
-        styles={contentContainerStyles}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-        onDropItem={(item) => handleFooterDrop(item, `${uniqueId}-content`)}
-        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-content`)}
-      >
-        {renderContainerChildren(`${uniqueId}-content`)}
-      </Div>
-    </SectionWithRef>
+      {renderFooterChildren(uniqueId)}
+    </FooterWithRef>
   );
 });
-
-DetailedFooter.displayName = 'DetailedFooter';
 
 export default DetailedFooter;

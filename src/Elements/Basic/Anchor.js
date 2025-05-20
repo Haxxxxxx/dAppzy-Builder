@@ -1,15 +1,15 @@
 // src/Elements/Interact/Anchor.js
-import React, { useContext, useRef, useEffect } from 'react';
+import React, { useContext, useRef, useEffect, useMemo } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
-const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
+const Anchor = React.memo(({ id, content: initialContent, styles: customStyles, href: customHref }) => {
   const { selectedElement, setSelectedElement, updateContent, elements, findElementById } =
     useContext(EditableContext);
   const anchorRef = useRef(null);
 
-  // Dynamically fetch full element data (which may include settings/configuration)
-  const elementData = findElementById(id, elements) || {};
-  let { content = initialContent || 'Click here', href = '#', styles = {} } = elementData;
+  // Only fetch element data if needed
+  const elementData = useMemo(() => findElementById(id, elements) || {}, [id, elements, findElementById]);
+  let { content = initialContent || 'Click here', href = customHref || '#', styles = {} } = elementData;
 
   // Ensure content is a string
   if (typeof content !== 'string') {
@@ -36,6 +36,17 @@ const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
     }
   }, [selectedElement, id]);
 
+  // Memoize merged styles
+  const mergedStyles = useMemo(() => ({
+    ...styles,
+    ...customStyles,
+    cursor: 'text',
+    border: 'none',     // Remove any border
+    outline: 'none',     // Remove focus outline
+    textDecoration: 'underline',
+    color: '#007BFF',
+  }), [styles, customStyles]);
+
   return (
     <a
       id={id}
@@ -45,19 +56,11 @@ const Anchor = ({ id, content: initialContent, styles: customStyles }) => {
       onClick={handleSelect}
       onBlur={handleBlur}
       suppressContentEditableWarning={true}
-      style={{
-        ...styles,
-        ...customStyles,
-        cursor: 'text',
-        border: 'none',     // Remove any border
-        outline: 'none',     // Remove focus outline
-        textDecoration: 'underline',
-        color: '#007BFF',
-      }}
+      style={mergedStyles}
     >
       {content}
     </a>
   );
-};
+});
 
 export default Anchor;

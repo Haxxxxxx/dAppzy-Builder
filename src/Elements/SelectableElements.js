@@ -49,19 +49,29 @@ import DraggableDeFi from './DraggableLayout/DraggableDeFi';
 import DeFiModule from './Sections/Web3Related/DeFiModule';
 import DraggableMinting from './DraggableLayout/DraggableMinting';
 import MintingModule from './Sections/Web3Related/MintingModule';
+
+// Memoize leaf components for performance
+const MemoParagraph = React.memo(Paragraph);
+const MemoHeading = React.memo(Heading);
+const MemoImage = React.memo(Image);
+const MemoAnchor = React.memo(Anchor);
+const MemoSpan = React.memo(Span);
+const MemoButton = React.memo(Button);
+const MemoDiv = React.memo(Div);
+
 // Wrap basic components with forwardRef
-const DivWithRef = forwardRef((props, ref) => <Div {...props} ref={ref} />);
-const ButtonWithRef = forwardRef((props, ref) => <Button {...props} ref={ref} />);
-const ImageWithRef = forwardRef((props, ref) => <Image {...props} ref={ref} />);
+const DivWithRef = forwardRef((props, ref) => <MemoDiv {...props} ref={ref} />);
+const ButtonWithRef = forwardRef((props, ref) => <MemoButton {...props} ref={ref} />);
+const ImageWithRef = forwardRef((props, ref) => <MemoImage {...props} ref={ref} />);
 const FormWithRef = forwardRef((props, ref) => <Form {...props} ref={ref} />);
-const SpanWithRef = forwardRef((props, ref) => <Span {...props} ref={ref} />);
+const SpanWithRef = forwardRef((props, ref) => <MemoSpan {...props} ref={ref} />);
 const InputWithRef = forwardRef((props, ref) => <Input {...props} ref={ref} />);
 const ListWithRef = forwardRef((props, ref) => <List {...props} ref={ref} />);
 const ListItemWithRef = forwardRef((props, ref) => <ListItem {...props} ref={ref} />);
 const TableWithRef = forwardRef((props, ref) => <Table {...props} ref={ref} />);
 const TableRowWithRef = forwardRef((props, ref) => <TableRow {...props} ref={ref} />);
 const TableCellWithRef = forwardRef((props, ref) => <TableCell {...props} ref={ref} />);
-const AnchorWithRef = forwardRef((props, ref) => <Anchor {...props} ref={ref} />);
+const AnchorWithRef = forwardRef((props, ref) => <MemoAnchor {...props} ref={ref} />);
 const TextareaWithRef = forwardRef((props, ref) => <Textarea {...props} ref={ref} />);
 const SelectWithRef = forwardRef((props, ref) => <Select {...props} ref={ref} />);
 const VideoWithRef = forwardRef((props, ref) => <Video {...props} ref={ref} />);
@@ -209,7 +219,7 @@ const SelectableDateComponent = withSelectable(DateComponentWithRef);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButtonWithRef);
 const SelectableBGVideo = withSelectable(BGVideoWithRef);
 const SelectableContainer = withSelectable(ContainerWithRef);
-const SelectableGridLayout = withSelectable(GridLayoutWithRef);
+const SelectableGridLayout = withSelectable(GridLayout);
 const SelectableHFlexLayout = withSelectable(HFlexLayoutWithRef);
 const SelectableVFlexLayout = withSelectable(VFlexLayoutWithRef);
 const SelectableLine = withSelectable(LineWithRef);

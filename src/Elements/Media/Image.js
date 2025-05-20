@@ -60,31 +60,25 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
 
   return (
     <>
-      <div
+      <img
         id={id}
         ref={drop}
         onClick={handleSelect}
+        src={currentSrc}
+        alt={styles.alt || "Editable element"}
         style={{
+          width: styles.width || customStyles.width || "auto",
+          height: styles.height || customStyles.height || "auto",
+          objectFit: styles.objectFit || "cover",
+          borderRadius: styles.borderRadius || customStyles.borderRadius || "0",
+          maxWidth: styles.maxWidth || customStyles.maxWidth || "100%",
+          maxHeight: styles.maxHeight || customStyles.maxHeight || "100%",
           border: isOver ? "2px dashed green" : "none",
-          position: "relative",
-          cursor: "pointer",
-          display: "inline-flex",
+          position: styles.position || customStyles.position || "relative",
+          cursor: styles.cursor || customStyles.cursor || "pointer",
+          display: styles.display || customStyles.display || "block"
         }}
-        aria-label="Editable image"
-      >
-        <img
-          src={currentSrc}
-          alt={styles.alt || "Editable element"}
-          style={{
-            width: styles.width || customStyles.width || "auto",
-            height: styles.height || customStyles.height || "auto",
-            objectFit: styles.objectFit || "cover",
-            borderRadius: styles.borderRadius || customStyles.borderRadius || "50%",
-            maxWidth: "100%",
-            maxHeight: "100%",
-          }}
-        />
-      </div>
+      />
 
       {errorMessage && (
         <div

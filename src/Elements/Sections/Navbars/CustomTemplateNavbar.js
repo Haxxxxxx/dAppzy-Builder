@@ -68,14 +68,6 @@ const CustomTemplateNavbar = ({
       style={{
         ...CustomTemplateNavbarStyles.nav,
         ...(navbarElement?.styles || {}),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '1rem',
-        backgroundColor: '#ffffff',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        flexWrap: 'wrap',
-        gap: '1rem',
       }}
       onClick={(e) => handleSelect(e)}
       className="custom-template-navbar"

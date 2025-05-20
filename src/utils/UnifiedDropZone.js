@@ -4,6 +4,8 @@ import '../components/css/dropzone.css';
 import '../Root.css';
 import { structureConfigurations } from '../configs/structureConfigurations';
 import { createPortal } from 'react-dom';
+import { defaultNavbarStyles, CustomTemplateNavbarStyles } from '../Elements/Sections/Navbars/DefaultNavbarStyles';
+import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../Elements/Sections/Heros/defaultHeroStyles';
 
 // Section Selection Popup Component
 const SectionSelectionPopup = ({ onClose, onSelect }) => {
@@ -95,84 +97,84 @@ const divConfigurations = [
   {
     id: 'vflex-2-hflex',
     name: '2 Rows',
-    parentType: 'vflex',
+    parentType: 'vflexLayout',
     direction: 'column',
-    children: [{ type: 'hflex' }, { type: 'hflex' }]
+    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }]
   },
   {
     id: 'vflex-3-hflex',
     name: '3 Rows',
-    parentType: 'vflex',
+    parentType: 'vflexLayout',
     direction: 'column',
-    children: [{ type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }]
+    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }]
   },
   {
     id: 'hflex-2-vflex',
     name: '2 Columns',
-    parentType: 'hflex',
+    parentType: 'hflexLayout',
     direction: 'row',
-    children: [{ type: 'vflex' }, { type: 'vflex' }]
+    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }]
   },
   {
     id: 'hflex-3-vflex',
     name: '3 Columns',
-    parentType: 'hflex',
+    parentType: 'hflexLayout',
     direction: 'row',
-    children: [{ type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }]
+    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }]
   },
   {
     id: 'vflex-nested-grid',
     name: '2 Rows, 2 Cols Each',
-    parentType: 'vflex',
+    parentType: 'vflexLayout',
     direction: 'column',
     children: [
-      { type: 'hflex', children: [{ type: 'vflex' }, { type: 'vflex' }] },
-      { type: 'hflex', children: [{ type: 'vflex' }, { type: 'vflex' }] }
+      { type: 'hflexLayout', children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }] },
+      { type: 'hflexLayout', children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }] }
     ]
   },
   {
     id: 'hflex-nested-grid',
     name: '2 Cols, 2 Rows Each',
-    parentType: 'hflex',
+    parentType: 'hflexLayout',
     direction: 'row',
     children: [
-      { type: 'vflex', children: [{ type: 'hflex' }, { type: 'hflex' }] },
-      { type: 'vflex', children: [{ type: 'hflex' }, { type: 'hflex' }] }
+      { type: 'vflexLayout', children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }] },
+      { type: 'vflexLayout', children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }] }
     ]
   },
   {
     id: 'vflex-mixed',
     name: 'Row + Col',
-    parentType: 'vflex',
+    parentType: 'vflexLayout',
     direction: 'column',
-    children: [{ type: 'hflex' }, { type: 'vflex' }]
+    children: [{ type: 'hflexLayout' }, { type: 'vflexLayout' }]
   },
   {
     id: 'hflex-mixed',
     name: 'Col + Row',
-    parentType: 'hflex',
+    parentType: 'hflexLayout',
     direction: 'row',
-    children: [{ type: 'vflex' }, { type: 'hflex' }]
+    children: [{ type: 'vflexLayout' }, { type: 'hflexLayout' }]
   },
   {
     id: 'vflex-4-hflex',
     name: '4 Rows',
-    parentType: 'vflex',
+    parentType: 'vflexLayout',
     direction: 'column',
-    children: [{ type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }, { type: 'hflex' }]
+    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }]
   },
   {
     id: 'hflex-4-vflex',
     name: '4 Columns',
-    parentType: 'hflex',
+    parentType: 'hflexLayout',
     direction: 'row',
-    children: [{ type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }, { type: 'vflex' }]
+    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }]
   }
 ];
 
 // Helper to render a mini preview for a config
 function renderPreview(config, depth = 0) {
-  const isVFlex = (config.parentType || config.type) === 'vflex';
+  const isVFlex = (config.parentType || config.type) === 'vflexLayout';
   const direction = isVFlex ? 'column' : 'row';
   return (
     <div
@@ -220,10 +222,10 @@ function createFlexElement(config, addNewElement, parentId = null) {
   if (config.children && config.children.length > 0) {
     config.children.forEach(child => {
       if (child.children) {
-        createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflex' ? 'column' : 'row' }, addNewElement, id);
+        createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflexLayout' ? 'column' : 'row' }, addNewElement, id);
       } else {
         addNewElement(child.type, 1, 0, id, {
-          styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflex' ? 'column' : 'row' }
+          styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflexLayout' ? 'column' : 'row' }
         });
       }
     });
@@ -241,7 +243,34 @@ const UnifiedDropZone = React.memo(({
   isDragging,
   index,
   onPanelToggle,
-  accept = ['ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'CONNECT_WALLET_BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM', 'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION', 'defiSection', 'mintingSection', 'footer', 'navbar', 'hero', 'cta']
+  accept = [
+    // Basic Elements
+    'paragraph', 'heading', 'section', 'div', 'button', 'image', 'form', 'span', 'input',
+    'list', 'listItem', 'table', 'tableRow', 'tableCell',
+    'anchor', 'textarea', 'select', 'video', 'audio', 'iframe',
+    'label', 'fieldset', 'legend', 'progress', 'meter',
+    'blockquote', 'code', 'pre', 'hr', 'caption',
+    
+    // Layout Elements
+    'container', 'gridLayout', 'hflexLayout', 'vflexLayout',
+    'line', 'linkBlock',
+    
+    // Media Elements
+    'youtubeVideo', 'icon', 'bgVideo',
+    
+    // Web3 Elements
+    'defiModule', 'mintingModule',
+    'defiSection', 'mintingSection',
+    'connectWalletButton',
+    
+    // Special Elements
+    'dateComponent',
+    
+    // Legacy/Alternative Types
+    'ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM',
+    'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION',
+    'footer', 'navbar', 'hero', 'cta', 'ContentSection'
+  ]
 }) => {
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -291,11 +320,50 @@ const UnifiedDropZone = React.memo(({
           ...sectionConfig.styles,
           position: 'relative',
           display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
+          boxSizing: 'border-box',
+          flexDirection: sectionConfig.direction || 'column',
+        },
+        children: sectionConfig.children.map(child => {
+          // Special handling for navbar elements
+          if (sectionConfig.type === 'navbar') {
+            const navbarStyles = section.id === 'customTemplateNavbar' ? CustomTemplateNavbarStyles : defaultNavbarStyles;
+            
+            // Handle button styles specifically
+            if (child.type === 'button') {
+              return {
+                type: child.type,
+                content: child.content || {},
+                styles: {
+                  ...navbarStyles.buttonContainer,
+                  ...child.styles,
+                  position: 'relative',
           boxSizing: 'border-box'
         },
-        children: sectionConfig.children.map(child => ({
+                settings: child.content?.settings || {},
+                configuration: {
+                  ...child.content?.settings,
+                  enabled: true
+                }
+              };
+            }
+            
+            return {
+              type: child.type,
+              content: child.content || {},
+              styles: {
+                ...navbarStyles[child.type] || {},
+                position: 'relative',
+                boxSizing: 'border-box'
+              },
+              settings: child.content?.settings || {},
+              configuration: {
+                ...child.content?.settings,
+                enabled: true
+              }
+            };
+          }
+          
+          return {
           type: child.type,
           content: child.content || {},
           styles: {
@@ -308,7 +376,8 @@ const UnifiedDropZone = React.memo(({
             ...child.content?.settings,
             enabled: true
           }
-        })),
+          };
+        }),
         settings: sectionConfig.settings || {},
         label: sectionConfig.label || section.name
       };
@@ -369,11 +438,70 @@ const UnifiedDropZone = React.memo(({
               ...sectionConfig.styles,
               position: 'relative',
               display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
               boxSizing: 'border-box'
             },
-            children: sectionConfig.children.map(child => ({
+            children: sectionConfig.children.map(child => {
+              // Special handling for navbar elements
+              if (type === 'navbar') {
+                const navbarStyles = item.configuration === 'customTemplateNavbar' ? CustomTemplateNavbarStyles : defaultNavbarStyles;
+                
+                // Handle button styles specifically
+                if (child.type === 'button') {
+                  const buttonStyle = child.content?.settings?.isPrimary ? 
+                    navbarStyles.primaryButton : 
+                    (child.content?.settings?.isSecondary ? navbarStyles.secondaryButton : navbarStyles.button);
+                  
+                  return {
+                    type: child.type,
+                    content: child.content || '',
+                    styles: {
+                      ...navbarStyles.buttonContainer,
+                      ...buttonStyle,
+                      ...child.styles,
+                      position: 'relative',
+                      boxSizing: 'border-box'
+                    },
+                    settings: {
+                      ...child.settings,
+                      isPrimary: child.content?.settings?.isPrimary,
+                      isSecondary: child.content?.settings?.isSecondary
+                    },
+                    children: child.children || []
+                  };
+                }
+                
+                return {
+                  type: child.type,
+                  content: child.content || '',
+                  styles: {
+                    ...navbarStyles[child.type] || {},
+                    position: 'relative',
+                    boxSizing: 'border-box'
+                  },
+                  settings: child.settings || {},
+                  children: child.children || []
+                };
+              }
+              
+              // Special handling for hero elements
+              if (type === 'hero') {
+                const heroStyles = item.configuration === 'heroTwo' ? heroTwoStyles : 
+                                 (item.configuration === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
+                
+                return {
+                  type: child.type,
+                  content: child.content || '',
+                  styles: {
+                    ...heroStyles[child.type] || {},
+                    position: 'relative',
+                    boxSizing: 'border-box'
+                  },
+                  settings: child.settings || {},
+                  children: child.children || []
+                };
+              }
+              
+              return {
               type: child.type,
               content: child.content || '',
               styles: {
@@ -383,7 +511,8 @@ const UnifiedDropZone = React.memo(({
               },
               settings: child.settings || {},
               children: child.children || []
-            })),
+              };
+            }),
             settings: sectionConfig.settings || {},
             label: sectionConfig.label || item.configuration
           }, parentId);

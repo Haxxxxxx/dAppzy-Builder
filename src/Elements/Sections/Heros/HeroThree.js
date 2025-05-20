@@ -2,11 +2,11 @@ import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
-import useReorderDrop from '../../../utils/useReorderDrop.js';
+import useReorderDrop from '../../../utils/useReorderDrop';
 import { CustomTemplateHeroStyles } from './defaultHeroStyles';
-import { Image, Button, Heading, Paragraph, Section, Div, Span } from '../../SelectableElements';
+import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { structureConfigurations } from '../../../configs/structureConfigurations';
+import { HeroConfiguration } from '../../../configs/heros/HeroConfigurations';
 
 // Create a forwardRef wrapper for Section
 const SectionWithRef = forwardRef((props, ref) => (
@@ -36,108 +36,172 @@ const HeroThree = forwardRef(({
     [elements, uniqueId]
   );
 
+  const leftContainerId = `${uniqueId}-left`;
+  const rightContainerId = `${uniqueId}-right`;
+  const buttonContainerId = `${uniqueId}-button-container`;
+
   useEffect(() => {
-    if (defaultInjectedRef.current || !heroElement) return;
+    if (!heroElement || defaultInjectedRef.current) return;
 
     // First, ensure the hero has the default styles
-    const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement?.styles);
+    const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement.styles);
     updateStyles(heroElement.id, mergedHeroStyles);
 
-    const leftContainer = findElementById(`${uniqueId}-left`, elements);
-    const rightContainer = findElementById(`${uniqueId}-right`, elements);
-    const defaultContent = heroElement?.configuration ? 
-      structureConfigurations[heroElement.configuration].children : [];
-
-    // Create a batch of updates
-    const updates = [];
-
-    // Add containers if they don't exist
-    if (!leftContainer) {
-      updates.push({
-          id: `${uniqueId}-left`,
+    // Create left container if it doesn't exist
+    if (!findElementById(leftContainerId, elements)) {
+      const leftContainer = {
+        id: leftContainerId,
           type: 'div',
           styles: CustomTemplateHeroStyles.heroContent,
           children: [],
           parentId: uniqueId,
-      });
-    }
-    if (!rightContainer) {
-      updates.push({
-          id: `${uniqueId}-right`,
-          type: 'div',
-          styles: CustomTemplateHeroStyles.heroImageContainer,
-          children: [],
-          parentId: uniqueId,
-      });
-    }
+      };
+      setElements(prev => [...prev, leftContainer]);
 
-    // Only inject content if we have default content and the containers are empty
-    if (defaultContent.length > 0 && 
-        (!leftContainer || leftContainer.children.length === 0) && 
-        (!rightContainer || rightContainer.children.length === 0)) {
-      
-      const newChildren = defaultContent.map(child => {
-        const newId = `${uniqueId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
-        const isImage = child.type === 'image';
-        const parentId = isImage ? `${uniqueId}-right` : `${uniqueId}-left`;
-        
+      // Create button container
+      const buttonContainer = {
+        id: buttonContainerId,
+          type: 'div',
+        styles: {
+          ...CustomTemplateHeroStyles.buttonContainer,
+          display: 'flex',
+          gap: '1rem',
+          marginTop: '2rem'
+        },
+          children: [],
+        parentId: leftContainerId,
+      };
+      setElements(prev => [...prev, buttonContainer]);
+
+      // Add default content to left container from configuration
+      const defaultContent = HeroConfiguration.heroThree.children;
+      const contentElements = defaultContent.filter(child => 
+        child.type !== 'image' && child.type !== 'span' && child.type !== 'button'
+      );
+      const buttonElements = defaultContent.filter(child => child.type === 'button');
+
+      // Create all content elements first
+      const contentIds = contentElements.map(child => {
+        const newId = addNewElement(child.type, 1, null, leftContainerId);
+        // Update the element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
         return {
-          id: newId,
-          type: child.type,
+              ...el,
                   content: child.content,
                   styles: merge(
-                    child.type === 'span' ? CustomTemplateHeroStyles.caption :
                     child.type === 'heading' ? CustomTemplateHeroStyles.heroTitle :
                     child.type === 'paragraph' ? CustomTemplateHeroStyles.heroDescription :
-                    child.type === 'button' ? CustomTemplateHeroStyles.primaryButton :
-            child.type === 'image' ? CustomTemplateHeroStyles.heroImage :
                     {},
                     child.styles || {}
-          ),
-          parentId
-        };
+              )
+            };
+          }
+          return el;
+        }));
+        return newId;
       });
 
-      // Add all new children to updates
-      updates.push(...newChildren);
+      // Create all button elements
+      const buttonIds = buttonElements.map(child => {
+        const newId = addNewElement(child.type, 1, null, buttonContainerId);
+        // Update the element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === newId) {
+            return {
+              ...el,
+              content: child.content,
+              styles: merge(
+                child.settings?.isPrimary ? 
+                  CustomTemplateHeroStyles.primaryButton : 
+                  CustomTemplateHeroStyles.secondaryButton,
+                child.styles || {}
+              ),
+              settings: child.settings
+            };
+          }
+          return el;
+        }));
+        return newId;
+      });
 
-      // Update containers with their respective children
-      const leftChildren = newChildren
-        .filter(child => child.parentId === `${uniqueId}-left`)
-        .map(child => child.id);
-      const rightChildren = newChildren
-        .filter(child => child.parentId === `${uniqueId}-right`)
-        .map(child => child.id);
+      // Update button container with all button IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === buttonContainerId) {
+          return {
+            ...el,
+            children: buttonIds
+          };
+        }
+        return el;
+      }));
 
-      if (leftContainer) {
-        updates.push({
-          ...leftContainer,
-          children: leftChildren
-        });
-      } else {
-        updates[0].children = leftChildren;
-      }
+      // Update left container with all content and button container IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === leftContainerId) {
+          return {
+            ...el,
+            children: [...contentIds, buttonContainerId]
+          };
+        }
+        return el;
+      }));
+    }
 
-      if (rightContainer) {
-        updates.push({
-          ...rightContainer,
-          children: rightChildren
-        });
-      } else {
-        updates[1].children = rightChildren;
+    // Create right container if it doesn't exist
+    if (!findElementById(rightContainerId, elements)) {
+      const rightContainer = {
+        id: rightContainerId,
+        type: 'div',
+        styles: CustomTemplateHeroStyles.heroImageContainer,
+        children: [],
+        parentId: uniqueId,
+      };
+      setElements(prev => [...prev, rightContainer]);
+
+      // Add default image to right container from configuration
+      const imageContent = HeroConfiguration.heroThree.children.find(child => child.type === 'image');
+      if (imageContent) {
+        const imageId = addNewElement('image', 1, null, rightContainerId);
+        // Update image element with content and styles
+        setElements(prev => prev.map(el => {
+          if (el.id === imageId) {
+            return {
+              ...el,
+              content: imageContent.content,
+              styles: merge(CustomTemplateHeroStyles.heroImage, imageContent.styles || {})
+            };
+          }
+          return el;
+        }));
+        // Update right container with image ID
+        setElements(prev => prev.map(el => {
+          if (el.id === rightContainerId) {
+            return {
+              ...el,
+              children: [imageId]
+            };
+          }
+          return el;
+        }));
       }
     }
 
-    // Apply all updates in a single state change
-    if (updates.length > 0) {
-      setElements(prev => {
-        const existingIds = new Set(prev.map(el => el.id));
-        const newElements = updates.filter(el => !existingIds.has(el.id));
-        return [...prev, ...newElements];
-        });
-        defaultInjectedRef.current = true;
+    // Update hero's children to only include the containers
+    setElements(prev => prev.map(el => {
+      if (el.id === uniqueId) {
+        return {
+          ...el,
+          children: [leftContainerId, rightContainerId],
+          configuration: 'heroThree',
+          structure: 'heroThree'
+        };
       }
-  }, [heroElement, elements, findElementById, uniqueId, updateStyles, setElements]);
+      return el;
+    }));
+
+        defaultInjectedRef.current = true;
+  }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     // Simple drop handler that just adds the element
@@ -185,19 +249,13 @@ const HeroThree = forwardRef(({
     });
   };
 
-  // Get the left and right container elements
-  const leftContainer = findElementById(`${uniqueId}-left`, elements);
-  const rightContainer = findElementById(`${uniqueId}-right`, elements);
+  // Get the container elements
+  const leftContainer = findElementById(leftContainerId, elements);
+  const rightContainer = findElementById(rightContainerId, elements);
 
   // Merge styles for containers
-  const leftContainerStyles = merge({}, CustomTemplateHeroStyles.heroContent, {
-    maxWidth: '40%',
-    width: '40%'
-  }, leftContainer?.styles || {});
-  const rightContainerStyles = merge({}, CustomTemplateHeroStyles.heroImageContainer, {
-    maxWidth: '40%',
-    width: '40%'
-  }, rightContainer?.styles || {});
+  const leftContainerStyles = merge({}, CustomTemplateHeroStyles.heroContent, leftContainer?.styles || {});
+  const rightContainerStyles = merge({}, CustomTemplateHeroStyles.heroImageContainer, rightContainer?.styles || {});
 
   // Merge styles for hero section
   const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement?.styles || {});
@@ -207,11 +265,11 @@ const HeroThree = forwardRef(({
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
-        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {})
       }}
       onClick={(e) => {
         e.stopPropagation();
-        handleSelect(e, uniqueId);
+        handleSelect?.(e, uniqueId);
       }}
       ref={(node) => {
         heroRef.current = node;
@@ -226,24 +284,24 @@ const HeroThree = forwardRef(({
       }}
     >
       <Div
-        id={`${uniqueId}-left`}
-        parentId={`${uniqueId}-left`}
+        id={leftContainerId}
+        parentId={leftContainerId}
         styles={leftContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
-        onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-left`)}
-        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-left`)}
+        onDropItem={(item) => handleHeroDrop(item, leftContainerId)}
+        onClick={(e) => handleInnerDivClick(e, leftContainerId)}
       >
-        {renderContainerChildren(`${uniqueId}-left`)}
+        {renderContainerChildren(leftContainerId)}
       </Div>
       <Div
-        id={`${uniqueId}-right`}
-        parentId={`${uniqueId}-right`}
+        id={rightContainerId}
+        parentId={rightContainerId}
         styles={rightContainerStyles}
         handleOpenMediaPanel={handleOpenMediaPanel}
-        onDropItem={(item) => handleHeroDrop(item, `${uniqueId}-right`)}
-        onClick={(e) => handleInnerDivClick(e, `${uniqueId}-right`)}
+        onDropItem={(item) => handleHeroDrop(item, rightContainerId)}
+        onClick={(e) => handleInnerDivClick(e, rightContainerId)}
       >
-        {renderContainerChildren(`${uniqueId}-right`)}
+        {renderContainerChildren(rightContainerId)}
       </Div>
     </SectionWithRef>
   );

@@ -1,10 +1,10 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, forwardRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 import '../Basic/css/EmptyState.css';
 
-const Section = ({
+const Section = forwardRef(({
   id,
   parentId = null,
   handleOpenMediaPanel,
@@ -12,7 +12,7 @@ const Section = ({
   children: passedChildren,
   onDropItem,
   onClick: extraOnClick,
-}) => {
+}, ref) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
 
   let sectionElement = elements.find((el) => el.id === id);
@@ -117,6 +117,13 @@ const Section = ({
       ref={(node) => {
         sectionRef.current = node;
         drop(node);
+        if (ref) {
+          if (typeof ref === 'function') {
+            ref(node);
+          } else {
+            ref.current = node;
+          }
+        }
       }}
       onClick={handleSelect}
       style={{
@@ -170,6 +177,8 @@ const Section = ({
       )}
     </section>
   );
-};
+});
+
+Section.displayName = 'Section';
 
 export default Section;
