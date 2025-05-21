@@ -1,9 +1,11 @@
-import React, { useContext, useEffect, forwardRef } from 'react';
+import React, { useContext, useEffect, forwardRef, useCallback, useState } from 'react';
 import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../context/EditableContext';
+import { AutoSaveContext } from '../context/AutoSaveContext';
 import UnifiedDropZone from '../utils/UnifiedDropZone';
 import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
+import debounce from 'lodash/debounce';
 
 const ContentList = forwardRef(
   (
@@ -16,6 +18,7 @@ const ContentList = forwardRef(
       handleOpenMediaPanel = () => { },
       isSideBarVisible,
       handlePanelToggle,
+      websiteSettings,
     },
     ref
   ) => {
@@ -30,6 +33,85 @@ const ContentList = forwardRef(
       selectedElement,
       generateUniqueId,
     } = useContext(EditableContext);
+
+    const { saveContent, markPendingChanges } = useContext(AutoSaveContext);
+
+    // Load elements from chunked localStorage on mount
+    useEffect(() => {
+      const loadChunkedElements = () => {
+        try {
+          // Get the number of chunks
+          const numChunks = parseInt(localStorage.getItem('editableElements_chunks') || '0');
+          if (numChunks === 0) {
+            // Try to load from the old single-item storage
+            const oldElements = localStorage.getItem('editableElements');
+            if (oldElements) {
+              const parsedElements = JSON.parse(oldElements);
+              if (Array.isArray(parsedElements) && parsedElements.length > 0) {
+                setElements(parsedElements);
+              }
+            }
+            return;
+          }
+
+          // Load and combine all chunks
+          let allElements = [];
+          for (let i = 0; i < numChunks * 50; i += 50) {
+            const chunkData = localStorage.getItem(`editableElements_chunk_${i}`);
+            if (chunkData) {
+              const chunk = JSON.parse(chunkData);
+              allElements = [...allElements, ...chunk];
+            }
+          }
+
+          // Only update if we have elements and they're different from current
+          if (allElements.length > 0 && JSON.stringify(allElements) !== JSON.stringify(elements)) {
+            console.log('Loading chunked elements:', allElements.length);
+            setElements(allElements);
+          }
+        } catch (error) {
+          console.error('Error loading chunked elements:', error);
+        }
+      };
+
+      loadChunkedElements();
+    }, []); // Only run on mount
+
+    // Create a debounced save function with memoization
+    const debouncedSave = useCallback(
+      debounce((elements, settings) => {
+        // Only save if we have actual elements to save
+        if (elements && elements.length > 0) {
+          saveContent(elements, settings);
+        }
+      }, 3000), // Increased debounce time to 3 seconds
+      [saveContent]
+    );
+
+    // Batch multiple changes together
+    const [pendingChanges, setPendingChanges] = useState(false);
+    
+    // Watch for changes in elements and trigger auto-save
+    useEffect(() => {
+      if (elements.length > 0) {
+        // Mark changes as pending immediately
+        if (!pendingChanges) {
+          setPendingChanges(true);
+          markPendingChanges();
+        }
+        
+        // Schedule the save
+        debouncedSave(elements, websiteSettings);
+      }
+    }, [elements, websiteSettings, markPendingChanges, debouncedSave, pendingChanges]);
+
+    // Reset pending changes when save is complete
+    useEffect(() => {
+      return () => {
+        setPendingChanges(false);
+        debouncedSave.cancel();
+      };
+    }, [debouncedSave]);
 
     // Use useDragLayer to determine if any drag is active.
     const { isDragging } = useDragLayer((monitor) => ({

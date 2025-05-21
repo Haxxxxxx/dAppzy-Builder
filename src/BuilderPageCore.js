@@ -857,6 +857,7 @@ const BuilderPageCore = ({
                 setScale={setScale}
                 isPreviewMode={isPreviewMode}
                 handleOpenMediaPanel={handleOpenMediaPanel}
+                websiteSettings={pageSettings}
               />
             </div>
             {showAIInputBar && !openPanel ? (

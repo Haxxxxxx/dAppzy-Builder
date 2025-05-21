@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useEffect, forwardRef, useState } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef, useState, useCallback } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { useWalletContext } from '../../../context/WalletContext';
 import { Image, Span, Button, DeFiModule, Section, Div } from '../../SelectableElements';
@@ -219,17 +219,17 @@ const DeFiSection = forwardRef(({
     return findElementById(id, elements);
   }, [id, elements, findElementById]);
   
-  // Initialize DeFi section structure
+  // Initialize DeFi section structure - ONLY ONCE
   useEffect(() => {
-    console.log('Initializing DeFi section:', defiElement);
-    if (!defiElement) return;
+    if (!defiElement || isInitialized) return;
 
-    // Create content container if it doesn't exist
+    // Check if content container already exists
     const contentContainerId = `${defiElement.id}-content`;
     const existingContainer = findElementById(contentContainerId, elements);
     
     if (!existingContainer) {
-      console.log('Creating content container:', contentContainerId);
+      console.log('Initializing DeFi section for the first time');
+      
       const contentContainer = {
         id: contentContainerId,
         type: 'div',
@@ -248,31 +248,29 @@ const DeFiSection = forwardRef(({
 
       // Get default modules from Web3Configs
       const defaultModules = Web3Configs.defiSection.children || [];
-      console.log('Default modules:', defaultModules);
 
       // Create module elements
-      const moduleElements = defaultModules.map(module => {
-        const moduleId = generateUniqueId('defiModule');
-        console.log('Creating module with ID:', moduleId);
-        return {
-          id: moduleId,
-          type: 'defiModule',
-          moduleType: module.moduleType || 'aggregator',
-          content: module.content,
-          styles: module.styles,
-          configuration: module.configuration,
-          settings: module.settings,
-          parentId: contentContainerId
-        };
-      });
+      const moduleElements = defaultModules.map(module => ({
+        id: generateUniqueId('defiModule'),
+        type: 'defiModule',
+        moduleType: module.moduleType || 'aggregator',
+        content: module.content,
+        styles: module.styles,
+        configuration: module.configuration,
+        settings: module.settings,
+        parentId: contentContainerId
+      }));
 
       // Update content container with module IDs
       contentContainer.children = moduleElements.map(module => module.id);
 
       // Add all elements in a single state update
       setElements(prev => [...prev, contentContainer, ...moduleElements]);
+      setIsInitialized(true);
+    } else {
+      setIsInitialized(true);
     }
-  }, [defiElement, elements, findElementById, setElements]);
+  }, [defiElement, elements, findElementById, setElements, isInitialized]);
 
   // Handle dropping items into the DeFi section
   const handleDeFiDrop = (item, index) => {
@@ -326,29 +324,15 @@ const DeFiSection = forwardRef(({
   };
 
   // Render container children
-  const renderContainerChildren = () => {
-    console.log('Rendering container children for ID:', id);
-    if (!id) {
-      console.log('No section ID provided');
-      return null;
-    }
+  const renderContainerChildren = useCallback(() => {
+    if (!id) return null;
 
     const container = findElementById(`${id}-content`, elements);
-    console.log('Found container:', container);
-
-    if (!container) {
-      console.log('Container not found');
-      return null;
-    }
+    if (!container) return null;
 
     return container.children?.map((childId) => {
       const child = findElementById(childId, elements);
-      console.log('Rendering child:', child);
-
-      if (!child) {
-        console.log('Child not found:', childId);
-        return null;
-      }
+      if (!child) return null;
 
       const isSelected = selectedElement?.id === childId;
 
@@ -415,6 +399,7 @@ const DeFiSection = forwardRef(({
             </div>
           )}
           <DeFiModule
+            key={`module-${childId}`}
             id={childId}
             content={child.content}
             styles={child.styles}
@@ -430,13 +415,13 @@ const DeFiSection = forwardRef(({
         </div>
       );
     });
-  };
+  }, [id, elements, selectedElement, findElementById, handleRemoveElement, handleSelect, handleOpenMediaPanel, contextConnected]);
 
   // Get the content container ID
-  const contentContainerId = `${id}-content`;
+  const contentContainerId = useMemo(() => `${id}-content`, [id]);
 
   // Merge styles properly
-  const sectionStyles = {
+  const sectionStyles = useMemo(() => ({
     ...defaultDeFiStyles.defiSection,
     ...defiElement?.styles,
     position: 'relative',
@@ -447,9 +432,9 @@ const DeFiSection = forwardRef(({
     margin: '0',
     backgroundColor: 'rgba(42, 42, 60, 0.5)',
     backdropFilter: 'blur(10px)'
-  };
+  }), [defiElement?.styles]);
 
-      return (
+  return (
     <SectionWithRef
       ref={ref}
       id={id}
@@ -461,19 +446,19 @@ const DeFiSection = forwardRef(({
     >
       <div
         id={contentContainerId}
-              style={{
+        style={{
           ...defaultDeFiStyles.defiContent,
           display: 'flex',
           flexDirection: 'column',
           gap: '32px',
           maxWidth: '1200px',
           margin: '0 auto',
-                width: '100%',
+          width: '100%',
           padding: '20px'
         }}
       >
-      <div style={{
-        textAlign: 'center',
+        <div style={{
+          textAlign: 'center',
           marginBottom: '40px'
         }}>
           <h1 style={{
@@ -486,9 +471,9 @@ const DeFiSection = forwardRef(({
           }}>
             Manage your DeFi investments and explore new opportunities
           </p>
-              </div>
+        </div>
         {renderContainerChildren()}
-              </div>
+      </div>
     </SectionWithRef>
   );
 });

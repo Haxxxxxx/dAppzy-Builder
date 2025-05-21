@@ -75,78 +75,6 @@ const DraggableMinting = ({
   // Generate a unique ID if none is provided
   const sectionId = id || `minting-section-${Date.now()}`;
 
-  // Initialize the Minting structure with content container
-  useEffect(() => {
-    if (!sectionId || defaultInjectedRef.current) return;
-
-    // First, ensure the Minting section has the default styles
-    const mergedMintingStyles = merge({}, defaultMintingStyles.mintingSection, findElementById(sectionId, elements)?.styles);
-    updateStyles(sectionId, mergedMintingStyles);
-
-    const contentContainerId = `${sectionId}-content`;
-
-    // Create content container if it doesn't exist
-    if (!findElementById(contentContainerId, elements)) {
-      const contentContainer = {
-        id: contentContainerId,
-        type: 'div',
-        styles: defaultMintingStyles.mintingContent,
-        children: [],
-        parentId: sectionId,
-      };
-      setElements(prev => [...prev, contentContainer]);
-
-      // Add default modules to content container
-      const mintingConfig = Web3Configs[configuration];
-      if (mintingConfig?.children) {
-        const moduleIds = mintingConfig.children.map(module => {
-          const newId = addNewElement('mintingModule', 1, null, contentContainerId);
-          // Update the module with content and styles
-          setElements(prev => prev.map(el => {
-            if (el.id === newId) {
-              return {
-                ...el,
-                content: module.content,
-                styles: merge(defaultMintingStyles.mintingModule, module.styles || {}),
-                settings: {
-                  ...module.settings,
-                  enabled: true
-                }
-              };
-            }
-            return el;
-          }));
-          return newId;
-        });
-
-        // Update content container with all module IDs
-        setElements(prev => prev.map(el => {
-          if (el.id === contentContainerId) {
-            return {
-              ...el,
-              children: moduleIds
-            };
-          }
-          return el;
-        }));
-      }
-    }
-
-    // Update Minting section's children to only include the content container
-    setElements(prev => prev.map(el => {
-      if (el.id === sectionId) {
-        return {
-          ...el,
-          children: [contentContainerId],
-          configuration: configuration
-        };
-      }
-      return el;
-    }));
-
-    defaultInjectedRef.current = true;
-  }, [sectionId, elements, findElementById, setElements, addNewElement, updateStyles, configuration]);
-
   // Standardized container creation helper
   const createContainerStructure = (parentId, type) => {
     const contentContainerId = `${parentId}-content`;
@@ -214,7 +142,7 @@ const DraggableMinting = ({
     return Array(count).fill(null).map(() => generateUniqueId(type));
   };
 
-  // Set up drag-and-drop functionality with improved configuration handling
+  // Set up drag-and-drop functionality
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { 
@@ -240,30 +168,51 @@ const DraggableMinting = ({
               ?.find(el => el?.type === 'mintingSection' && el?.configuration === item.configuration);
 
             if (!existingMinting) {
-              // Generate unique IDs for the section and its modules
+              // Generate unique IDs for the section
               const newSectionId = generateUniqueId('mintingSection');
-              const moduleIds = generateElementIds('mintingModule', mintingConfig.children?.length || 0);
+              const contentContainerId = `${newSectionId}-content`;
               
               // Create the content container first
-              const contentContainer = createContainerStructure(newSectionId, 'mintingSection');
+              const contentContainer = {
+                id: contentContainerId,
+                type: 'div',
+                styles: defaultMintingStyles.mintingContent,
+                children: [],
+                parentId: newSectionId,
+              };
 
-              // Create the new Minting section with standardized configuration
-              const newMintingSection = createElementConfig('mintingSection', {
+              // Create the new Minting section
+              const newMintingSection = {
+                id: newSectionId,
                 type: 'mintingSection',
                 structure: mintingConfig,
-                settings: mintingConfig.settings || {}
-              });
-              newMintingSection.id = newSectionId;
-              newMintingSection.children = [contentContainer.id];
+                styles: defaultMintingStyles.mintingSection,
+                settings: {
+                  simulateConnected: false,
+                  requireSignature: true,
+                  simulateSigned: false
+                },
+                children: [contentContainerId]
+              };
 
-              // Create default modules with standardized structure
-              const modules = mintingConfig.children?.map((child, index) => ({
-                id: moduleIds[index],
-                type: 'mintingModule',
-                content: child.content,
-                settings: child.settings || {},
-                styles: applyStyles(child, 'mintingModule')
-              })) || [];
+              // Create modules based on configuration
+              const modules = mintingConfig.children?.map(module => {
+                const moduleId = generateUniqueId('mintingModule');
+                return {
+                  id: moduleId,
+                  type: 'mintingModule',
+                  content: module.content,
+                  styles: merge(defaultMintingStyles.mintingModule, module.styles || {}),
+                  settings: {
+                    ...module.settings,
+                    enabled: true
+                  },
+                  parentId: contentContainerId
+                };
+              }) || [];
+
+              // Update content container with module IDs
+              contentContainer.children = modules.map(module => module.id);
 
               // Add all elements in a single update
               setElements(prev => {

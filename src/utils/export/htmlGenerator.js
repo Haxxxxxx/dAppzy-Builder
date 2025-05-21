@@ -258,13 +258,27 @@ export const generateProjectHtml = (elements, websiteSettings) => {
     }
   });
 
-  // Generate styles HTML
+  // Generate styles HTML with optimized structure
   const stylesHtml = `
     <style>
+      /* Base styles */
+      :root {
+        --primary-color: #334155;
+        --text-color: #1a1a1a;
+        --background-color: #ffffff;
+      }
+
       body {
         margin: 0;
         padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        color: var(--text-color);
+        background-color: var(--background-color);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
       /* Preserve element-specific styles */
       ${collectedStyles.map(style => `
         .${style.className} {
@@ -288,10 +302,48 @@ export const generateProjectHtml = (elements, websiteSettings) => {
           margin: 8px 0;
         }
       }
+
+      /* IPFS-specific optimizations */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* Loading states */
+      .loading {
+        opacity: 0;
+        transition: opacity 0.3s ease-in;
+      }
+
+      .loaded {
+        opacity: 1;
+      }
     </style>
   `;
 
-  // Generate the final HTML
+  // Generate meta tags
+  const metaTags = `
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${websiteSettings.metaDescription || 'A website created with Dappzy'}" />
+    <meta name="keywords" content="${websiteSettings.metaKeywords || ''}" />
+    <meta name="author" content="${websiteSettings.author || 'Dappzy'}" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="${websiteSettings.siteTitle || 'My Website'}" />
+    <meta property="og:description" content="${websiteSettings.metaDescription || 'A website created with Dappzy'}" />
+    <meta property="og:image" content="${websiteSettings.ogImage || ''}" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${websiteSettings.siteTitle || 'My Website'}" />
+    <meta name="twitter:description" content="${websiteSettings.metaDescription || 'A website created with Dappzy'}" />
+    <meta name="twitter:image" content="${websiteSettings.ogImage || ''}" />
+  `;
+
+  // Generate the final HTML with IPFS optimizations
   const title = websiteSettings.siteTitle || 'Exported Website';
   const favicon = websiteSettings.faviconUrl || '/favicon.ico';
 
@@ -299,11 +351,50 @@ export const generateProjectHtml = (elements, websiteSettings) => {
     <!DOCTYPE html>
     <html lang="en">
     <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      ${metaTags}
       <link rel="icon" href="${favicon}">
       <title>${title}</title>
       ${stylesHtml}
+      <script>
+        // IPFS Gateway Fallback
+        const ipfsGateways = [
+          'https://ipfs.io/ipfs/',
+          'https://gateway.pinata.cloud/ipfs/',
+          'https://cloudflare-ipfs.com/ipfs/',
+          'https://dweb.link/ipfs/'
+        ];
+
+        // Function to handle image loading with fallback
+        function handleImageLoad(img) {
+          if (img.src.startsWith('ipfs://')) {
+            const ipfsHash = img.src.replace('ipfs://', '');
+            let currentGatewayIndex = 0;
+
+            function tryNextGateway() {
+              if (currentGatewayIndex >= ipfsGateways.length) {
+                console.error('All IPFS gateways failed');
+                return;
+              }
+
+              const gateway = ipfsGateways[currentGatewayIndex];
+              img.src = gateway + ipfsHash;
+              currentGatewayIndex++;
+            }
+
+            img.onerror = tryNextGateway;
+            tryNextGateway();
+          }
+          img.classList.add('loaded');
+        }
+
+        // Initialize image loading
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('img').forEach(img => {
+            img.classList.add('loading');
+            handleImageLoad(img);
+          });
+        });
+      </script>
     </head>
     <body>
       ${bodyHtml}

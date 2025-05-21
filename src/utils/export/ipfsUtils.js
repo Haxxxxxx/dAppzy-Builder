@@ -135,17 +135,78 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
       metaKeywords: websiteSettings?.metaKeywords || '',
       customStyles: websiteSettings?.customStyles || '',
       customScripts: websiteSettings?.customScripts || '',
+      ogImage: websiteSettings?.ogImage || '',
+      author: websiteSettings?.author || 'Dappzy',
     };
 
+    // Generate HTML content
     const fullHtml = generateProjectHtml(cleanedElements, cleanedWebsiteSettings);
-    const htmlBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
 
-    const files = [{
+    // Create a directory structure for IPFS
+    const files = [];
+
+    // Add main HTML file
+    const htmlBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+    files.push({
       file: htmlBlob,
       fileName: 'index.html',
       type: 'text/html'
-    }];
+    });
 
+    // Add favicon if exists
+    if (cleanedWebsiteSettings.faviconUrl) {
+      try {
+        const faviconResponse = await fetch(cleanedWebsiteSettings.faviconUrl);
+        const faviconBlob = await faviconResponse.blob();
+        files.push({
+          file: faviconBlob,
+          fileName: 'favicon.ico',
+          type: 'image/x-icon'
+        });
+      } catch (error) {
+        console.warn('Failed to fetch favicon:', error);
+      }
+    }
+
+    // Add OG image if exists
+    if (cleanedWebsiteSettings.ogImage) {
+      try {
+        const ogImageResponse = await fetch(cleanedWebsiteSettings.ogImage);
+        const ogImageBlob = await ogImageResponse.blob();
+        files.push({
+          file: ogImageBlob,
+          fileName: 'og-image.jpg',
+          type: 'image/jpeg'
+        });
+      } catch (error) {
+        console.warn('Failed to fetch OG image:', error);
+      }
+    }
+
+    // Add assets from elements
+    const assetPromises = cleanedElements
+      .filter(element => element.type === 'image' && element.src)
+      .map(async (element) => {
+        try {
+          const response = await fetch(element.src);
+          const blob = await response.blob();
+          const fileName = `assets/${element.id}-${Date.now()}.${blob.type.split('/')[1]}`;
+          files.push({
+            file: blob,
+            fileName,
+            type: blob.type
+          });
+          // Update element src to use IPFS path
+          element.src = `ipfs://${fileName}`;
+        } catch (error) {
+          console.warn(`Failed to fetch asset for element ${element.id}:`, error);
+        }
+      });
+
+    // Wait for all asset uploads to complete
+    await Promise.all(assetPromises);
+
+    // Add metadata
     const metadata = {
       name: cleanedWebsiteSettings.siteTitle,
       keyvalues: {
@@ -153,10 +214,13 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
         timestamp: new Date().toISOString(),
         size: htmlBlob.size.toString(),
         projectId: sanitizedProjectId,
-        contentType: "text/html"
+        contentType: "text/html",
+        version: "1.0.0",
+        assets: files.length.toString()
       },
     };
 
+    // Upload to IPFS
     const ipfsHash = await pinDirectoryToPinata(files, metadata);
     
     if (!ipfsHash) {

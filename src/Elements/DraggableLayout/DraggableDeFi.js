@@ -158,80 +158,6 @@ const DraggableDeFi = forwardRef(({
     };
   };
 
-  // Initialize the DeFi structure with content container
-  useEffect(() => {
-    if (!sectionId || defaultInjectedRef.current) return;
-
-    // First, ensure the DeFi section has the default styles
-    const mergedDeFiStyles = merge({}, defaultDeFiStyles.defiSection, findElementById(sectionId, elements)?.styles);
-    updateStyles(sectionId, mergedDeFiStyles);
-
-    const contentContainerId = `${sectionId}-content`;
-
-    // Create content container if it doesn't exist
-    if (!findElementById(contentContainerId, elements)) {
-      const contentContainer = {
-        id: contentContainerId,
-        type: 'div',
-        styles: defaultDeFiStyles.defiContent,
-        children: [],
-        parentId: sectionId,
-      };
-      setElements(prev => [...prev, contentContainer]);
-
-      // Add default modules to content container
-      const moduleIds = defaultModules.map(module => {
-        const newId = addNewElement('defiModule', 1, null, contentContainerId);
-        // Update the module with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === newId) {
-            return {
-              ...el,
-              moduleType: module.moduleType,
-              content: module.content,
-              styles: merge(defaultDeFiStyles.defiModule, module.styles || {}),
-              configuration: {
-                enabled: true,
-                ...module.content.functionality
-              },
-              settings: {
-                ...module.content.settings,
-                enabled: true
-              }
-            };
-          }
-          return el;
-        }));
-        return newId;
-      });
-
-      // Update content container with all module IDs
-      setElements(prev => prev.map(el => {
-        if (el.id === contentContainerId) {
-          return {
-            ...el,
-            children: moduleIds
-          };
-        }
-        return el;
-      }));
-    }
-
-    // Update DeFi section's children to only include the content container
-    setElements(prev => prev.map(el => {
-      if (el.id === sectionId) {
-        return {
-          ...el,
-          children: [contentContainerId],
-          configuration: configuration
-        };
-      }
-      return el;
-    }));
-
-    defaultInjectedRef.current = true;
-  }, [sectionId, elements, findElementById, setElements, addNewElement, updateStyles, configuration]);
-
   // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
@@ -260,50 +186,54 @@ const DraggableDeFi = forwardRef(({
             if (!existingDeFi) {
               // Generate unique IDs for the section and its modules
               const newSectionId = generateUniqueId('defiSection');
-              const moduleIds = generateElementIds('defiModule', defaultModules.length);
+              const contentContainerId = `${newSectionId}-content`;
               
               // Create the content container first
-              const contentContainer = createContainerStructure(newSectionId, 'defiSection');
+              const contentContainer = {
+                id: contentContainerId,
+                type: 'div',
+                styles: defaultDeFiStyles.defiContent,
+                children: [],
+                parentId: newSectionId,
+              };
 
               // Create the new DeFi section with standardized configuration
-              const newDeFiSection = createElementConfig('defiSection', {
+              const newDeFiSection = {
+                id: newSectionId,
                 type: 'defiSection',
                 structure: defiConfig,
+                styles: defaultDeFiStyles.defiSection,
                 settings: {
                   simulateConnected: false,
                   requireSignature: true,
                   simulateSigned: false
-                }
-              });
-              newDeFiSection.id = newSectionId;
-              newDeFiSection.children = [contentContainer.id];
+                },
+                children: [contentContainerId]
+              };
 
               // Create default modules with standardized structure
-              const modules = defaultModules.map((module, index) => ({
-                id: moduleIds[index],
-                type: 'defiModule',
-                moduleType: module.moduleType,
-                content: {
-                  title: module.content.title,
-                  description: module.content.description,
-                  stats: module.content.stats,
+              const modules = defaultModules.map(module => {
+                const moduleId = generateUniqueId('defiModule');
+                return {
+                  id: moduleId,
+                  type: 'defiModule',
+                  moduleType: module.moduleType,
+                  content: module.content,
+                  styles: merge(defaultDeFiStyles.defiModule, module.styles || {}),
+                  configuration: {
+                    enabled: true,
+                    ...module.content.functionality
+                  },
                   settings: {
-                    showStats: true,
-                    showButton: true,
-                    customColor: '#2A2A3C',
-                    ...module.content.settings
-                  }
-                },
-                styles: applyStyles(module, 'defiModule'),
-                configuration: {
-                  enabled: true,
-                  ...module.content.functionality
-                },
-                settings: {
-                  ...module.content.settings,
-                  enabled: true
-                }
-              }));
+                    ...module.content.settings,
+                    enabled: true
+                  },
+                  parentId: contentContainerId
+                };
+              });
+
+              // Update content container with module IDs
+              contentContainer.children = modules.map(module => module.id);
 
               // Add all elements in a single update
               setElements(prev => {

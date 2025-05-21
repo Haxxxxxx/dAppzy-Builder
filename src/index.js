@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { EditableProvider } from './context/EditableContext';
+import { AutoSaveProvider } from './context/AutoSaveContext';
 import Web3Provider from './context/Web3Provider';
 
 const RootComponent = () => {
@@ -65,9 +66,11 @@ const RootComponent = () => {
   return (
     <React.StrictMode>
       <EditableProvider userId={userId}>
-        <Web3Provider>
-          <App userId={userId} setUserId={setUserId} projectId={projectId} />
-        </Web3Provider>
+        <AutoSaveProvider userId={userId} projectId={projectId}>
+          <Web3Provider>
+            <App userId={userId} setUserId={setUserId} projectId={projectId} />
+          </Web3Provider>
+        </AutoSaveProvider>
       </EditableProvider>
     </React.StrictMode>
   );

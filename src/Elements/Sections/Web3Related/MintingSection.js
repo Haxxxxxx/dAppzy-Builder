@@ -56,18 +56,10 @@ const MintingSection = forwardRef(({
   // Get configuration from Web3Configs
   const config = Web3Configs.mintingSection;
   
-  // Initialize the Minting section structure
-  useEffect(() => {
-    if (!mintingElement || defaultInjectedRef.current) return;
-
-    // First, ensure the Minting section has the default styles
-    const mergedMintingStyles = merge({}, config.styles, mintingElement.styles);
-    updateStyles(mintingElement.id, mergedMintingStyles);
-
-    const contentContainerId = `${sectionId}-content`;
-
-    // Create content container if it doesn't exist
-    if (!findElementById(contentContainerId, elements)) {
+  const handleMintingDrop = (droppedItem, parentId = sectionId) => {
+    if (droppedItem.type === 'mintingModule') {
+      // Create content container first
+      const contentContainerId = `${sectionId}-content`;
       const contentContainer = {
         id: contentContainerId,
         type: 'div',
@@ -84,7 +76,6 @@ const MintingSection = forwardRef(({
         children: [],
         parentId: sectionId,
       };
-      setElements(prev => [...prev, contentContainer]);
 
       // Add default content to container from configuration
       const defaultContent = config.children || [];
@@ -110,36 +101,30 @@ const MintingSection = forwardRef(({
         return newId;
       });
 
-      // Update content container with all content IDs
-      setElements(prev => prev.map(el => {
-        if (el.id === contentContainerId) {
-          return {
-            ...el,
-            children: contentIds
-          };
-        }
-        return el;
-      }));
+      // Add content container and update its children
+      setElements(prev => {
+        const newElements = [...prev, contentContainer];
+        return newElements.map(el => {
+          if (el.id === contentContainerId) {
+            return {
+              ...el,
+              children: contentIds
+            };
+          }
+          if (el.id === sectionId) {
+            return {
+              ...el,
+              children: [contentContainerId],
+              configuration: mintingElement.configuration
+            };
+          }
+          return el;
+        });
+      });
+    } else {
+      // Simple drop handler that just adds the element
+      addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
     }
-
-    // Update Minting section's children to include the container
-    setElements(prev => prev.map(el => {
-      if (el.id === sectionId) {
-        return {
-          ...el,
-          children: [contentContainerId],
-          configuration: mintingElement.configuration
-        };
-      }
-      return el;
-    }));
-
-    defaultInjectedRef.current = true;
-  }, [mintingElement, sectionId, elements, findElementById, setElements, addNewElement, updateStyles, config]);
-
-  const handleMintingDrop = (droppedItem, parentId = sectionId) => {
-    // Simple drop handler that just adds the element
-    addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
   const { isOverCurrent, drop } = useElementDrop({

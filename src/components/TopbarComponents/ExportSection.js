@@ -4,20 +4,37 @@ import { db } from '../../firebase';
 import { generatePreviewUrl, deployToIPFS } from '../../utils/export/ipfsUtils';
 import { generateProjectHtml } from '../../utils/export/htmlGenerator';
 import { EditableContext } from '../../context/EditableContext';
+import { AutoSaveContext } from '../../context/AutoSaveContext';
 import SnsDomainSelector from './Deployements/SnsDomainSelector';
 import '../css/Topbar.css';
 
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
-  const [autoSaveStatus, setAutoSaveStatus] = useState('All changes saved');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showSnsSelector, setShowSnsSelector] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isTestDomainEnabled, setIsTestDomainEnabled] = useState(false);
+  const [operationStatus, setOperationStatus] = useState(null);
   const dropdownRef = useRef(null);
   const { findElementById } = useContext(EditableContext);
+  const { saveStatus, lastSaved } = useContext(AutoSaveContext);
 
   // Get wallet address from session storage
   const walletAddress = sessionStorage.getItem("userAccount");
+
+  // Format the last saved time
+  const getLastSavedText = () => {
+    if (!lastSaved) return '';
+    const now = new Date();
+    const diff = now - lastSaved;
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    return `${Math.floor(diff / 3600000)}h ago`;
+  };
+
+  // Get the current status to display (prioritize operation status over auto-save status)
+  const getCurrentStatus = () => {
+    return operationStatus || saveStatus;
+  };
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -45,19 +62,23 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
 
   const handleGeneratePreview = async () => {
     try {
-      setAutoSaveStatus('Generating preview...');
+      setOperationStatus('Generating preview...');
       const url = await generatePreviewUrl(userId, projectId, elements, websiteSettings);
       setPreviewUrl(url);
-      setAutoSaveStatus('Preview generated successfully');
+      setOperationStatus('Preview generated successfully');
+      // Clear operation status after 3 seconds
+      setTimeout(() => setOperationStatus(null), 3000);
     } catch (error) {
       console.error('Error generating preview:', error);
-      setAutoSaveStatus('Error generating preview: ' + error.message);
+      setOperationStatus('Error generating preview: ' + error.message);
       setPreviewUrl(null);
+      // Clear error status after 5 seconds
+      setTimeout(() => setOperationStatus(null), 5000);
     }
   };
 
   const handleDeployToIPFS = async () => {
-    setAutoSaveStatus('Publishing to IPFS...');
+    setOperationStatus('Publishing to IPFS...');
     try {
       const { ipfsUrl, ipfsHash } = await deployToIPFS(userId, projectId, elements, websiteSettings);
 
@@ -69,18 +90,22 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         lastDeployed: serverTimestamp(),
       }, { merge: true });
 
-      setAutoSaveStatus('IPFS deploy complete!');
+      setOperationStatus('IPFS deploy complete!');
+      // Clear operation status after 3 seconds
+      setTimeout(() => setOperationStatus(null), 3000);
       return ipfsUrl;
     } catch (error) {
       console.error('Deployment error:', error);
-      setAutoSaveStatus('Error during deployment: ' + error.message);
+      setOperationStatus('Error during deployment: ' + error.message);
+      // Clear error status after 5 seconds
+      setTimeout(() => setOperationStatus(null), 5000);
       return null;
     }
   };
 
   const handleUpdate = async () => {
     if (isTestDomainEnabled) {
-      setAutoSaveStatus('Deploying to IPFS...');
+      setOperationStatus('Deploying to IPFS...');
       try {
         const ipfsUrl = await handleDeployToIPFS();
         if (ipfsUrl) {
@@ -96,14 +121,18 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
           }, { merge: true });
 
           setPreviewUrl(ipfsUrl);
-          setAutoSaveStatus('Deployment complete!');
+          setOperationStatus('Deployment complete!');
           if (onProjectPublished) {
             onProjectPublished(ipfsUrl);
           }
+          // Clear operation status after 3 seconds
+          setTimeout(() => setOperationStatus(null), 3000);
         }
       } catch (error) {
         console.error('Error deploying to IPFS:', error);
-        setAutoSaveStatus('Error during deployment: ' + error.message);
+        setOperationStatus('Error during deployment: ' + error.message);
+        // Clear error status after 5 seconds
+        setTimeout(() => setOperationStatus(null), 5000);
       }
     }
     setIsDropdownOpen(false);
@@ -111,7 +140,9 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
 
   const handleSnsDeploy = () => {
     if (!walletAddress) {
-      setAutoSaveStatus('Error: No Solana wallet connected');
+      setOperationStatus('Error: No Solana wallet connected');
+      // Clear error status after 5 seconds
+      setTimeout(() => setOperationStatus(null), 5000);
       return;
     }
     setShowSnsSelector(true);
@@ -155,12 +186,22 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     }
   };
 
+  const currentStatus = getCurrentStatus();
+  const isOperationInProgress = currentStatus && (
+    currentStatus.includes('Generating') ||
+    currentStatus.includes('Publishing') ||
+    currentStatus.includes('Deploying')
+  );
+
   return (
     <div className="export-section" ref={dropdownRef}>
       <span className="material-symbols-outlined export-cloud" style={{ color: 'white' }}>
-        cloud_done
+        {isOperationInProgress ? 'sync' : currentStatus === 'All changes saved' ? 'cloud_done' : 'cloud_sync'}
       </span>
-      <span className="autosave-status">{autoSaveStatus}</span>
+      <span className="autosave-status">
+        {currentStatus}
+        {!operationStatus && lastSaved && <span className="last-saved-time">{getLastSavedText()}</span>}
+      </span>
       <div className="dropdown-container">
         <button
           className="button"
@@ -237,7 +278,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
           websiteSettings={websiteSettings}
           onDomainSelected={handleSnsDomainSelected}
           onCancel={handleSnsCancel}
-          setAutoSaveStatus={setAutoSaveStatus}
+          setAutoSaveStatus={setOperationStatus}
           generateFullHtml={() => generateProjectHtml(elements, websiteSettings)}
           saveProjectToFirestore={async (userId, html, type, domain) => {
             const projectRef = doc(db, 'projects', userId);
