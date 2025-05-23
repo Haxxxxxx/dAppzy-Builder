@@ -1,8 +1,9 @@
-import React, { useContext, useRef, forwardRef } from 'react';
+import React, { useContext, useRef, forwardRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 import '../Basic/css/EmptyState.css';
+import { divConfigurations } from '../../utils/UnifiedDropZone';
 
 const Section = forwardRef(({
   id,
@@ -14,6 +15,7 @@ const Section = forwardRef(({
   onClick: extraOnClick,
 }, ref) => {
   const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
+  const [showDivOptions, setShowDivOptions] = useState(false);
 
   let sectionElement = elements.find((el) => el.id === id);
   const contextStyles = (sectionElement && sectionElement.styles) || {};
@@ -64,18 +66,31 @@ const Section = forwardRef(({
 
   const handleAddElement = (e) => {
     e.stopPropagation();
-    // Deselect the current element
-    setSelectedElement(null);
-    
-    // Switch back to elements view
-    const switchToElementsEvent = new CustomEvent('switchToElementsView');
-    window.dispatchEvent(switchToElementsEvent);
-    
-    // Trigger element panel opening
-    const openPanelEvent = new CustomEvent('openElementPanel', {
-      detail: { parentId: id }
-    });
-    window.dispatchEvent(openPanelEvent);
+    setShowDivOptions(true);
+  };
+
+  const handleDivSelect = (config) => {
+    // Create flex elements recursively
+    const createFlexElement = (config, parentId = null) => {
+      const id = addNewElement(config.parentType || config.type, 1, 0, parentId, {
+        styles: { gap: '12px', padding: '12px', display: 'flex', flexDirection: config.direction }
+      });
+      if (config.children && config.children.length > 0) {
+        config.children.forEach(child => {
+          if (child.children) {
+            createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflexLayout' ? 'column' : 'row' }, id);
+          } else {
+            addNewElement(child.type, 1, 0, id, {
+              styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflexLayout' ? 'column' : 'row' }
+            });
+          }
+        });
+      }
+      return id;
+    };
+
+    createFlexElement(config, id);
+    setShowDivOptions(false);
   };
 
   const backgroundContent =
@@ -147,12 +162,44 @@ const Section = forwardRef(({
             background: isOverCurrent ? '#f0f0f0' : 'transparent',
           }}
         >
-          <button
-            className="add-element-button"
-            onClick={handleAddElement}
-          >
-            <span className="plus-icon">+</span>
-          </button>
+          {showDivOptions ? (
+            <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%' }}>
+              {divConfigurations.map((config) => (
+                <div
+                  key={config.id}
+                  className="inline-div-option"
+                  onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
+                  style={{
+                    cursor: 'pointer',
+                    background: '#e5e8ea',
+                    borderRadius: '6px',
+                    padding: '8px',
+                    minWidth: '60px',
+                    minHeight: '40px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                    border: '2px solid #e5e8ea',
+                    transition: 'border 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
+                  onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
+                >
+                  {config.preview}
+                  <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <button
+              className="add-element-button"
+              onClick={handleAddElement}
+            >
+              <span className="plus-icon">+</span>
+            </button>
+          )}
         </div>
       ) : Array.isArray(childrenToRender) ? (
         childrenToRender.map((child, index) => {

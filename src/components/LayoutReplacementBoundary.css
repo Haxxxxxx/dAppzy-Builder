@@ -1,0 +1,152 @@
+.layout-replacement-boundary {
+  position: relative;
+  width: 100%;
+  cursor: move;
+  transition: all 0.3s ease;
+}
+
+.layout-replacement-boundary.hovering {
+  outline: 2px dashed rgba(92, 78, 250, 0.5);
+  background-color: rgba(92, 78, 250, 0.05);
+}
+
+.layout-replacement-boundary[draggable="true"]:hover {
+  outline: 2px solid rgba(92, 78, 250, 0.3);
+}
+
+.layout-replacement-boundary[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.8;
+}
+
+.drop-indicator {
+  position: absolute;
+  background-color: #5C4EFA;
+  z-index: 1000;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 8px rgba(92, 78, 250, 0.5);
+}
+
+.drop-indicator.top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 2px 2px 0 0;
+  transform-origin: center top;
+}
+
+.drop-indicator.bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 0 0 2px 2px;
+  transform-origin: center bottom;
+}
+
+.drop-indicator.left {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px 0 0 2px;
+  transform-origin: left center;
+}
+
+.drop-indicator.right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+  transform-origin: right center;
+}
+
+/* Layout-specific styles */
+.layout-replacement-boundary.navbar {
+  min-height: 60px;
+  z-index: 100;
+}
+
+.layout-replacement-boundary.hero {
+  min-height: 400px;
+  z-index: 90;
+}
+
+.layout-replacement-boundary.cta {
+  min-height: 200px;
+  z-index: 80;
+}
+
+.layout-replacement-boundary.defiSection {
+  min-height: 300px;
+  z-index: 70;
+}
+
+.layout-replacement-boundary.footer {
+  min-height: 100px;
+  z-index: 60;
+}
+
+/* Hover animations */
+.drop-indicator {
+  animation: pulse 1.5s infinite;
+  transform: scale(1);
+}
+
+.drop-indicator.top,
+.drop-indicator.bottom {
+  animation: pulseVertical 1.5s infinite;
+}
+
+.drop-indicator.left,
+.drop-indicator.right {
+  animation: pulseHorizontal 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseVertical {
+  0% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes pulseHorizontal {
+  0% {
+    opacity: 0.6;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scaleY(1);
+  }
+} 

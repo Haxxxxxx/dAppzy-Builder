@@ -5,6 +5,7 @@ import { AutoSaveContext } from '../context/AutoSaveContext';
 import UnifiedDropZone from '../utils/UnifiedDropZone';
 import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
+import LayoutReplacementBoundary from './LayoutReplacementBoundary';
 import debounce from 'lodash/debounce';
 
 const ContentList = forwardRef(
@@ -149,8 +150,258 @@ const ContentList = forwardRef(
       return id;
     }
 
+    // Get root-level elements only
+    const getRootElements = useCallback(() => {
+      return elements.filter(el => !el.parentId);
+    }, [elements]);
+
+    // Simplified replaceLayout function that just reorders elements
+    const replaceLayout = (oldLayoutId, newLayoutConfig, position) => {
+      // Find the old layout
+      const oldLayout = elements.find(el => el.id === oldLayoutId);
+      if (!oldLayout) {
+        console.warn('Could not find layout with id:', oldLayoutId);
+        return null;
+      }
+
+      // Get root elements and their indices
+      const rootElements = getRootElements();
+      const rootElementIds = rootElements.map(el => el.id);
+      
+      // Get source and target indices in the root elements array
+      const sourceIndex = rootElementIds.indexOf(oldLayoutId);
+      
+      // Find the target element by ID instead of index
+      const targetId = newLayoutConfig.targetId || elements[newLayoutConfig.targetIndex]?.id;
+      const targetIndex = rootElementIds.indexOf(targetId);
+
+      console.log('Root element indices:', {
+        source: sourceIndex,
+        target: targetIndex,
+        targetId,
+        edge: position?.edge,
+        rootElementsCount: rootElements.length,
+        totalElementsCount: elements.length,
+        rootElementIds
+      });
+
+      if (sourceIndex === -1 || targetIndex === -1) {
+        console.warn('Could not find source or target in root elements:', {
+          sourceId: oldLayoutId,
+          targetId,
+          rootElementIds
+        });
+        return null;
+      }
+
+      // Calculate the final position based on the drop edge
+      let finalIndex = targetIndex;
+      switch (position?.edge) {
+        case 'top':
+          finalIndex = targetIndex;
+          break;
+        case 'bottom':
+          finalIndex = targetIndex + 1;
+          break;
+        case 'left':
+          finalIndex = targetIndex;
+          break;
+        case 'right':
+          finalIndex = targetIndex + 1;
+          break;
+        default:
+          finalIndex = targetIndex;
+      }
+
+      // Ensure the index is within bounds
+      finalIndex = Math.max(0, Math.min(finalIndex, rootElements.length));
+
+      console.log('Moving root element:', {
+        from: sourceIndex,
+        to: finalIndex,
+        edge: position?.edge
+      });
+
+      // Reorder elements
+      setElements(prevElements => {
+        // Create a map of parent IDs to their children
+        const childrenMap = new Map();
+        prevElements.forEach(el => {
+          if (el.parentId) {
+            if (!childrenMap.has(el.parentId)) {
+              childrenMap.set(el.parentId, []);
+            }
+            childrenMap.get(el.parentId).push({...el});
+          }
+        });
+
+        // Get root elements in their current order
+        const currentRootElements = prevElements.filter(el => !el.parentId);
+        
+        // Create a copy of root elements and perform the move
+        const reorderedRootElements = [...currentRootElements];
+        const [movedElement] = reorderedRootElements.splice(sourceIndex, 1);
+        const adjustedFinalIndex = finalIndex > sourceIndex ? finalIndex - 1 : finalIndex;
+        reorderedRootElements.splice(adjustedFinalIndex, 0, movedElement);
+
+        // Build the final array preserving all elements
+        const updatedElements = [];
+        
+        // Add root elements in their new order with updated indices
+        reorderedRootElements.forEach((root, index) => {
+          // Add the root element with its updated index
+          const rootElement = {
+            ...root,
+            index
+          };
+          updatedElements.push(rootElement);
+
+          // Add all children of this root element (if any)
+          const children = childrenMap.get(root.id) || [];
+          children.forEach(child => {
+            // Preserve all child properties while ensuring parentId is maintained
+            updatedElements.push({
+              ...child,
+              parentId: root.id
+            });
+          });
+        });
+
+        // Add any remaining elements that might not be directly under reordered roots
+        prevElements.forEach(el => {
+          if (el.parentId && !updatedElements.find(updated => updated.id === el.id)) {
+            updatedElements.push({...el});
+          }
+        });
+
+        console.log('Element reordering details:', {
+          totalElementsBefore: prevElements.length,
+          totalElementsAfter: updatedElements.length,
+          rootElements: reorderedRootElements.map((el, idx) => ({
+            id: el.id,
+            type: el.type,
+            index: idx,
+            childCount: (childrenMap.get(el.id) || []).length
+          })),
+          childrenMap: Array.from(childrenMap.entries()).map(([parentId, children]) => ({
+            parentId,
+            childCount: children.length
+          }))
+        });
+
+        return updatedElements;
+      });
+
+      return oldLayoutId;
+    };
+
+    // Enhanced layout replacement handler
+    const handleLayoutReplace = useCallback(({ oldLayoutId, sourceIndex, targetIndex, newLayout, position }) => {
+      console.log('Handling layout replace:', {
+        oldLayoutId,
+        sourceIndex,
+        targetIndex,
+        targetId: newLayout.id,
+        position
+      });
+      
+      const resultId = replaceLayout(oldLayoutId, {
+        ...newLayout,
+        sourceIndex,
+        targetIndex,
+        targetId: newLayout.id
+      }, position);
+
+      if (resultId) {
+        setSelectedElement({ id: resultId, type: newLayout.type });
+      }
+    }, [replaceLayout, setSelectedElement]);
+
+    // Prepare layout data for dragging
+    const getLayoutData = useCallback((element) => {
+      return {
+        type: element.type,
+        configuration: element.configuration,
+        structure: element.structure,
+        styles: element.styles,
+        settings: element.settings,
+        label: element.label
+      };
+    }, []);
+
+    // Enhanced wrapWithBoundary function
+    const wrapWithBoundary = (element, renderedElement, index) => {
+      const isLayout = [
+        'navbar',
+        'hero',
+        'cta',
+        'mintingSection',
+        'ContentSection',
+        'defiSection',
+        'footer',
+        'section'
+      ].includes(element.type);
+
+      if (!isLayout) return renderedElement;
+
+      const layoutData = {
+        type: element.type,
+        configuration: element.configuration,
+        structure: element.structure,
+        styles: element.styles,
+        settings: element.settings,
+        label: element.label,
+        children: element.children
+      };
+
+      return (
+        <LayoutReplacementBoundary
+          key={element.id}
+          layoutId={element.id}
+          layoutType={element.type}
+          layoutData={layoutData}
+          elementIndex={index}
+          onReplace={handleLayoutReplace}
+          isPreviewMode={isPreviewMode}
+        >
+          {renderedElement}
+        </LayoutReplacementBoundary>
+      );
+    };
+
+    // Enhanced handleDrop function
     const handleDrop = (item, index) => {
       if (!item) return;
+
+      // Handle layout replacement from drag and drop
+      if (item.type && ['navbar', 'hero', 'cta', 'mintingSection', 'ContentSection', 'defiSection', 'footer', 'section'].includes(item.type)) {
+        const layoutData = {
+          type: item.type,
+          configuration: item.configuration,
+          structure: item.structure,
+          styles: item.styles,
+          settings: item.settings,
+          label: item.label
+        };
+
+        // Set the layout data in dataTransfer
+        if (item.dataTransfer) {
+          try {
+            item.dataTransfer.setData('application/layout-data', JSON.stringify(layoutData));
+          } catch (err) {
+            console.error('Error setting layout data:', err);
+          }
+        }
+      }
+
+      // Handle layout replacement
+      if (item.isLayoutReplacement && item.targetLayoutId) {
+        const newId = replaceLayout(item.targetLayoutId, item, item.position);
+        if (newId) {
+          setSelectedElement({ id: newId, type: item.type });
+        }
+        return;
+      }
 
       // Handle flex config drop
       if (item.isFlexConfig && item.flexConfig) {
@@ -294,8 +545,7 @@ const ContentList = forwardRef(
           </DropZoneErrorBoundary>
         ) : (
           <>
-            {elements
-              .filter((element) => !element.parentId)
+            {getRootElements()
               .map((element, index) => (
                 <React.Fragment key={element.id}>
                   {!isPreviewMode && (
@@ -312,17 +562,21 @@ const ContentList = forwardRef(
                       />
                     </DropZoneErrorBoundary>
                   )}
-                  {renderElement(
+                  {wrapWithBoundary(
                     element,
-                    elements,
-                    contentListWidth,
-                    setSelectedElement,
-                    setElements,
-                    handlePanelToggle,
-                    selectedElement,
-                    selectedStyle,
-                    isPreviewMode,
-                    handleOpenMediaPanel
+                    renderElement(
+                      element,
+                      elements,
+                      contentListWidth,
+                      setSelectedElement,
+                      setElements,
+                      handlePanelToggle,
+                      selectedElement,
+                      selectedStyle,
+                      isPreviewMode,
+                      handleOpenMediaPanel
+                    ),
+                    index
                   )}
                 </React.Fragment>
               ))}

@@ -1,28 +1,45 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
 import '../Basic/css/EmptyState.css';
+import { divConfigurations } from '../../utils/UnifiedDropZone';
+
+// Helper to generate a unique ID based on type
+const generateUniqueId = (type) => {
+  const prefix = type === 'vflexLayout' ? 'vflex' : 
+                type === 'hflexLayout' ? 'hflex' : 
+                type === 'container' ? 'container' : 'div';
+  return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 const Container = ({ id }) => {
-  const { selectedElement, setSelectedElement, elements, addNewElement, setElements } =
+  const { selectedElement, setSelectedElement, elements, setElements } =
     useContext(EditableContext);
   const containerElement = elements.find((el) => el.id === id) || {};
   const { styles = {}, children = [] } = containerElement;
   const containerRef = useRef(null);
+  const [showDivOptions, setShowDivOptions] = useState(false);
 
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: containerRef,
     onDropItem: (item, parentId) => {
-      const newId = addNewElement(item.type, item.level || 1, null, parentId);
-      setElements((prev) =>
-        prev.map((el) =>
+      const newId = generateUniqueId(item.type);
+      setElements((prev) => [
+        ...prev.map((el) =>
           el.id === parentId
             ? { ...el, children: [...new Set([...el.children, newId])] }
             : el
-        )
-      );
+        ),
+        {
+          id: newId,
+          type: item.type,
+          parentId,
+          styles: item.styles || {},
+          children: []
+        }
+      ]);
     },
   });
 
@@ -33,18 +50,84 @@ const Container = ({ id }) => {
 
   const handleAddElement = (e) => {
     e.stopPropagation();
-    // Deselect the current element
-    setSelectedElement(null);
+    setShowDivOptions(true);
+  };
+
+  const handleDivSelect = (config) => {
+    // Create all elements in memory first
+    const newElements = [];
+    const elementMap = new Map();
     
-    // Switch back to elements view
-    const switchToElementsEvent = new CustomEvent('switchToElementsView');
-    window.dispatchEvent(switchToElementsEvent);
-    
-    // Trigger element panel opening
-    const openPanelEvent = new CustomEvent('openElementPanel', {
-      detail: { parentId: id }
+    // Helper to create an element and its children
+    const createElementInMemory = (config, parentId) => {
+      const currentId = generateUniqueId(config.parentType || config.type);
+      const currentElement = {
+        id: currentId,
+        type: config.parentType || config.type,
+        parentId,
+        styles: {
+          flex: 1,
+          gap: '12px',
+          padding: '12px',
+          display: 'flex',
+          flexDirection: config.direction,
+          position: 'relative',
+          boxSizing: 'border-box'
+        },
+        children: []
+      };
+      
+      newElements.push(currentElement);
+      elementMap.set(currentId, currentElement);
+
+      if (config.children && config.children.length > 0) {
+        config.children.forEach(child => {
+          const childConfig = {
+            ...child,
+            parentType: child.type,
+            direction: child.type === 'vflexLayout' ? 'column' : 'row'
+          };
+
+          const childId = createElementInMemory(childConfig, currentId);
+          currentElement.children.push(childId);
+        });
+      }
+
+      return currentId;
+    };
+
+    // Create the entire structure starting from the container's children
+    const childrenIds = config.children.map(child => {
+      const childConfig = {
+        ...child,
+        parentType: child.type,
+        direction: child.type === 'vflexLayout' ? 'column' : 'row'
+      };
+      return createElementInMemory(childConfig, id);
     });
-    window.dispatchEvent(openPanelEvent);
+
+    // Update everything in one state update
+    setElements(prev => [
+      ...prev.map(el => el.id === id ? {
+        ...el,
+        type: config.parentType || config.type, // Transform container into flex
+        children: childrenIds,
+        styles: {
+          ...el.styles,
+          display: 'flex',
+          flexDirection: config.direction,
+          gap: '12px',
+          padding: '12px',
+          position: 'relative',
+          boxSizing: 'border-box',
+          margin: el.styles.margin || '10px auto',
+          maxWidth: el.styles.maxWidth || '1200px',
+        }
+      } : el),
+      ...newElements
+    ]);
+
+    setShowDivOptions(false);
   };
 
   return (
@@ -57,7 +140,7 @@ const Container = ({ id }) => {
       onClick={handleSelect}
       style={{
         ...styles,
-        display: 'block',
+        display: styles.display || 'block',
         position: 'relative',
         padding: styles.padding || '10px',
         margin: styles.margin || '10px auto',
@@ -75,12 +158,44 @@ const Container = ({ id }) => {
             background: isOverCurrent ? '#f0f0f0' : 'transparent',
           }}
         >
-          <button
-            className="add-element-button"
-            onClick={handleAddElement}
-          >
-            <span className="plus-icon">+</span>
-          </button>
+          {showDivOptions ? (
+            <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%' }}>
+              {divConfigurations.map((config) => (
+                <div
+                  key={config.id}
+                  className="inline-div-option"
+                  onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
+                  style={{
+                    cursor: 'pointer',
+                    background: '#e5e8ea',
+                    borderRadius: '6px',
+                    padding: '8px',
+                    minWidth: '60px',
+                    minHeight: '40px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                    border: '2px solid #e5e8ea',
+                    transition: 'border 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
+                  onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
+                >
+                  {config.preview}
+                  <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <button
+              className="add-element-button"
+              onClick={handleAddElement}
+            >
+              <span className="plus-icon">+</span>
+            </button>
+          )}
         </div>
       ) : (
         children.map((childId) =>

@@ -5,12 +5,40 @@ import debounce from 'lodash/debounce';
 
 export const AutoSaveContext = createContext();
 
-export const AutoSaveProvider = ({ children, userId, projectId }) => {
+export const AutoSaveProvider = ({ children, userId: propUserId, projectId: propProjectId }) => {
+  // Get URL parameters as fallback
+  const getUrlParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      urlUserId: params.get('userId'),
+      urlProjectId: params.get('projectId')
+    };
+  };
+
+  // Use props or URL parameters
+  const { urlUserId, urlProjectId } = getUrlParams();
+  const userId = propUserId || urlUserId;
+  const projectId = propProjectId || urlProjectId;
+
   const [saveStatus, setSaveStatus] = useState('All changes saved');
   const [lastSaved, setLastSaved] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
   const [saveQueue, setSaveQueue] = useState([]);
+
+  // Validate IDs are present
+  useEffect(() => {
+    if (!userId || !projectId) {
+      console.warn('Missing required IDs:', { 
+        userId: userId || 'missing', 
+        projectId: projectId || 'missing',
+        urlParams: getUrlParams(),
+        propUserId,
+        propProjectId
+      });
+      setSaveStatus('Cannot save: Missing user or project ID');
+    }
+  }, [userId, projectId, propUserId, propProjectId]);
 
   // Validate element structure before saving
   const validateElement = (element) => {
@@ -21,19 +49,37 @@ export const AutoSaveProvider = ({ children, userId, projectId }) => {
                             element.type && 
                             typeof element.styles === 'object';
     
+    // Check for undefined values in styles
+    const hasValidStyles = Object.entries(element.styles || {}).every(([_, value]) => value !== undefined);
+    
     // Layout-specific validation
     if (['navbar', 'hero', 'footer', 'ContentSection', 'cta', 'defiSection'].includes(element.type)) {
-      return hasValidStructure && Array.isArray(element.children);
+      return hasValidStructure && Array.isArray(element.children) && hasValidStyles;
     }
     
-    return hasValidStructure;
+    return hasValidStructure && hasValidStyles;
+  };
+
+  // Remove undefined values from an object recursively
+  const removeUndefined = (obj) => {
+    if (Array.isArray(obj)) {
+      return obj.map(item => removeUndefined(item)).filter(item => item !== undefined);
+    }
+    if (typeof obj === 'object' && obj !== null) {
+      return Object.fromEntries(
+        Object.entries(obj)
+          .filter(([_, value]) => value !== undefined)
+          .map(([key, value]) => [key, removeUndefined(value)])
+      );
+    }
+    return obj;
   };
 
   // Optimize elements for storage by removing unnecessary data
   const optimizeElementForStorage = (element) => {
     const { id, type, styles, content, children, configuration, settings } = element;
-    // Ensure we preserve all necessary layout data
-    return {
+    // Clean and optimize the data
+    const optimizedElement = removeUndefined({
       id,
       type,
       styles: styles || {},
@@ -41,12 +87,13 @@ export const AutoSaveProvider = ({ children, userId, projectId }) => {
       children: children || [],
       configuration: configuration || {},
       settings: settings || {},
-      // Preserve layout-specific properties
       ...(element.structure && { structure: element.structure }),
       ...(element.part && { part: element.part }),
       ...(element.layout && { layout: element.layout }),
       ...(element.parentId && { parentId: element.parentId })
-    };
+    });
+
+    return optimizedElement;
   };
 
   // Process save queue
@@ -63,7 +110,21 @@ export const AutoSaveProvider = ({ children, userId, projectId }) => {
       const { elements, websiteSettings } = nextSave;
 
       // Validate and optimize elements
-      const validElements = elements.filter(validateElement).map(optimizeElementForStorage);
+      const validElements = elements
+        .filter(validateElement)
+        .map(optimizeElementForStorage)
+        .filter(element => Object.keys(element).length > 0);
+
+      // Skip save if no valid elements
+      if (validElements.length === 0) {
+        console.warn('No valid elements to save');
+        setSaveQueue(prev => prev.slice(1));
+        setSaveStatus('Skipped save - invalid data');
+        return;
+      }
+
+      // Clean website settings
+      const cleanWebsiteSettings = removeUndefined(websiteSettings || {});
 
       // First, clear any existing chunks
       const existingChunks = parseInt(localStorage.getItem('editableElements_chunks') || '0');
@@ -75,17 +136,17 @@ export const AutoSaveProvider = ({ children, userId, projectId }) => {
       const chunkSize = 50;
       for (let i = 0; i < validElements.length; i += chunkSize) {
         const chunk = validElements.slice(i, i + chunkSize);
-        await new Promise(resolve => setTimeout(resolve, 0)); // Yield to main thread
+        await new Promise(resolve => setTimeout(resolve, 0));
         localStorage.setItem(`editableElements_chunk_${i}`, JSON.stringify(chunk));
       }
       localStorage.setItem('editableElements_chunks', Math.ceil(validElements.length / chunkSize));
-      localStorage.setItem('websiteSettings', JSON.stringify(websiteSettings));
+      localStorage.setItem('websiteSettings', JSON.stringify(cleanWebsiteSettings));
 
       // Save to Firestore
       const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       await setDoc(projectRef, {
         elements: validElements,
-        websiteSettings,
+        websiteSettings: cleanWebsiteSettings,
         lastUpdated: serverTimestamp()
       }, { merge: true });
 
@@ -95,7 +156,17 @@ export const AutoSaveProvider = ({ children, userId, projectId }) => {
       setSaveQueue(prev => prev.slice(1)); // Remove processed save
     } catch (error) {
       console.error('Error saving content:', error);
-      setSaveStatus('Error saving changes');
+      setSaveStatus('Error saving changes - will retry with clean data');
+      
+      // Remove the failed save attempt from the queue to prevent infinite retries
+      setSaveQueue(prev => prev.slice(1));
+      
+      // Log detailed error information for debugging
+      console.warn('Save failed with the following data:', {
+        elementsCount: nextSave?.elements?.length,
+        websiteSettingsKeys: nextSave?.websiteSettings ? Object.keys(nextSave.websiteSettings) : [],
+        error: error.message
+      });
     } finally {
       setIsSaving(false);
     }
@@ -112,14 +183,21 @@ export const AutoSaveProvider = ({ children, userId, projectId }) => {
   const debouncedSaveContent = useCallback(
     debounce((elements, websiteSettings) => {
       if (!userId || !projectId) {
-        console.log('Save aborted: missing userId or projectId', { userId, projectId });
+        console.warn('Save aborted: missing userId or projectId', { 
+          userId, 
+          projectId,
+          urlParams: getUrlParams(),
+          propUserId,
+          propProjectId
+        });
+        setSaveStatus('Cannot save: Missing user or project ID');
         return;
       }
 
       // Add to save queue instead of saving immediately
       setSaveQueue(prev => [...prev, { elements, websiteSettings }]);
-    }, 3000), // Increased debounce time to reduce save frequency
-    [userId, projectId]
+    }, 3000),
+    [userId, projectId, propUserId, propProjectId]
   );
 
   // Save content wrapper that uses debounced function

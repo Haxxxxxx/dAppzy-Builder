@@ -362,7 +362,25 @@ export const renderElement = (
     icon: <Icon id={id} key={id} styles={mergedStyles} />,
     dateComponent: <DateComponent id={id} key={id} styles={mergedStyles} />,
     bgVideo: <BGVideo id={id} key={id} styles={mergedStyles} />,
-    connectWalletButton: <ConnectWalletButton id={id} key={id} styles={mergedStyles} />
+    connectWalletButton: <ConnectWalletButton id={id} key={id} styles={mergedStyles} />,
+    hflexLayout: (
+      <HFlexLayout
+        id={id}
+        key={id}
+        styles={mergedStyles}
+      >
+        {children ? renderChildren(children) : null}
+      </HFlexLayout>
+    ),
+    vflexLayout: (
+      <VFlexLayout
+        id={id}
+        key={id}
+        styles={mergedStyles}
+      >
+        {children ? renderChildren(children) : null}
+      </VFlexLayout>
+    )
   };
 
   // Get the appropriate component or fallback

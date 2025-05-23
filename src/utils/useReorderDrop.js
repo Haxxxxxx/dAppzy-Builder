@@ -7,6 +7,8 @@ const useReorderDrop = (findElementById, elements, setElements) => {
     const [isInternalDrag, setIsInternalDrag] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [dragSource, setDragSource] = useState(null);
+    const [isLayoutReplacement, setIsLayoutReplacement] = useState(false);
+    const [targetLayoutId, setTargetLayoutId] = useState(null);
 
     // Cleanup function to reset drag state
     const resetDrag = useCallback(() => {
@@ -15,6 +17,8 @@ const useReorderDrop = (findElementById, elements, setElements) => {
         setIsInternalDrag(false);
         setIsDragging(false);
         setDragSource(null);
+        setIsLayoutReplacement(false);
+        setTargetLayoutId(null);
     }, []);
 
     // Add cleanup on unmount
@@ -24,25 +28,54 @@ const useReorderDrop = (findElementById, elements, setElements) => {
         };
     }, [resetDrag]);
 
-    const onDragStart = useCallback((e, id, sourceContainerId) => {
+    const onDragStart = useCallback((e, id, sourceContainerId, isReplacement = false, layoutId = null) => {
         e.stopPropagation();
         setDraggedId(id);
         setIsInternalDrag(true);
         setIsDragging(true);
         setDragSource(sourceContainerId);
+        setIsLayoutReplacement(isReplacement);
+        setTargetLayoutId(layoutId);
         e.dataTransfer.setData("text/plain", id);
+        
+        // Add layout replacement data if applicable
+        if (isReplacement && layoutId) {
+            e.dataTransfer.setData("application/layout-replacement", JSON.stringify({
+                targetLayoutId: layoutId
+            }));
+        }
     }, []);
 
-    const onDragOver = useCallback((e, containerId, index) => {
+    const onDragOver = useCallback((e, containerId, index, isLayoutTarget = false) => {
         e.preventDefault();
         e.stopPropagation();
         if (!isDragging) return;
+
+        // Check if this is a layout replacement drag over
+        if (isLayoutTarget && isLayoutReplacement) {
+            e.dataTransfer.dropEffect = "copy";
+        } else {
+            e.dataTransfer.dropEffect = "move";
+        }
+
         setActiveDrop({ containerId, index });
-    }, [isDragging]);
+    }, [isDragging, isLayoutReplacement]);
 
     const onDrop = useCallback((e, containerId) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Check for layout replacement
+        const layoutReplacementData = e.dataTransfer.getData("application/layout-replacement");
+        if (layoutReplacementData) {
+            try {
+                const { targetLayoutId } = JSON.parse(layoutReplacementData);
+                // Handle layout replacement through the drop handler in ContentList
+                return;
+            } catch (err) {
+                console.error('Error parsing layout replacement data:', err);
+            }
+        }
 
         const id = draggedId || e.dataTransfer.getData("text/plain");
         if (!id) {
@@ -142,6 +175,8 @@ const useReorderDrop = (findElementById, elements, setElements) => {
         activeDrop,
         isDragging,
         dragSource,
+        isLayoutReplacement,
+        targetLayoutId,
         onDragStart,
         onDragOver,
         onDrop,

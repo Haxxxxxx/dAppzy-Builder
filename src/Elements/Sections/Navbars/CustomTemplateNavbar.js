@@ -156,9 +156,9 @@ const CustomTemplateNavbar = ({
             >
               {children?.slice(2)
                 .filter((child) => child?.type === 'span')
-                .map((child) => (
+                .map((child, index) => (
                   <Span
-                    key={child.id}
+                    key={`span-${child.id}-${index}`}
                     id={child.id}
                     content={child.content}
                     styles={{
@@ -175,10 +175,11 @@ const CustomTemplateNavbar = ({
                   (child) =>
                     child?.type === 'button' || child?.type === 'connectWalletButton'
                 )
-                .map((child) => (
-                  <React.Fragment key={child.id}>
+                .map((child, index) => (
+                  <React.Fragment key={`button-container-${child.id}-${index}`}>
                     {child.type === 'connectWalletButton' ? (
                       <ConnectWalletButton
+                        key={`wallet-${child.id}-${index}`}
                         id={child.id}
                         content={child.content}
                         styles={{
@@ -191,6 +192,7 @@ const CustomTemplateNavbar = ({
                       />
                     ) : (
                       <Button
+                        key={`button-${child.id}-${index}`}
                         id={child.id}
                         content={child.content}
                         styles={{
@@ -209,77 +211,71 @@ const CustomTemplateNavbar = ({
         </>
       )}
 
-      {/* Standard Menu */}
+      {/* Regular Menu */}
       {!isCompact && (
-        <>
-          <div 
-            style={{ 
-              display: 'flex', 
-              gap: '2rem',
-              flex: '1 1 auto',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-            }} 
-            className="navbar-standard-menu"
-          >
-            {children?.slice(2)
-              .filter((child) => child?.type === 'span')
-              .map((child) => (
-                <Span
-                  key={child.id}
-                  id={child.id}
-                  content={child.content}
-                  styles={{
-                    ...child.styles,
-                    cursor: 'pointer',
-                    flex: '0 0 auto',
-                  }}
-                  className="navbar-link"
-                />
-              ))}
-          </div>
-
-          <div 
-            style={{ 
-              display: 'flex', 
-              gap: '1rem',
-              flex: '0 1 auto',
-              justifyContent: 'flex-end',
-              flexWrap: 'wrap',
-            }} 
-            className="navbar-buttons"
-          >
-            {children?.slice(2)
-              .filter(
-                (child) => child?.type === 'button' || child?.type === 'connectWalletButton'
-              )
-              .map((child) => (
-                <React.Fragment key={child.id}>
-                  {child.type === 'connectWalletButton' ? (
-                    <ConnectWalletButton
-                      id={child.id}
-                      content={child.content}
-                      styles={{
-                        ...child.styles,
-                        flex: '0 0 auto',
-                      }}
-                      className="navbar-connect-wallet"
-                    />
-                  ) : (
-                    <Button
-                      id={child.id}
-                      content={child.content}
-                      styles={{
-                        ...child.styles,
-                        flex: '0 0 auto',
-                      }}
-                      className="navbar-button"
-                    />
-                  )}
-                </React.Fragment>
-              ))}
-          </div>
-        </>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            flex: '1 1 auto',
+            justifyContent: 'flex-end',
+          }}
+          className="navbar-menu"
+        >
+          {children?.slice(2)
+            .filter((child) => child?.type === 'span')
+            .map((child, index) => (
+              <Span
+                key={`span-${child.id}-${index}`}
+                id={child.id}
+                content={child.content}
+                styles={{
+                  ...child.styles,
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  flex: '0 0 auto',
+                }}
+                className="navbar-link"
+              />
+            ))}
+          {children?.slice(2)
+            .filter(
+              (child) =>
+                child?.type === 'button' || child?.type === 'connectWalletButton'
+            )
+            .map((child, index) => (
+              <React.Fragment key={`button-container-${child.id}-${index}`}>
+                {child.type === 'connectWalletButton' ? (
+                  <ConnectWalletButton
+                    key={`wallet-${child.id}-${index}`}
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      cursor: 'pointer',
+                      padding: '0.5rem',
+                      flex: '0 0 auto',
+                    }}
+                    className="navbar-connect-wallet"
+                  />
+                ) : (
+                  <Button
+                    key={`button-${child.id}-${index}`}
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      cursor: 'pointer',
+                      padding: '0.5rem',
+                      flex: '0 0 auto',
+                    }}
+                    className="navbar-button"
+                  />
+                )}
+              </React.Fragment>
+            ))}
+        </div>
       )}
     </nav>
   );

@@ -9,39 +9,68 @@ import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../E
 
 // Section Selection Popup Component
 const SectionSelectionPopup = ({ onClose, onSelect }) => {
+  const defaultPreviewImage = './img/previewcomponent.png';
+
   // Define section configurations with their preview images
   const sectionConfigurations = {
     // Navbar configurations
-    customTemplateNavbar: { name: 'Custom Navbar', previewImage: './img/previsu-custom-navbar.png' },
-    twoColumn: { name: 'Two Columns', previewImage: './img/previsu-two-columns-navbar.png' },
-    defiNavbar: { name: 'DeFi Navbar', previewImage: './img/previsu-defi-navbar.png' },
+    customTemplateNavbar: { name: 'Custom Navbar', previewImage: './img/previsu-custom-navbar.png', category: 'Navbar' },
+    twoColumn: { name: 'Two Columns', previewImage: './img/previsu-two-columns-navbar.png', category: 'Navbar' },
+    defiNavbar: { name: 'DeFi Navbar', previewImage: './img/previsu-defi-navbar.png', category: 'Navbar' },
 
     // Hero configurations
-    heroOne: { name: 'Basic Hero', previewImage: './img/previsu-basic-hero.png' },
-    heroTwo: { name: 'Small Hero', previewImage: './img/previsu-small-hero.png' },
-    heroThree: { name: 'Advanced Hero', previewImage: './img/previsu-advanced-hero.png' },
+    heroOne: { name: 'Basic Hero', previewImage: './img/previsu-basic-hero.png', category: 'Hero' },
+    heroTwo: { name: 'Small Hero', previewImage: './img/previsu-small-hero.png', category: 'Hero' },
+    heroThree: { name: 'Advanced Hero', previewImage: './img/previsu-advanced-hero.png', category: 'Hero' },
 
     // CTA configurations
-    ctaOne: { name: 'Advanced CTA', previewImage: './img/previsu-advanced-cta.png' },
-    ctaTwo: { name: 'Quick CTA', previewImage: './img/previsu-quick-cta.png' },
+    ctaOne: { name: 'Advanced CTA', previewImage: './img/previsu-advanced-cta.png', category: 'CTA' },
+    ctaTwo: { name: 'Quick CTA', previewImage: './img/previsu-quick-cta.png', category: 'CTA' },
+
+    // Content Section configurations - Using default preview for now as these might not have unique images yet
+    sectionOne: { name: 'Feature Section', previewImage: './img/previsu-feature-section.png', category: 'Content' },
+    sectionTwo: { name: 'Content Grid', previewImage: './img/previsu-content-grid.png', category: 'Content' },
+    sectionThree: { name: 'Testimonial Section', previewImage: './img/previsu-testimonial.png', category: 'Content' },
+    sectionFour: { name: 'Pricing Section', previewImage: './img/previsu-pricing.png', category: 'Content' },
 
     // Web3 section configurations
-    defiSection: { name: 'DeFi Dashboard', previewImage: './img/previsu-defi-dashboard.png' },
-    mintingSection: { name: 'NFT Minting', previewImage: './img/previsu-minting.png' },
+    defiSection: { name: 'DeFi Dashboard', previewImage: './img/previsu-defi-dashboard.png', category: 'Web3' },
+    mintingSection: { name: 'NFT Minting', previewImage: './img/previsu-minting.png', category: 'Web3' },
   
     // Footer configurations
-    simpleFooter: { name: 'Simple Footer', previewImage: './img/previsu-simple-footer.png' },
-    detailedFooter: { name: 'Detailed Footer', previewImage: './img/previsu-detailed-footer.png' },
-    advancedFooter: { name: 'Advanced Footer', previewImage: './img/previsu-advanced-footer.png' },
-    defiFooter: { name: 'DeFi Footer', previewImage: './img/previsu-defi-footer.png' },
+    simpleFooter: { name: 'Simple Footer', previewImage: './img/previsu-simple-footer.png', category: 'Footer' },
+    detailedFooter: { name: 'Detailed Footer', previewImage: './img/previsu-detailed-footer.png', category: 'Footer' },
+    advancedFooter: { name: 'Advanced Footer', previewImage: './img/previsu-advanced-footer.png', category: 'Footer' },
+    defiFooter: { name: 'DeFi Footer', previewImage: './img/previsu-defi-footer.png', category: 'Footer' }
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [imageErrors, setImageErrors] = useState({});
+
+  const categories = ['All', 'Navbar', 'Hero', 'CTA', 'Content', 'Web3', 'Footer'];
+
+  const handleImageError = (sectionId) => {
+    console.warn(`Image failed to load for section: ${sectionId}, using default preview`);
+    setImageErrors(prev => ({
+      ...prev,
+      [sectionId]: true
+    }));
   };
 
   const sections = Object.entries(structureConfigurations)
-    .filter(([key]) => sectionConfigurations[key]) // Only include sections with configurations
+    .filter(([key]) => sectionConfigurations[key])
+    .filter(([key]) => {
+      const matchesCategory = selectedCategory === 'All' || sectionConfigurations[key].category === selectedCategory;
+      const matchesSearch = searchQuery === '' || 
+        sectionConfigurations[key].name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
     .map(([key, config]) => ({
       id: key,
       name: sectionConfigurations[key].name,
       previewImage: sectionConfigurations[key].previewImage,
+      category: sectionConfigurations[key].category,
       configuration: config
     }));
 
@@ -54,31 +83,68 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
         </div>
         <hr className='section-selection-popup-hr'></hr>
         <div className="section-selection-popup-toolbar">
-          <select>
-            <option>Category</option>
-            {/* Ajoute ici les catégories si besoin */}
+          <select 
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="section-selection-category-select"
+          >
+            {categories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
           </select>
-          <input type="search" placeholder="Search" />
+          <input 
+            type="search" 
+            placeholder="Search" 
+            className="section-selection-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
         <div className="section-selection-sections-grid">
           {sections.map((section) => (
             <div
               key={section.id}
               className="section-selection-section-item"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px'
+              }}
             >
               <div className="section-selection-section-preview">
                 <img
-                  src={section.previewImage}
+                  src={imageErrors[section.id] ? defaultPreviewImage : section.previewImage}
                   alt={section.name}
                   loading="lazy"
+                  onError={() => handleImageError(section.id)}
                 />
               </div>
+              {imageErrors[section.id] && (
+                <div 
+                  className="section-selection-section-name"
+                  style={{
+                    fontSize: '14px',
+                    color: '#666',
+                    textAlign: 'center',
+                    padding: '4px 8px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '4px',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {section.name}
+                </div>
+              )}
               <div className="section-selection-section-overlay">
                 <button
                   className="section-selection-insert-btn"
                   onClick={() => onSelect(section)}
                 >
-                  <span class="material-symbols-outlined">
+                  <span className="material-symbols-outlined">
                     download
                   </span>
                   Insert
@@ -92,85 +158,6 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
     document.body
   );
 };
-
-const divConfigurations = [
-  {
-    id: 'vflex-2-hflex',
-    name: '2 Rows',
-    parentType: 'vflexLayout',
-    direction: 'column',
-    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }]
-  },
-  {
-    id: 'vflex-3-hflex',
-    name: '3 Rows',
-    parentType: 'vflexLayout',
-    direction: 'column',
-    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }]
-  },
-  {
-    id: 'hflex-2-vflex',
-    name: '2 Columns',
-    parentType: 'hflexLayout',
-    direction: 'row',
-    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }]
-  },
-  {
-    id: 'hflex-3-vflex',
-    name: '3 Columns',
-    parentType: 'hflexLayout',
-    direction: 'row',
-    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }]
-  },
-  {
-    id: 'vflex-nested-grid',
-    name: '2 Rows, 2 Cols Each',
-    parentType: 'vflexLayout',
-    direction: 'column',
-    children: [
-      { type: 'hflexLayout', children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }] },
-      { type: 'hflexLayout', children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }] }
-    ]
-  },
-  {
-    id: 'hflex-nested-grid',
-    name: '2 Cols, 2 Rows Each',
-    parentType: 'hflexLayout',
-    direction: 'row',
-    children: [
-      { type: 'vflexLayout', children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }] },
-      { type: 'vflexLayout', children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }] }
-    ]
-  },
-  {
-    id: 'vflex-mixed',
-    name: 'Row + Col',
-    parentType: 'vflexLayout',
-    direction: 'column',
-    children: [{ type: 'hflexLayout' }, { type: 'vflexLayout' }]
-  },
-  {
-    id: 'hflex-mixed',
-    name: 'Col + Row',
-    parentType: 'hflexLayout',
-    direction: 'row',
-    children: [{ type: 'vflexLayout' }, { type: 'hflexLayout' }]
-  },
-  {
-    id: 'vflex-4-hflex',
-    name: '4 Rows',
-    parentType: 'vflexLayout',
-    direction: 'column',
-    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }]
-  },
-  {
-    id: 'hflex-4-vflex',
-    name: '4 Columns',
-    parentType: 'hflexLayout',
-    direction: 'row',
-    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }]
-  }
-];
 
 // Helper to render a mini preview for a config
 function renderPreview(config, depth = 0) {
@@ -232,6 +219,95 @@ function createFlexElement(config, addNewElement, parentId = null) {
   }
   return id;
 }
+
+export const divConfigurations = [
+  {
+    id: 'vflex-2-hflex',
+    name: '2 Rows',
+    parentType: 'vflexLayout',
+    direction: 'column',
+    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'vflex-3-hflex',
+    name: '3 Rows',
+    parentType: 'vflexLayout',
+    direction: 'column',
+    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'hflex-2-vflex',
+    name: '2 Columns',
+    parentType: 'hflexLayout',
+    direction: 'row',
+    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'hflex-3-vflex',
+    name: '3 Columns',
+    parentType: 'hflexLayout',
+    direction: 'row',
+    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'vflex-nested-grid',
+    name: '2 Rows, 2 Cols Each',
+    parentType: 'vflexLayout',
+    direction: 'column',
+    children: [
+      { type: 'hflexLayout', children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }] },
+      { type: 'hflexLayout', children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }] }
+    ],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'hflex-nested-grid',
+    name: '2 Cols, 2 Rows Each',
+    parentType: 'hflexLayout',
+    direction: 'row',
+    children: [
+      { type: 'vflexLayout', children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }] },
+      { type: 'vflexLayout', children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }] }
+    ],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'vflex-mixed',
+    name: 'Row + Col',
+    parentType: 'vflexLayout',
+    direction: 'column',
+    children: [{ type: 'hflexLayout' }, { type: 'vflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'hflex-mixed',
+    name: 'Col + Row',
+    parentType: 'hflexLayout',
+    direction: 'row',
+    children: [{ type: 'vflexLayout' }, { type: 'hflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'vflex-4-hflex',
+    name: '4 Rows',
+    parentType: 'vflexLayout',
+    direction: 'column',
+    children: [{ type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }, { type: 'hflexLayout' }],
+    get preview() { return renderPreview(this); }
+  },
+  {
+    id: 'hflex-4-vflex',
+    name: '4 Columns',
+    parentType: 'hflexLayout',
+    direction: 'row',
+    children: [{ type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }, { type: 'vflexLayout' }],
+    get preview() { return renderPreview(this); }
+  }
+];
 
 const UnifiedDropZone = React.memo(({
   onDrop,
@@ -633,7 +709,7 @@ const UnifiedDropZone = React.memo(({
                     onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
                     onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
                   >
-                    {renderPreview(config)}
+                    {config.preview}
                     <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
                   </div>
                 ))}
