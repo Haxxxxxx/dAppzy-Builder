@@ -431,7 +431,770 @@ const ContentList = forwardRef(
           // Handle all section types with their full configuration
           console.log('Adding section with data:', item);
           
-          // For all section types, process children normally
+          // For hero elements, ensure proper configuration inheritance
+          if (item.type === 'hero') {
+            const timestamp = Date.now();
+            const heroId = `hero-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+
+            // Create different structures based on hero configuration
+            let heroStructure;
+            if (item.configuration === 'heroTwo') {
+              // HeroTwo uses a single content container
+              const contentContainerId = `${heroId}-content`;
+              heroStructure = [
+                // Main hero element
+                {
+                  id: heroId,
+                  type: 'hero',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [contentContainerId],
+                  parentId: null
+                },
+                // Single content container
+                {
+                  id: contentContainerId,
+                  type: 'div',
+                  styles: item.styles?.contentContainer || {},
+                  children: [],
+                  parentId: heroId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+            } else {
+              // Other heroes use left/right containers
+              const leftContainerId = `${heroId}-left`;
+              const rightContainerId = `${heroId}-right`;
+              heroStructure = [
+                // Main hero element
+                {
+                  id: heroId,
+                  type: 'hero',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [leftContainerId, rightContainerId],
+                  parentId: null
+                },
+                // Left container
+                {
+                  id: leftContainerId,
+                  type: 'div',
+                  styles: item.styles?.leftContainer || {},
+                  children: [],
+                  parentId: heroId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Right container
+                {
+                  id: rightContainerId,
+                  type: 'div',
+                  styles: item.styles?.rightContainer || {},
+                  children: [],
+                  parentId: heroId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+            }
+
+            // Update elements in a single batch
+            setElements(prev => {
+              // Remove any existing elements with the same IDs
+              const filteredElements = prev.filter(el => 
+                !heroStructure.some(newEl => newEl.id === el.id)
+              );
+              return [...filteredElements, ...heroStructure];
+            });
+
+            newId = heroId;
+          } else if (item.type === 'cta') {
+            const timestamp = Date.now();
+            const ctaId = `cta-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+
+            // Create different structures based on CTA configuration
+            let ctaStructure;
+            if (item.configuration === 'ctaOne') {
+              // CTAOne has text, buttons, and image containers
+              const textContainerId = `${ctaId}-text`;
+              const buttonsContainerId = `${ctaId}-buttons`;
+              const imageContainerId = `${ctaId}-image`;
+
+              // Create the base structure
+              ctaStructure = [
+                // Main CTA element
+                {
+                  id: ctaId,
+                  type: 'cta',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [textContainerId, buttonsContainerId, imageContainerId],
+                  parentId: null
+                },
+                // Text container
+                {
+                  id: textContainerId,
+                  type: 'div',
+                  styles: item.styles?.textContainer || {},
+                  children: [],
+                  parentId: ctaId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Buttons container
+                {
+                  id: buttonsContainerId,
+                  type: 'div',
+                  styles: item.styles?.buttonsContainer || {},
+                  children: [],
+                  parentId: ctaId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Image container
+                {
+                  id: imageContainerId,
+                  type: 'div',
+                  styles: item.styles?.imageContainer || {},
+                  children: [],
+                  parentId: ctaId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+
+              // Add content elements if they exist
+              if (item.children && item.children.length > 0) {
+                const textElements = [];
+                const buttonElements = [];
+                const imageElements = [];
+
+                item.children.forEach(child => {
+                  const newId = `${ctaId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  let parentId;
+
+                  if (child.type === 'image') {
+                    parentId = imageContainerId;
+                    imageElements.push(newId);
+                  } else if (child.type === 'button') {
+                    parentId = buttonsContainerId;
+                    buttonElements.push(newId);
+                  } else {
+                    parentId = textContainerId;
+                    textElements.push(newId);
+                  }
+
+                  ctaStructure.push({
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: child.styles || {},
+                    parentId,
+                    isConfigured: true,
+                    configuration: child.configuration || null,
+                    structure: child.structure || null
+                  });
+                });
+
+                // Update container children arrays
+                ctaStructure = ctaStructure.map(el => {
+                  if (el.id === textContainerId) {
+                    return { ...el, children: textElements };
+                  }
+                  if (el.id === buttonsContainerId) {
+                    return { ...el, children: buttonElements };
+                  }
+                  if (el.id === imageContainerId) {
+                    return { ...el, children: imageElements };
+                  }
+                  return el;
+                });
+              }
+            } else if (item.configuration === 'ctaTwo') {
+              // CTATwo has only text and buttons containers
+              const textContainerId = `${ctaId}-text`;
+              const buttonsContainerId = `${ctaId}-buttons`;
+
+              // Create the base structure
+              ctaStructure = [
+                // Main CTA element
+                {
+                  id: ctaId,
+                  type: 'cta',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [textContainerId, buttonsContainerId],
+                  parentId: null
+                },
+                // Text container
+                {
+                  id: textContainerId,
+                  type: 'div',
+                  styles: item.styles?.textContainer || {},
+                  children: [],
+                  parentId: ctaId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Buttons container
+                {
+                  id: buttonsContainerId,
+                  type: 'div',
+                  styles: item.styles?.buttonsContainer || {},
+                  children: [],
+                  parentId: ctaId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+
+              // Add content elements if they exist
+              if (item.children && item.children.length > 0) {
+                const textElements = [];
+                const buttonElements = [];
+
+                item.children.forEach(child => {
+                  const newId = `${ctaId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const parentId = child.type === 'button' ? buttonsContainerId : textContainerId;
+
+                  if (child.type === 'button') {
+                    buttonElements.push(newId);
+                  } else {
+                    textElements.push(newId);
+                  }
+
+                  ctaStructure.push({
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: child.styles || {},
+                    parentId,
+                    isConfigured: true,
+                    configuration: child.configuration || null,
+                    structure: child.structure || null
+                  });
+                });
+
+                // Update container children arrays
+                ctaStructure = ctaStructure.map(el => {
+                  if (el.id === textContainerId) {
+                    return { ...el, children: textElements };
+                  }
+                  if (el.id === buttonsContainerId) {
+                    return { ...el, children: buttonElements };
+                  }
+                  return el;
+                });
+              }
+            }
+
+            // Update elements in a single batch
+            setElements(prev => {
+              // Remove any existing elements with the same IDs
+              const filteredElements = prev.filter(el => 
+                !ctaStructure.some(newEl => newEl.id === el.id)
+              );
+              return [...filteredElements, ...ctaStructure];
+            });
+
+            newId = ctaId;
+          } else if (item.type === 'ContentSection') {
+            const timestamp = Date.now();
+            const sectionId = `section-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+
+            // Create different structures based on section configuration
+            let sectionStructure;
+            if (item.configuration === 'sectionOne') {
+              // SectionOne has content, buttons, and image containers
+              const contentContainerId = `${sectionId}-content`;
+              const buttonsContainerId = `${sectionId}-buttons`;
+              const imageContainerId = `${sectionId}-image`;
+
+              // Create the base structure
+              const sectionStructure = [
+                // Main section element
+                {
+                  id: sectionId,
+                  type: 'ContentSection',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [contentContainerId, buttonsContainerId, imageContainerId],
+                  parentId: null,
+                  label: item.label || 'Section One'
+                }
+              ];
+
+              // Create containers
+              const containers = [
+                // Content container
+                {
+                  id: contentContainerId,
+                  type: 'div',
+                  styles: item.styles?.content || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: item.configuration,
+                  structure: null,
+                  part: 'content',
+                  layout: 'content'
+                },
+                // Buttons container
+                {
+                  id: buttonsContainerId,
+                  type: 'div',
+                  styles: item.styles?.buttons || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: item.configuration,
+                  structure: null,
+                  part: 'buttons',
+                  layout: 'buttons'
+                },
+                // Image container
+                {
+                  id: imageContainerId,
+                  type: 'div',
+                  styles: item.styles?.image || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: item.configuration,
+                  structure: null,
+                  part: 'image',
+                  layout: 'image'
+                }
+              ];
+
+              // Add containers to section structure
+              sectionStructure.push(...containers);
+
+              // Add content elements if they exist
+              if (item.children && item.children.length > 0) {
+                const contentElements = [];
+                const buttonElements = [];
+                const imageElements = [];
+
+                item.children.forEach(child => {
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  let parentId;
+                  let elementStyles = {};
+
+                  if (child.type === 'image') {
+                    parentId = imageContainerId;
+                    imageElements.push(newId);
+                    elementStyles = { ...item.styles?.image, ...child.styles };
+                  } else if (child.type === 'button') {
+                    parentId = buttonsContainerId;
+                    buttonElements.push(newId);
+                    elementStyles = { ...item.styles?.button, ...child.styles };
+                  } else if (child.type === 'heading') {
+                    parentId = contentContainerId;
+                    contentElements.push(newId);
+                    elementStyles = { ...item.styles?.heading, ...child.styles };
+                  } else if (child.type === 'paragraph') {
+                    parentId = contentContainerId;
+                    contentElements.push(newId);
+                    elementStyles = { ...item.styles?.paragraph, ...child.styles };
+                  }
+
+                  sectionStructure.push({
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: elementStyles,
+                    parentId,
+                    isConfigured: true,
+                    configuration: child.configuration || null,
+                    structure: child.structure || null
+                  });
+                });
+
+                // Update container children arrays
+                sectionStructure.forEach((el, index) => {
+                  if (el.id === contentContainerId) {
+                    sectionStructure[index] = { ...el, children: contentElements };
+                  }
+                  if (el.id === buttonsContainerId) {
+                    sectionStructure[index] = { ...el, children: buttonElements };
+                  }
+                  if (el.id === imageContainerId) {
+                    sectionStructure[index] = { ...el, children: imageElements };
+                  }
+                });
+              }
+
+              // Update elements in a single batch
+              setElements(prev => {
+                // Remove any existing elements with the same IDs
+                const filteredElements = prev.filter(el => 
+                  !sectionStructure.some(newEl => newEl.id === el.id)
+                );
+                return [...filteredElements, ...sectionStructure];
+              });
+
+              newId = sectionId;
+              return; // Add return statement to prevent further processing
+            } else if (item.configuration === 'sectionTwo') {
+              // SectionTwo has label, content, buttons, image, and cards containers
+              const labelContainerId = `${sectionId}-label`;
+              const contentContainerId = `${sectionId}-content`;
+              const buttonsContainerId = `${sectionId}-buttons`;
+              const imageContainerId = `${sectionId}-image`;
+              const cardsContainerId = `${sectionId}-cards`;
+
+              // Create the base structure
+              sectionStructure = [
+                // Main section element
+                {
+                  id: sectionId,
+                  type: 'ContentSection',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [labelContainerId, contentContainerId, buttonsContainerId, imageContainerId, cardsContainerId],
+                  parentId: null
+                },
+                // Label container
+                {
+                  id: labelContainerId,
+                  type: 'div',
+                  styles: item.styles?.labelContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Content container
+                {
+                  id: contentContainerId,
+                  type: 'div',
+                  styles: item.styles?.contentContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Buttons container
+                {
+                  id: buttonsContainerId,
+                  type: 'div',
+                  styles: item.styles?.buttonsContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Image container
+                {
+                  id: imageContainerId,
+                  type: 'div',
+                  styles: item.styles?.imageContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Cards container
+                {
+                  id: cardsContainerId,
+                  type: 'gridLayout',
+                  styles: item.styles?.cardsContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+
+              // Add content elements if they exist
+              if (item.children && item.children.length > 0) {
+                const labelElements = [];
+                const contentElements = [];
+                const buttonElements = [];
+                const imageElements = [];
+                const cardElements = [];
+
+                item.children.forEach(child => {
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  let parentId;
+
+                  if (child.type === 'image') {
+                    parentId = imageContainerId;
+                    imageElements.push(newId);
+                  } else if (child.type === 'button') {
+                    parentId = buttonsContainerId;
+                    buttonElements.push(newId);
+                  } else if (child.type === 'span') {
+                    parentId = labelContainerId;
+                    labelElements.push(newId);
+                  } else if (child.type === 'gridLayout') {
+                    parentId = cardsContainerId;
+                    cardElements.push(newId);
+                  } else {
+                    parentId = contentContainerId;
+                    contentElements.push(newId);
+                  }
+
+                  sectionStructure.push({
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: child.styles || {},
+                    parentId,
+                    isConfigured: true,
+                    configuration: child.configuration || null,
+                    structure: child.structure || null
+                  });
+                });
+
+                // Update container children arrays
+                sectionStructure = sectionStructure.map(el => {
+                  if (el.id === labelContainerId) {
+                    return { ...el, children: labelElements };
+                  }
+                  if (el.id === contentContainerId) {
+                    return { ...el, children: contentElements };
+                  }
+                  if (el.id === buttonsContainerId) {
+                    return { ...el, children: buttonElements };
+                  }
+                  if (el.id === imageContainerId) {
+                    return { ...el, children: imageElements };
+                  }
+                  if (el.id === cardsContainerId) {
+                    return { ...el, children: cardElements };
+                  }
+                  return el;
+                });
+              }
+            } else if (item.configuration === 'sectionThree') {
+              // SectionThree has left and right containers
+              const leftContainerId = `${sectionId}-left`;
+              const rightContainerId = `${sectionId}-right`;
+
+              // Create the base structure
+              sectionStructure = [
+                // Main section element
+                {
+                  id: sectionId,
+                  type: 'ContentSection',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [leftContainerId, rightContainerId],
+                  parentId: null
+                },
+                // Left container
+                {
+                  id: leftContainerId,
+                  type: 'div',
+                  styles: item.styles?.leftContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Right container
+                {
+                  id: rightContainerId,
+                  type: 'div',
+                  styles: item.styles?.rightContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+
+              // Add content elements if they exist
+              if (item.children && item.children.length > 0) {
+                const leftElements = [];
+                const rightElements = [];
+
+                item.children.forEach(child => {
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const parentId = child.styles?.key === 'right' ? rightContainerId : leftContainerId;
+
+                  if (child.styles?.key === 'right') {
+                    rightElements.push(newId);
+                  } else {
+                    leftElements.push(newId);
+                  }
+
+                  sectionStructure.push({
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: child.styles || {},
+                    parentId,
+                    isConfigured: true,
+                    configuration: child.configuration || null,
+                    structure: child.structure || null
+                  });
+                });
+
+                // Update container children arrays
+                sectionStructure = sectionStructure.map(el => {
+                  if (el.id === leftContainerId) {
+                    return { ...el, children: leftElements };
+                  }
+                  if (el.id === rightContainerId) {
+                    return { ...el, children: rightElements };
+                  }
+                  return el;
+                });
+              }
+            } else if (item.configuration === 'sectionFour') {
+              // SectionFour has content, grid, and bottom button
+              const contentContainerId = `${sectionId}-content`;
+              const gridContainerId = `${sectionId}-grid`;
+              const bottomButtonId = `${sectionId}-bottom-button`;
+
+              // Create the base structure
+              sectionStructure = [
+                // Main section element
+                {
+                  id: sectionId,
+                  type: 'ContentSection',
+                  configuration: item.configuration,
+                  structure: item.structure,
+                  styles: item.styles || {},
+                  isConfigured: true,
+                  children: [contentContainerId, gridContainerId, bottomButtonId],
+                  parentId: null
+                },
+                // Content container
+                {
+                  id: contentContainerId,
+                  type: 'div',
+                  styles: item.styles?.contentContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Grid container
+                {
+                  id: gridContainerId,
+                  type: 'div',
+                  styles: item.styles?.gridContainer || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                },
+                // Bottom button
+                {
+                  id: bottomButtonId,
+                  type: 'button',
+                  styles: item.styles?.bottomButton || {},
+                  children: [],
+                  parentId: sectionId,
+                  isConfigured: true,
+                  configuration: null,
+                  structure: null
+                }
+              ];
+
+              // Add content elements if they exist
+              if (item.children && item.children.length > 0) {
+                const contentElements = [];
+                const gridElements = [];
+
+                item.children.forEach(child => {
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  let parentId;
+
+                  if (child.styles?.key === 'grid') {
+                    parentId = gridContainerId;
+                    gridElements.push(newId);
+                  } else if (child.type === 'button' && child.styles?.key === 'bottomButton') {
+                    // Update bottom button
+                    sectionStructure = sectionStructure.map(el => {
+                      if (el.id === bottomButtonId) {
+                        return {
+                          ...el,
+                          content: child.content,
+                          styles: { ...el.styles, ...child.styles }
+                        };
+                      }
+                      return el;
+                    });
+                    return;
+                  } else {
+                    parentId = contentContainerId;
+                    contentElements.push(newId);
+                  }
+
+                  sectionStructure.push({
+                    id: newId,
+                    type: child.type,
+                    content: child.content,
+                    styles: child.styles || {},
+                    parentId,
+                    isConfigured: true,
+                    configuration: child.configuration || null,
+                    structure: child.structure || null
+                  });
+                });
+
+                // Update container children arrays
+                sectionStructure = sectionStructure.map(el => {
+                  if (el.id === contentContainerId) {
+                    return { ...el, children: contentElements };
+                  }
+                  if (el.id === gridContainerId) {
+                    return { ...el, children: gridElements };
+                  }
+                  return el;
+                });
+              }
+            }
+
+            // Update elements in a single batch
+            setElements(prev => {
+              // Remove any existing elements with the same IDs
+              const filteredElements = prev.filter(el => 
+                !sectionStructure.some(newEl => newEl.id === el.id)
+              );
+              return [...filteredElements, ...sectionStructure];
+            });
+
+            newId = sectionId;
+          } else {
+            // For other section types, process children normally
           const processedChildren = item.children?.map(child => ({
             ...child,
             id: generateUniqueId(child.type || 'element')
@@ -447,8 +1210,10 @@ const ContentList = forwardRef(
             styles: item.styles || {},
             settings: item.settings || {},
             label: item.label,
-            children: processedChildren
+              children: processedChildren,
+              isConfigured: true
           });
+          }
         } else if (
           item.type === 'defiModule' ||
           item.type === 'mintingModule' ||
@@ -480,7 +1245,8 @@ const ContentList = forwardRef(
             },
             configuration: item.configuration || {},
             settings: item.settings || {},
-            children: item.children || []
+            children: item.children || [],
+            isConfigured: true
           });
         } else {
           // For individual elements, check if we're dropping onto a layout element
@@ -497,7 +1263,8 @@ const ContentList = forwardRef(
             newId = addNewElement(item.type, 1, null, targetElement.id, {
               type: item.type,
               content: item.content || '',
-              styles: item.styles || {}
+              styles: item.styles || {},
+              isConfigured: true
             });
           } else {
             // Add as a regular element

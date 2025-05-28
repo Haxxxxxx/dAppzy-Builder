@@ -66,18 +66,35 @@ const DraggableContentSections = ({
     const configStyles = config.styles || {};
 
     // First, ensure the section has the default styles
-    const mergedSectionStyles = merge({}, defaultSectionStyles.section, configStyles.section || {});
+    const mergedSectionStyles = mergeStyles(defaultSectionStyles.section, configStyles.section || {});
     updateStyles(id, mergedSectionStyles);
 
-    // Create default containers
+    // Create default containers with their content
     const containers = [
       {
         id: `${id}-content`,
         type: 'div',
         part: 'content',
         layout: 'content',
-        styles: merge({}, defaultSectionStyles.contentWrapper, configStyles.content || {}),
-        children: [],
+        styles: mergeStyles(defaultSectionStyles.contentWrapper, configStyles.content || {}),
+        children: [
+          {
+            id: `${id}-heading-${generateUniqueId('heading')}`,
+            type: 'heading',
+            content: 'Bibendum amet at molestie mattis.',
+            styles: mergeStyles(defaultSectionStyles.heading, configStyles.heading || {}),
+            parentId: `${id}-content`,
+            configuration: configuration
+          },
+          {
+            id: `${id}-paragraph-${generateUniqueId('paragraph')}`,
+            type: 'paragraph',
+            content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit. Condimentum sit nunc in eros scelerisque sed. Commodo in viverra nunc, ullamcorper ut. Non, amet, aliquet scelerisque nullam sagittis, pulvinar. Fermentum scelerisque sit consectetur hac mi. Mollis leo eleifend ultricies purus iaculis.',
+            styles: mergeStyles(defaultSectionStyles.paragraph, configStyles.paragraph || {}),
+            parentId: `${id}-content`,
+            configuration: configuration
+          }
+        ],
         parentId: id,
         configuration: configuration
       },
@@ -86,22 +103,25 @@ const DraggableContentSections = ({
         type: 'div',
         part: 'buttons',
         layout: 'buttons',
-        styles: merge({}, 
-          defaultSectionStyles.buttonContainer,
+        styles: mergeStyles(defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
+        children: [
           {
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '1rem',
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: '700px',
-            margin: '0 auto',
-            padding: '1rem'
+            id: `${id}-button-${generateUniqueId('button')}`,
+            type: 'button',
+            content: 'Primary Action',
+            styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
+            parentId: `${id}-buttons`,
+            configuration: configuration
           },
-          configStyles.buttons || {}
-        ),
-        children: [],
+          {
+            id: `${id}-button-${generateUniqueId('button')}`,
+            type: 'button',
+            content: 'Secondary Action',
+            styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
+            parentId: `${id}-buttons`,
+            configuration: configuration
+          }
+        ],
         parentId: id,
         configuration: configuration
       },
@@ -110,38 +130,72 @@ const DraggableContentSections = ({
         type: 'div',
         part: 'image',
         layout: 'image',
-        styles: merge({}, defaultSectionStyles.imageContainer, configStyles.image || {}),
-        children: [],
+        styles: mergeStyles(defaultSectionStyles.imageContainer, configStyles.image || {}),
+        children: [
+          {
+            id: `${id}-image-${generateUniqueId('image')}`,
+            type: 'image',
+            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+            styles: mergeStyles(defaultSectionStyles.image, configStyles.image || {}),
+            parentId: `${id}-image`,
+            configuration: configuration
+          }
+        ],
         parentId: id,
         configuration: configuration
       }
     ];
 
-    // Add containers if they don't exist
-    containers.forEach(container => {
-      if (!findElementById(container.id, elements)) {
-        setElements(prev => [...prev, container]);
+    // Check for existing containers and only add missing ones
+    setElements(prev => {
+      const existingIds = new Set(prev.map(el => el.id));
+      const newElements = [];
+      
+      // Add containers and their content elements
+      containers.forEach(container => {
+        if (!existingIds.has(container.id)) {
+          newElements.push(container);
+          container.children.forEach(child => {
+            if (!existingIds.has(child.id)) {
+              newElements.push(child);
+            }
+          });
+        }
+      });
+      
+      if (newElements.length === 0) {
+        return prev;
       }
+
+      // Update section's children to only include containers
+      const updatedElements = [...prev];
+      const sectionIndex = updatedElements.findIndex(el => el.id === id);
+      
+      if (sectionIndex !== -1) {
+        // Remove any non-container children from the section
+        const containerIds = containers.map(c => c.id);
+        const currentChildren = updatedElements[sectionIndex].children || [];
+        const nonContainerChildren = currentChildren.filter(childId => !containerIds.includes(childId));
+        
+        // Remove non-container children from the elements array
+        const filteredElements = updatedElements.filter(el => !nonContainerChildren.includes(el.id));
+        
+        // Update the section with only container children
+        filteredElements[sectionIndex] = {
+          ...filteredElements[sectionIndex],
+          children: containerIds,
+          configuration: configuration,
+          styles: mergedSectionStyles
+        };
+
+        return [...filteredElements, ...newElements];
+      }
+
+      return [...updatedElements, ...newElements];
     });
 
-    // Update section's children to include all containers
-    setElements(prev => prev.map(el => {
-      if (el.id === id) {
-        return {
-          ...el,
-          children: containers.map(c => c.id),
-          configuration: configuration,
-          styles: {
-            ...el.styles,
-            ...configStyles.section
-          }
-        };
-      }
-      return el;
-    }));
-
     defaultInjectedRef.current = true;
-  }, [id, elements, findElementById, setElements, updateStyles, configuration]);
+  }, [id, elements, findElementById, setElements, updateStyles, configuration, generateUniqueId]);
 
   // Standardized container creation helper
   const createContainerStructure = (parentId, type, config) => {
@@ -249,22 +303,39 @@ const DraggableContentSections = ({
               type: 'section',
               configuration: item.configuration,
               structure: item.configuration,
-              styles: merge({}, defaultSectionStyles.section, configStyles.section || {}),
+              styles: mergeStyles(defaultSectionStyles.section, configStyles.section || {}),
               children: [],
               label: label || '',
               description: description || '',
               settings: {}
             };
 
-            // Create default containers with proper styles
+            // Create default containers with their content
             const containers = [
               {
                 id: `${newSectionId}-content`,
                 type: 'div',
                 part: 'content',
                 layout: 'content',
-                styles: merge({}, defaultSectionStyles.contentWrapper, configStyles.content || {}),
-                children: [],
+                styles: mergeStyles(defaultSectionStyles.contentWrapper, configStyles.content || {}),
+                children: [
+                  {
+                    id: `${newSectionId}-heading-${generateUniqueId('heading')}`,
+                    type: 'heading',
+                    content: 'Bibendum amet at molestie mattis.',
+                    styles: mergeStyles(defaultSectionStyles.heading, configStyles.heading || {}),
+                    parentId: `${newSectionId}-content`,
+                    configuration: item.configuration
+                  },
+                  {
+                    id: `${newSectionId}-paragraph-${generateUniqueId('paragraph')}`,
+                    type: 'paragraph',
+                    content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit. Condimentum sit nunc in eros scelerisque sed. Commodo in viverra nunc, ullamcorper ut. Non, amet, aliquet scelerisque nullam sagittis, pulvinar. Fermentum scelerisque sit consectetur hac mi. Mollis leo eleifend ultricies purus iaculis.',
+                    styles: mergeStyles(defaultSectionStyles.paragraph, configStyles.paragraph || {}),
+                    parentId: `${newSectionId}-content`,
+                    configuration: item.configuration
+                  }
+                ],
                 parentId: newSectionId,
                 configuration: item.configuration
               },
@@ -273,8 +344,25 @@ const DraggableContentSections = ({
                 type: 'div',
                 part: 'buttons',
                 layout: 'buttons',
-                styles: merge({}, defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
-                children: [],
+                styles: mergeStyles(defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
+                children: [
+                  {
+                    id: `${newSectionId}-button-${generateUniqueId('button')}`,
+                    type: 'button',
+                    content: 'Primary Action',
+                    styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
+                    parentId: `${newSectionId}-buttons`,
+                    configuration: item.configuration
+                  },
+                  {
+                    id: `${newSectionId}-button-${generateUniqueId('button')}`,
+                    type: 'button',
+                    content: 'Secondary Action',
+                    styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
+                    parentId: `${newSectionId}-buttons`,
+                    configuration: item.configuration
+                  }
+                ],
                 parentId: newSectionId,
                 configuration: item.configuration
               },
@@ -283,30 +371,56 @@ const DraggableContentSections = ({
                 type: 'div',
                 part: 'image',
                 layout: 'image',
-                styles: merge({}, defaultSectionStyles.imageContainer, configStyles.image || {}),
-                children: [],
+                styles: mergeStyles(defaultSectionStyles.imageContainer, configStyles.image || {}),
+                children: [
+                  {
+                    id: `${newSectionId}-image-${generateUniqueId('image')}`,
+                    type: 'image',
+                    content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+                    styles: mergeStyles(defaultSectionStyles.image, configStyles.image || {}),
+                    parentId: `${newSectionId}-image`,
+                    configuration: item.configuration
+                  }
+                ],
                 parentId: newSectionId,
                 configuration: item.configuration
               }
             ];
 
-            // Add all elements in a single update
+            // Add all elements in a single batch update
             setElements(prev => {
-              const newElements = [...prev];
-              newElements.push(newSection, ...containers);
-              return newElements;
-            });
+              const existingIds = new Set(prev.map(el => el.id));
+              const newElements = [];
+              
+              // Add containers and their content elements
+              containers.forEach(container => {
+                if (!existingIds.has(container.id)) {
+                  newElements.push(container);
+                  container.children.forEach(child => {
+                    if (!existingIds.has(child.id)) {
+                      newElements.push(child);
+                    }
+                  });
+                }
+              });
+              
+              if (newElements.length === 0) {
+                return prev;
+              }
 
-            // Update section's children to include all containers
-            setElements(prev => prev.map(el => {
-              if (el.id === newSectionId) {
-                return {
-                  ...el,
+              // Update the section's children in the same batch
+              const updatedElements = [...prev];
+              const sectionIndex = updatedElements.findIndex(el => el.id === newSectionId);
+              
+              if (sectionIndex !== -1) {
+                updatedElements[sectionIndex] = {
+                  ...updatedElements[sectionIndex],
                   children: containers.map(c => c.id)
                 };
               }
-              return el;
-            }));
+
+              return [...updatedElements, ...newElements];
+            });
 
             setSelectedElement({ id: newSectionId, type: 'section', configuration: item.configuration });
           }
@@ -332,20 +446,42 @@ const DraggableContentSections = ({
       return;
     }
 
-    // Check for duplicate elements
-    const existingElements = currentSection.children
+    // Find the appropriate container for the element type
+    const containerMap = {
+      heading: 'content',
+      paragraph: 'content',
+      button: 'buttons',
+      image: 'image'
+    };
+
+    const containerType = containerMap[item.type];
+    if (!containerType) {
+      console.warn(`No container found for element type: ${item.type}`);
+      return;
+    }
+
+    // Find the container
+    const container = currentSection.children
+      ?.map(childId => findElementById(childId, elements))
+      ?.find(el => el?.part === containerType);
+
+    if (!container) {
+      console.warn(`Container not found for type: ${containerType}`);
+      return;
+    }
+
+    // Check for duplicate elements within the container
+    const existingElements = container.children
       ?.map(childId => findElementById(childId, elements))
       .filter(Boolean);
 
-    // For specific elements, check for duplicates
-    if (item.type === 'heading' || item.type === 'paragraph' || item.type === 'image') {
-      const hasDuplicate = existingElements?.some(el => 
-        el.type === item.type && el.content === item.content
-      );
-      if (hasDuplicate) {
-        console.warn(`A ${item.type} with this content already exists in the content section`);
-        return;
-      }
+    const hasDuplicate = existingElements?.some(el => 
+      el.type === item.type && el.content === item.content
+    );
+
+    if (hasDuplicate) {
+      console.warn(`A ${item.type} with this content already exists in the ${containerType} container`);
+      return;
     }
 
     // Generate a unique ID for the new element
@@ -379,23 +515,22 @@ const DraggableContentSections = ({
       item.type,
       1,
       index,
-      id,
+      container.id,
       {
         id: newId,
         type: item.type,
         content: item.content || '',
-        styles: {
-          ...baseStyles[item.type],
-          ...item.styles
-        },
-        children: item.children || []
+        styles: mergeStyles(baseStyles[item.type] || {}, item.styles || {}),
+        children: item.children || [],
+        parentId: container.id,
+        configuration: currentSection.configuration
       }
     );
 
-    // Update the parent element's children array
+    // Update the container's children array
     setElements(prevElements => {
       const updatedElements = prevElements.map(el => {
-        if (el.id === id) {
+        if (el.id === container.id) {
           // Create a new array for the children, maintaining existing ones
           const updatedChildren = [...(el.children || [])];
           
@@ -417,7 +552,7 @@ const DraggableContentSections = ({
     setSelectedElement({ 
       id: elementId, 
       type: item.type,
-      parentId: id,
+      parentId: container.id,
       index: index
     });
   };

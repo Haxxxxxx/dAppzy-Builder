@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useEffect, forwardRef, useCallback } from 'react';
+import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
 import merge from 'lodash/merge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
@@ -38,17 +38,15 @@ const HeroTwo = forwardRef(({
   useEffect(() => {
     if (!heroElement || defaultInjectedRef.current) return;
 
-    // Always ensure the hero has the correct base styles
-    const mergedHeroStyles = {
-      ...heroTwoStyles.heroSection,
-      ...heroElement.styles
-    };
-    if (typeof updateStyles === 'function') {
-      updateStyles(heroElement.id, mergedHeroStyles);
-    }
+    // First, ensure the hero has the default styles
+    const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement.styles);
+    updateStyles(heroElement.id, mergedHeroStyles);
 
-    // Create content container if it doesn't exist
-    if (!findElementById(contentContainerId, elements)) {
+    // Check if content container already exists
+    const contentContainer = findElementById(contentContainerId, elements);
+
+    // Only create container if it doesn't exist
+    if (!contentContainer) {
       const contentContainer = {
         id: contentContainerId,
         type: 'div',
@@ -59,37 +57,38 @@ const HeroTwo = forwardRef(({
         },
         children: [],
         parentId: uniqueId,
+        isConfigured: true
       };
       setElements(prev => [...prev, contentContainer]);
+    }
 
-      // Add default content to content container from configuration
-      const defaultContent = HeroConfiguration.heroTwo.children;
-      const contentIds = defaultContent.map(child => {
-        const newId = addNewElement(child.type, 1, null, contentContainerId);
-        // Update the element with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === newId) {
-            const childStyles = {
-              ...(child.type === 'heading' ? heroTwoStyles.heroTitle :
-                  child.type === 'paragraph' ? heroTwoStyles.heroDescription :
-                  child.type === 'button' ? heroTwoStyles.primaryButton :
-                  {}),
-              ...child.styles,
-              position: 'relative',
-              boxSizing: 'border-box'
-            };
-            return {
-              ...el,
-              content: child.content,
-              styles: childStyles
-            };
-          }
-          return el;
-        }));
+    // Get default content from configuration
+    const defaultContent = HeroConfiguration.heroTwo.children;
+    const contentElements = defaultContent.filter(child => 
+      child.type !== 'span'
+    );
+
+    // Only create content if container is empty
+    if (contentContainer && (!contentContainer.children || contentContainer.children.length === 0)) {
+      const contentIds = contentElements.map(child => {
+        const newId = addNewElement(child.type, 1, null, contentContainerId, {
+          content: child.content,
+          styles: merge(
+            child.type === 'heading' ? heroTwoStyles.heroTitle :
+            child.type === 'paragraph' ? heroTwoStyles.heroDescription :
+            child.type === 'button' ? heroTwoStyles.primaryButton :
+            child.type === 'image' ? heroTwoStyles.heroImage :
+            {},
+            child.styles || {}
+          ),
+          isConfigured: true,
+          configuration: child.configuration || null,
+          structure: child.structure || null
+        });
         return newId;
       });
 
-      // Update content container with all content IDs
+      // Update content container with content IDs
       setElements(prev => prev.map(el => {
         if (el.id === contentContainerId) {
           return {
@@ -108,7 +107,7 @@ const HeroTwo = forwardRef(({
           ...el,
           children: [contentContainerId],
           configuration: 'heroTwo',
-          structure: 'heroTwo',
+          isConfigured: true
         };
       }
       return el;

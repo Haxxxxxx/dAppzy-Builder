@@ -77,8 +77,30 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
 
   // Optimize elements for storage by removing unnecessary data
   const optimizeElementForStorage = (element) => {
-    const { id, type, styles, content, children, configuration, settings } = element;
-    // Clean and optimize the data
+    const { id, type, styles, content, children, configuration, settings, isConfigured } = element;
+    
+    // If this is a configured element, ensure we only save it once
+    if (isConfigured) {
+      // Clean and optimize the data
+      const optimizedElement = removeUndefined({
+        id,
+        type,
+        styles: styles || {},
+        content: content || '',
+        children: children || [],
+        configuration: configuration || {},
+        settings: settings || {},
+        isConfigured: true,
+        ...(element.structure && { structure: element.structure }),
+        ...(element.part && { part: element.part }),
+        ...(element.layout && { layout: element.layout }),
+        ...(element.parentId && { parentId: element.parentId })
+      });
+
+      return optimizedElement;
+    }
+
+    // For non-configured elements, proceed as normal
     const optimizedElement = removeUndefined({
       id,
       type,
@@ -109,14 +131,32 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
 
       const { elements, websiteSettings } = nextSave;
 
-      // Validate and optimize elements
+      // Validate and optimize elements, ensuring configured elements are handled properly
       const validElements = elements
         .filter(validateElement)
         .map(optimizeElementForStorage)
         .filter(element => Object.keys(element).length > 0);
 
+      // Remove duplicate configured elements
+      const uniqueElements = validElements.reduce((acc, element) => {
+        if (element.isConfigured) {
+          // Check if we already have this configured element
+          const existingIndex = acc.findIndex(e => 
+            e.isConfigured && 
+            e.type === element.type && 
+            e.configuration === element.configuration
+          );
+          if (existingIndex === -1) {
+            acc.push(element);
+          }
+        } else {
+          acc.push(element);
+        }
+        return acc;
+      }, []);
+
       // Skip save if no valid elements
-      if (validElements.length === 0) {
+      if (uniqueElements.length === 0) {
         console.warn('No valid elements to save');
         setSaveQueue(prev => prev.slice(1));
         setSaveStatus('Skipped save - invalid data');
@@ -134,18 +174,18 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
 
       // Save to localStorage in chunks to prevent UI blocking
       const chunkSize = 50;
-      for (let i = 0; i < validElements.length; i += chunkSize) {
-        const chunk = validElements.slice(i, i + chunkSize);
+      for (let i = 0; i < uniqueElements.length; i += chunkSize) {
+        const chunk = uniqueElements.slice(i, i + chunkSize);
         await new Promise(resolve => setTimeout(resolve, 0));
         localStorage.setItem(`editableElements_chunk_${i}`, JSON.stringify(chunk));
       }
-      localStorage.setItem('editableElements_chunks', Math.ceil(validElements.length / chunkSize));
+      localStorage.setItem('editableElements_chunks', Math.ceil(uniqueElements.length / chunkSize));
       localStorage.setItem('websiteSettings', JSON.stringify(cleanWebsiteSettings));
 
       // Save to Firestore
       const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       await setDoc(projectRef, {
-        elements: validElements,
+        elements: uniqueElements,
         websiteSettings: cleanWebsiteSettings,
         lastUpdated: serverTimestamp()
       }, { merge: true });

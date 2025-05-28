@@ -47,47 +47,62 @@ const HeroOne = forwardRef(({
     const leftContainerId = `${uniqueId}-left`;
     const rightContainerId = `${uniqueId}-right`;
 
-    // Create left container if it doesn't exist
-    if (!findElementById(leftContainerId, elements)) {
+    // Check if containers already exist
+    const leftContainer = findElementById(leftContainerId, elements);
+    const rightContainer = findElementById(rightContainerId, elements);
+
+    // Only create containers if they don't exist
+    if (!leftContainer) {
       const leftContainer = {
         id: leftContainerId,
         type: 'div',
         styles: defaultHeroStyles.heroLeftContent,
         children: [],
         parentId: uniqueId,
+        isConfigured: true
       };
       setElements(prev => [...prev, leftContainer]);
+    }
 
-      // Add default content to left container from configuration
-      const defaultContent = HeroConfiguration.heroOne.children;
-      const contentElements = defaultContent.filter(child => 
-        child.type !== 'image' && child.type !== 'span'
-      );
+    if (!rightContainer) {
+      const rightContainer = {
+        id: rightContainerId,
+        type: 'div',
+        styles: defaultHeroStyles.heroRightContent,
+        children: [],
+        parentId: uniqueId,
+        isConfigured: true
+      };
+      setElements(prev => [...prev, rightContainer]);
+    }
 
-      // Create all content elements first
+    // Get default content from configuration
+    const defaultContent = HeroConfiguration.heroOne.children;
+    const contentElements = defaultContent.filter(child => 
+      child.type !== 'image' && child.type !== 'span'
+    );
+    const imageContent = defaultContent.find(child => child.type === 'image');
+
+    // Only create content if containers are empty
+    if (leftContainer && (!leftContainer.children || leftContainer.children.length === 0)) {
       const contentIds = contentElements.map(child => {
-        const newId = addNewElement(child.type, 1, null, leftContainerId);
-        // Update the element with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === newId) {
-            return {
-              ...el,
-              content: child.content,
-              styles: merge(
-                child.type === 'heading' ? defaultHeroStyles.heroTitle :
-                child.type === 'paragraph' ? defaultHeroStyles.heroDescription :
-                child.type === 'button' ? defaultHeroStyles.primaryButton :
-                {},
-                child.styles || {}
-              )
-            };
-          }
-          return el;
-        }));
+        const newId = addNewElement(child.type, 1, null, leftContainerId, {
+          content: child.content,
+          styles: merge(
+            child.type === 'heading' ? defaultHeroStyles.heroTitle :
+            child.type === 'paragraph' ? defaultHeroStyles.heroDescription :
+            child.type === 'button' ? defaultHeroStyles.primaryButton :
+            {},
+            child.styles || {}
+          ),
+          isConfigured: true,
+          configuration: child.configuration || null,
+          structure: child.structure || null
+        });
         return newId;
       });
 
-      // Update left container with all content IDs
+      // Update left container with content IDs
       setElements(prev => prev.map(el => {
         if (el.id === leftContainerId) {
           return {
@@ -99,43 +114,25 @@ const HeroOne = forwardRef(({
       }));
     }
 
-    // Create right container if it doesn't exist
-    if (!findElementById(rightContainerId, elements)) {
-      const rightContainer = {
-        id: rightContainerId,
-        type: 'div',
-        styles: defaultHeroStyles.heroRightContent,
-        children: [],
-        parentId: uniqueId,
-      };
-      setElements(prev => [...prev, rightContainer]);
+    if (rightContainer && (!rightContainer.children || rightContainer.children.length === 0) && imageContent) {
+      const imageId = addNewElement('image', 1, null, rightContainerId, {
+        content: imageContent.content,
+        styles: merge(defaultHeroStyles.heroImage, imageContent.styles || {}),
+        isConfigured: true,
+        configuration: imageContent.configuration || null,
+        structure: imageContent.structure || null
+      });
 
-      // Add default image to right container from configuration
-      const imageContent = HeroConfiguration.heroOne.children.find(child => child.type === 'image');
-      if (imageContent) {
-        const imageId = addNewElement('image', 1, null, rightContainerId);
-        // Update image element with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === imageId) {
-            return {
-              ...el,
-              content: imageContent.content,
-              styles: merge(defaultHeroStyles.heroImage, imageContent.styles || {})
-            };
-          }
-          return el;
-        }));
-        // Update right container with image ID
-        setElements(prev => prev.map(el => {
-          if (el.id === rightContainerId) {
-            return {
-              ...el,
-              children: [imageId]
-            };
-          }
-          return el;
-        }));
-      }
+      // Update right container with image ID
+      setElements(prev => prev.map(el => {
+        if (el.id === rightContainerId) {
+          return {
+            ...el,
+            children: [imageId]
+          };
+        }
+        return el;
+      }));
     }
 
     // Update hero's children to only include the containers
@@ -144,8 +141,8 @@ const HeroOne = forwardRef(({
         return {
           ...el,
           children: [leftContainerId, rightContainerId],
-          // Remove any direct children that are not containers
-          configuration: 'heroOne'
+          configuration: 'heroOne',
+          isConfigured: true
         };
       }
       return el;

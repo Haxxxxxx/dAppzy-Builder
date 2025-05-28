@@ -55,6 +55,7 @@ const withSelectable = (WrappedComponent) => {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               marginTop: '-25px',
+              zIndex: 1000,
             }}
           >
             <span

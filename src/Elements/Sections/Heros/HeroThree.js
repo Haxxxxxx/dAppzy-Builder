@@ -47,144 +47,95 @@ const HeroThree = forwardRef(({
     const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement.styles);
     updateStyles(heroElement.id, mergedHeroStyles);
 
-    // Create left container if it doesn't exist
-    if (!findElementById(leftContainerId, elements)) {
+    const leftContainerId = `${uniqueId}-left`;
+    const rightContainerId = `${uniqueId}-right`;
+
+    // Check if containers already exist
+    const leftContainer = findElementById(leftContainerId, elements);
+    const rightContainer = findElementById(rightContainerId, elements);
+
+    // Only create containers if they don't exist
+    if (!leftContainer) {
       const leftContainer = {
         id: leftContainerId,
-          type: 'div',
-          styles: CustomTemplateHeroStyles.heroContent,
-          children: [],
-          parentId: uniqueId,
+        type: 'div',
+        styles: CustomTemplateHeroStyles.heroContent,
+        children: [],
+        parentId: uniqueId,
+        isConfigured: true
       };
       setElements(prev => [...prev, leftContainer]);
-
-      // Create button container
-      const buttonContainer = {
-        id: buttonContainerId,
-          type: 'div',
-        styles: {
-          ...CustomTemplateHeroStyles.buttonContainer,
-          display: 'flex',
-          gap: '1rem',
-          marginTop: '2rem'
-        },
-          children: [],
-        parentId: leftContainerId,
-      };
-      setElements(prev => [...prev, buttonContainer]);
-
-      // Add default content to left container from configuration
-      const defaultContent = HeroConfiguration.heroThree.children;
-      const contentElements = defaultContent.filter(child => 
-        child.type !== 'image' && child.type !== 'span' && child.type !== 'button'
-      );
-      const buttonElements = defaultContent.filter(child => child.type === 'button');
-
-      // Create all content elements first
-      const contentIds = contentElements.map(child => {
-        const newId = addNewElement(child.type, 1, null, leftContainerId);
-        // Update the element with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === newId) {
-        return {
-              ...el,
-                  content: child.content,
-                  styles: merge(
-                    child.type === 'heading' ? CustomTemplateHeroStyles.heroTitle :
-                    child.type === 'paragraph' ? CustomTemplateHeroStyles.heroDescription :
-                    {},
-                    child.styles || {}
-              )
-            };
-          }
-          return el;
-        }));
-        return newId;
-      });
-
-      // Create all button elements
-      const buttonIds = buttonElements.map(child => {
-        const newId = addNewElement(child.type, 1, null, buttonContainerId);
-        // Update the element with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === newId) {
-            return {
-              ...el,
-              content: child.content,
-              styles: merge(
-                child.settings?.isPrimary ? 
-                  CustomTemplateHeroStyles.primaryButton : 
-                  CustomTemplateHeroStyles.secondaryButton,
-                child.styles || {}
-              ),
-              settings: child.settings
-            };
-          }
-          return el;
-        }));
-        return newId;
-      });
-
-      // Update button container with all button IDs
-      setElements(prev => prev.map(el => {
-        if (el.id === buttonContainerId) {
-          return {
-            ...el,
-            children: buttonIds
-          };
-        }
-        return el;
-      }));
-
-      // Update left container with all content and button container IDs
-      setElements(prev => prev.map(el => {
-        if (el.id === leftContainerId) {
-          return {
-            ...el,
-            children: [...contentIds, buttonContainerId]
-          };
-        }
-        return el;
-      }));
     }
 
-    // Create right container if it doesn't exist
-    if (!findElementById(rightContainerId, elements)) {
+    if (!rightContainer) {
       const rightContainer = {
         id: rightContainerId,
         type: 'div',
         styles: CustomTemplateHeroStyles.heroImageContainer,
         children: [],
         parentId: uniqueId,
+        isConfigured: true
       };
       setElements(prev => [...prev, rightContainer]);
+    }
 
-      // Add default image to right container from configuration
-      const imageContent = HeroConfiguration.heroThree.children.find(child => child.type === 'image');
-      if (imageContent) {
-        const imageId = addNewElement('image', 1, null, rightContainerId);
-        // Update image element with content and styles
-        setElements(prev => prev.map(el => {
-          if (el.id === imageId) {
-            return {
-              ...el,
-              content: imageContent.content,
-              styles: merge(CustomTemplateHeroStyles.heroImage, imageContent.styles || {})
-            };
-          }
-          return el;
-        }));
-        // Update right container with image ID
-        setElements(prev => prev.map(el => {
-          if (el.id === rightContainerId) {
-            return {
-              ...el,
-              children: [imageId]
-            };
-          }
-          return el;
-        }));
-      }
+    // Get default content from configuration
+    const defaultContent = HeroConfiguration.heroThree.children;
+    const contentElements = defaultContent.filter(child => 
+      child.type !== 'image' && child.type !== 'span'
+    );
+    const imageContent = defaultContent.find(child => child.type === 'image');
+
+    // Only create content if containers are empty
+    if (leftContainer && (!leftContainer.children || leftContainer.children.length === 0)) {
+      const contentIds = contentElements.map(child => {
+        const newId = addNewElement(child.type, 1, null, leftContainerId, {
+          content: child.content,
+          styles: merge(
+            child.type === 'heading' ? CustomTemplateHeroStyles.heroTitle :
+            child.type === 'paragraph' ? CustomTemplateHeroStyles.heroDescription :
+            child.type === 'button' ? CustomTemplateHeroStyles.primaryButton :
+            {},
+            child.styles || {}
+          ),
+          isConfigured: true,
+          configuration: child.configuration || null,
+          structure: child.structure || null
+        });
+        return newId;
+      });
+
+      // Update left container with content IDs
+      setElements(prev => prev.map(el => {
+        if (el.id === leftContainerId) {
+          return {
+            ...el,
+            children: contentIds
+          };
+        }
+        return el;
+      }));
+    }
+
+    if (rightContainer && (!rightContainer.children || rightContainer.children.length === 0) && imageContent) {
+      const imageId = addNewElement('image', 1, null, rightContainerId, {
+        content: imageContent.content,
+        styles: merge(CustomTemplateHeroStyles.heroImage, imageContent.styles || {}),
+        isConfigured: true,
+        configuration: imageContent.configuration || null,
+        structure: imageContent.structure || null
+      });
+
+      // Update right container with image ID
+      setElements(prev => prev.map(el => {
+        if (el.id === rightContainerId) {
+          return {
+            ...el,
+            children: [imageId]
+          };
+        }
+        return el;
+      }));
     }
 
     // Update hero's children to only include the containers
@@ -194,13 +145,13 @@ const HeroThree = forwardRef(({
           ...el,
           children: [leftContainerId, rightContainerId],
           configuration: 'heroThree',
-          structure: 'heroThree'
+          isConfigured: true
         };
       }
       return el;
     }));
 
-        defaultInjectedRef.current = true;
+    defaultInjectedRef.current = true;
   }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {

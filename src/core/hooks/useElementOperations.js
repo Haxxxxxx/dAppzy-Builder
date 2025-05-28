@@ -7,7 +7,7 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
     return elements.find(el => el.id === id);
   }, [elements]);
 
-  const addNewElement = useCallback((type, parentId = null, configuration = null) => {
+  const addNewElement = useCallback((type, level = 1, index = null, parentId = null, additionalProps = {}) => {
     try {
       // Get base configuration
       const baseConfig = elementTypes[type];
@@ -16,24 +16,27 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
       }
 
       // Get structure configuration if provided
-      const structureConfig = configuration ? structureConfigurations[configuration] : null;
+      const structureConfig = structureConfigurations[additionalProps.configuration || ''];
       
       // Create the new element
       const newElement = {
         id: uuidv4(),
         type,
-        configuration,
+        level,
+        content: '',
         styles: {
-          ...baseConfig.defaultStyles,
+          ...(baseConfig.defaultStyles || {}),
           ...(structureConfig?.styles || {}),
+          ...(additionalProps.styles || {})
         },
         children: [],
-        content: baseConfig.defaultContent || '',
         parentId,
         settings: {
-          ...baseConfig.settings,
-          ...(structureConfig?.settings || {})
-        }
+          ...(baseConfig.settings || {}),
+          ...(structureConfig?.settings || {}),
+          ...(additionalProps.settings || {})
+        },
+        isConfigured: additionalProps.isConfigured || false // Track if element is part of a configured layout
       };
 
       // Validate the element
@@ -43,7 +46,7 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
       }
 
       // Handle structure configuration children if present
-      if (structureConfig?.children) {
+      if (structureConfig?.children && !additionalProps.isConfigured) {
         const childElements = structureConfig.children.map(childConfig => ({
           id: uuidv4(),
           type: childConfig.type,
@@ -53,7 +56,8 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
             ...(childConfig.styles || {})
           },
           parentId: newElement.id,
-          settings: childConfig.settings || {}
+          settings: childConfig.settings || {},
+          isConfigured: false // These are unique elements
         }));
 
         // Set children IDs in the parent element
@@ -62,18 +66,18 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
         // Add all elements to state in a single update
         setElements(prev => [...prev, newElement, ...childElements]);
       } else {
-        // Add just the new element if no children
-    setElements(prev => [...prev, newElement]);
+        // Add just the new element if no children or if it's a configured element
+        setElements(prev => [...prev, newElement]);
       }
 
       // Update parent's children if there is a parent
-    if (parentId) {
-      setElements(prev => prev.map(el => 
-        el.id === parentId 
+      if (parentId) {
+        setElements(prev => prev.map(el => 
+          el.id === parentId 
             ? { ...el, children: [...el.children, newElement.id] }
-          : el
-      ));
-    }
+            : el
+        ));
+      }
 
       return newElement.id;
     } catch (error) {
