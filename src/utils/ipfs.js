@@ -73,6 +73,7 @@ export async function pinDirectoryToPinata(files, metadata) {
       throw new Error('No IPFS hash returned from Pinata');
     }
 
+    // Return just the hash
     return data.IpfsHash;
   } catch (error) {
     console.error('Error uploading to Pinata:', error);

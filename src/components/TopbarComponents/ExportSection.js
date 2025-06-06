@@ -5,7 +5,7 @@ import { generatePreviewUrl, deployToIPFS } from '../../utils/export/ipfsUtils';
 import { generateProjectHtml } from '../../utils/export/htmlGenerator';
 import { EditableContext } from '../../context/EditableContext';
 import { AutoSaveContext } from '../../context/AutoSaveContext';
-import SnsDomainSelector from './Deployements/SnsDomainSelector';
+import SnsDomainSelector from './Deployements/sns/SnsDomainSelector';
 import '../css/Topbar.css';
 
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
