@@ -7,7 +7,8 @@
     "array-callback-return": "warn",
     "no-unused-vars": "off",
     "no-console": "off",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "no-unused-expressions": "off"
   },
   "settings": {
     "react": {

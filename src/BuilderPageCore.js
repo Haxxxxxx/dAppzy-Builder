@@ -796,6 +796,7 @@ const BuilderPageCore = ({
     <DndProvider backend={HTML5Backend}>
       <div className="layout">
         <LeftBar
+          userId={userId} 
           openPanel={openPanel}
           onShowSidebar={() => handlePanelToggle("sidebar")}
           onShowStructurePanel={() => handlePanelToggle("structure")}

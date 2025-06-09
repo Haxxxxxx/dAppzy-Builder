@@ -4,6 +4,8 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider as WalletProviderBase } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const WalletContext = createContext({
   walletAddress: '',
@@ -48,30 +50,45 @@ export const WalletProvider = ({ children }) => {
 };
 
 const WalletContextProvider = ({ children }) => {
-  const { publicKey, connected, disconnect: solanaDisconnect } = useWallet();
   const [walletAddress, setWalletAddress] = useState('');
-  const [balance, setBalance] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [walletId, setWalletId] = useState('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [balance, setBalance] = useState(0);
 
-  // Only update wallet state when explicitly connected
+  // Check for existing wallet connection on mount
   useEffect(() => {
-    if (connected && publicKey) {
-      const address = publicKey.toString();
-      setWalletAddress(address);
-      setWalletId(address);
-      setIsWalletConnected(true);
-      
-      // Simulate balance fetching
-      setIsLoading(true);
-      setTimeout(() => {
-        setBalance(100); // Mock balance
-        setIsLoading(false);
-      }, 1000);
-    }
-  }, [connected, publicKey]);
+    const checkExistingConnection = async () => {
+      try {
+        if (window.solana && window.solana.isPhantom) {
+          const isConnected = window.solana.isConnected;
+          if (isConnected) {
+            const { publicKey } = window.solana;
+            if (publicKey) {
+              const address = publicKey.toString();
+              setWalletAddress(address);
+              setWalletId(address);
+              setIsWalletConnected(true);
+              
+              // Check subscription status in Firestore
+              const userRef = doc(db, 'users', address);
+              const userDoc = await getDoc(userRef);
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                // Store subscription status in session storage for persistence
+                sessionStorage.setItem('subscriptionStatus', userData.subscriptionStatus || 'freemium');
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error checking existing connection:', err);
+      }
+    };
+
+    checkExistingConnection();
+  }, []);
 
   const connectWallet = async () => {
     try {
@@ -95,6 +112,15 @@ const WalletContextProvider = ({ children }) => {
             setWalletAddress(address);
             setWalletId(address);
             setIsWalletConnected(true);
+
+            // Check subscription status in Firestore
+            const userRef = doc(db, 'users', address);
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              // Store subscription status in session storage for persistence
+              sessionStorage.setItem('subscriptionStatus', userData.subscriptionStatus || 'freemium');
+            }
           }
         }
       } else {
@@ -120,13 +146,16 @@ const WalletContextProvider = ({ children }) => {
         setWalletId('');
         setIsWalletConnected(false);
       } else if (window.solana) {
-        await solanaDisconnect();
+        await window.solana.disconnect();
       }
       
       setWalletAddress('');
       setWalletId('');
       setIsWalletConnected(false);
       setBalance(0);
+      
+      // Clear subscription status from session storage
+      sessionStorage.removeItem('subscriptionStatus');
     } catch (err) {
       console.error('Error disconnecting wallet:', err);
       setError(err.message || 'Failed to disconnect wallet');
@@ -138,19 +167,23 @@ const WalletContextProvider = ({ children }) => {
 
   const value = {
     walletAddress,
-    balance,
-    isConnected: isWalletConnected || connected,
-    isLoading,
-    walletId,
-    disconnect: solanaDisconnect,
-    setIsConnected: setIsWalletConnected,
     setWalletAddress,
+    walletId,
+    setWalletId,
+    isConnected: isWalletConnected,
+    setIsConnected: setIsWalletConnected,
+    isLoading,
+    error,
+    balance,
     connectWallet,
-    disconnectWallet,
-    error
+    disconnectWallet
   };
 
-  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
+  return (
+    <WalletContext.Provider value={value}>
+      {children}
+    </WalletContext.Provider>
+  );
 };
 
 export { WalletContext, WalletContextProvider }; 

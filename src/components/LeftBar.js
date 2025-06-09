@@ -1,7 +1,9 @@
 import React, { useState, useContext } from 'react';
 import './css/LeftBar.css';
 import SupportPopup from './LeftbarPanels/SupportPopup';
+import UpgradePopup from './UpgradePopup';
 import { EditableContext } from '../context/EditableContext';
+import { useSubscription } from '../context/SubscriptionContext';
 
 const LeftBar = ({ 
   openPanel, 
@@ -14,7 +16,9 @@ const LeftBar = ({
 }) => {
   // Track whether SupportPopup is visible
   const [showSupportPopup, setShowSupportPopup] = useState(false);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const { selectedElement } = useContext(EditableContext);
+  const { isPioneer } = useSubscription();
 
   const handleHelpClick = () => {
     setShowSupportPopup(true);
@@ -22,6 +26,14 @@ const LeftBar = ({
 
   const handleClosePopup = () => {
     setShowSupportPopup(false);
+  };
+
+  const handleUpgradeClick = () => {
+    setShowUpgradePopup(true);
+  };
+
+  const handleCloseUpgradePopup = () => {
+    setShowUpgradePopup(false);
   };
 
   return (
@@ -59,6 +71,15 @@ const LeftBar = ({
       </div>
 
       <div className="help-center">
+        {!isPioneer && (
+          <button 
+            className="upgrade-button" 
+            onClick={handleUpgradeClick}
+            title="Upgrade to Pioneer"
+          >
+            <span className="material-symbols-outlined">workspace_premium</span>
+          </button>
+        )}
         <button className="help-center-button" onClick={handleHelpClick}>
           <span className="material-symbols-outlined">help</span>
         </button>
@@ -67,6 +88,11 @@ const LeftBar = ({
       {/* Conditionally render the SupportPopup */}
       {showSupportPopup && (
         <SupportPopup onClose={handleClosePopup} />
+      )}
+
+      {/* Conditionally render the UpgradePopup */}
+      {showUpgradePopup && (
+        <UpgradePopup onClose={handleCloseUpgradePopup} />
       )}
     </div>
   );

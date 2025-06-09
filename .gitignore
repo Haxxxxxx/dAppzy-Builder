@@ -1,10 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+*/node_modules
 /.pnp
-.pnp.js
-
+.pnp.js 
+/node_modules
 # testing
 /coverage
 
@@ -25,3 +25,10 @@ yarn-error.log*
 
 # keys
 cdp_api_key.json
+admin-keypair.json
+# Admin keys
+admin-keypair.json
+*.keypair.json
+.env
+.env.local
+.env.*.local

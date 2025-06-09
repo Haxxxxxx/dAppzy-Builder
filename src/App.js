@@ -5,33 +5,23 @@ import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import PreviewPage from "./PreviewPage";
 import BuilderPageLoader from "./BuilderPageLoader";
-import { WalletProvider } from './context/WalletContext';
+import { WalletProvider, useWalletContext } from './context/WalletContext';
 import { DappWalletProvider } from './context/DappWalletContext';
 import Web3Provider from './context/Web3Provider';
 import { EditableProvider } from './context/EditableContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 import WalletConnection from "./NewLogin/WalletConnection";
 
-function App({ userId, setUserId, projectId }) {  
-  // Add error handling for userId and projectId
-  useEffect(() => {
-    if (!userId) {
-      // Try to get userId from sessionStorage
-      const storedUserId = sessionStorage.getItem("userAccount");
-      if (storedUserId && setUserId) {
-        setUserId(storedUserId);
-      }
-    }
-  }, [userId, setUserId]);
-
-  // If no userId is found, show the wallet connection component
-  if (!userId) {
+function AppContent({ userId, setUserId, projectId }) {
+  const { walletAddress } = useWalletContext();
+  // If no wallet is connected, show the wallet connection component
+  if (!walletAddress) {
     return (
       <div className="app-container">
         <WalletConnection
           onUserLogin={(walletKey) => {
             if (setUserId) {
               setUserId(walletKey);
-              sessionStorage.setItem("userAccount", walletKey);
             }
           }}
         />
@@ -42,9 +32,9 @@ function App({ userId, setUserId, projectId }) {
   return (
     <Router>
       <EditableProvider>
-        <WalletProvider>
           <DappWalletProvider>
             <Web3Provider>
+            <SubscriptionProvider>
               <Routes>
                 <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
                 <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
@@ -52,11 +42,19 @@ function App({ userId, setUserId, projectId }) {
                 <Route path="/preview" element={<PreviewPage />} />
                 <Route path="/export" element={<PreviewPage />} />
               </Routes>
+            </SubscriptionProvider>
             </Web3Provider>
           </DappWalletProvider>
-        </WalletProvider>
       </EditableProvider>
     </Router>
+  );
+}
+
+function App(props) {
+  return (
+    <WalletProvider>
+      <AppContent {...props} />
+    </WalletProvider>
   );
 }
 

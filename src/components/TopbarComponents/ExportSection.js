@@ -5,8 +5,10 @@ import { generatePreviewUrl, deployToIPFS } from '../../utils/export/ipfsUtils';
 import { generateProjectHtml } from '../../utils/export/htmlGenerator';
 import { EditableContext } from '../../context/EditableContext';
 import { AutoSaveContext } from '../../context/AutoSaveContext';
+import { useSubscription } from '../../context/SubscriptionContext';
 import SnsDomainSelector from './Deployements/sns/SnsDomainSelector';
 import '../css/Topbar.css';
+import UpgradePopup from '../UpgradePopup';
 
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -14,9 +16,11 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isTestDomainEnabled, setIsTestDomainEnabled] = useState(false);
   const [operationStatus, setOperationStatus] = useState(null);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const dropdownRef = useRef(null);
   const { findElementById } = useContext(EditableContext);
   const { saveStatus, lastSaved } = useContext(AutoSaveContext);
+  const { isPioneer } = useSubscription();
 
   // Get wallet address from session storage
   const walletAddress = sessionStorage.getItem("userAccount");
@@ -139,9 +143,14 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   };
 
   const handleSnsDeploy = () => {
+    if (!isPioneer) {
+      setShowUpgradePopup(true);
+      setIsDropdownOpen(false);
+      return;
+    }
+    
     if (!walletAddress) {
       setOperationStatus('Error: No Solana wallet connected');
-      // Clear error status after 5 seconds
       setTimeout(() => setOperationStatus(null), 5000);
       return;
     }
@@ -253,11 +262,19 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
             <div className='dropdown-menu-item'>
               <p className='dropdown-menu-item-title'>Custom Domain</p>
               <div className='dropdown-menu-item-content'>
+                {!isPioneer && (
+                  <div className="upgrade-message" onClick={() => setShowUpgradePopup(true)}>
+                    <span className="material-symbols-outlined">workspace_premium</span>
+                    <p>Upgrade to Pioneer to use custom domains</p>
+                  </div>
+                )}
                 <button
                   onClick={handleSnsDeploy}
-                  className="dropdown-menu-item-content-button"
-                  disabled={!walletAddress}
-                >Add Domain</button>
+                  className={`dropdown-menu-item-content-button ${!isPioneer ? 'disabled' : ''}`}
+                  disabled={!walletAddress || !isPioneer}
+                >
+                  Add Domain
+                </button>
               </div>
             </div>
             <button 
@@ -294,6 +311,9 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
             }, { merge: true });
           }}
         />
+      )}
+      {showUpgradePopup && (
+        <UpgradePopup onClose={() => setShowUpgradePopup(false)} />
       )}
     </div>
   );

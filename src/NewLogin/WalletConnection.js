@@ -7,10 +7,14 @@ import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighte
 import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
 import Web3 from "web3";
 import "./NewLogin.css";
+import { useWalletContext } from '../context/WalletContext';
+import { Connection, PublicKey, Keypair, Transaction } from '@solana/web3.js';
+import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 
 function WalletConnection({ onUserLogin }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { connectWallet } = useWalletContext();
 
   // Save wallet info to Firestore
   const saveWalletToFirestore = async (walletId, walletType) => {
@@ -30,12 +34,13 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
-  // Process login by saving session data
+  // Process login by saving session data and updating WalletContext
   const processLogin = (userId, walletType) => {
     if (typeof onUserLogin === "function") {
       onUserLogin(userId);
-      sessionStorage.setItem("isLoggedIn", "true");
-      sessionStorage.setItem("userAccount", userId);
+      // sessionStorage.setItem("isLoggedIn", "true");
+      // sessionStorage.setItem("userAccount", userId);
+      connectWallet(); // Ensure WalletContext is updated
     } else {
       console.error("onUserLogin is not a function");
     }
@@ -95,7 +100,7 @@ function WalletConnection({ onUserLogin }) {
           signature
         );
         const userCredential = await signInWithCustomToken(auth, customToken);
-        await saveWalletToFirestore(publicKey);
+        await saveWalletToFirestore(publicKey, "Solana");
         processLogin(publicKey, "Solana");
       } else {
         setErrorMessage("Phantom wallet not found. Please install it.");
@@ -246,23 +251,25 @@ function WalletConnection({ onUserLogin }) {
               id="phantom"
               className="wallet-btn ga-wallet-btn-phantom"
               onClick={handleLoginWithPhantom}
+              disabled={isLoading}
             >
               <img
                 src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fphantom-logo.png?alt=media&token=5ffe611b-3ccd-4663-81e4-59feeb1dbba7"
                 alt="phantom"
               />
-              Continue with Phantom
+              {isLoading ? "Connecting..." : "Continue with Phantom"}
             </button>
             <button
               id="metamask"
               className="wallet-btn ga-wallet-btn-metamask"
               onClick={handleLoginWithMetamask}
+              disabled={isLoading}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media"
+                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media&token=507097be-0cc4-4d93-a87b-99c67d82cfe5"
                 alt="metamask"
               />
-              Continue with Metamask
+              {isLoading ? "Connecting..." : "Continue with Metamask"}
             </button>
             <button
               id="freighter"
@@ -290,12 +297,13 @@ function WalletConnection({ onUserLogin }) {
               id="unstoppable"
               className="wallet-btn ga-wallet-btn-ud"
               onClick={handleLoginWithUnstoppable}
+              disabled={isLoading}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media"
+                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media&token=60b8c7c0-d644-4954-be2d-7afe3065b876"
                 alt="unstoppable"
               />
-              Continue with Unstoppable
+              {isLoading ? "Connecting..." : "Continue with Unstoppable"}
             </button>
           </div>
         )}

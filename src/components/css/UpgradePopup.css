@@ -1,0 +1,271 @@
+.upgrade-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.upgrade-popup.wide {
+  background: var(--builder-bg);
+  border-radius: 18px;
+  max-width: 480px;
+  width: 95%;
+  padding: 2.5rem 2.2rem 2rem 2.2rem;
+  position: relative;
+  font-family: inherit;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.close-button {
+  position: absolute;
+  right: 2rem;
+  top: 2rem;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 2rem;
+  cursor: pointer;
+  z-index: 2;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.upgrade-title {
+  color: var(--white);
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 2.2rem;
+  text-align: left;
+}
+
+.upgrade-section-label {
+  color: var(--editor-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+}
+
+.membership-toggle-cards.modern {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.7rem;
+}
+
+.membership-card {
+  background: var(--dark-gray);
+  border-radius: 12px;
+  border: 2px solid var(--not-selected);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  transition: border 0.2s, background 0.2s;
+  position: relative;
+  min-height: 56px;
+}
+
+.membership-card.active {
+  border: 2px solid var(--purple);
+  background: var(--purple);
+  background: linear-gradient(90deg, var(--purple) 0%, var(--purple-hover) 100%);
+}
+
+.membership-card input[type="radio"] {
+  display: none;
+}
+
+.membership-card-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.membership-card-title {
+  color: var(--white);
+  font-size: 1.08rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.save-badge {
+  background: var(--purple);
+  color: var(--white);
+  font-size: 0.75rem;
+  border-radius: 8px;
+  padding: 0.13rem 0.7rem;
+  margin-left: 0.5rem;
+  font-weight: 700;
+}
+
+.membership-card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.membership-card-price {
+  color: var(--white);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.membership-card-currency {
+  color: var(--editor-text);
+  font-size: 1.05rem;
+  font-weight: 500;
+  margin-left: 0.2rem;
+}
+
+.crypto-select-row {
+  margin-bottom: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crypto-select-wrapper {
+
+
+}
+
+.crypto-select {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1 0 0;
+  width: 207px;
+  padding: 7px 10px;
+  gap: 15px;
+  border-radius: 7px;
+  border: 1px solid var(--purple);
+  background: #313031;
+  color: var(--editor-text);
+}
+
+.crypto-select option {
+  background: var(--builder-bg);
+  color: var(--white);
+}
+
+.upgrade-total-row.modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0.7rem 0 1.7rem 0;
+}
+
+.upgrade-total-label {
+  color: var(--editor-text);
+  font-size: 1.08rem;
+  font-weight: 600;
+}
+
+.upgrade-total-value {
+  color: var(--white);
+  font-size: 1.18rem;
+  text-align: right;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--editor-text);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.upgrade-warning.modern {
+  background: var(--builder-bg);
+  border: 1.5px solid var(--not-selected);
+  color: var(--white);
+  border-radius: 10px;
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  font-size: 1.01rem;
+  margin-bottom: 1.7rem;
+  margin-top: 0.2rem;
+}
+
+.warning-icon {
+  font-size: 1.5rem;
+  color: #ffe066;
+  margin-top: 0.1rem;
+}
+
+.upgrade-confirm-btn {
+  width: 100%;
+  background: var(--purple);
+  background: linear-gradient(90deg, var(--purple) 0%, var(--purple-hover) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  padding: 1.15rem 0;
+  font-size: 1.13rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 1.1rem;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(108, 76, 255, 0.08);
+}
+
+.upgrade-confirm-btn:hover {
+  background: var(--purple-hover);
+  background: linear-gradient(90deg, var(--purple-hover) 0%, var(--purple) 100%);
+}
+
+.upgrade-terms {
+  color: var(--not-selected);
+  font-size: 0.93rem;
+  text-align: center;
+  margin-top: 0.2rem;
+}
+
+.upgrade-terms b {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.transaction-info {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.solscan-link {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #9945FF;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.solscan-link:hover {
+  background-color: #7D3ACD;
+  text-decoration: none;
+  color: white;
+}

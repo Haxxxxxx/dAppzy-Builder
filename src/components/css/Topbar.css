@@ -461,3 +461,35 @@ input:checked+.dropdown-menu-item-content-slider:before {
   opacity: 0.7;
   font-size: 12px;
 }
+
+.upgrade-message {
+  display: flex;
+  align-items: center;
+  background: var(--dark-gray);
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.upgrade-message .material-symbols-outlined {
+  color: var(--purple);
+  margin-right: 0.5rem;
+}
+
+.upgrade-message p {
+  margin: 0;
+  color: var(--editor-text);
+  font-size: 0.875rem;
+}
+
+.dropdown-menu-item-content-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--not-selected);
+}
+
+.dropdown-menu-item-content-button.disabled:hover {
+  background-color: var(--not-selected);
+  transform: none;
+}
