@@ -18,31 +18,71 @@ function WalletConnection({ onUserLogin }) {
 
   // Save wallet info to Firestore
   const saveWalletToFirestore = async (walletId, walletType) => {
-    const walletRef = doc(db, "wallets", walletId);
-    const walletSnap = await getDoc(walletRef);
-    const timestamp = new Date().toISOString();
+    try {
+      // First, check if user document exists
+      const userRef = doc(db, "users", walletId);
+      const userSnap = await getDoc(userRef);
+      
+      const timestamp = new Date().toISOString();
+      const walletRef = doc(db, "wallets", walletId);
+      const walletSnap = await getDoc(walletRef);
 
-    if (!walletSnap.exists()) {
-      await setDoc(walletRef, {
+      // Prepare wallet data
+      const walletData = {
         walletId,
         lastLogin: timestamp,
         walletType,
-      });
-      console.log("Wallet ID saved to Firestore:", walletId);
-    } else {
-      console.log("Wallet data retrieved:", walletSnap.data());
+        timestamp: new Date().toISOString(),
+        selectedButtons: walletSnap.exists() ? walletSnap.data().selectedButtons || {} : {}
+      };
+
+      // If user document exists, include subscription data
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        walletData.subscriptionStatus = userData.subscriptionStatus || 'freemium';
+        walletData.subscriptionEndDate = userData.subscriptionEndDate || null;
+      } else {
+        // Create new user document with default subscription
+        await setDoc(userRef, {
+          subscriptionStatus: 'freemium',
+          subscriptionEndDate: null,
+          createdAt: timestamp,
+          walletId,
+          walletType
+        });
+        walletData.subscriptionStatus = 'freemium';
+        walletData.subscriptionEndDate = null;
+      }
+
+      // Save or update wallet document
+      await setDoc(walletRef, walletData, { merge: true });
+      
+      // Store subscription data in localStorage
+      localStorage.setItem('subscriptionStatus', walletData.subscriptionStatus);
+      if (walletData.subscriptionEndDate) {
+        localStorage.setItem('subscriptionEndDate', walletData.subscriptionEndDate);
+      }
+
+      console.log("Wallet data saved to Firestore:", walletData);
+    } catch (error) {
+      console.error("Error saving wallet data:", error);
+      throw error;
     }
   };
 
   // Process login by saving session data and updating WalletContext
-  const processLogin = (userId, walletType) => {
-    if (typeof onUserLogin === "function") {
-      onUserLogin(userId);
-      // sessionStorage.setItem("isLoggedIn", "true");
-      // sessionStorage.setItem("userAccount", userId);
-      connectWallet(); // Ensure WalletContext is updated
-    } else {
-      console.error("onUserLogin is not a function");
+  const processLogin = async (userId, walletType) => {
+    try {
+      await saveWalletToFirestore(userId, walletType);
+      if (typeof onUserLogin === "function") {
+        onUserLogin(userId);
+        connectWallet(); // Ensure WalletContext is updated
+      } else {
+        console.error("onUserLogin is not a function");
+      }
+    } catch (error) {
+      console.error("Error processing login:", error);
+      setErrorMessage("Failed to process login. Please try again.");
     }
   };
 

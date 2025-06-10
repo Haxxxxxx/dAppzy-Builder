@@ -76,8 +76,14 @@ const WalletContextProvider = ({ children }) => {
               const userDoc = await getDoc(userRef);
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                // Store subscription status in session storage for persistence
-                sessionStorage.setItem('subscriptionStatus', userData.subscriptionStatus || 'freemium');
+                // Store subscription status in localStorage for persistence
+                if (userData.subscriptionStatus) {
+                  localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+                  // Also store subscription end date
+                  if (userData.subscriptionEndDate) {
+                    localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+                  }
+                }
               }
             }
           }
@@ -118,8 +124,14 @@ const WalletContextProvider = ({ children }) => {
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              // Store subscription status in session storage for persistence
-              sessionStorage.setItem('subscriptionStatus', userData.subscriptionStatus || 'freemium');
+              // Store subscription status in localStorage for persistence
+              if (userData.subscriptionStatus) {
+                localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+                // Also store subscription end date
+                if (userData.subscriptionEndDate) {
+                  localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+                }
+              }
             }
           }
         }
@@ -154,8 +166,9 @@ const WalletContextProvider = ({ children }) => {
       setIsWalletConnected(false);
       setBalance(0);
       
-      // Clear subscription status from session storage
-      sessionStorage.removeItem('subscriptionStatus');
+      // Clear subscription status from localStorage
+      localStorage.removeItem('subscriptionStatus');
+      localStorage.removeItem('subscriptionEndDate');
     } catch (err) {
       console.error('Error disconnecting wallet:', err);
       setError(err.message || 'Failed to disconnect wallet');

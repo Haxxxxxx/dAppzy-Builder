@@ -9,6 +9,7 @@ import MediaPanel from "./components/LeftbarPanels/MediaPanel";
 import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPanel";
 import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
+import { useSubscription } from "./context/SubscriptionContext";
 import Topbar from "./components/TopBar";
 import SideBar from './components/SideBar';
 import AIAgentPanel from "./components/Rightbar/AIAgentPanel";
@@ -39,6 +40,7 @@ const BuilderPageCore = ({
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
   const { setSelectedElement, handleAICommand, elements, selectedElement } = useContext(EditableContext);
+  const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
   const [showAIInputBar, setShowAIInputBar] = useState(false);
   const [initialAIMessages, setInitialAIMessages] = useState(null);
   const [aiChatStarted, setAIChatStarted] = useState(false);
@@ -70,12 +72,15 @@ const BuilderPageCore = ({
   };
 
   const handleAIFloatingButtonClick = () => {
+    if (!isPioneer) {
+      // Show upgrade popup or message for non-pioneer users
+      return;
+    }
+
     if (!aiChatStarted) {
-      // If no chat has started yet, show the input bar and prepare for first prompt
       setShowAIInputBar(true);
       setOpenPanel("");
     } else {
-      // If chat has already started, just open the AI panel
       setOpenPanel("ai");
       setShowAIInputBar(false);
     }
@@ -803,6 +808,7 @@ const BuilderPageCore = ({
           onShowMediaPanel={() => handlePanelToggle("media")}
           onShowSettingsPanel={() => handlePanelToggle("settings")}
           onShowAIPanel={() => handleAIFloatingButtonClick()}
+          isPioneer={isPioneer}
         />
         <div className="app">
           <Topbar
@@ -814,16 +820,17 @@ const BuilderPageCore = ({
             pageSettings={pageSettings}
             userId={userId}
             projectId={projectId}
+            isPioneer={isPioneer}
           />
           <div className="content-container">
             {openPanel === "sidebar" && (
               <div className="sidebar" id="sidebar">
-                <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} />
+                <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} isPioneer={isPioneer} />
               </div>
             )}
             {openPanel === "structure" && (
               <div id="structure-panel">
-                <StructurePanel />
+                <StructurePanel isPioneer={isPioneer} />
               </div>
             )}
             {openPanel === "media" && (
@@ -832,6 +839,7 @@ const BuilderPageCore = ({
                   projectName={pageSettings.siteTitle}
                   isOpen={openPanel}
                   userId={userId}
+                  isPioneer={isPioneer}
                 />
               </div>
             )}
@@ -843,6 +851,7 @@ const BuilderPageCore = ({
                     localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
                   }}
                   userId={userId}
+                  isPioneer={isPioneer}
                 />
               </div>
             )}
@@ -859,9 +868,10 @@ const BuilderPageCore = ({
                 isPreviewMode={isPreviewMode}
                 handleOpenMediaPanel={handleOpenMediaPanel}
                 websiteSettings={pageSettings}
+                isPioneer={isPioneer}
               />
             </div>
-            {showAIInputBar && !openPanel ? (
+            {showAIInputBar && !openPanel && isPioneer ? (
               <div className="ai-absolute-input-bar-container">
                 <form className="ai-absolute-input-bar" onSubmit={async (e) => {
                   e.preventDefault();
@@ -911,7 +921,7 @@ const BuilderPageCore = ({
                   </div>
                 </form>
               </div>
-            ) : openPanel === "ai" && (
+            ) : openPanel === "ai" && isPioneer && (
               <div className="right-panel" id="ai-panel">
                 <AIAgentPanel
                   messages={activeConversation.messages}
@@ -927,12 +937,13 @@ const BuilderPageCore = ({
                   onSecondPrompt={handleSecondPrompt}
                   onSelectedElementEdit={handleSelectedElementEdit}
                   onThirdPrompt={handleThirdPrompt}
+                  isPioneer={isPioneer}
                 />
               </div>
             )}
           </div>
         </div>
-        {!(showAIInputBar || openPanel === "ai") && (
+        {!(showAIInputBar || openPanel === "ai") && isPioneer && (
           <AIFloatingButton onClick={handleAIFloatingButtonClick} />
         )}
       </div>

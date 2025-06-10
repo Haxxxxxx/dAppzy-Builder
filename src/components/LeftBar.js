@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import './css/LeftBar.css';
 import SupportPopup from './LeftbarPanels/SupportPopup';
 import UpgradePopup from './UpgradePopup';
@@ -18,7 +18,19 @@ const LeftBar = ({
   const [showSupportPopup, setShowSupportPopup] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const { selectedElement } = useContext(EditableContext);
-  const { isPioneer } = useSubscription();
+  const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
+
+  // Debug subscription status
+  useEffect(() => {
+    console.log('LeftBar - Subscription Status:', {
+      isPioneer,
+      subscriptionLoading,
+      localStorage: {
+        status: localStorage.getItem('subscriptionStatus'),
+        endDate: localStorage.getItem('subscriptionEndDate')
+      }
+    });
+  }, [isPioneer, subscriptionLoading]);
 
   const handleHelpClick = () => {
     setShowSupportPopup(true);
@@ -36,12 +48,17 @@ const LeftBar = ({
     setShowUpgradePopup(false);
   };
 
+  // Don't render anything while subscription status is loading
+  if (subscriptionLoading) {
+    return null;
+  }
+
   return (
     <div className="leftbar">
       <div className="buttons-group">
         <button
           onClick={onShowSidebar}
-          className={`icon-button ${openPanel === 'sidebar' &&!selectedElement ? 'active' : ''}`}
+          className={`icon-button ${openPanel === 'sidebar' && !selectedElement ? 'active' : ''}`}
         >
           <span className="material-symbols-outlined">add</span>
         </button>
@@ -60,14 +77,16 @@ const LeftBar = ({
           <span className="material-symbols-outlined">settings</span>
         </button>
 
-        {/* AI Agent Button */}
-        <button
-          onClick={onShowAIPanel}
-          className={`icon-button ${openPanel === 'ai' ? 'active' : ''}`}
-          title="AI Assistant"
-        >
-          <span className="material-symbols-outlined">smart_toy</span>
-        </button>
+        {/* AI Agent Button - Only show for pioneer users */}
+        {isPioneer && (
+          <button
+            onClick={onShowAIPanel}
+            className={`icon-button ${openPanel === 'ai' ? 'active' : ''}`}
+            title="AI Assistant"
+          >
+            <span className="material-symbols-outlined">smart_toy</span>
+          </button>
+        )}
       </div>
 
       <div className="help-center">
