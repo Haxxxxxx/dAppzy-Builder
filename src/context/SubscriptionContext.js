@@ -51,16 +51,18 @@ export const SubscriptionProvider = ({ children }) => {
       }
 
       try {
-        const walletRef = doc(db, "wallets", walletAddress);
+        const userRef = doc(db, "users", walletAddress);
         
-        // Set up real-time listener for wallet document
-        unsubscribe = onSnapshot(walletRef, (walletDoc) => {
-          if (walletDoc.exists()) {
-            const walletData = walletDoc.data();
-            console.log('Wallet data received:', walletData); // Debug log
+        // Set up real-time listener for user document
+        unsubscribe = onSnapshot(userRef, (userDoc) => {
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log('User data received:', userData); // Debug log
 
-            const newStatus = walletData.subscriptionStatus;
-            const newEndDate = walletData.subscriptionEndDate;
+            // Check both profile and direct subscription data
+            const newStatus = userData.profile?.subscriptionStatus || userData.subscriptionStatus;
+            const newEndDate = userData.profile?.subscriptionEndDate || userData.subscriptionEndDate;
+            const isPioneer = userData.profile?.isPioneer || false;
 
             if (newStatus && newEndDate) {
               // Only update if we have both status and end date
@@ -76,11 +78,16 @@ export const SubscriptionProvider = ({ children }) => {
                 localStorage.setItem('subscriptionStatus', newStatus);
                 localStorage.setItem('subscriptionEndDate', newEndDate);
               }
+            } else if (isPioneer) {
+              // If isPioneer is true but no subscription dates, set as pioneer
+              console.log('User is pioneer, setting subscription status'); // Debug log
+              setSubscriptionStatus('pioneer');
+              localStorage.setItem('subscriptionStatus', 'pioneer');
             } else {
-              console.log('No subscription data found in wallet document'); // Debug log
+              console.log('No subscription data found in user document'); // Debug log
             }
           } else {
-            console.log('No wallet document found'); // Debug log
+            console.log('No user document found'); // Debug log
           }
           setIsLoading(false);
         }, (error) => {
@@ -89,13 +96,15 @@ export const SubscriptionProvider = ({ children }) => {
         });
 
         // Initial check
-        const walletDoc = await getDoc(walletRef);
-        if (walletDoc.exists()) {
-          const walletData = walletDoc.data();
-          console.log('Initial wallet data:', walletData); // Debug log
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log('Initial user data:', userData); // Debug log
 
-          const newStatus = walletData.subscriptionStatus;
-          const newEndDate = walletData.subscriptionEndDate;
+          // Check both profile and direct subscription data
+          const newStatus = userData.profile?.subscriptionStatus || userData.subscriptionStatus;
+          const newEndDate = userData.profile?.subscriptionEndDate || userData.subscriptionEndDate;
+          const isPioneer = userData.profile?.isPioneer || false;
 
           if (newStatus && newEndDate) {
             if (new Date(newEndDate) < new Date()) {
@@ -108,6 +117,10 @@ export const SubscriptionProvider = ({ children }) => {
               localStorage.setItem('subscriptionStatus', newStatus);
               localStorage.setItem('subscriptionEndDate', newEndDate);
             }
+          } else if (isPioneer) {
+            // If isPioneer is true but no subscription dates, set as pioneer
+            setSubscriptionStatus('pioneer');
+            localStorage.setItem('subscriptionStatus', 'pioneer');
           }
         }
         setIsLoading(false);

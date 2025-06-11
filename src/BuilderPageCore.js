@@ -15,6 +15,7 @@ import SideBar from './components/SideBar';
 import AIAgentPanel from "./components/Rightbar/AIAgentPanel";
 import AIFloatingButton from "./components/AIFloatingButton";
 import { Web3Configs } from "./configs/Web3/Web3Configs";
+import { useWalletContext } from "./context/WalletContext";
 
 const BuilderPageCore = ({
   userId,
@@ -41,6 +42,7 @@ const BuilderPageCore = ({
   const mainContentRef = useRef(null);
   const { setSelectedElement, handleAICommand, elements, selectedElement } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
+  const { isConnected, walletAddress } = useWalletContext();
   const [showAIInputBar, setShowAIInputBar] = useState(false);
   const [initialAIMessages, setInitialAIMessages] = useState(null);
   const [aiChatStarted, setAIChatStarted] = useState(false);
@@ -54,6 +56,31 @@ const BuilderPageCore = ({
     { id: 1, name: 'Conversation 1', messages: [] }
   ]);
   const [activeConversationId, setActiveConversationId] = useState(1);
+
+  // Check URL parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlUserId = urlParams.get('userId');
+    const urlProjectId = urlParams.get('projectId');
+
+    if (urlUserId && !userId) {
+      setUserId(urlUserId);
+    }
+    if (urlProjectId && !activeProjectId) {
+      setActiveProjectId(urlProjectId);
+    }
+  }, [userId, activeProjectId, setUserId, setActiveProjectId]);
+
+  // Skip authentication if userId is present in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlUserId = urlParams.get('userId');
+    
+    if (urlUserId && !isConnected) {
+      // If we have userId in URL but not connected, we'll let the WalletContext handle it
+      console.log('Using URL userId for authentication:', urlUserId);
+    }
+  }, [isConnected]);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || conversations[0];
 

@@ -40,8 +40,8 @@ export const WalletProvider = ({ children }) => {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProviderBase 
         wallets={wallets} 
-        autoConnect={false}  // Disable auto-connect
-        localStorageKey="walletAdapter"  // Add a specific key for wallet storage
+        autoConnect={true}  // Enable auto-connect
+        localStorageKey="walletAdapter"
       >
         <WalletContextProvider>{children}</WalletContextProvider>
       </WalletProviderBase>
@@ -57,10 +57,36 @@ const WalletContextProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [balance, setBalance] = useState(0);
 
-  // Check for existing wallet connection on mount
+  // Check for existing wallet connection and URL parameters on mount
   useEffect(() => {
     const checkExistingConnection = async () => {
       try {
+        // First check URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        
+        if (userId) {
+          // If userId is in URL, use it directly
+          setWalletAddress(userId);
+          setWalletId(userId);
+          setIsWalletConnected(true);
+          
+          // Check subscription status in Firestore
+          const userRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.subscriptionStatus) {
+              localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+              if (userData.subscriptionEndDate) {
+                localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+              }
+            }
+          }
+          return;
+        }
+
+        // If no userId in URL, check for existing wallet connection
         if (window.solana && window.solana.isPhantom) {
           const isConnected = window.solana.isConnected;
           if (isConnected) {
@@ -76,10 +102,8 @@ const WalletContextProvider = ({ children }) => {
               const userDoc = await getDoc(userRef);
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                // Store subscription status in localStorage for persistence
                 if (userData.subscriptionStatus) {
                   localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
-                  // Also store subscription end date
                   if (userData.subscriptionEndDate) {
                     localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
                   }
