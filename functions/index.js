@@ -5,7 +5,15 @@ const admin = require("firebase-admin");
 const nacl = require("tweetnacl");
 const { PublicKey } = require("@solana/web3.js");
 const fetch = require("node-fetch");
-const cors = require("cors")({ origin: true }); // For manual CORS handling
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "https://builder.dappzy.io",
+  "https://dappzy.io",
+  "https://www.dappzy.io",
+];
+if (process.env.FUNCTIONS_EMULATOR) {
+  ALLOWED_ORIGINS.push("http://localhost:3000");
+}
 const nodemailer = require("nodemailer");
 
 // 1) Define your secret using firebase-functions/params
@@ -19,12 +27,22 @@ const db = admin.firestore(); // Firestore instance
 exports.sendSupportEmail = onRequest(
   {
     secrets: [EMAIL_USER, EMAIL_PASS],
-    cors: true,
-    invoker: "public",
+    cors: ALLOWED_ORIGINS,
   },
   async (req, res) => {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    // Require Firebase Auth token to prevent spam
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized — missing auth token" });
+    }
+    try {
+      await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+    } catch (authError) {
+      return res.status(401).json({ error: "Unauthorized — invalid auth token" });
     }
 
     try {
@@ -85,62 +103,53 @@ exports.sendSupportEmail = onRequest(
 // 3) Reverse Lookup Function
 exports.reverseLookup = onRequest(
   {
-    // This ensures the function can read your UD_JWT secret
     secrets: [udJwt],
-    // You can also specify region, e.g. region: "us-central1",
-    cors: true,           // Tells Functions v2 to handle OPTIONS automatically
-    invoker: "public",    // Let it be publicly callable
+    cors: ALLOWED_ORIGINS,
+    invoker: "public",
   },
-  (req, res) => {
-    // Use the cors middleware
-    cors(req, res, async () => {
-      if (req.method !== "GET") {
-        return res.status(405).json({ error: "Method Not Allowed" });
+  async (req, res) => {
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    try {
+      const jwtValue = udJwt.value();
+      if (!jwtValue) {
+        return res.status(500).json({ error: "UD JWT not configured" });
       }
 
-      try {
-        // 4) Retrieve the secret value (JWT)
-        const jwtValue = udJwt.value();
-        if (!jwtValue) {
-          return res.status(500).json({ error: "UD JWT not configured" });
-        }
+      const address = req.query.address;
+      if (!address) {
+        return res.status(400).json({ error: "Missing address parameter" });
+      }
 
-        // Check query param
-        const address = req.query.address;
-        if (!address) {
-          return res.status(400).json({ error: "Missing address parameter" });
-        }
+      const apiUrl = `https://api.unstoppabledomains.com/partner/v3/owners/${address}/domains`;
+      const queryParams = new URLSearchParams({ "$expand": "records" }).toString();
+      const fullUrl = `${apiUrl}?${queryParams}`;
 
-        // Build the UD Partner API URL
-        const apiUrl = `https://api.unstoppabledomains.com/partner/v3/owners/${address}/domains`;
-        const queryParams = new URLSearchParams({ "$expand": "records" }).toString();
-        const fullUrl = `${apiUrl}?${queryParams}`;
+      const response = await fetch(fullUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${jwtValue}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-        // 5) Make the request
-        const response = await fetch(fullUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${jwtValue}`,
-            "Content-Type": "application/json",
-          },
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error fetching domain data from UD API:", response.status, errorText);
+        return res.status(response.status).json({
+          error: "Error fetching domain data from UD API",
+          details: errorText,
         });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error fetching domain data from UD API:", response.status, errorText);
-          return res.status(response.status).json({
-            error: "Error fetching domain data from UD API",
-            details: errorText,
-          });
-        }
-
-        const data = await response.json();
-        return res.json(data);
-      } catch (error) {
-        console.error("Error in reverseLookup:", error);
-        return res.status(500).json({ error: error.message });
       }
-    });
+
+      const data = await response.json();
+      return res.json(data);
+    } catch (error) {
+      console.error("Error in reverseLookup:", error);
+      return res.status(500).json({ error: error.message });
+    }
   }
 );
 
@@ -148,7 +157,7 @@ exports.reverseLookup = onRequest(
 exports.verifyPhantomV2 = onRequest(
   {
     region: "us-central1",
-    cors: true,
+    cors: ALLOWED_ORIGINS,
     invoker: "public",
   },
   async (req, res) => {
