@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import DOMPurify from "dompurify";
 import { db } from "./firebase";
 
 const PreviewPage = () => {
@@ -53,7 +54,7 @@ const PreviewPage = () => {
         <h2>{error}</h2>
       ) : (
         <div
-          dangerouslySetInnerHTML={{ __html: projectHtml }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(projectHtml) }}
           style={{ width: "100vw", height: "100vh", overflow: "auto" }}
         />
       )}
