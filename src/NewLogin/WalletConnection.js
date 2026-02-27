@@ -4,12 +4,8 @@ import UAuth from "@uauth/js";
 import { auth } from "../firebase";
 import { signInWithCustomToken } from "firebase/auth";
 import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighter API methods
-import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
-import Web3 from "web3";
 import "./NewLogin.css";
 import { useWalletContext } from '../context/WalletContext';
-import { Connection, PublicKey, Keypair, Transaction } from '@solana/web3.js';
-import { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 
 function WalletConnection({ onUserLogin }) {
   const [errorMessage, setErrorMessage] = useState("");
@@ -189,8 +185,8 @@ function WalletConnection({ onUserLogin }) {
   const handleLoginWithUnstoppable = async () => {
     setIsLoading(true);
     const uauth = new UAuth({
-      clientID: "65f44ad3-b7ad-4e87-b782-9654d7257a4c",
-      redirectUri: "http://localhost:3000",
+      clientID: process.env.REACT_APP_UD_CLIENT_ID,
+      redirectUri: process.env.REACT_APP_UD_REDIRECT_URI || window.location.origin,
       scope: "openid wallet",
     });
     try {
@@ -235,38 +231,6 @@ function WalletConnection({ onUserLogin }) {
       setIsLoading(false);
     }
   };
-
-  // // --- Coinbase Wallet Integration ---
-  // const handleLoginWithCoinbase = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     // Initialize Coinbase Wallet SDK with your app details.
-  //     const coinbaseWallet = new CoinbaseWalletSDK({
-  //       appName: "Your App Name", // Replace with your app name
-  //       appLogoUrl: "https://example.com/logo.png", // Replace with your app logo URL
-  //       darkMode: false,
-  //     });
-      
-  //     // Create a Web3 provider using Coinbase Wallet.
-  //     // Here we use the Polygon mainnet endpoint so the chain ID should be 137.
-  //     const ethereum = coinbaseWallet.makeWeb3Provider(
-  //       "https://polygon-mainnet.infura.io/v3/065dcf3394a94a4cab29ac97be680697",
-  //       137
-  //     );
-      
-  //     const web3 = new Web3(ethereum);
-  //     const accounts = await web3.eth.getAccounts();
-  //     const account = accounts[0];
-      
-  //     await saveWalletToFirestore(account, "Coinbase");
-  //     processLogin(account, "Coinbase");
-  //   } catch (error) {
-  //     console.error("Error with Coinbase Wallet login:", error);
-  //     setErrorMessage("Coinbase Wallet authentication failed. Please try again");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   return (
     <div className="popup">
