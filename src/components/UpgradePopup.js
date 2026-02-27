@@ -94,12 +94,8 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const usdcPrice = getPlanPrice('pioneer', billingCycle);
   const solPrice = solUsd ? (usdcPrice / solUsd).toFixed(4) : null;
   
-  const hasAdminDiscount = userProfile?.community === 'Admin';
-  const hasSuperteamDiscount = userProfile?.community === 'Superteam' && userProfile?.referralCode === 'SUPERTEAM25';
-  
-  const finalSolPrice = hasAdminDiscount ? 0 : 
-                       hasSuperteamDiscount ? (solPrice / 2).toFixed(4) : 
-                       solPrice;
+  // Discounts must be validated server-side — never trust client-side profile fields
+  const finalSolPrice = solPrice;
 
   // Get Solana wallet address
   const getSolanaWalletAddress = async () => {
@@ -190,15 +186,10 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
       const fromWallet = new PublicKey(displayWallet);
       const toWallet = new PublicKey(ADMIN_WALLET);
 
-      // Calculate final price with discounts
+      // Calculate price — discounts must be validated server-side
       const usdcPrice = getPlanPrice('pioneer', billingCycle);
       const solPrice = solUsd ? (usdcPrice / solUsd) : 0;
-      const hasAdminDiscount = userProfile?.community === 'Admin';
-      const hasSuperteamDiscount = userProfile?.community === 'Superteam' && userProfile?.referralCode === 'SUPERTEAM25';
-      
-      const finalSolPrice = hasAdminDiscount ? 0 : 
-                           hasSuperteamDiscount ? solPrice / 2 : 
-                           solPrice;
+      const finalSolPrice = solPrice;
 
       const lamports = Math.round(finalSolPrice * LAMPORTS_PER_SOL);
 
@@ -264,7 +255,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
         billingCycle,
         subscriptionStartDate: new Date().toISOString(),
         subscriptionEndDate: new Date(Date.now() + (billingCycle === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString(),
-        appliedDiscount: hasAdminDiscount ? 'admin' : hasSuperteamDiscount ? 'superteam' : null,
+        appliedDiscount: null,
         originalPrice: usdcPrice,
         finalPrice: finalSolPrice
       });
