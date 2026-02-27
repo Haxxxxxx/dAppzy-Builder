@@ -61,32 +61,7 @@ const WalletContextProvider = ({ children }) => {
   useEffect(() => {
     const checkExistingConnection = async () => {
       try {
-        // First check URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('userId');
-        
-        if (userId) {
-          // If userId is in URL, use it directly
-          setWalletAddress(userId);
-          setWalletId(userId);
-          setIsWalletConnected(true);
-          
-          // Check subscription status in Firestore
-          const userRef = doc(db, 'users', userId);
-          const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.subscriptionStatus) {
-              localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
-              if (userData.subscriptionEndDate) {
-                localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
-              }
-            }
-          }
-          return;
-        }
-
-        // If no userId in URL, check for existing wallet connection
+        // Check for existing wallet connection (URL userId is NOT trusted for auth)
         if (window.solana && window.solana.isPhantom) {
           const isConnected = window.solana.isConnected;
           if (isConnected) {

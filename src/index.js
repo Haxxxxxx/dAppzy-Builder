@@ -9,13 +9,7 @@ import Web3Provider from './context/Web3Provider';
 
 const RootComponent = () => {
   const [userId, setUserId] = useState(() => {
-    // Initialize from URL params first, then sessionStorage
-    const params = new URLSearchParams(window.location.search);
-    const urlUserId = params.get("userId");
-    if (urlUserId) {
-      sessionStorage.setItem("userAccount", urlUserId);
-      return urlUserId;
-    }
+    // Initialize from sessionStorage only — wallet connection sets the real userId
     return sessionStorage.getItem("userAccount") || null;
   });
   
@@ -30,19 +24,16 @@ const RootComponent = () => {
   useEffect(() => {
     const initializeUserData = () => {
       try {
+        // projectId can still be passed via URL for deep-linking
         const params = new URLSearchParams(window.location.search);
-        const queryUserId = params.get("userId");
         const queryProjectId = params.get("projectId");
-
-        if (queryUserId) {
-          setUserId(queryUserId);
+        if (queryProjectId) {
           setProjectId(queryProjectId);
-          sessionStorage.setItem("userAccount", queryUserId);
-        } else {
-          const storedUserId = sessionStorage.getItem("userAccount");
-          if (storedUserId) {
-            setUserId(storedUserId);
-          }
+        }
+
+        const storedUserId = sessionStorage.getItem("userAccount");
+        if (storedUserId) {
+          setUserId(storedUserId);
         }
       } catch (error) {
         console.error("Error initializing user data:", error);
