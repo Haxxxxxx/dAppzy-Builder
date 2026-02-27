@@ -8,7 +8,6 @@ import BuilderPageLoader from "./BuilderPageLoader";
 import { WalletProvider, useWalletContext } from './context/WalletContext';
 import { DappWalletProvider } from './context/DappWalletContext';
 import Web3Provider from './context/Web3Provider';
-import { EditableProvider } from './context/EditableContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import WalletConnection from "./NewLogin/WalletConnection";
 
@@ -31,21 +30,19 @@ function AppContent({ userId, setUserId, projectId }) {
 
   return (
     <Router>
-      <EditableProvider>
-          <DappWalletProvider>
-            <Web3Provider>
-            <SubscriptionProvider>
-              <Routes>
-                <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
-                <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
-                <Route path="/:customUrl" element={<PreviewPage />} />
-                <Route path="/preview" element={<PreviewPage />} />
-                <Route path="/export" element={<PreviewPage />} />
-              </Routes>
-            </SubscriptionProvider>
-            </Web3Provider>
-          </DappWalletProvider>
-      </EditableProvider>
+      <DappWalletProvider>
+        <Web3Provider>
+          <SubscriptionProvider>
+            <Routes>
+              <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
+              <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
+              <Route path="/:customUrl" element={<PreviewPage />} />
+              <Route path="/preview" element={<PreviewPage />} />
+              <Route path="/export" element={<PreviewPage />} />
+            </Routes>
+          </SubscriptionProvider>
+        </Web3Provider>
+      </DappWalletProvider>
     </Router>
   );
 }
