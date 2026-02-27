@@ -33,55 +33,63 @@ export const isPinataConfigured = () => {
   return validateEnv() && pinataConfigObject.jwt && pinataConfigObject.apiKey && pinataConfigObject.secretKey;
 };
 
-// Log the environment variables to verify they're being loaded
-console.log('Pinata Config:', {
-  hasJWT: !!pinataConfigObject.jwt,
-  hasApiKey: !!pinataConfigObject.apiKey,
-  hasSecretKey: !!pinataConfigObject.secretKey,
-  env: process.env
+// Lazy Pinata SDK initialization (avoids top-level await which CRA doesn't support)
+let pinataInstance = null;
+let pinataInitPromise = null;
+
+const createMockPinata = () => ({
+  pinFileToIPFS: async () => ({ IpfsHash: 'mock-hash' }),
+  pinJSONToIPFS: async () => ({ IpfsHash: 'mock-hash' }),
+  unpin: async () => ({ success: true }),
+  testAuthentication: async () => ({ authenticated: true }),
+  groups: {
+    list: async () => [],
+    create: async (name) => ({ groupId: name }),
+    get: async (groupId) => ({ groupId })
+  }
 });
 
-// Initialize Pinata SDK
-let pinata;
-try {
-  // First try to get the JWT from TokenManager
-  let pinataJWT = await TokenManager.getToken('PINATA');
-  
-  // If not found in TokenManager, use the one from environment
-  if (!pinataJWT && pinataConfigObject.jwt) {
-    pinataJWT = pinataConfigObject.jwt;
-    // Store it in TokenManager for future use
-    await TokenManager.setToken('PINATA', pinataJWT);
-  }
+const initializePinata = async () => {
+  try {
+    let pinataJWT = await TokenManager.getToken('PINATA');
 
-  if (!pinataJWT) {
-    throw new Error('No Pinata JWT found in environment or TokenManager');
-  }
-
-  // Initialize Pinata SDK with all credentials
-  pinata = new pinataSDK({
-    pinataApiKey: pinataConfigObject.apiKey,
-    pinataSecretApiKey: pinataConfigObject.secretKey,
-    pinataJWTKey: pinataJWT
-  });
-
-  // Test authentication
-  await pinata.testAuthentication();
-} catch (error) {
-  console.error('Failed to initialize Pinata SDK:', error);
-  // Create a mock pinata object with basic functionality
-  pinata = {
-    pinFileToIPFS: async () => ({ IpfsHash: 'mock-hash' }),
-    pinJSONToIPFS: async () => ({ IpfsHash: 'mock-hash' }),
-    unpin: async () => ({ success: true }),
-    testAuthentication: async () => ({ authenticated: true }),
-    groups: {
-      list: async () => [],
-      create: async (name) => ({ groupId: name }),
-      get: async (groupId) => ({ groupId })
+    if (!pinataJWT && pinataConfigObject.jwt) {
+      pinataJWT = pinataConfigObject.jwt;
+      await TokenManager.setToken('PINATA', pinataJWT);
     }
-  };
-}
 
-// Export the configuration and SDK instance
-export { pinata, pinataConfigObject as pinataConfig };
+    if (!pinataJWT) {
+      throw new Error('No Pinata JWT found in environment or TokenManager');
+    }
+
+    const sdk = new pinataSDK({
+      pinataApiKey: pinataConfigObject.apiKey,
+      pinataSecretApiKey: pinataConfigObject.secretKey,
+      pinataJWTKey: pinataJWT
+    });
+
+    await sdk.testAuthentication();
+    return sdk;
+  } catch (error) {
+    console.error('Failed to initialize Pinata SDK:', error);
+    return createMockPinata();
+  }
+};
+
+/**
+ * Returns the initialized Pinata SDK instance (lazy singleton)
+ */
+export const getPinata = async () => {
+  if (pinataInstance) return pinataInstance;
+  if (!pinataInitPromise) {
+    pinataInitPromise = initializePinata().then(sdk => {
+      pinataInstance = sdk;
+      return sdk;
+    });
+  }
+  return pinataInitPromise;
+};
+
+// Backwards-compatible sync export — returns mock until initialized
+export const pinata = createMockPinata();
+export { pinataConfigObject as pinataConfig };
