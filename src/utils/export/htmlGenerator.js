@@ -1,6 +1,35 @@
 import { buildElementHierarchy, cleanElementData } from './elementUtils';
 
 /**
+ * Escapes HTML special characters to prevent XSS
+ * @param {string} str - The string to escape
+ * @returns {string} - Escaped string
+ */
+const escapeHtml = (str) => {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
+/**
+ * Escapes a string for use inside an HTML attribute value (double-quoted)
+ * @param {string} str - The string to escape
+ * @returns {string} - Escaped string safe for attribute context
+ */
+const escapeAttr = (str) => {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+};
+
+/**
  * Converts camelCase to kebab-case
  * @param {string} str - The string to convert
  * @returns {string} - Converted string
@@ -61,20 +90,20 @@ const generateHeroHtml = (element) => {
   const leftContentHtml = `
     <div style="${contentContainerStyles}">
       ${heading ? `
-        <h3 id="${heading.id}" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 16px; color: ${element.configuration === 'heroTwo' ? '#ffffff' : '#1a1a1a'}">${heading.content}</h3>
+        <h3 id="${heading.id}" style="font-size: 2.5rem; font-weight: bold; margin-bottom: 16px; color: ${element.configuration === 'heroTwo' ? '#ffffff' : '#1a1a1a'}">${escapeHtml(heading.content)}</h3>
       ` : ''}
       ${paragraph ? `
-        <div id="${paragraph.id}" style="font-size: 1rem; line-height: 1.5; margin-bottom: 24px; color: ${element.configuration === 'heroTwo' ? '#ffffff' : '#1a1a1a'}">${paragraph.content}</div>
+        <div id="${paragraph.id}" style="font-size: 1rem; line-height: 1.5; margin-bottom: 24px; color: ${element.configuration === 'heroTwo' ? '#ffffff' : '#1a1a1a'}">${escapeHtml(paragraph.content)}</div>
       ` : ''}
       ${button ? `
-        <button id="${button.id}" style="background-color: #334155; color: #ffffff; padding: 12px 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-size: 1rem">${button.content}</button>
+        <button id="${button.id}" style="background-color: #334155; color: #ffffff; padding: 12px 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; font-size: 1rem">${escapeHtml(button.content)}</button>
       ` : ''}
     </div>
   `;
 
   const rightContentHtml = image ? `
     <div style="background-color: transparent; max-width: 40%; width: 40%; display: flex; justify-content: flex-end; align-items: center;">
-      <img id="${image.id}" style="max-width: 100%; height: 400px; background-color: #334155; object-fit: cover; border-radius: 8px" src="${image.content}" alt="">
+      <img id="${image.id}" style="max-width: 100%; height: 400px; background-color: #334155; object-fit: cover; border-radius: 8px" src="${escapeAttr(image.content)}" alt="">
     </div>
   ` : '';
 
@@ -146,12 +175,12 @@ const generateNavbarHtml = (element) => {
       <nav id="${element.id}" class="section-navbar" role="navigation" aria-label="Main Navigation" style="${navbarStyleString}">
         <div style="display: flex; align-items: center; gap: 12px;">
           ${logo ? `
-            <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${logo.content}" alt="">
+            <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${escapeAttr(logo.content)}" alt="">
           ` : ''}
         </div>
         <div style="display: flex; align-items: center; flex: 1; gap: 30px; justify-content: flex-end;">
           ${spans.map((span, index) => `
-            <span id="${span.id}" style="color: #1a1a1a; cursor: pointer${index === spans.length - 1 ? '; margin-right: 16px;' : ''}">${span.content}</span>
+            <span id="${span.id}" style="color: #1a1a1a; cursor: pointer${index === spans.length - 1 ? '; margin-right: 16px;' : ''}">${escapeHtml(span.content)}</span>
           `).join('')}
         </div>
       </nav>
@@ -163,17 +192,17 @@ const generateNavbarHtml = (element) => {
       <nav id="${element.id}" class="section-navbar" role="navigation" aria-label="Main Navigation" style="${navbarStyleString}">
         <div style="display: flex; align-items: center; gap: 12px;">
           ${logo ? `
-            <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${logo.content}" alt="">
+            <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${escapeAttr(logo.content)}" alt="">
           ` : ''}
         </div>
         <div style="display: flex; align-items: center; justify-content: center; flex: 1;">
           ${spans.map((span, index) => `
-            <span id="${span.id}" style="color: #1a1a1a; cursor: pointer; margin-right: 16px">${span.content}</span>
+            <span id="${span.id}" style="color: #1a1a1a; cursor: pointer; margin-right: 16px">${escapeHtml(span.content)}</span>
           `).join('')}
         </div>
         <div style="display: flex; align-items: center; gap: 16px;">
           ${buttons.map(button => `
-            <button id="${button.id}" style="border: none; padding: 10px 20px; background-color: #334155; color: #ffffff; cursor: pointer">${button.content}</button>
+            <button id="${button.id}" style="border: none; padding: 10px 20px; background-color: #334155; color: #ffffff; cursor: pointer">${escapeHtml(button.content)}</button>
           `).join('')}
       </div>
       </nav>
@@ -183,7 +212,7 @@ const generateNavbarHtml = (element) => {
   const logoGroupHtml = `
     <div style="display: flex; align-items: center; gap: 12px;">
       ${logo ? `
-        <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${logo.content}" alt="">
+        <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${escapeAttr(logo.content)}" alt="">
       ` : ''}
       ${spans[0] ? `
         <span id="${spans[0].id}" style="color: #1a1a1a; cursor: pointer">${spans[0].content}</span>
@@ -194,7 +223,7 @@ const generateNavbarHtml = (element) => {
   const navGroupHtml = spans.length > 1 ? `
     <div style="display: flex; align-items: center; justify-content: center; flex: 1;">
       ${spans.slice(1).map(span => `
-        <span id="${span.id}" style="color: #1a1a1a; cursor: pointer; margin-right: 16px">${span.content}</span>
+        <span id="${span.id}" style="color: #1a1a1a; cursor: pointer; margin-right: 16px">${escapeHtml(span.content)}</span>
       `).join('')}
     </div>
   ` : '';
@@ -202,7 +231,7 @@ const generateNavbarHtml = (element) => {
   const buttonGroupHtml = buttons.length > 0 ? `
     <div style="display: flex; align-items: center; gap: 16px;">
       ${buttons.map(button => `
-        <button id="${button.id}" style="border: none; padding: 10px 20px; background-color: #334155; color: #ffffff; cursor: pointer">${button.content}</button>
+        <button id="${button.id}" style="border: none; padding: 10px 20px; background-color: #334155; color: #ffffff; cursor: pointer">${escapeHtml(button.content)}</button>
       `).join('')}
     </div>
   ` : '';
@@ -244,7 +273,7 @@ export const generateProjectHtml = (elements, websiteSettings) => {
         const styleString = styleObjectToString(element.styles);
         renderedContent = `
           <div id="${element.id}" class="${element.className || ''}" style="${styleString}">
-            ${element.content || ''}
+            ${escapeHtml(element.content || '')}
           </div>
         `;
       }
@@ -326,21 +355,21 @@ export const generateProjectHtml = (elements, websiteSettings) => {
   const metaTags = `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="${websiteSettings.metaDescription || 'A website created with Dappzy'}" />
-    <meta name="keywords" content="${websiteSettings.metaKeywords || ''}" />
-    <meta name="author" content="${websiteSettings.author || 'Dappzy'}" />
-    
+    <meta name="description" content="${escapeAttr(websiteSettings.metaDescription || 'A website created with Dappzy')}" />
+    <meta name="keywords" content="${escapeAttr(websiteSettings.metaKeywords || '')}" />
+    <meta name="author" content="${escapeAttr(websiteSettings.author || 'Dappzy')}" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="${websiteSettings.siteTitle || 'My Website'}" />
-    <meta property="og:description" content="${websiteSettings.metaDescription || 'A website created with Dappzy'}" />
-    <meta property="og:image" content="${websiteSettings.ogImage || ''}" />
-    
+    <meta property="og:title" content="${escapeAttr(websiteSettings.siteTitle || 'My Website')}" />
+    <meta property="og:description" content="${escapeAttr(websiteSettings.metaDescription || 'A website created with Dappzy')}" />
+    <meta property="og:image" content="${escapeAttr(websiteSettings.ogImage || '')}" />
+
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${websiteSettings.siteTitle || 'My Website'}" />
-    <meta name="twitter:description" content="${websiteSettings.metaDescription || 'A website created with Dappzy'}" />
-    <meta name="twitter:image" content="${websiteSettings.ogImage || ''}" />
+    <meta name="twitter:title" content="${escapeAttr(websiteSettings.siteTitle || 'My Website')}" />
+    <meta name="twitter:description" content="${escapeAttr(websiteSettings.metaDescription || 'A website created with Dappzy')}" />
+    <meta name="twitter:image" content="${escapeAttr(websiteSettings.ogImage || '')}" />
   `;
 
   // Generate the final HTML with IPFS optimizations
@@ -352,8 +381,8 @@ export const generateProjectHtml = (elements, websiteSettings) => {
     <html lang="en">
     <head>
       ${metaTags}
-      <link rel="icon" href="${favicon}">
-      <title>${title}</title>
+      <link rel="icon" href="${escapeAttr(favicon)}">
+      <title>${escapeHtml(title)}</title>
       ${stylesHtml}
       <script>
         // IPFS Gateway Fallback
