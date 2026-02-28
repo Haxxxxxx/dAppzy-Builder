@@ -1,33 +1,5 @@
 import { buildElementHierarchy, cleanElementData } from './elementUtils';
-
-/**
- * Escapes HTML special characters to prevent XSS
- * @param {string} str - The string to escape
- * @returns {string} - Escaped string
- */
-const escapeHtml = (str) => {
-  if (!str || typeof str !== 'string') return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
-
-/**
- * Escapes a string for use inside an HTML attribute value (double-quoted)
- * @param {string} str - The string to escape
- * @returns {string} - Escaped string safe for attribute context
- */
-const escapeAttr = (str) => {
-  if (!str || typeof str !== 'string') return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-};
+import { escapeHtml, escapeAttr } from './escapeUtils';
 
 /**
  * Converts camelCase to kebab-case

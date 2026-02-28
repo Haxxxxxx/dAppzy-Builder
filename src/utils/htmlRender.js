@@ -1,23 +1,25 @@
+import { escapeHtml, escapeAttr, escapeJsString } from './export/escapeUtils';
+
 export function buildAttributesString(type, attributes, src, settings = {}) {
   let attributesString = '';
 
   if (type === 'input' && attributes.type) {
-    attributesString += ` type="${attributes.type}"`;
+    attributesString += ` type="${escapeAttr(attributes.type)}"`;
   }
 
   if (type === 'anchor') {
     const href = attributes.href || settings.targetValue;
     if (href) {
-      attributesString += ` href="${href}"`;
+      attributesString += ` href="${escapeAttr(href)}"`;
     }
     if (settings.openInNewTab) {
-      attributesString += ` target="_blank"`;
+      attributesString += ` target="_blank" rel="noopener noreferrer"`;
     }
   }
 
   // Include both "img" and "image" types.
   if (['img', 'image', 'video', 'audio', 'iframe', 'source'].includes(type) && src) {
-    attributesString += ` src="${src}"`;
+    attributesString += ` src="${escapeAttr(src)}"`;
   }
 
   if (type === 'select' && attributes.multiple) {
@@ -25,19 +27,19 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
   }
 
   if (type === 'option' && attributes.value) {
-    attributesString += ` value="${attributes.value}"`;
+    attributesString += ` value="${escapeAttr(attributes.value)}"`;
   }
 
   if (type === 'progress' && attributes.value && attributes.max) {
-    attributesString += ` value="${attributes.value}" max="${attributes.max}"`;
+    attributesString += ` value="${escapeAttr(attributes.value)}" max="${escapeAttr(attributes.max)}"`;
   }
 
   if (type === 'meter' && attributes.value && attributes.min && attributes.max) {
-    attributesString += ` value="${attributes.value}" min="${attributes.min}" max="${attributes.max}"`;
+    attributesString += ` value="${escapeAttr(attributes.value)}" min="${escapeAttr(attributes.min)}" max="${escapeAttr(attributes.max)}"`;
   }
 
   if (type === 'iframe' && attributes.frameborder) {
-    attributesString += ` frameborder="${attributes.frameborder}"`;
+    attributesString += ` frameborder="${escapeAttr(attributes.frameborder)}"`;
   }
 
   if (type === 'date') {
@@ -45,21 +47,23 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
   }
 
   if (type === 'button' && settings.targetValue && settings.actionType !== 'Dropdown') {
+    const safeTarget = escapeJsString(settings.targetValue);
     if (settings.openInNewTab) {
-      attributesString += ` onclick="window.open('${settings.targetValue}', '_blank')"`;
+      attributesString += ` onclick="window.open('${safeTarget}', '_blank')"`;
     } else {
-      attributesString += ` onclick="window.location.href='${settings.targetValue}'"`;
+      attributesString += ` onclick="window.location.href='${safeTarget}'"`;
     }
   }
 
   if (type === 'span' && settings.targetValue) {
+    const safeTarget = escapeJsString(settings.targetValue);
     if (settings.actionType === 'pageSection') {
-      attributesString += ` onclick="(function(){ var targetEl = document.getElementById('${settings.targetValue}'); if(targetEl){ targetEl.scrollIntoView({ behavior: 'smooth' }); } else { console.warn('Target element \\'${settings.targetValue}\\' not found'); } })()" style="cursor: pointer;"`;
+      attributesString += ` onclick="(function(){ var targetEl = document.getElementById('${safeTarget}'); if(targetEl){ targetEl.scrollIntoView({ behavior: 'smooth' }); } else { console.warn('Target element not found'); } })()" style="cursor: pointer;"`;
     } else if (settings.actionType === 'file') {
       if (settings.downloadFile) {
-        attributesString += ` onclick="(function(){ var a = document.createElement('a'); a.href='${settings.targetValue}'; a.download = ''; a.click(); })()" style="cursor: pointer;"`;
+        attributesString += ` onclick="(function(){ var a = document.createElement('a'); a.href='${safeTarget}'; a.download = ''; a.click(); })()" style="cursor: pointer;"`;
       } else {
-        attributesString += ` onclick="window.open('${settings.targetValue}', '_blank')" style="cursor: pointer;"`;
+        attributesString += ` onclick="window.open('${safeTarget}', '_blank')" style="cursor: pointer;"`;
       }
     }
   }
@@ -94,21 +98,21 @@ export function renderElementToHtml(element, collectedStyles = []) {
   // Helper to generate attributes string
   function getAttributesString(attrs) {
     return Object.entries(attrs)
-      .map(([k, v]) => `${camelToKebab(k)}="${v}"`)
+      .map(([k, v]) => `${camelToKebab(k)}="${escapeAttr(String(v))}"`)
       .join(' ');
   }
 
   // Helper to generate data attributes string
   function getDataAttributesString(attrs) {
     return Object.entries(attrs)
-      .map(([k, v]) => `data-${camelToKebab(k)}="${v}"`)
+      .map(([k, v]) => `data-${camelToKebab(k)}="${escapeAttr(String(v))}"`)
       .join(' ');
   }
 
   // Helper to generate event handlers string
-  function getEventsString(events) {
-    return Object.entries(events)
-      .map(([k, v]) => `on${k}="${v}"`)
+  function getEventsString(evts) {
+    return Object.entries(evts)
+      .map(([k, v]) => `on${k}="${escapeAttr(String(v))}"`)
       .join(' ');
   }
 
@@ -203,27 +207,27 @@ export function renderElementToHtml(element, collectedStyles = []) {
   // Determine tag
   const tag = tagMap[type] || tagMap.default;
   const styleString = getAllStyles(element);
-  const classString = className ? ` ${className}` : '';
-  const idString = id ? ` id="${id}"` : '';
+  const classString = className ? ` ${escapeAttr(className)}` : '';
+  const idString = id ? ` id="${escapeAttr(id)}"` : '';
   const attrString = getAttributesString(attributes);
   const dataAttrString = getDataAttributesString(dataAttributes);
   const eventString = getEventsString(events);
 
   // Special handling for img, input, textarea, select, option, br, hr (self-closing)
   if (tag === 'img') {
-    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${element.src || content}" alt="${element.alt || ''}" ${attrString} ${dataAttrString} ${eventString}/>`;
+    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(element.alt || '')}" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
   if (tag === 'input') {
-    return `<input${idString} class="${classString.trim()}" style="${styleString}" value="${content || ''}" ${attrString} ${dataAttrString} ${eventString}/>`;
+    return `<input${idString} class="${classString.trim()}" style="${styleString}" value="${escapeAttr(content || '')}" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
   if (tag === 'textarea') {
-    return `<textarea${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}</textarea>`;
+    return `<textarea${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}</textarea>`;
   }
   if (tag === 'select') {
     return `<select${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</select>`;
   }
   if (tag === 'option') {
-    return `<option${idString} class="${classString.trim()}" style="${styleString}" value="${element.value || ''}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}</option>`;
+    return `<option${idString} class="${classString.trim()}" style="${styleString}" value="${escapeAttr(element.value || '')}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}</option>`;
   }
   if (tag === 'br' || tag === 'hr') {
     return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}/>`;
@@ -231,17 +235,17 @@ export function renderElementToHtml(element, collectedStyles = []) {
 
   // For a, button, label, etc. with content and children
   if (tag === 'a') {
-    return `<a${idString} class="${classString.trim()}" style="${styleString}" href="${element.href || '#'}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</a>`;
+    return `<a${idString} class="${classString.trim()}" style="${styleString}" href="${escapeAttr(element.href || '#')}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</a>`;
   }
   if (tag === 'button') {
-    return `<button${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</button>`;
+    return `<button${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</button>`;
   }
   if (tag === 'label') {
-    return `<label${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</label>`;
+    return `<label${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</label>`;
   }
 
   // Default: generic tag with content and children
-  return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${content || ''}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</${tag}>`;
+  return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</${tag}>`;
 }
 
 function cleanStyles(styles = {}) {
