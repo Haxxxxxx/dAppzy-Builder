@@ -100,7 +100,7 @@ const SectionOne = forwardRef(({
         (!imageContainer || imageContainer.children.length === 0)) {
       
       const newChildren = defaultContent.map(child => {
-        const newId = `${uniqueId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+        const newId = `${uniqueId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
         let parentId;
         if (child.type === 'image') {
           parentId = `${uniqueId}-image`;

@@ -241,11 +241,11 @@ const DeFiSectionSettings = ({ selectedElement }) => {
     const element = elements.find(el => el.id === selectedElement.id);
     if (element) {
       const newModule = {
-        id: `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        id: `defiModule-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         type: 'defiModule',
         parentId: element.id,
         content: JSON.stringify({
-          id: `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          id: `defiModule-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           moduleType: type,
           title: type === 'aggregator' ? 'Pool Aggregator' :
                  type === 'simulation' ? 'Investment Simulator' :

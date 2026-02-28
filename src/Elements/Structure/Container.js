@@ -10,7 +10,7 @@ const generateUniqueId = (type) => {
   const prefix = type === 'vflexLayout' ? 'vflex' : 
                 type === 'hflexLayout' ? 'hflex' : 
                 type === 'container' ? 'container' : 'div';
-  return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${prefix}-${Math.random().toString(36).substring(2, 11)}`;
 };
 
 const Container = ({ id }) => {

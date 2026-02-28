@@ -6,7 +6,7 @@ import '../Basic/css/EmptyState.css';
 
 // Helper to generate a unique ID
 const generateUniqueId = () => {
-  return 'div-' + Math.random().toString(36).substr(2, 9);
+  return 'div-' + Math.random().toString(36).substring(2, 11);
 };
 
 // Helper to render a grid preview

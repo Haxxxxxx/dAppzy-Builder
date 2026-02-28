@@ -10,7 +10,7 @@ export const generateUniqueId = (type = 'element') => {
   
   elementCounter += 1;
   const timestamp = Date.now();
-  const randomPart = Math.random().toString(36).substr(2, 5);
+  const randomPart = Math.random().toString(36).substring(2, 7);
   return `${type}-${timestamp}-${randomPart}-${elementCounter}`;
 };
 

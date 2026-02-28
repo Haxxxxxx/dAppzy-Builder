@@ -371,7 +371,7 @@ const ContentList = forwardRef(
           // For hero elements, ensure proper configuration inheritance
           if (item.type === 'hero') {
             const timestamp = Date.now();
-            const heroId = `hero-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+            const heroId = `hero-${timestamp}-${Math.random().toString(36).substring(2, 6)}`;
 
             // Create different structures based on hero configuration
             let heroStructure;
@@ -455,7 +455,7 @@ const ContentList = forwardRef(
             newId = heroId;
           } else if (item.type === 'cta') {
             const timestamp = Date.now();
-            const ctaId = `cta-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+            const ctaId = `cta-${timestamp}-${Math.random().toString(36).substring(2, 6)}`;
 
             // Create different structures based on CTA configuration
             let ctaStructure;
@@ -520,7 +520,7 @@ const ContentList = forwardRef(
                 const imageElements = [];
 
                 item.children.forEach(child => {
-                  const newId = `${ctaId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newId = `${ctaId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
                   let parentId;
 
                   if (child.type === 'image') {
@@ -608,7 +608,7 @@ const ContentList = forwardRef(
                 const buttonElements = [];
 
                 item.children.forEach(child => {
-                  const newId = `${ctaId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newId = `${ctaId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
                   const parentId = child.type === 'button' ? buttonsContainerId : textContainerId;
 
                   if (child.type === 'button') {
@@ -654,7 +654,7 @@ const ContentList = forwardRef(
             newId = ctaId;
           } else if (item.type === 'ContentSection') {
             const timestamp = Date.now();
-            const sectionId = `section-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+            const sectionId = `section-${timestamp}-${Math.random().toString(36).substring(2, 6)}`;
 
             // Create different structures based on section configuration
             let sectionStructure;
@@ -733,7 +733,7 @@ const ContentList = forwardRef(
                 const imageElements = [];
 
                 item.children.forEach(child => {
-                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
                   let parentId;
                   let elementStyles = {};
 
@@ -879,7 +879,7 @@ const ContentList = forwardRef(
                 const cardElements = [];
 
                 item.children.forEach(child => {
-                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
                   let parentId;
 
                   if (child.type === 'image') {
@@ -979,7 +979,7 @@ const ContentList = forwardRef(
                 const rightElements = [];
 
                 item.children.forEach(child => {
-                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
                   const parentId = child.styles?.key === 'right' ? rightContainerId : leftContainerId;
 
                   if (child.styles?.key === 'right') {
@@ -1071,7 +1071,7 @@ const ContentList = forwardRef(
                 const gridElements = [];
 
                 item.children.forEach(child => {
-                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substr(2, 9)}`;
+                  const newId = `${sectionId}-${child.type}-${Math.random().toString(36).substring(2, 11)}`;
                   let parentId;
 
                   if (child.styles?.key === 'grid') {

@@ -73,7 +73,7 @@ const DraggableHero = ({
 
               // Generate all IDs first
               const timestamp = Date.now();
-              const newHeroId = `hero-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+              const newHeroId = `hero-${timestamp}-${Math.random().toString(36).substring(2, 6)}`;
               const leftContainerId = `${newHeroId}-left`;
               const rightContainerId = `${newHeroId}-right`;
 
@@ -93,7 +93,7 @@ const DraggableHero = ({
 
               // Create left container children with proper configuration inheritance
               const leftChildIds = leftChildren.map(child => {
-                const childId = `${leftContainerId}-${child.type}-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+                const childId = `${leftContainerId}-${child.type}-${timestamp}-${Math.random().toString(36).substring(2, 6)}`;
                 newElements.push({
                   id: childId,
                   type: child.type,
@@ -115,7 +115,7 @@ const DraggableHero = ({
 
               // Create right container children with proper configuration inheritance
               const rightChildIds = rightChildren.map(child => {
-                const childId = `${rightContainerId}-${child.type}-${timestamp}-${Math.random().toString(36).substr(2, 4)}`;
+                const childId = `${rightContainerId}-${child.type}-${timestamp}-${Math.random().toString(36).substring(2, 6)}`;
                 newElements.push({
                   id: childId,
                   type: child.type,
