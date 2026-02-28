@@ -19,8 +19,8 @@ export const EditableProvider = ({ children, userId }) => {
   const [elements, setElements] = useState([]); // Start with empty array instead of loading from localStorage
 
   const [selectedElement, setSelectedElement] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [history, setHistory] = useState([{ elements: [], selectedElement: null }]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [forceBorder, setForceBorder] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(null);
 
@@ -539,9 +539,8 @@ export const EditableProvider = ({ children, userId }) => {
     findElementById
   ]);
 
-  // Initialize history on mount
+  // Set elements version on mount
   useEffect(() => {
-    pushToHistory(elements);
     localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
   }, []);
 
