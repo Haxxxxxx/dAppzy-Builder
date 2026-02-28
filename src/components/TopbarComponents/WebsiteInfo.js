@@ -8,11 +8,29 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
   const [showUrl, setShowUrl] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Fallback return URL if none is provided
-  const returnUrl = searchParams.get('returnUrl') ||
-    (window.location.hostname === "localhost"
-      ? "http://localhost:3000/dashboard"
-      : "https://dashboard.dappzy.io");
+  // Validate returnUrl to prevent open redirect attacks
+  const ALLOWED_RETURN_HOSTS = ['dashboard.dappzy.io', 'dappzy.io', 'www.dappzy.io', 'localhost'];
+  const defaultReturnUrl = window.location.hostname === "localhost"
+    ? "http://localhost:3000/dashboard"
+    : "https://dashboard.dappzy.io";
+
+  const rawReturnUrl = searchParams.get('returnUrl');
+  let returnUrl = defaultReturnUrl;
+  if (rawReturnUrl) {
+    // Allow relative paths
+    if (rawReturnUrl.startsWith('/')) {
+      returnUrl = rawReturnUrl;
+    } else {
+      try {
+        const parsed = new URL(rawReturnUrl);
+        if (ALLOWED_RETURN_HOSTS.includes(parsed.hostname)) {
+          returnUrl = rawReturnUrl;
+        }
+      } catch {
+        // Invalid URL — use default
+      }
+    }
+  }
 
   useEffect(() => {
     // Update URL when it changes from parent
