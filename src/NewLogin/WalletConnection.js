@@ -38,10 +38,9 @@ function WalletConnection({ onUserLogin }) {
         walletData.subscriptionStatus = userData.subscriptionStatus || 'freemium';
         walletData.subscriptionEndDate = userData.subscriptionEndDate || null;
       } else {
-        // Create new user document with default subscription
+        // Create new user document without subscription fields
+        // (subscription defaults are set by the verifySubscription Cloud Function)
         await setDoc(userRef, {
-          subscriptionStatus: 'freemium',
-          subscriptionEndDate: null,
           createdAt: timestamp,
           walletId,
           walletType
