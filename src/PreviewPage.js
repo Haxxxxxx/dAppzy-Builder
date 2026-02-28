@@ -55,8 +55,8 @@ const PreviewPage = () => {
       ) : (
         <div
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(projectHtml, {
-            ADD_ATTR: ['style', 'target', 'onclick'],
-            ALLOW_DATA_ATTR: true,
+            ADD_ATTR: ['style', 'target'],
+            ALLOW_DATA_ATTR: false,
           }) }}
           style={{ width: "100vw", height: "100vh", overflow: "auto" }}
         />
