@@ -190,6 +190,13 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
         lastUpdated: serverTimestamp()
       }, { merge: true });
 
+      // Clean up localStorage backup chunks after successful Firestore save
+      const savedChunks = parseInt(localStorage.getItem('editableElements_chunks') || '0');
+      for (let i = 0; i < savedChunks * chunkSize; i += chunkSize) {
+        localStorage.removeItem(`editableElements_chunk_${i}`);
+      }
+      localStorage.removeItem('editableElements_chunks');
+
       setLastSaved(new Date());
       setSaveStatus('All changes saved');
       setPendingChanges(false);
