@@ -367,7 +367,7 @@ export async function updateOrCreateIpfsRecord(
 
     // Get record key using sync version
     const recordType = 'IPFS';
-    const recordKey = getRecordKeySync(formattedDomainName, recordType);
+    const recordKey = getRecordKeySync(domainKey, recordType);
     log('Record key:', recordKey.toBase58());
 
     // Check if record exists
