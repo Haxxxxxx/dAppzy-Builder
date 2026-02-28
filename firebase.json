@@ -40,7 +40,7 @@
   },
   "functions": {
     "source": "functions",
-    "codebase": "default",
+    "codebase": "builder",
     "ignore": [
       "node_modules",
       ".git",
