@@ -47,15 +47,17 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // Candy machine IDs: authenticated users can create/read; deletes are server-only
+    // Candy machine IDs: scoped to owner
     match /candyMachineIds/{docId} {
-      allow read, create: if request.auth != null;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
 
-    // Images: authenticated users can create/read; deletes are server-only
+    // Images: scoped to owner
     match /images/{imageId} {
-      allow read, create: if request.auth != null;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
     }
   }
