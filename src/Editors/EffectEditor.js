@@ -26,6 +26,8 @@ const EffectEditor = () => {
     }
   }, [selectedElement, elements]);
 
+  if (!selectedElement) return null;
+
   const { id } = selectedElement;
 
   // Handlers for each property
