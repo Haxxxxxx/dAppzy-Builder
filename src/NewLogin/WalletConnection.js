@@ -80,6 +80,18 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
+  // Fetch a one-time nonce for wallet auth challenge-response
+  const fetchNonce = async (walletAddress) => {
+    const res = await fetch(`${process.env.REACT_APP_CF_BASE_URL}/generateNonce`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ walletAddress }),
+    });
+    if (!res.ok) throw new Error("Failed to generate nonce");
+    const data = await res.json();
+    return data.nonce;
+  };
+
   // --- MetaMask Integration (with server-side signature verification) ---
   const handleLoginWithMetamask = async () => {
     setIsLoading(true);
@@ -93,7 +105,8 @@ function WalletConnection({ onUserLogin }) {
         method: "eth_requestAccounts",
       });
       const account = accounts[0];
-      const message = "Please sign this message to confirm your identity.";
+      const nonce = await fetchNonce(account.toLowerCase());
+      const message = `Sign this message to verify your identity.\n\nNonce: ${nonce}`;
       const signature = await window.ethereum.request({
         method: "personal_sign",
         params: [message, account],
@@ -105,7 +118,7 @@ function WalletConnection({ onUserLogin }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: account, signature, message }),
+          body: JSON.stringify({ address: account, signature, message, nonce }),
         }
       );
       if (!response.ok) {
@@ -130,15 +143,17 @@ function WalletConnection({ onUserLogin }) {
       if ("solana" in window && window.solana?.isPhantom) {
         const response = await window.solana.connect();
         const publicKey = response.publicKey.toString();
-        const message = new TextEncoder().encode(
-          "Lets create your beta account reserved for testing issues ! Thanks for your QA and enjoy your time."
-        );
+        const nonce = await fetchNonce(publicKey);
+        const messageText = `Sign this message to verify your identity.\n\nNonce: ${nonce}`;
+        const message = new TextEncoder().encode(messageText);
         const { signature } = await window.solana.signMessage(message);
         const customToken = await getPhantomCustomTokenFromServer(
           publicKey,
-          signature
+          signature,
+          messageText,
+          nonce
         );
-        const userCredential = await signInWithCustomToken(auth, customToken);
+        await signInWithCustomToken(auth, customToken);
         await saveWalletToFirestore(publicKey, "Solana");
         processLogin(publicKey, "Solana");
       } else {
@@ -152,9 +167,9 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
-  const getPhantomCustomTokenFromServer = async (publicKey, signature) => {
+  const getPhantomCustomTokenFromServer = async (publicKey, signature, message, nonce) => {
     const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
-    const body = { publicKey, signature: sigBase64 };
+    const body = { publicKey, signature: sigBase64, message, nonce };
     const response = await fetch(
       `${process.env.REACT_APP_CF_BASE_URL}/verifyPhantomV2`,
       {
@@ -226,8 +241,9 @@ function WalletConnection({ onUserLogin }) {
         throw new Error("Unable to retrieve public key from Freighter.");
       }
 
-      // Ask the user to sign a message
-      const message = "Please sign this message to confirm your identity.";
+      // Fetch nonce and ask the user to sign a message
+      const nonce = await fetchNonce(publicKey);
+      const message = `Sign this message to verify your identity.\n\nNonce: ${nonce}`;
       const signResult = await signMessage(message, { address: publicKey });
       if (signResult.error) {
         throw new Error(signResult.error);
@@ -240,7 +256,7 @@ function WalletConnection({ onUserLogin }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ publicKey, signature, message }),
+          body: JSON.stringify({ publicKey, signature, message, nonce }),
         }
       );
       if (!response.ok) {

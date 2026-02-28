@@ -15,6 +15,7 @@ const ALLOWED_ORIGINS = [
 if (process.env.FUNCTIONS_EMULATOR) {
   ALLOWED_ORIGINS.push("http://localhost:3000");
 }
+const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 
 // 1) Define your secret using firebase-functions/params
@@ -24,6 +25,49 @@ const EMAIL_PASS = defineSecret("EMAIL_PASS");
 // 2) Initialize Firebase Admin
 admin.initializeApp();
 const db = admin.firestore(); // Firestore instance
+
+// Nonce TTL: 5 minutes
+const NONCE_TTL_MS = 5 * 60 * 1000;
+
+// Generate and store a nonce for wallet auth challenge-response
+exports.generateNonce = onRequest(
+  {
+    region: "us-central1",
+    cors: ALLOWED_ORIGINS,
+    invoker: "public",
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+    const { walletAddress } = req.body;
+    if (!walletAddress || typeof walletAddress !== "string") {
+      return res.status(400).json({ error: "Missing walletAddress" });
+    }
+    const nonce = crypto.randomBytes(32).toString("hex");
+    await db.collection("authNonces").doc(walletAddress).set({
+      nonce,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + NONCE_TTL_MS),
+    });
+    return res.json({ nonce });
+  }
+);
+
+// Consume and validate a nonce — returns true if valid, false if expired/missing
+async function consumeNonce(walletAddress, nonce) {
+  const nonceRef = db.collection("authNonces").doc(walletAddress);
+  const nonceDoc = await nonceRef.get();
+  if (!nonceDoc.exists) return false;
+  const data = nonceDoc.data();
+  if (data.nonce !== nonce) return false;
+  if (data.expiresAt.toDate() < new Date()) {
+    await nonceRef.delete();
+    return false;
+  }
+  await nonceRef.delete(); // consume the nonce
+  return true;
+}
 
 exports.sendSupportEmail = onRequest(
   {
@@ -193,15 +237,24 @@ exports.verifyPhantomV2 = onRequest(
     }
 
     try {
-      const { publicKey, signature } = req.body;
-      if (!publicKey || !signature) {
-        return res.status(400).json({ error: "Missing parameters" });
+      const { publicKey, signature, message, nonce } = req.body;
+      if (!publicKey || !signature || !message || !nonce) {
+        return res.status(400).json({ error: "Missing parameters: publicKey, signature, message, nonce" });
+      }
+
+      // Validate nonce
+      const nonceValid = await consumeNonce(publicKey, nonce);
+      if (!nonceValid) {
+        return res.status(401).json({ error: "Invalid or expired nonce" });
+      }
+
+      // Verify nonce is embedded in the signed message
+      if (!message.includes(nonce)) {
+        return res.status(401).json({ error: "Nonce not found in signed message" });
       }
 
       const signatureBuffer = Buffer.from(signature, "base64");
-      const messageBuffer = Buffer.from(
-        "Lets create your beta account reserved for testing issues ! Thanks for your QA and enjoy your time."
-      );
+      const messageBuffer = Buffer.from(message);
 
       const pubKey = new PublicKey(publicKey);
       const pubKeyBytes = pubKey.toBytes();
@@ -419,9 +472,18 @@ exports.verifyMetaMask = onRequest(
     }
 
     try {
-      const { address, signature, message } = req.body;
-      if (!address || !signature || !message) {
-        return res.status(400).json({ error: "Missing parameters: address, signature, message" });
+      const { address, signature, message, nonce } = req.body;
+      if (!address || !signature || !message || !nonce) {
+        return res.status(400).json({ error: "Missing parameters: address, signature, message, nonce" });
+      }
+
+      // Validate nonce
+      const nonceValid = await consumeNonce(address.toLowerCase(), nonce);
+      if (!nonceValid) {
+        return res.status(401).json({ error: "Invalid or expired nonce" });
+      }
+      if (!message.includes(nonce)) {
+        return res.status(401).json({ error: "Nonce not found in signed message" });
       }
 
       // Verify the signature matches the claimed address
@@ -459,9 +521,18 @@ exports.verifyFreighter = onRequest(
     }
 
     try {
-      const { publicKey, signature, message } = req.body;
-      if (!publicKey || !signature || !message) {
-        return res.status(400).json({ error: "Missing parameters: publicKey, signature, message" });
+      const { publicKey, signature, message, nonce } = req.body;
+      if (!publicKey || !signature || !message || !nonce) {
+        return res.status(400).json({ error: "Missing parameters: publicKey, signature, message, nonce" });
+      }
+
+      // Validate nonce
+      const nonceValid = await consumeNonce(publicKey, nonce);
+      if (!nonceValid) {
+        return res.status(401).json({ error: "Invalid or expired nonce" });
+      }
+      if (!message.includes(nonce)) {
+        return res.status(401).json({ error: "Nonce not found in signed message" });
       }
 
       // Stellar uses ed25519 — verify with tweetnacl
