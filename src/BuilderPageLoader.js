@@ -24,21 +24,35 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     description: "",
     author: "",
   });
-  const [viewState, setViewState] = useState('loading'); // 'loading', 'selection', 'builder'
+  const [viewState, setViewState] = useState('loading'); // 'loading', 'selection', 'builder', 'error'
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const loadingTimeoutRef = useRef(null);
+  const loadingWatchdogRef = useRef(null);
   const isInitialLoadRef = useRef(true);
 
-  // Helper to safely set loading state with debounce
+  // Helper to safely set loading state with debounce and watchdog timeout
   const setLoadingState = useCallback((isLoading) => {
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
     }
-    
+    if (loadingWatchdogRef.current) {
+      clearTimeout(loadingWatchdogRef.current);
+    }
+
     if (isLoading) {
       setLoadingProject(true);
       setViewState('loading');
+      // Watchdog: if still loading after 15s, show error
+      loadingWatchdogRef.current = setTimeout(() => {
+        setLoadingProject(false);
+        setErrorMessage('Loading timed out. Please check your connection and try again.');
+        setViewState('error');
+      }, 15000);
     } else {
+      if (loadingWatchdogRef.current) {
+        clearTimeout(loadingWatchdogRef.current);
+      }
       loadingTimeoutRef.current = setTimeout(() => {
         setLoadingProject(false);
       }, 300);
@@ -118,12 +132,13 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         setInternProjectId(projId);
         setViewState('builder');
       } else {
-        alert("Project not found: " + projId);
-        setViewState('selection');
+        setErrorMessage("Project not found. It may have been deleted.");
+        setViewState('error');
       }
     } catch (error) {
       console.error("Error loading project:", error);
-      setViewState('selection');
+      setErrorMessage("Failed to load project. Please try again.");
+      setViewState('error');
     } finally {
       setLoadingState(false);
     }
@@ -190,8 +205,8 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
           if (qProjectId === "new") {
             const count = await checkProjectLimit(userId);
             if (count >= 3) {
-              alert("You have reached the maximum number of projects (3).");
-              setViewState('selection');
+              setErrorMessage("You have reached the maximum number of projects (3).");
+              setViewState('error');
             } else {
               const newProjectId = await createUserProject({
                 elements: [],
@@ -220,12 +235,11 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     loadProject();
   }, [userId, checkProjectLimit, createUserProject, loadProjectById, loadUserProjects, pageSettings, setLoadingState]);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
+      if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+      if (loadingWatchdogRef.current) clearTimeout(loadingWatchdogRef.current);
     };
   }, []);
 
@@ -327,6 +341,22 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         />
       );
     
+    case 'error':
+      return (
+        <div className="loading-container">
+          <p style={{ color: '#e74c3c', marginBottom: '16px' }}>{errorMessage}</p>
+          <button
+            className="create-new-project"
+            onClick={() => {
+              setErrorMessage(null);
+              loadUserProjects(userId);
+            }}
+          >
+            Back to Projects
+          </button>
+        </div>
+      );
+
     default:
       return null;
   }
