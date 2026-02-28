@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import debounce from 'lodash/debounce';
@@ -25,7 +25,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
   const [lastSaved, setLastSaved] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
-  const [saveQueue, setSaveQueue] = useState([]);
+  const latestPendingSave = useRef(null);
 
   // Validate IDs are present
   useEffect(() => {
@@ -119,12 +119,13 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     return optimizedElement;
   };
 
-  // Process save queue
+  // Process the latest pending save (replaces unbounded queue)
   const processSaveQueue = useCallback(async () => {
-    if (saveQueue.length === 0 || isSaving) return;
+    if (!latestPendingSave.current || isSaving) return;
 
-    const nextSave = saveQueue[0];
-    if (!nextSave) return;
+    // Grab and clear the pending save atomically
+    const nextSave = latestPendingSave.current;
+    latestPendingSave.current = null;
 
     try {
       setIsSaving(true);
@@ -159,7 +160,6 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       // Skip save if no valid elements
       if (uniqueElements.length === 0) {
         console.warn('No valid elements to save');
-        setSaveQueue(prev => prev.slice(1));
         setSaveStatus('Skipped save - invalid data');
         return;
       }
@@ -198,13 +198,9 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       setLastSaved(new Date());
       setSaveStatus('All changes saved');
       setPendingChanges(false);
-      setSaveQueue(prev => prev.slice(1)); // Remove processed save
     } catch (error) {
       console.error('Error saving content:', error);
       setSaveStatus('Error saving changes - will retry with clean data');
-      
-      // Remove the failed save attempt from the queue to prevent infinite retries
-      setSaveQueue(prev => prev.slice(1));
       
       // Log detailed error information for debugging
       console.warn('Save failed with the following data:', {
@@ -215,14 +211,14 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     } finally {
       setIsSaving(false);
     }
-  }, [saveQueue, isSaving, userId, projectId]);
+  }, [isSaving, userId, projectId]);
 
-  // Process queue whenever it changes
+  // Re-trigger save processing when isSaving clears and there's a pending save
   useEffect(() => {
-    if (saveQueue.length > 0) {
+    if (!isSaving && latestPendingSave.current) {
       processSaveQueue();
     }
-  }, [saveQueue, processSaveQueue]);
+  }, [isSaving, processSaveQueue]);
 
   // Debounced save function
   const debouncedSaveContent = useCallback(
@@ -239,8 +235,9 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
         return;
       }
 
-      // Add to save queue instead of saving immediately
-      setSaveQueue(prev => [...prev, { elements, websiteSettings }]);
+      // Replace pending save with latest state (no queue growth)
+      latestPendingSave.current = { elements, websiteSettings };
+      processSaveQueue();
     }, 3000),
     [userId, projectId, propUserId, propProjectId]
   );
@@ -262,7 +259,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       debouncedSaveContent.flush();
-      if (pendingChanges || saveQueue.length > 0) {
+      if (pendingChanges || latestPendingSave.current) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -272,7 +269,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       window.removeEventListener('beforeunload', handleBeforeUnload);
       debouncedSaveContent.flush();
     };
-  }, [debouncedSaveContent, pendingChanges, saveQueue]);
+  }, [debouncedSaveContent, pendingChanges]);
 
   const value = {
     saveStatus,
