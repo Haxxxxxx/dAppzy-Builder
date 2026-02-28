@@ -935,7 +935,7 @@ const BuilderPageCore = ({
                           attach_file
                         </span></a>
                         <button type="submit" className="ai-input-send-btn">
-                          <span class="material-symbols-outlined">
+                          <span className="material-symbols-outlined">
                             arrow_forward
                           </span>
                         </button>
