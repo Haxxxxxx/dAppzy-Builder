@@ -285,7 +285,7 @@ export const EditableProvider = ({ children, userId }) => {
   const handleAICommand = useCallback((command) => {
     if (!command || !command.action) {
       console.warn('Invalid AI command:', command);
-      return;
+      return null;
     }
 
     // Helper function to merge styles with proper inheritance
@@ -395,9 +395,9 @@ export const EditableProvider = ({ children, userId }) => {
         
         if (!targetElement) {
           console.warn(`Element not found: ${command.targetId}`);
-          return;
+          return null;
         }
-        
+
         // Update element properties
         if (Object.keys(otherProps).length > 0) {
           updateElementProperties(command.targetId, otherProps);
@@ -437,7 +437,7 @@ export const EditableProvider = ({ children, userId }) => {
                 if (childEdit.content !== undefined) {
               updateContent(childId, childEdit.content);
                 }
-                
+
             // Update child styles
                 if (childEdit.styles) {
               const structureConfig = targetElement.configuration ? 
@@ -454,21 +454,21 @@ export const EditableProvider = ({ children, userId }) => {
               }
             });
         }
-        break;
+        return command.targetId;
       }
 
       case 'updateContent':
         updateContent(command.targetId, command.content);
-        break;
+        return command.targetId;
 
       case 'updateStyles': {
         const targetElement = elementsRef.current.find(el => el.id === command.targetId);
         if (!targetElement) {
           console.warn(`Element not found: ${command.targetId}`);
-          return;
+          return null;
         }
 
-        const structureConfig = targetElement.configuration ? 
+        const structureConfig = targetElement.configuration ?
           structureConfigurations[targetElement.configuration] : null;
 
         const mergedStyles = mergeStyles(
@@ -478,19 +478,20 @@ export const EditableProvider = ({ children, userId }) => {
         );
 
         updateStyles(command.targetId, mergedStyles);
-        break;
+        return command.targetId;
       }
 
       case 'delete':
         handleRemoveElement(command.targetId);
-        break;
+        return command.targetId;
 
       case 'move':
         moveElement(command.targetId, command.newIndex);
-        break;
+        return command.targetId;
 
       default:
         console.warn('Unknown AI command:', command);
+        return null;
     }
   }, [addNewElement, updateStyles, updateContent, updateElementProperties, handleRemoveElement, moveElement]);
 
