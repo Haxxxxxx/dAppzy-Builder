@@ -218,7 +218,18 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       {elements.length > 0 && (
         <button
           onClick={() => {
+            if (!window.confirm('Are you sure you want to clear all elements? This cannot be undone.')) return;
             localStorage.removeItem('editableElements');
+            // Clear chunked storage keys
+            const chunkKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('editableElements_chunk_')) {
+                chunkKeys.push(key);
+              }
+            }
+            chunkKeys.forEach(key => localStorage.removeItem(key));
+            localStorage.removeItem('editableElements_chunks');
             setElements([]);
           }}
           style={{
