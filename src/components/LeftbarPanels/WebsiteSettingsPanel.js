@@ -52,6 +52,7 @@ async function uploadFileToPinata(file, walletId, projectName) {
       },
       body: formData,
     });
+    if (!response.ok) throw new Error('Pinata upload failed: ' + response.status);
     const data = await response.json();
     return data;
   } catch (error) {
