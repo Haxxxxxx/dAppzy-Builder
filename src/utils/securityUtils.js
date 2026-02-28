@@ -14,20 +14,6 @@ export const encryptData = (data, key) => {
 };
 
 /**
- * Decrypts sensitive data using AES-256-CBC
- * @param {string} encryptedData - The encrypted data
- * @param {string} key - The encryption key (should be from environment variables)
- * @returns {string} The decrypted data
- */
-export const decryptData = (encryptedData, key) => {
-  if (!key) {
-    throw new Error('Encryption key is required');
-  }
-  const bytes = CryptoJS.AES.decrypt(encryptedData, key);
-  return bytes.toString(CryptoJS.enc.Utf8);
-};
-
-/**
  * Encrypts and stores data securely
  * @param {string} key - The key to store the data under
  * @param {string} data - The data to store
