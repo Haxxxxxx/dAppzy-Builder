@@ -34,10 +34,10 @@ export const EditableProvider = ({ children, userId }) => {
   // Initialize functions after state
   const pushToHistory = useCallback((newElements) => {
     const truncatedHistory = history.slice(0, currentIndex + 1);
-    const updatedHistory = [...truncatedHistory, newElements];
+    const updatedHistory = [...truncatedHistory, { elements: newElements, selectedElement }];
     setHistory(updatedHistory);
     setCurrentIndex(updatedHistory.length - 1);
-  }, [history, currentIndex]);
+  }, [history, currentIndex, selectedElement]);
 
   const recordElementsUpdate = useCallback((updater) => {
     setElements((prev) => {
@@ -144,13 +144,13 @@ export const EditableProvider = ({ children, userId }) => {
   }, [recordElementsUpdate]);
 
   const updateStyles = useCallback((id, newStyles) => {
-    setElements(prev => {
+    recordElementsUpdate(prev => {
       const element = findElementById(id, prev);
       if (!element) return prev;
 
       // Get the configuration styles if available
       const configStyles = element.configuration && structureConfigurations[element.configuration]?.styles;
-      
+
       // Merge styles in the correct order: base styles -> config styles -> new styles
       const mergedStyles = {
         ...(configStyles?.[element.type] || {}), // Base styles from configuration
@@ -173,7 +173,7 @@ export const EditableProvider = ({ children, userId }) => {
           : el
       );
     });
-  }, [findElementById]);
+  }, [findElementById, recordElementsUpdate]);
 
   const updateElementProperties = useCallback((id, newProperties) => {
     recordElementsUpdate((prev) =>
@@ -240,8 +240,13 @@ export const EditableProvider = ({ children, userId }) => {
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
       setCurrentIndex(newIndex);
-      setElements(history[newIndex]);
-      saveToLocalStorage('editableElements', history[newIndex]);
+      const snapshot = history[newIndex];
+      const restoredElements = snapshot.elements || snapshot;
+      setElements(restoredElements);
+      if (snapshot.selectedElement !== undefined) {
+        setSelectedElement(snapshot.selectedElement);
+      }
+      saveToLocalStorage('editableElements', restoredElements);
     }
   }, [currentIndex, history]);
 
@@ -249,8 +254,13 @@ export const EditableProvider = ({ children, userId }) => {
     if (currentIndex < history.length - 1) {
       const newIndex = currentIndex + 1;
       setCurrentIndex(newIndex);
-      setElements(history[newIndex]);
-      saveToLocalStorage('editableElements', history[newIndex]);
+      const snapshot = history[newIndex];
+      const restoredElements = snapshot.elements || snapshot;
+      setElements(restoredElements);
+      if (snapshot.selectedElement !== undefined) {
+        setSelectedElement(snapshot.selectedElement);
+      }
+      saveToLocalStorage('editableElements', restoredElements);
     }
   }, [currentIndex, history]);
 
