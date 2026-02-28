@@ -530,14 +530,14 @@ exports.verifyUnstoppable = onRequest(
     }
 
     try {
-      const { idToken, sub } = req.body;
-      if (!idToken || !sub) {
-        return res.status(400).json({ error: "Missing parameters: idToken, sub" });
+      const { accessToken, sub } = req.body;
+      if (!accessToken || !sub) {
+        return res.status(400).json({ error: "Missing parameters: accessToken, sub" });
       }
 
-      // Verify the idToken by checking with UD's userinfo endpoint
+      // Verify the accessToken by checking with UD's userinfo endpoint
       const userinfoRes = await fetch("https://auth.unstoppabledomains.com/userinfo", {
-        headers: { Authorization: `Bearer ${idToken}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
 
       if (!userinfoRes.ok) {

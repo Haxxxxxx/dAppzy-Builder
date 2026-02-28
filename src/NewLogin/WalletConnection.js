@@ -192,7 +192,7 @@ function WalletConnection({ onUserLogin }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            idToken: authorization.accessToken,
+            accessToken: authorization.accessToken,
             sub: userId,
           }),
         }
