@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import './SupportPopup.css';
 import { EditableContext } from '../../context/EditableContext';
+import { auth } from '../../firebase';
 
 const SupportPopup = ({ onClose }) => {
   const [text, setText] = useState('');
@@ -58,12 +59,15 @@ const SupportPopup = ({ onClose }) => {
     setStatus('Sending...');
 
     try {
-      // Call your function endpoint
+      const token = await auth.currentUser?.getIdToken();
       const response = await fetch(
-        'https://sendsupportemail-xkek6fohuq-uc.a.run.app',
+        `${process.env.REACT_APP_CF_BASE_URL}/sendSupportEmail`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
           body: JSON.stringify({ text, imageBase64, userId }),
         }
       );

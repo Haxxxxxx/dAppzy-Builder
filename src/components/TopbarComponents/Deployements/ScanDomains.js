@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { db, auth } from '../../../firebase';
 import { pinataConfig } from '../../../utils/configPinata';
 import './DomainsStyles.css';
 
@@ -40,13 +40,12 @@ const ScanDomains = ({
       setIsLoading(true);
 
       try {
-        // Replace with your actual function URL
-        // e.g. "https://us-central1-yourProject.cloudfunctions.net/reverseLookup"
-        const functionUrl = "https://reverselookup-xkek6fohuq-uc.a.run.app";
-        // Build the final endpoint with the user's address
-        const endpoint = `${functionUrl}?address=${walletAddress}`;
+        const endpoint = `${process.env.REACT_APP_CF_BASE_URL}/reverseLookup?address=${encodeURIComponent(walletAddress)}`;
 
-        const response = await fetch(endpoint);
+        const token = await auth.currentUser?.getIdToken();
+        const response = await fetch(endpoint, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!response.ok) {
           throw new Error(`UD lookup failed: ${response.statusText}`);
         }
