@@ -117,8 +117,15 @@ export const cleanElementData = (element) => {
       };
 
     default:
-      console.warn(`Invalid element type: ${element.type}`);
-      return null;
+      // Generic fallback for input, textarea, form, video, container, grid, etc.
+      return {
+        id: element.id,
+        type: element.type,
+        content: element.content || '',
+        styles: processElementStyles(element),
+        children: (element.children || []).map(cleanElementData).filter(Boolean),
+        ...(element.configuration && { configuration: element.configuration }),
+      };
   }
 };
 
