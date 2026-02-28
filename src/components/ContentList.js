@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, forwardRef, useCallback, useState } from 'react';
+import React, { useContext, useEffect, forwardRef, useCallback } from 'react';
 import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../context/EditableContext';
 import { AutoSaveContext } from '../context/AutoSaveContext';
@@ -7,7 +7,6 @@ import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 import { generateUniqueId } from '../utils/LeftBarUtils/elementUtils';
 import LayoutReplacementBoundary from './LayoutReplacementBoundary';
-import debounce from 'lodash/debounce';
 
 const ContentList = forwardRef(
   (
@@ -77,41 +76,14 @@ const ContentList = forwardRef(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Intentionally mount-only: load chunked elements once on init
 
-    // Create a debounced save function with memoization
-    const debouncedSave = useCallback(
-      debounce((elements, settings) => {
-        // Only save if we have actual elements to save
-        if (elements && elements.length > 0) {
-          saveContent(elements, settings);
-        }
-      }, 3000), // Increased debounce time to 3 seconds
-      [saveContent]
-    );
-
-    // Batch multiple changes together
-    const [pendingChanges, setPendingChanges] = useState(false);
-    
     // Watch for changes in elements and trigger auto-save
+    // AutoSaveContext handles its own debouncing — no need for a second debounce here
     useEffect(() => {
       if (elements.length > 0) {
-        // Mark changes as pending immediately
-        if (!pendingChanges) {
-          setPendingChanges(true);
-          markPendingChanges();
-        }
-        
-        // Schedule the save
-        debouncedSave(elements, websiteSettings);
+        markPendingChanges();
+        saveContent(elements, websiteSettings);
       }
-    }, [elements, websiteSettings, markPendingChanges, debouncedSave, pendingChanges]);
-
-    // Reset pending changes when save is complete
-    useEffect(() => {
-      return () => {
-        setPendingChanges(false);
-        debouncedSave.cancel();
-      };
-    }, [debouncedSave]);
+    }, [elements, websiteSettings, markPendingChanges, saveContent]);
 
     // Use useDragLayer to determine if any drag is active.
     const { isDragging } = useDragLayer((monitor) => ({
