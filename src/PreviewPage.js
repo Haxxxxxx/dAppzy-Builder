@@ -54,7 +54,10 @@ const PreviewPage = () => {
         <h2>{error}</h2>
       ) : (
         <div
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(projectHtml) }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(projectHtml, {
+            ADD_ATTR: ['style', 'target'],
+            ALLOW_DATA_ATTR: true,
+          }) }}
           style={{ width: "100vw", height: "100vh", overflow: "auto" }}
         />
       )}
