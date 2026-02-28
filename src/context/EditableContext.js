@@ -3,8 +3,6 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   generateUniqueId,
-  buildHierarchy,
-  findElementById,
   removeElementRecursively,
 } from '../utils/LeftBarUtils/elementUtils';
 import {
