@@ -95,6 +95,35 @@ const WalletContextProvider = ({ children }) => {
     };
 
     checkExistingConnection();
+
+    // Listen for Phantom account changes and disconnect
+    if (window.solana && window.solana.isPhantom) {
+      const handleAccountChanged = (newPublicKey) => {
+        if (newPublicKey) {
+          const address = newPublicKey.toString();
+          setWalletAddress(address);
+          setWalletId(address);
+        } else {
+          // Account changed to nothing — treat as disconnect
+          setWalletAddress('');
+          setWalletId('');
+          setIsWalletConnected(false);
+        }
+      };
+      const handleDisconnect = () => {
+        setWalletAddress('');
+        setWalletId('');
+        setIsWalletConnected(false);
+        setBalance(0);
+      };
+      window.solana.on('accountChanged', handleAccountChanged);
+      window.solana.on('disconnect', handleDisconnect);
+
+      return () => {
+        window.solana.removeListener('accountChanged', handleAccountChanged);
+        window.solana.removeListener('disconnect', handleDisconnect);
+      };
+    }
   }, []);
 
   const connectWallet = async () => {
