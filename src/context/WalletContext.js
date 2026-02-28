@@ -5,7 +5,7 @@ import { ConnectionProvider, WalletProvider as WalletProviderBase } from '@solan
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 
 const WalletContext = createContext({
   walletAddress: '',
@@ -61,6 +61,9 @@ const WalletContextProvider = ({ children }) => {
     const checkExistingConnection = async () => {
       try {
         // Check for existing wallet connection (URL userId is NOT trusted for auth)
+        // Only restore session if Firebase Auth session is still valid
+        if (!auth.currentUser) return;
+
         if (window.solana && window.solana.isPhantom) {
           const isConnected = window.solana.isConnected;
           if (isConnected) {
