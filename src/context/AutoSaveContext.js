@@ -253,12 +253,21 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     setSaveStatus('Changes pending...');
   }, []);
 
-  // Cleanup on unmount
+  // Flush pending saves on tab close/navigation
   useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      debouncedSaveContent.flush();
+      if (pendingChanges || saveQueue.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       debouncedSaveContent.cancel();
     };
-  }, [debouncedSaveContent]);
+  }, [debouncedSaveContent, pendingChanges, saveQueue]);
 
   const value = {
     saveStatus,
