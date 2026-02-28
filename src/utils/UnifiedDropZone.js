@@ -463,9 +463,6 @@ const UnifiedDropZone = React.memo(({
 
   const handleDivSelect = (config) => {
     if (onDrop && typeof window !== 'undefined') {
-      // Use context's addNewElement for recursive creation
-      const { addNewElement } = require('../context/EditableContext');
-      // But since we don't have context here, pass the config to onDrop and let ContentList/EditableContext handle recursion
       onDrop({ flexConfig: config, isFlexConfig: true }, parentId);
     }
     setShowDivOptions(false);
