@@ -75,7 +75,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   // Generate preview URL only when dropdown opens (not on every element change)
   const prevDropdownOpen = useRef(false);
   useEffect(() => {
-    if (isDropdownOpen && !prevDropdownOpen.current) {
+    if (isDropdownOpen && !prevDropdownOpen.current && !previewUrl) {
       handleGeneratePreview();
     }
     prevDropdownOpen.current = isDropdownOpen;
