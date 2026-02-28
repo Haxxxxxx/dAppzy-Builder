@@ -6,7 +6,8 @@ import { storage } from "../firebase";
 import "./css/BackgroundEditor.css";
 
 const BackgroundEditor = ({ pageSettings }) => {
-  const { selectedElement, updateStyles, userId } = useContext(EditableContext);
+  const { selectedElement, updateStyles } = useContext(EditableContext);
+  const userId = sessionStorage.getItem("userAccount") || "anonymous";
   // Assume the project name is provided as pageSettings.siteTitle.
   const projectName = pageSettings?.siteTitle || "defaultProject";
 
