@@ -7,7 +7,9 @@ const TypographyEditor = () => {
 
   // Utility: Convert "rgb(r,g,b)" to "#rrggbb"
   function rgbToHex(rgb) {
-    const result = rgb.match(/\d+/g).map(Number);
+    const matches = rgb.match(/\d+/g);
+    if (!matches) return rgb;
+    const result = matches.map(Number);
     return `#${result.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
   }
 
