@@ -1,4 +1,5 @@
 import { renderElementToHtml } from '../../htmlRender';
+import { escapeHtml } from '../../export/escapeUtils';
 
 export function renderDefiSection(element, collectedStyles) {
   // Extract content from element, handling both string and object formats
@@ -165,13 +166,13 @@ export function renderDefiSection(element, collectedStyles) {
 
   const headingsHtml = headings.map((c) => `
     <div style="position: relative; box-sizing: border-box;">
-      <span style="color: rgb(255, 255, 255); font-size: 2rem; font-weight: bold; display: block; margin-bottom: 1rem; cursor: text; border: none; outline: none;">${c.content || ''}</span>
+      <span style="color: rgb(255, 255, 255); font-size: 2rem; font-weight: bold; display: block; margin-bottom: 1rem; cursor: text; border: none; outline: none;">${escapeHtml(c.content || '')}</span>
     </div>
   `).join('\n');
 
   const paragraphsHtml = paragraphs.map((c) => `
     <div style="position: relative; box-sizing: border-box;">
-      <span style="font-size: 1rem; color: rgb(204, 204, 204); display: block; margin-bottom: 2rem; cursor: text; border: none; outline: none;">${c.content || ''}</span>
+      <span style="font-size: 1rem; color: rgb(204, 204, 204); display: block; margin-bottom: 2rem; cursor: text; border: none; outline: none;">${escapeHtml(c.content || '')}</span>
     </div>
   `).join('\n');
 
