@@ -16,6 +16,7 @@ import AIAgentPanel from "./components/Rightbar/AIAgentPanel";
 import AIFloatingButton from "./components/AIFloatingButton";
 import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const BuilderPageCore = ({
   userId,
@@ -878,20 +879,22 @@ const BuilderPageCore = ({
               </div>
             )}
             <div className="main-content" ref={mainContentRef} onClick={handleMainContentClick}>
-              <ContentList
-                contentListWidth={contentListWidth}
-                canvasWidth={availableCanvasWidth}
-                isSideBarVisible={openPanel === "sidebar"}
-                leftBarWidth={40}
-                handlePanelToggle={handlePanelToggle}
-                ref={contentRef}
-                scale={scale}
-                setScale={setScale}
-                isPreviewMode={isPreviewMode}
-                handleOpenMediaPanel={handleOpenMediaPanel}
-                websiteSettings={pageSettings}
-                isPioneer={isPioneer}
-              />
+              <ErrorBoundary name="Canvas">
+                <ContentList
+                  contentListWidth={contentListWidth}
+                  canvasWidth={availableCanvasWidth}
+                  isSideBarVisible={openPanel === "sidebar"}
+                  leftBarWidth={40}
+                  handlePanelToggle={handlePanelToggle}
+                  ref={contentRef}
+                  scale={scale}
+                  setScale={setScale}
+                  isPreviewMode={isPreviewMode}
+                  handleOpenMediaPanel={handleOpenMediaPanel}
+                  websiteSettings={pageSettings}
+                  isPioneer={isPioneer}
+                />
+              </ErrorBoundary>
             </div>
             {showAIInputBar && !openPanel && isPioneer ? (
               <div className="ai-absolute-input-bar-container">
@@ -945,6 +948,7 @@ const BuilderPageCore = ({
               </div>
             ) : openPanel === "ai" && isPioneer && (
               <div className="right-panel" id="ai-panel">
+                <ErrorBoundary name="Editor Panel">
                 <AIAgentPanel
                   messages={activeConversation.messages}
                   conversations={conversations}
@@ -961,6 +965,7 @@ const BuilderPageCore = ({
                   onThirdPrompt={handleThirdPrompt}
                   isPioneer={isPioneer}
                 />
+                </ErrorBoundary>
               </div>
             )}
           </div>
