@@ -58,29 +58,22 @@ const BuilderPageCore = ({
   ]);
   const [activeConversationId, setActiveConversationId] = useState(1);
 
-  // Check URL parameters on mount
+  // Check URL parameters on mount — only use if authenticated
   useEffect(() => {
+    if (!isConnected || !walletAddress) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const urlUserId = urlParams.get('userId');
     const urlProjectId = urlParams.get('projectId');
 
-    if (urlUserId && !userId) {
+    // Only accept URL userId if it matches the authenticated wallet
+    if (urlUserId && urlUserId === walletAddress && !userId) {
       setUserId(urlUserId);
     }
     if (urlProjectId && !activeProjectId) {
       setActiveProjectId(urlProjectId);
     }
-  }, [userId, activeProjectId, setUserId, setActiveProjectId]);
-
-  // Skip authentication if userId is present in URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlUserId = urlParams.get('userId');
-    
-    if (urlUserId && !isConnected) {
-      // If we have userId in URL but not connected, we'll let the WalletContext handle it
-    }
-  }, [isConnected]);
+  }, [userId, activeProjectId, setUserId, setActiveProjectId, isConnected, walletAddress]);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || conversations[0];
 
