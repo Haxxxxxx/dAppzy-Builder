@@ -28,7 +28,6 @@ const Div = ({
     id,
     elementRef: divRef,
     onDropItem: (item) => {
-      console.log('Div drop triggered for id:', id, 'with item:', item);
       if (onDropItem) {
         onDropItem(item, id);
       } else if (item.flexConfig) {

@@ -21,8 +21,6 @@ const validatePinataConfig = () => {
 export async function pinDirectoryToPinata(files, metadata) {
   try {
     validatePinataConfig();
-    console.log('Starting Pinata upload...');
-    
     const formData = new FormData();
     
     // Append the file (use Blob directly)
@@ -32,12 +30,6 @@ export async function pinDirectoryToPinata(files, metadata) {
     if (metadata) {
       formData.append('pinataMetadata', JSON.stringify(metadata));
     }
-
-    console.log('Uploading to Pinata:', {
-      fileName: files[0].fileName,
-      fileSize: files[0].file.size,
-      metadata: metadata
-    });
 
     const response = await fetch(PINATA_PIN_FILE_URL, {
       method: 'POST',
@@ -67,7 +59,6 @@ export async function pinDirectoryToPinata(files, metadata) {
     }
 
     const data = await response.json();
-    console.log('Pinata upload response:', data);
 
     if (!data.IpfsHash) {
       throw new Error('No IPFS hash returned from Pinata');
@@ -129,7 +120,6 @@ export async function uploadFileToPinata(file, walletId, projectName) {
     }
 
     const data = await response.json();
-    console.log("Pinata upload response:", data);
     return data;
   } catch (error) {
     console.error("Error uploading file to Pinata:", error);

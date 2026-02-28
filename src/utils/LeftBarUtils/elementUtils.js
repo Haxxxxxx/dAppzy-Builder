@@ -42,7 +42,6 @@ export const buildHierarchy = (elements) => {
     .filter((el) => !el.parentId)
     .filter((el) => el.children.length > 0 || el.content || el.structure);
 
-  console.log('Generated hierarchy:', hierarchy);
   return hierarchy;
 };
 

@@ -1,15 +1,12 @@
 import { renderElementToHtml } from '../../htmlRender';
 
 export function renderDefiModule(element, collectedStyles) {
-  console.log('renderDefiModule element:', element);
-  
   // Extract content from element
   let moduleContent = element.content;
   if (typeof moduleContent === 'string') {
     try {
       moduleContent = JSON.parse(moduleContent);
     } catch (e) {
-      console.log('Module content is string but not JSON:', moduleContent);
       moduleContent = {};
     }
   }

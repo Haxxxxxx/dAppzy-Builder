@@ -57,8 +57,6 @@ export const SubscriptionProvider = ({ children }) => {
         unsubscribe = onSnapshot(userRef, (userDoc) => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            console.log('User data received:', userData); // Debug log
-
             // Check both profile and direct subscription data
             const newStatus = userData.profile?.subscriptionStatus || userData.subscriptionStatus;
             const newEndDate = userData.profile?.subscriptionEndDate || userData.subscriptionEndDate;
@@ -67,12 +65,10 @@ export const SubscriptionProvider = ({ children }) => {
             if (newStatus && newEndDate) {
               // Only update if we have both status and end date
               if (new Date(newEndDate) < new Date()) {
-                console.log('Subscription expired, setting to freemium'); // Debug log
                 setSubscriptionStatus('freemium');
                 localStorage.setItem('subscriptionStatus', 'freemium');
                 localStorage.removeItem('subscriptionEndDate');
               } else {
-                console.log('Setting subscription status:', newStatus); // Debug log
                 setSubscriptionStatus(newStatus);
                 setSubscriptionEndDate(newEndDate);
                 localStorage.setItem('subscriptionStatus', newStatus);
@@ -80,14 +76,9 @@ export const SubscriptionProvider = ({ children }) => {
               }
             } else if (isPioneer) {
               // If isPioneer is true but no subscription dates, set as pioneer
-              console.log('User is pioneer, setting subscription status'); // Debug log
               setSubscriptionStatus('pioneer');
               localStorage.setItem('subscriptionStatus', 'pioneer');
-            } else {
-              console.log('No subscription data found in user document'); // Debug log
             }
-          } else {
-            console.log('No user document found'); // Debug log
           }
           setIsLoading(false);
         }, (error) => {
@@ -108,20 +99,6 @@ export const SubscriptionProvider = ({ children }) => {
       unsubscribe();
     };
   }, [walletAddress]);
-
-  // Debug subscription status changes
-  useEffect(() => {
-    console.log('SubscriptionContext - Status Update:', {
-      subscriptionStatus,
-      subscriptionEndDate,
-      isLoading,
-      isPioneer: subscriptionStatus === 'pioneer' && !isSubscriptionExpired(),
-      localStorage: {
-        status: localStorage.getItem('subscriptionStatus'),
-        endDate: localStorage.getItem('subscriptionEndDate')
-      }
-    });
-  }, [subscriptionStatus, subscriptionEndDate, isLoading]);
 
   const value = {
     subscriptionStatus,

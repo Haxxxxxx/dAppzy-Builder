@@ -151,15 +151,12 @@ export function renderMintingSection(mintingElement, context) {
   if (!candyMachineId) {
     const generatedId = crypto.randomUUID();
     candyMachineId = generatedId;
-    console.log('No Candy Machine ID found. Generated one:', generatedId);
-
     // Save to Firestore asynchronously
     setDoc(doc(db, 'candyMachineIds', `element-${id}`), {
       candyMachineId: generatedId,
       createdAt: new Date().toISOString(),
     })
       .then(() => {
-        console.log('Generated Candy Machine ID saved to Firestore successfully.');
       })
       .catch(err => {
         console.error('Error saving generated Candy Machine ID to Firestore:', err);

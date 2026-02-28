@@ -32,12 +32,10 @@ const MintingModule = ({
   // Handle minting process
   const handleMint = async () => {
     if (!isConnected) {
-      console.log('Please connect your wallet first');
       return;
     }
 
     if (requireSignature && !isSigned) {
-      console.log('Please sign the transaction');
       return;
     }
 
@@ -45,7 +43,6 @@ const MintingModule = ({
     try {
       // Simulate minting process
       await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log(`Minting ${quantity} NFT(s)...`);
       // Add actual minting logic here
     } catch (error) {
       console.error('Minting failed:', error);

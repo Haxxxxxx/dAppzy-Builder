@@ -367,7 +367,6 @@ const UnifiedDropZone = React.memo(({
   const handleLibraryClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Library button clicked');
     setShowSectionPopup(true);
   };
 
@@ -378,7 +377,6 @@ const UnifiedDropZone = React.memo(({
   };
 
   const handleSectionSelect = (section) => {
-    console.log('Section selected:', section);
     if (onDrop) {
       // Get the section configuration from structureConfigurations
       const sectionConfig = structureConfigurations[section.id];
@@ -458,7 +456,6 @@ const UnifiedDropZone = React.memo(({
         label: sectionConfig.label || section.name
       };
 
-      console.log('Sending section data:', sectionData);
       onDrop(sectionData, parentId);
     }
     setShowSectionPopup(false);

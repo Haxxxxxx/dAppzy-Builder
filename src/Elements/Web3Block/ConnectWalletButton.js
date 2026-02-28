@@ -179,7 +179,6 @@ const ConnectWalletButton = ({
 
   // Handle wallet selection from popup
   const handleWalletSelect = async (wallet) => {
-    console.log('Selected wallet:', wallet);
     setIsLoading(true);
     setErrorMessage(null);
     
@@ -193,7 +192,6 @@ const ConnectWalletButton = ({
       switch (wallet.type) {
         case 'ethereum':
           if (window.ethereum) {
-            console.log('Connecting to Ethereum wallet');
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             if (accounts && accounts.length > 0) {
               const signature = await window.ethereum.request({
@@ -201,7 +199,6 @@ const ConnectWalletButton = ({
                 params: ['Please sign this message to verify your wallet connection.', accounts[0]]
               });
               if (signature) {
-                console.log('Ethereum wallet connected successfully');
                 setIsTestConnected(true);
                 setSelectedWallet(wallet);
                 setShowWalletPopup(false);
@@ -220,7 +217,6 @@ const ConnectWalletButton = ({
         case 'solana':
           if (window.solana) {
             try {
-              console.log('Connecting to Solana wallet');
               // Request wallet connection
               const { publicKey } = await window.solana.connect();
               if (publicKey) {
@@ -229,7 +225,6 @@ const ConnectWalletButton = ({
                 const { signature } = await window.solana.signMessage(message);
                 
                 if (signature) {
-                  console.log('Solana wallet connected successfully');
                   setIsTestConnected(true);
                   setSelectedWallet(wallet);
                   setShowWalletPopup(false);
@@ -249,12 +244,10 @@ const ConnectWalletButton = ({
           
         case 'stellar':
           if (window.freighter) {
-            console.log('Connecting to Stellar wallet');
             const publicKey = await window.freighter.getPublicKey();
             if (publicKey) {
               const signature = await window.freighter.signMessage('Please sign this message to verify your wallet connection.');
               if (signature) {
-                console.log('Stellar wallet connected successfully');
                 setIsTestConnected(true);
                 setSelectedWallet(wallet);
                 setShowWalletPopup(false);
@@ -304,7 +297,6 @@ const ConnectWalletButton = ({
       if (content === "Disconnect") {
         updateContent(id, "Connect Wallet");
       }
-      console.log("Successfully disconnected test wallet and reset dashboard data");
     } catch (error) {
       console.error('Error disconnecting test wallet:', error);
       setErrorMessage(error.message);
@@ -474,7 +466,6 @@ const ConnectWalletButton = ({
                 <button
                   key={index}
                   onMouseDown={(e) => {
-                    console.log("Wallet button clicked:", wallet.name);
                   e.preventDefault();
                     e.stopPropagation();
                     handleWalletSelect(wallet);

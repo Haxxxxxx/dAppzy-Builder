@@ -1,8 +1,6 @@
 import { renderElementToHtml } from '../../htmlRender';
 
 export function renderDefiSection(element, collectedStyles) {
-  console.log('renderDefiSection element:', element);
-  
   // Extract content from element, handling both string and object formats
   let content = element.content;
   if (typeof content === 'string') {

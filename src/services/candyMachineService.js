@@ -56,7 +56,6 @@ export const createCandyMachine = async (config, wallet) => {
     // Create the candy machine.
     const { candyMachine } = await metaplex.candyMachines().create(candyMachineConfig);
 
-    console.log('Candy Machine created successfully:', candyMachine);
     return candyMachine;
   } catch (error) {
     console.error('Error creating candy machine:', error);

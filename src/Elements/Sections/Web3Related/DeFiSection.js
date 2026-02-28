@@ -228,8 +228,6 @@ const DeFiSection = forwardRef(({
     const existingContainer = findElementById(contentContainerId, elements);
     
     if (!existingContainer) {
-      console.log('Initializing DeFi section for the first time');
-      
       const contentContainer = {
         id: contentContainerId,
         type: 'div',
