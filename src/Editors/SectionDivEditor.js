@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const SectionDivEditor = ({ element, updateStyles, setElements }) => {
+const SectionDivEditor = ({ element, updateStyles, recordElementsUpdate }) => {
   const [backgroundColor, setBackgroundColor] = useState(element.styles.backgroundColor || '');
   const [padding, setPadding] = useState(element.styles.padding || '');
   const [margin, setMargin] = useState(element.styles.margin || '');
@@ -49,7 +49,7 @@ const SectionDivEditor = ({ element, updateStyles, setElements }) => {
       parentId: element.id,
     };
 
-    setElements((prevElements) => {
+    recordElementsUpdate((prevElements) => {
       return prevElements.map((el) =>
         el.id === element.id
           ? { ...el, children: [...el.children, newId] }
