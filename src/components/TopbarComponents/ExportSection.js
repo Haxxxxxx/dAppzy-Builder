@@ -230,10 +230,11 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
                   </span>
                   {previewUrl ? (
                     <div className="preview-url-container">
-                      <a 
-                        className='dropdown-menu-item-content-left-text' 
-                        href={previewUrl} 
+                      <a
+                        className='dropdown-menu-item-content-left-text'
+                        href={previewUrl}
                         target='_blank'
+                        rel='noreferrer'
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(previewUrl, '_blank');
