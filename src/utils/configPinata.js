@@ -1,47 +1,23 @@
-const validateEnv = () => {
-  const requiredVars = [
-    'REACT_APP_PINATA_JWT',
-    'REACT_APP_PINATA_KEY',
-    'REACT_APP_PINATA_SECRET'
-  ];
+// Pinata uploads now go through the uploadToPinata Cloud Function proxy.
+// Client-side Pinata credentials are no longer required.
+// This file is kept for backward compatibility with any remaining imports.
 
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
-  if (missingVars.length > 0) {
-    console.warn(`Missing required environment variables: ${missingVars.join(', ')}`);
-    return false;
-  }
-  return true;
-};
-
-// Initialize Pinata configuration
 const pinataConfigObject = {
-  jwt: process.env.REACT_APP_PINATA_JWT || '',
-  apiKey: process.env.REACT_APP_PINATA_KEY || '',
-  secretKey: process.env.REACT_APP_PINATA_SECRET || ''
+  jwt: '',
+  apiKey: '',
+  secretKey: ''
 };
 
-// Validate configuration on import
-if (!validateEnv()) {
-  console.error('Pinata configuration is incomplete. Please check your environment variables.');
-}
-
-// Export a function to check if configuration is valid
 export const isPinataConfigured = () => {
-  return validateEnv() && pinataConfigObject.jwt && pinataConfigObject.apiKey && pinataConfigObject.secretKey;
+  // Pinata is configured if the CF proxy endpoint is available
+  return !!process.env.REACT_APP_CF_BASE_URL;
 };
 
-const createMockPinata = () => ({
-  pinFileToIPFS: async () => ({ IpfsHash: 'mock-hash' }),
-  pinJSONToIPFS: async () => ({ IpfsHash: 'mock-hash' }),
-  unpin: async () => ({ success: true }),
+export const pinata = {
+  pinFileToIPFS: async () => { throw new Error('Use uploadToPinata CF instead'); },
+  pinJSONToIPFS: async () => { throw new Error('Use uploadToPinata CF instead'); },
+  unpin: async () => { throw new Error('Use uploadToPinata CF instead'); },
   testAuthentication: async () => ({ authenticated: true }),
-  groups: {
-    list: async () => [],
-    create: async (name) => ({ groupId: name }),
-    get: async (groupId) => ({ groupId })
-  }
-});
+};
 
-// Pinata mock client — all uploads use raw fetch via pinataConfig
-export const pinata = createMockPinata();
 export { pinataConfigObject as pinataConfig };
