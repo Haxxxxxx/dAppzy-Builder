@@ -236,7 +236,8 @@ exports.reverseLookup = onRequest(
       }
 
       const data = await response.json();
-      return res.json(data);
+      const filtered = { items: (data.items || []).map(item => ({ name: item.name })) };
+      return res.json(filtered);
     } catch (error) {
       console.error("Error in reverseLookup:", error);
       return res.status(500).json({ error: "Internal server error" });
