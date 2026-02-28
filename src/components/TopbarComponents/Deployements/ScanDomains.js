@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../../../firebase';
-import { pinataConfig } from '../../../utils/configPinata';
+import { pinDirectoryToPinata } from '../../../utils/ipfs';
 import './DomainsStyles.css';
-
-const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 const ScanDomains = ({
   userId,
@@ -72,31 +70,7 @@ const ScanDomains = ({
   }, [walletAddress]);
 
   // -----------------------------------------------------
-  // 2) Pin files to Pinata => returns final IPFS URL
-  // -----------------------------------------------------
-  const pinDirectoryToPinata = async (files, metadata) => {
-    const formData = new FormData();
-    files.forEach(({ file, fileName }) => {
-      formData.append('file', file, fileName);
-    });
-    formData.append('pinataOptions', JSON.stringify({ wrapWithDirectory: true }));
-    formData.append('pinataMetadata', JSON.stringify(metadata));
-
-    const response = await fetch(PINATA_PIN_FILE_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${pinataConfig.jwt}`,
-      },
-      body: formData,
-    });
-    if (!response.ok) {
-      throw new Error(`Pinata pinFileToIPFS failed: ${response.statusText}`);
-    }
-    return response.json();
-  };
-
-  // -----------------------------------------------------
-  // 3) Deploy to IPFS on demand
+  // 2) Deploy to IPFS on demand
   // -----------------------------------------------------
   const handleDeployToIPFS = async () => {
     setAutoSaveStatus('Publishing to IPFS...');
@@ -113,8 +87,7 @@ const ScanDomains = ({
         name: websiteSettings.siteTitle || 'MyWebsite',
         keyvalues: { userId },
       };
-      const result = await pinDirectoryToPinata(files, metadata);
-      const cid = result.IpfsHash;
+      const cid = await pinDirectoryToPinata(files, metadata);
       const ipfsUrl = `https://ipfs.io/ipfs/${cid}/${userId}`;
 
       // Optionally save to Firestore
