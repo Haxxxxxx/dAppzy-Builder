@@ -1,9 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
+import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import '../css/StructurePanel.css';
 
 const StructurePanel = () => {
-  const { elements, buildHierarchy, selectedElement, setSelectedElement } = useContext(EditableContext);
+  const { elements, selectedElement, setSelectedElement } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
 
   // Define a mapping for friendly labels for each type
