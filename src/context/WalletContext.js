@@ -33,8 +33,7 @@ export const useWalletContext = () => {
 const wallets = [new PhantomWalletAdapter()];
 
 export const WalletProvider = ({ children }) => {
-  const network = WalletAdapterNetwork.Devnet;
-  const endpoint = clusterApiUrl(network);
+  const endpoint = process.env.REACT_APP_SOLANA_RPC_URL || clusterApiUrl(WalletAdapterNetwork.Devnet);
 
   return (
     <ConnectionProvider endpoint={endpoint}>

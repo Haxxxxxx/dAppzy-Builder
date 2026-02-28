@@ -19,8 +19,9 @@ import { Metaplex, keypairIdentity } from '@metaplex-foundation/js';
  */
 export const createCandyMachine = async (config, wallet) => {
   try {
-    // Connect to Solana devnet (change to 'mainnet-beta' for production)
-    const connection = new Connection(clusterApiUrl('devnet'));
+    const connection = new Connection(
+      process.env.REACT_APP_SOLANA_RPC_URL || clusterApiUrl('devnet')
+    );
 
     // Initialize Metaplex with the user's wallet.
     const metaplex = Metaplex.make(connection).use(keypairIdentity(wallet));
