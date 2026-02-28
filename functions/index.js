@@ -466,8 +466,28 @@ exports.verifyFreighter = onRequest(
       // Stellar uses ed25519 — verify with tweetnacl
       const messageBytes = Buffer.from(message);
       const signatureBytes = Buffer.from(signature, "base64");
-      // Stellar public keys are ed25519 — decode from Stellar format (raw 32 bytes)
-      const publicKeyBytes = Buffer.from(publicKey, "base64");
+
+      // Decode Stellar StrKey (G...) to raw 32-byte ed25519 public key
+      // StrKey = base32(versionByte + 32-byte-key + 2-byte-crc16)
+      const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+      const decodeBase32 = (str) => {
+        let bits = 0, value = 0;
+        const output = [];
+        for (const c of str) {
+          const idx = BASE32_ALPHABET.indexOf(c);
+          if (idx === -1) continue;
+          value = (value << 5) | idx;
+          bits += 5;
+          if (bits >= 8) {
+            bits -= 8;
+            output.push((value >>> bits) & 0xff);
+          }
+        }
+        return Buffer.from(output);
+      };
+      const decoded = decodeBase32(publicKey);
+      // Strip version byte (first) and CRC16 checksum (last 2)
+      const publicKeyBytes = decoded.slice(1, 33);
 
       const isVerified = nacl.sign.detached.verify(
         messageBytes,
