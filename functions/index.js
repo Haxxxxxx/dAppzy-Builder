@@ -187,6 +187,17 @@ exports.reverseLookup = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
+    // Require Firebase Auth
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    try {
+      await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+    } catch {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
     // Rate limit by IP
     const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
     if (!checkRateLimit(clientIp)) {
