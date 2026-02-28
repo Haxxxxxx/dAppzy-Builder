@@ -11,7 +11,7 @@ import {
   listAll,
   deleteObject
 } from "firebase/storage";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 import { useDrag, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend"; // or other backend if needed
@@ -261,7 +261,7 @@ const ImageSettings = () => {
               projectName,
               fileName: file.name,
               imageUrl: downloadURL,
-              createdAt: new Date(),
+              createdAt: serverTimestamp(),
             });
           } catch (firestoreError) {
             console.error("Firestore error:", firestoreError);

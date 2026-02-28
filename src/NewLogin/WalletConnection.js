@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { db, doc, getDoc, setDoc } from "../firebase";
+import { serverTimestamp } from "firebase/firestore";
 import UAuth from "@uauth/js";
 import { auth } from "../firebase";
 import { signInWithCustomToken } from "firebase/auth";
@@ -19,16 +20,15 @@ function WalletConnection({ onUserLogin }) {
       const userRef = doc(db, "users", walletId);
       const userSnap = await getDoc(userRef);
       
-      const timestamp = new Date().toISOString();
       const walletRef = doc(db, "wallets", walletId);
       const walletSnap = await getDoc(walletRef);
 
       // Prepare wallet data
       const walletData = {
         walletId,
-        lastLogin: timestamp,
+        lastLogin: serverTimestamp(),
         walletType,
-        timestamp: new Date().toISOString(),
+        timestamp: serverTimestamp(),
         selectedButtons: walletSnap.exists() ? walletSnap.data().selectedButtons || {} : {}
       };
 
@@ -41,7 +41,7 @@ function WalletConnection({ onUserLogin }) {
         // Create new user document without subscription fields
         // (subscription defaults are set by the verifySubscription Cloud Function)
         await setDoc(userRef, {
-          createdAt: timestamp,
+          createdAt: serverTimestamp(),
           walletId,
           walletType
         });
