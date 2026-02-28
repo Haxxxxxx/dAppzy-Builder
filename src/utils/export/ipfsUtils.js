@@ -1,11 +1,12 @@
+import { cleanElementData } from './elementUtils';
+import { generateProjectHtml } from './htmlGenerator';
+import { pinDirectoryToPinata } from '../../utils/ipfs';
+
 const isPinataConfigured = () => {
   // Pinata uploads now go through server-side CF proxy
   // Just check that the CF base URL is configured
   return !!process.env.REACT_APP_CF_BASE_URL;
 };
-import { cleanElementData } from './elementUtils';
-import { generateProjectHtml } from './htmlGenerator';
-import { pinDirectoryToPinata } from '../../utils/ipfs';
 
 /**
  * Validates a URL is safe to fetch (prevents SSRF via file:/data:/private IPs)
