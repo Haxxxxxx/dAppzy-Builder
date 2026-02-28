@@ -38,6 +38,12 @@ export function saveToLocalStorage(key, value) {
 }
 
 export const loadFromLocalStorage = (key) => {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.warn(`Corrupt localStorage data for key "${key}", removing:`, error.message);
+    localStorage.removeItem(key);
+    return null;
+  }
 };
