@@ -789,24 +789,13 @@ const BuilderPageCore = ({
 
   // Effects
   useEffect(() => {
-    if (conversations.length === 0) {
-      setConversations([{
-        id: 1,
-        name: 'Conversation 1',
-        messages: []
-      }]);
-      setActiveConversationId(1);
-    }
-  }, []);
-
-  useEffect(() => {
     if (openPanel === "ai") {
       const currentConv = conversations.find(c => c.id === activeConversationId);
       if (currentConv && currentConv.messages) {
         setMessages([...currentConv.messages]);
       }
     }
-  }, [openPanel, activeConversationId]);
+  }, [openPanel, activeConversationId, conversations]);
 
   useEffect(() => {
     const updateCanvasWidth = () => {

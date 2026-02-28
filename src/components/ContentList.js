@@ -75,7 +75,8 @@ const ContentList = forwardRef(
       };
 
       loadChunkedElements();
-    }, []); // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Intentionally mount-only: load chunked elements once on init
 
     // Create a debounced save function with memoization
     const debouncedSave = useCallback(
