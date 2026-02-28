@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useWalletContext } from './WalletContext';
 
@@ -95,35 +95,7 @@ export const SubscriptionProvider = ({ children }) => {
           setIsLoading(false);
         });
 
-        // Initial check
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          console.log('Initial user data:', userData); // Debug log
-
-          // Check both profile and direct subscription data
-          const newStatus = userData.profile?.subscriptionStatus || userData.subscriptionStatus;
-          const newEndDate = userData.profile?.subscriptionEndDate || userData.subscriptionEndDate;
-          const isPioneer = userData.profile?.isPioneer || false;
-
-          if (newStatus && newEndDate) {
-            if (new Date(newEndDate) < new Date()) {
-              setSubscriptionStatus('freemium');
-              localStorage.setItem('subscriptionStatus', 'freemium');
-              localStorage.removeItem('subscriptionEndDate');
-            } else {
-              setSubscriptionStatus(newStatus);
-              setSubscriptionEndDate(newEndDate);
-              localStorage.setItem('subscriptionStatus', newStatus);
-              localStorage.setItem('subscriptionEndDate', newEndDate);
-            }
-          } else if (isPioneer) {
-            // If isPioneer is true but no subscription dates, set as pioneer
-            setSubscriptionStatus('pioneer');
-            localStorage.setItem('subscriptionStatus', 'pioneer');
-          }
-        }
-        setIsLoading(false);
+        // onSnapshot fires immediately with initial data, no separate getDoc needed
       } catch (error) {
         console.error('Error checking subscription status:', error);
         setIsLoading(false);
