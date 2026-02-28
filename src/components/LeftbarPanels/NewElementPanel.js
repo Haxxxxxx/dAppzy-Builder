@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import FooterPanel from '../SectionsPanels/FooterPanel';
 import NavbarPanel from '../SectionsPanels/NavbarPanel';
 import DraggableElement from '../../Elements/DraggableElements/DraggableElement';
@@ -34,10 +34,6 @@ const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelT
         };
 
   const [expandedSections, setExpandedSections] = useState(defaultExpanded);
-  
-  useEffect(() => {
-    console.log("Expanded sections:", expandedSections);
-  }, [expandedSections]);
 
   const toggleSection = (sectionName) => {
     setExpandedSections((prev) => ({

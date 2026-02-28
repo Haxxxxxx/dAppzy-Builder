@@ -23,11 +23,6 @@ const LayoutReplacementBoundary = ({
       sourceIndex: elementIndex,
       ...layoutData
     };
-    console.log('Starting drag for element:', {
-      id: layoutId,
-      type: layoutType,
-      index: elementIndex
-    });
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'move';
   }, [layoutId, layoutType, layoutData, elementIndex]);
@@ -66,12 +61,6 @@ const LayoutReplacementBoundary = ({
       setIsHovering(true);
       e.dataTransfer.dropEffect = "move";
       
-      // Log the potential drop position
-      console.log('Potential drop at element:', {
-        targetId: layoutId,
-        targetIndex: elementIndex,
-        edge: closestEdge.edge
-      });
     } else {
       setDropIndicator(null);
       setIsHovering(false);
@@ -100,14 +89,6 @@ const LayoutReplacementBoundary = ({
       if (dragData.id === layoutId) {
         return;
       }
-
-      console.log('Drop event:', {
-        sourceId: dragData.id,
-        sourceIndex: dragData.sourceIndex,
-        targetId: layoutId,
-        targetIndex: elementIndex,
-        edge: dropIndicator
-      });
 
       onReplace({
         oldLayoutId: dragData.id,

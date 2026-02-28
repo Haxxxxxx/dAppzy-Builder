@@ -25,19 +25,6 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   // Get wallet address from session storage
   const walletAddress = sessionStorage.getItem("userAccount");
 
-  // Debug log for subscription status
-  useEffect(() => {
-    console.log('ExportSection - Subscription Status:', {
-      isPioneer,
-      subscriptionLoading,
-      walletAddress,
-      localStorage: {
-        status: localStorage.getItem('subscriptionStatus'),
-        endDate: localStorage.getItem('subscriptionEndDate')
-      }
-    });
-  }, [isPioneer, subscriptionLoading, walletAddress]);
-
   // Format the last saved time
   const getLastSavedText = () => {
     if (!lastSaved) return '';
@@ -156,23 +143,18 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   };
 
   const handleSnsDeploy = () => {
-    console.log('handleSnsDeploy called:', { isPioneer, walletAddress }); // Debug log
-
     if (!isPioneer) {
-      console.log('Not a pioneer user, showing upgrade popup'); // Debug log
       setShowUpgradePopup(true);
       setIsDropdownOpen(false);
       return;
     }
     
     if (!walletAddress) {
-      console.log('No wallet address found'); // Debug log
       setOperationStatus('Error: No Solana wallet connected');
       setTimeout(() => setOperationStatus(null), 5000);
       return;
     }
 
-    console.log('Opening SNS selector'); // Debug log
     setShowSnsSelector(true);
     setIsDropdownOpen(false);
   };

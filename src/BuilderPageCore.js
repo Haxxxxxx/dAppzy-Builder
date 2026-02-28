@@ -78,7 +78,6 @@ const BuilderPageCore = ({
     
     if (urlUserId && !isConnected) {
       // If we have userId in URL but not connected, we'll let the WalletContext handle it
-      console.log('Using URL userId for authentication:', urlUserId);
     }
   }, [isConnected]);
 
@@ -395,10 +394,6 @@ const BuilderPageCore = ({
   };
 
   const handleSecondPrompt = async (userMessage) => {
-    // Remove or comment out these console logs
-    // console.log('Updating navbar span with ID:', lastNavbarSpanId);
-    // console.log('Updating footer span with ID:', lastFooterSpanId);
-
     // Edit Navbar
     await handleAICommand({
       action: 'edit',

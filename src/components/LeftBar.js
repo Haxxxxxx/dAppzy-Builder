@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import './css/LeftBar.css';
 import SupportPopup from './LeftbarPanels/SupportPopup';
 import UpgradePopup from './UpgradePopup';
@@ -19,18 +19,6 @@ const LeftBar = ({
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const { selectedElement } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
-
-  // Debug subscription status
-  useEffect(() => {
-    console.log('LeftBar - Subscription Status:', {
-      isPioneer,
-      subscriptionLoading,
-      localStorage: {
-        status: localStorage.getItem('subscriptionStatus'),
-        endDate: localStorage.getItem('subscriptionEndDate')
-      }
-    });
-  }, [isPioneer, subscriptionLoading]);
 
   const handleHelpClick = () => {
     setShowSupportPopup(true);

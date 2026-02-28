@@ -10,22 +10,18 @@ const DeFiModuleSettings = ({ selectedElement }) => {
 
   useEffect(() => {
     if (selectedElement) {
-      console.log('Selected element changed:', selectedElement);
       try {
-        const data = typeof selectedElement.content === 'string' 
-          ? JSON.parse(selectedElement.content) 
+        const data = typeof selectedElement.content === 'string'
+          ? JSON.parse(selectedElement.content)
           : selectedElement.content;
-        console.log('Parsed module data:', data);
         setModuleData(data);
-        
-        // Set initial form values
+
         const initialValues = {
           title: data.title,
           showStats: data.settings?.showStats ?? true,
           showButton: data.settings?.showButton ?? true,
           customColor: data.settings?.customColor ?? '#2A2A3C',
           stats: data.stats || [],
-          // Module type specific settings
           ...(data.moduleType === 'aggregator' && {
             supportedChains: data.settings?.supportedChains || [],
             supportedTokens: data.settings?.supportedTokens || []
@@ -35,8 +31,7 @@ const DeFiModuleSettings = ({ selectedElement }) => {
             timeRange: data.settings?.timeRange || '5Y'
           })
         };
-        
-        console.log('Setting initial form values:', initialValues);
+
         form.setFieldsValue(initialValues);
       } catch (e) {
         console.error('Error parsing module data:', e);
@@ -45,13 +40,7 @@ const DeFiModuleSettings = ({ selectedElement }) => {
   }, [selectedElement, form]);
 
   const handleValuesChange = (changedValues, allValues) => {
-    console.log('Form values changed:', {
-      changedValues,
-      allValues
-    });
-
     if (!selectedElement || !moduleData) {
-      console.warn('No selected element or module data available');
       return;
     }
 
@@ -64,7 +53,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
         showStats: allValues.showStats ?? moduleData.settings?.showStats ?? true,
         showButton: allValues.showButton ?? moduleData.settings?.showButton ?? true,
         customColor: allValues.customColor || moduleData.settings?.customColor || '#2A2A3C',
-        // Module type specific settings
         ...(moduleData.moduleType === 'aggregator' && {
           supportedChains: allValues.supportedChains || moduleData.settings?.supportedChains || [],
           supportedTokens: allValues.supportedTokens || moduleData.settings?.supportedTokens || []
@@ -76,8 +64,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
       }
     };
 
-    console.log('Updating module data:', updatedData);
-
     updateContent(selectedElement.id, {
       ...selectedElement,
       content: JSON.stringify(updatedData),
@@ -87,7 +73,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
       }
     });
 
-    // Update local state
     setModuleData(updatedData);
   };
 
@@ -105,37 +90,23 @@ const DeFiModuleSettings = ({ selectedElement }) => {
                     name={[name, 'label']}
                     rules={[{ required: true, message: 'Missing label' }]}
                   >
-                    <Input 
-                      placeholder="Stat Label" 
-                      onChange={(e) => console.log(`Stat label changed for index ${name}:`, e.target.value)}
-                    />
+                    <Input placeholder="Stat Label" />
                   </Form.Item>
                   <Form.Item
                     {...restField}
                     name={[name, 'value']}
                     rules={[{ required: true, message: 'Missing value' }]}
                   >
-                    <Input 
-                      placeholder="Stat Value" 
-                      onChange={(e) => console.log(`Stat value changed for index ${name}:`, e.target.value)}
-                    />
+                    <Input placeholder="Stat Value" />
                   </Form.Item>
-                  <DeleteOutlined 
-                    onClick={() => {
-                      console.log(`Removing stat at index ${name}`);
-                      remove(name);
-                    }} 
-                  />
+                  <DeleteOutlined onClick={() => remove(name)} />
                 </Space>
               ))}
               <Form.Item>
-                <Button 
-                  type="dashed" 
-                  onClick={() => {
-                    console.log('Adding new stat');
-                    add();
-                  }} 
-                  block 
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  block
                   icon={<PlusOutlined />}
                 >
                   Add Stat
@@ -150,11 +121,8 @@ const DeFiModuleSettings = ({ selectedElement }) => {
 
   const renderModuleSpecificSettings = () => {
     if (!moduleData) {
-      console.log('No module data available for specific settings');
       return null;
     }
-
-    console.log('Rendering specific settings for module type:', moduleData.moduleType);
 
     switch (moduleData.moduleType) {
       case 'aggregator':
@@ -175,7 +143,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
                   { value: 'Avalanche', label: 'Avalanche' },
                   { value: 'Arbitrum', label: 'Arbitrum' }
                 ]}
-                onChange={(value) => console.log('Supported chains changed:', value)}
               />
             </Form.Item>
             <Form.Item
@@ -192,7 +159,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
                   { value: 'ETH', label: 'ETH' },
                   { value: 'WBTC', label: 'WBTC' }
                 ]}
-                onChange={(value) => console.log('Supported tokens changed:', value)}
               />
             </Form.Item>
           </>
@@ -209,7 +175,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
                 style={{ width: '100%' }}
                 formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                onChange={(value) => console.log('Simulation balance changed:', value)}
               />
             </Form.Item>
             <Form.Item
@@ -224,19 +189,16 @@ const DeFiModuleSettings = ({ selectedElement }) => {
                   { value: '1Y', label: '1 Year' },
                   { value: '5Y', label: '5 Years' }
                 ]}
-                onChange={(value) => console.log('Time range changed:', value)}
               />
             </Form.Item>
           </>
         );
       default:
-        console.log('No specific settings for module type:', moduleData.moduleType);
         return null;
     }
   };
 
   if (!selectedElement || !moduleData) {
-    console.log('No selected element or module data available');
     return <div>Select a DeFi module to edit its settings</div>;
   }
 
@@ -251,7 +213,7 @@ const DeFiModuleSettings = ({ selectedElement }) => {
         name="title"
         rules={[{ required: true, message: 'Please input the module title!' }]}
       >
-        <Input onChange={(e) => console.log('Title changed:', e.target.value)} />
+        <Input />
       </Form.Item>
 
       <Form.Item
@@ -259,7 +221,7 @@ const DeFiModuleSettings = ({ selectedElement }) => {
         name="showStats"
         valuePropName="checked"
       >
-        <Switch onChange={(checked) => console.log('Show stats toggled:', checked)} />
+        <Switch />
       </Form.Item>
 
       <Form.Item
@@ -267,14 +229,14 @@ const DeFiModuleSettings = ({ selectedElement }) => {
         name="showButton"
         valuePropName="checked"
       >
-        <Switch onChange={(checked) => console.log('Show button toggled:', checked)} />
+        <Switch />
       </Form.Item>
 
       <Form.Item
         label="Module Color"
         name="customColor"
       >
-        <ColorPicker onChange={(color) => console.log('Color changed:', color)} />
+        <ColorPicker />
       </Form.Item>
 
       {renderStatsSettings()}
@@ -283,4 +245,4 @@ const DeFiModuleSettings = ({ selectedElement }) => {
   );
 };
 
-export default DeFiModuleSettings; 
+export default DeFiModuleSettings;

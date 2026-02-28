@@ -242,7 +242,6 @@ const ImageSettings = () => {
         async () => {
           // On successful upload
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log("File available at", downloadURL);
           setImageSrc(downloadURL);
 
           // Update selected element
@@ -264,7 +263,6 @@ const ImageSettings = () => {
               imageUrl: downloadURL,
               createdAt: new Date(),
             });
-            console.log("Uploaded metadata to Firestore");
           } catch (firestoreError) {
             console.error("Firestore error:", firestoreError);
           }
@@ -322,7 +320,6 @@ const ImageSettings = () => {
         `usersProjectData/${userId}/projects/${projectName}/${img.name}`
       );
       await deleteObject(itemRef);
-      console.log("Deleted from Firebase:", img.name);
 
       // Update local state
       setExistingImages((prev) => prev.filter((x) => x.id !== itemId));

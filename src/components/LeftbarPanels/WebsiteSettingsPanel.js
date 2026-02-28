@@ -17,11 +17,9 @@ async function getOrCreateGroup(walletId) {
     const groupsResponse = await pinata.groups.list();
     const existingGroup = groupsResponse.find(group => group.name === walletId);
     if (existingGroup) {
-      console.log("Found group:", existingGroup);
       return existingGroup;
     } else {
       const newGroup = await pinata.groups.create(walletId);
-      console.log("Created new group:", newGroup);
       return newGroup;
     }
   } catch (error) {
@@ -56,7 +54,6 @@ async function uploadFileToPinata(file, walletId, projectName) {
       body: formData,
     });
     const data = await response.json();
-    console.log("Pinata upload response:", data);
     return data;
   } catch (error) {
     console.error("Error uploading file to Pinata:", error);
@@ -86,7 +83,6 @@ async function renameProjectFolder(oldName, newName, userId) {
       await deleteObject(itemRef);
     });
     await Promise.all(promises);
-    console.log(`Folder renamed successfully from ${oldName} to ${newName}`);
   } catch (error) {
     console.error("Error renaming folder:", error);
     throw error;

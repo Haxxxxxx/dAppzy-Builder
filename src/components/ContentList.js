@@ -67,7 +67,6 @@ const ContentList = forwardRef(
 
           // Only update if we have elements and they're different from current
           if (allElements.length > 0 && JSON.stringify(allElements) !== JSON.stringify(elements)) {
-            console.log('Loading chunked elements:', allElements.length);
             setElements(allElements);
           }
         } catch (error) {
@@ -175,16 +174,6 @@ const ContentList = forwardRef(
       const targetId = newLayoutConfig.targetId || elements[newLayoutConfig.targetIndex]?.id;
       const targetIndex = rootElementIds.indexOf(targetId);
 
-      console.log('Root element indices:', {
-        source: sourceIndex,
-        target: targetIndex,
-        targetId,
-        edge: position?.edge,
-        rootElementsCount: rootElements.length,
-        totalElementsCount: elements.length,
-        rootElementIds
-      });
-
       if (sourceIndex === -1 || targetIndex === -1) {
         console.warn('Could not find source or target in root elements:', {
           sourceId: oldLayoutId,
@@ -215,12 +204,6 @@ const ContentList = forwardRef(
 
       // Ensure the index is within bounds
       finalIndex = Math.max(0, Math.min(finalIndex, rootElements.length));
-
-      console.log('Moving root element:', {
-        from: sourceIndex,
-        to: finalIndex,
-        edge: position?.edge
-      });
 
       // Reorder elements
       setElements(prevElements => {
@@ -274,21 +257,6 @@ const ContentList = forwardRef(
           }
         });
 
-        console.log('Element reordering details:', {
-          totalElementsBefore: prevElements.length,
-          totalElementsAfter: updatedElements.length,
-          rootElements: reorderedRootElements.map((el, idx) => ({
-            id: el.id,
-            type: el.type,
-            index: idx,
-            childCount: (childrenMap.get(el.id) || []).length
-          })),
-          childrenMap: Array.from(childrenMap.entries()).map(([parentId, children]) => ({
-            parentId,
-            childCount: children.length
-          }))
-        });
-
         return updatedElements;
       });
 
@@ -297,14 +265,6 @@ const ContentList = forwardRef(
 
     // Enhanced layout replacement handler
     const handleLayoutReplace = useCallback(({ oldLayoutId, sourceIndex, targetIndex, newLayout, position }) => {
-      console.log('Handling layout replace:', {
-        oldLayoutId,
-        sourceIndex,
-        targetIndex,
-        targetId: newLayout.id,
-        position
-      });
-      
       const resultId = replaceLayout(oldLayoutId, {
         ...newLayout,
         sourceIndex,
@@ -429,8 +389,6 @@ const ContentList = forwardRef(
           item.type === 'section'
         ) {
           // Handle all section types with their full configuration
-          console.log('Adding section with data:', item);
-          
           // For hero elements, ensure proper configuration inheritance
           if (item.type === 'hero') {
             const timestamp = Date.now();
