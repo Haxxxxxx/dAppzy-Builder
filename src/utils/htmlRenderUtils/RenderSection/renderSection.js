@@ -111,7 +111,12 @@ export function renderSection(sectionElement, context) {
             case 'feature':
               return renderFeature(child, context);
             default:
-              return null;
+              // Generic fallback for paragraph, heading, image, button, etc.
+              return (
+                <div key={child.id} style={child.styles || {}}>
+                  {child.content || ''}
+                </div>
+              );
           }
         })}
       </div>
