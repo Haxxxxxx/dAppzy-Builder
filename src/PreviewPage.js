@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc, collectionGroup, query, where, getDocs } from "firebase/firestore";
 import DOMPurify from "dompurify";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 
 const PreviewPage = () => {
   // Destructure userId, projectId, and projectName from URL parameters.
@@ -41,7 +41,11 @@ const PreviewPage = () => {
         }
       } catch (err) {
         console.error("Error fetching project:", err);
-        setError("Failed to load project.");
+        if (err.code === "permission-denied" && !auth.currentUser) {
+          setError("Sign in to preview this project.");
+        } else {
+          setError("Failed to load project.");
+        }
       }
     };
 
