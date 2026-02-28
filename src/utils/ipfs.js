@@ -23,8 +23,8 @@ export async function pinDirectoryToPinata(files, metadata) {
     validatePinataConfig();
     const formData = new FormData();
     
-    // Append the file (use Blob directly)
-    formData.append('file', files[0].file, files[0].fileName);
+    // Append all files to the form data for directory pinning
+    files.forEach(f => formData.append('file', f.file, f.fileName));
     
     // Add metadata if provided
     if (metadata) {
