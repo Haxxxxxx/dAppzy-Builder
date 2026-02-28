@@ -26,6 +26,10 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
   const [isSaving, setIsSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
   const latestPendingSave = useRef(null);
+  const userIdRef = useRef(userId);
+  const projectIdRef = useRef(projectId);
+  userIdRef.current = userId;
+  projectIdRef.current = projectId;
 
   // Validate IDs are present
   useEffect(() => {
@@ -220,17 +224,12 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     }
   }, [isSaving, processSaveQueue]);
 
-  // Debounced save function
+  // Debounced save function — reads userId/projectId from refs to keep stable deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSaveContent = useCallback(
     debounce((elements, websiteSettings) => {
-      if (!userId || !projectId) {
-        console.warn('Save aborted: missing userId or projectId', { 
-          userId, 
-          projectId,
-          urlParams: getUrlParams(),
-          propUserId,
-          propProjectId
-        });
+      if (!userIdRef.current || !projectIdRef.current) {
+        console.warn('Save aborted: missing userId or projectId');
         setSaveStatus('Cannot save: Missing user or project ID');
         return;
       }
@@ -239,7 +238,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       latestPendingSave.current = { elements, websiteSettings };
       processSaveQueue();
     }, 3000),
-    [userId, projectId, propUserId, propProjectId]
+    []
   );
 
   // Save content wrapper that uses debounced function
