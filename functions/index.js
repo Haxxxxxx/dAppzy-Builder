@@ -77,6 +77,8 @@ exports.sendSupportEmail = onRequest(
   {
     secrets: [EMAIL_USER, EMAIL_PASS],
     cors: ALLOWED_ORIGINS,
+    invoker: "public",
+    region: "us-central1",
   },
   async (req, res) => {
     if (req.method !== "POST") {
@@ -330,6 +332,8 @@ exports.verifySubscription = onRequest(
   {
     secrets: [SOLANA_ADMIN_WALLET, HELIUS_API_KEY],
     cors: ALLOWED_ORIGINS,
+    invoker: "public",
+    region: "us-central1",
   },
   async (req, res) => {
     if (req.method !== "POST") {
