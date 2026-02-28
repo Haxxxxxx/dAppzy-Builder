@@ -9,7 +9,7 @@ import { ethers } from 'ethers';
  */
 export async function validateWeb3Message(message, signature) {
   try {
-    const address = await ethers.utils.verifyMessage(message, signature);
+    const address = await ethers.verifyMessage(message, signature);
     return address;
   } catch (error) {
     throw new Error('Invalid signature');
@@ -24,7 +24,7 @@ export async function validateWeb3Message(message, signature) {
  */
 export async function validateWeb3Transaction(txHash) {
   try {
-    const provider = new ethers.providers.JsonRpcProvider();
+    const provider = new ethers.JsonRpcProvider();
     const tx = await provider.getTransaction(txHash);
     if (!tx) {
       throw new Error('Transaction not found');
