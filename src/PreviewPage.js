@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collectionGroup, query, where, getDocs } from "firebase/firestore";
 import DOMPurify from "dompurify";
 import { db } from "./firebase";
 
@@ -19,8 +19,8 @@ const PreviewPage = () => {
         if (userId && projectId) {
           projectRef = doc(db, "projects", userId, "ProjectRef", projectId);
         } else {
-          // If using custom URL, fetch based on `customUrl` (if needed).
-          const q = query(collection(db, "projects"), where("customUrl", "==", userId)); // Adjust if necessary
+          // Custom URL lookup across all users' ProjectRef subcollections
+          const q = query(collectionGroup(db, "ProjectRef"), where("customUrl", "==", userId));
           const querySnapshot = await getDocs(q);
 
           if (!querySnapshot.empty) {
