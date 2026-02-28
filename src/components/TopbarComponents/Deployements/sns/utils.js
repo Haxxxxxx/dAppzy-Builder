@@ -124,13 +124,15 @@ export const debugTransaction = (tx, label) => {
   });
 };
 
-// Utility: Get domain state with cache
+// Utility: Get domain state with cache (30s TTL)
+const CACHE_TTL_MS = 30000;
 const domainStateCache = new Map();
 export const getDomainStateWithCache = async (connection, domainKey) => {
   const cacheKey = domainKey.toBase58();
-  if (domainStateCache.has(cacheKey)) {
+  const cached = domainStateCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     debugLog('Returning cached domain state', { domainKey: cacheKey });
-    return domainStateCache.get(cacheKey);
+    return cached.data;
   }
   try {
     // Get account info
@@ -160,7 +162,7 @@ export const getDomainStateWithCache = async (connection, domainKey) => {
         name
       }
     };
-    domainStateCache.set(cacheKey, state);
+    domainStateCache.set(cacheKey, { data: state, timestamp: Date.now() });
     return state;
   } catch (error) {
     debugLog('Error retrieving domain state', {
@@ -180,13 +182,14 @@ export const getDomainsByOwner = async (connection, walletAddress) => {
     const walletPubkey = new PublicKey(walletAddress);
     debugLog('Getting domains for wallet', { wallet: walletAddress });
 
-    // Check cache first
+    // Check cache first (30s TTL)
     const cacheKey = walletAddress;
-    if (domainCache.has(cacheKey)) {
-      debugLog('Returning cached domains', { 
-        count: domainCache.get(cacheKey).length 
+    const cached = domainCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      debugLog('Returning cached domains', {
+        count: cached.data.length
       });
-      return domainCache.get(cacheKey);
+      return cached.data;
     }
 
     // Get all domains owned by the wallet
@@ -246,7 +249,7 @@ export const getDomainsByOwner = async (connection, walletAddress) => {
     const validDomains = domains.filter(d => d !== null);
     
     // Cache the results
-    domainCache.set(cacheKey, validDomains);
+    domainCache.set(cacheKey, { data: validDomains, timestamp: Date.now() });
     
     return validDomains;
   } catch (error) {
