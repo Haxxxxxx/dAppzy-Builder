@@ -5,6 +5,7 @@ import { AutoSaveContext } from '../context/AutoSaveContext';
 import UnifiedDropZone from '../utils/UnifiedDropZone';
 import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
+import { generateUniqueId } from '../utils/LeftBarUtils/elementUtils';
 import LayoutReplacementBoundary from './LayoutReplacementBoundary';
 import debounce from 'lodash/debounce';
 
@@ -29,10 +30,8 @@ const ContentList = forwardRef(
       moveElement,
       setSelectedElement,
       setElements,
-      saveToLocalStorage,
       selectedStyle,
       selectedElement,
-      generateUniqueId,
     } = useContext(EditableContext);
 
     const { saveContent, markPendingChanges } = useContext(AutoSaveContext);
