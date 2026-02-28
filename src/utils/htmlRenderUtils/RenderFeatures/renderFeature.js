@@ -14,7 +14,10 @@ import { SecurityManager } from '../../../security/securityManager';
  * @returns {React.Element} The rendered feature
  */
 export function renderFeature(featureElement, context) {
-  const { id, content, styles = {} } = featureElement;
+  const { id, content: rawContent, styles = {} } = featureElement;
+  const content = rawContent || {};
+  const title = content.title || '';
+  const description = content.description || '';
 
   // Default styles for feature components
   const defaultStyles = {
@@ -79,7 +82,7 @@ export function renderFeature(featureElement, context) {
         {content.icon.startsWith('http') ? (
           <img
             src={SecurityManager.sanitizeUrl(content.icon)}
-            alt={SecurityManager.sanitizeInput(content.title)}
+            alt={SecurityManager.sanitizeInput(title)}
             loading="lazy"
           />
         ) : (
@@ -95,14 +98,14 @@ export function renderFeature(featureElement, context) {
       className="feature-item"
       style={containerStyle}
       role="article"
-      aria-label={SecurityManager.sanitizeInput(content.title)}
+      aria-label={SecurityManager.sanitizeInput(title)}
     >
       {renderIcon()}
       <h3 className="feature-title" style={titleStyle}>
-        {SecurityManager.sanitizeInput(content.title)}
+        {SecurityManager.sanitizeInput(title)}
       </h3>
       <p className="feature-description" style={descriptionStyle}>
-        {SecurityManager.sanitizeInput(content.description)}
+        {SecurityManager.sanitizeInput(description)}
       </p>
     </div>
   );
