@@ -248,6 +248,11 @@ exports.verifyPhantomV2 = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return res.status(429).json({ error: "Too many requests." });
+    }
+
     try {
       const { publicKey, signature, message, nonce } = req.body;
       if (!publicKey || !signature || !message || !nonce) {
@@ -512,6 +517,11 @@ exports.verifyMetaMask = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return res.status(429).json({ error: "Too many requests." });
+    }
+
     try {
       const { address, signature, message, nonce } = req.body;
       if (!address || !signature || !message || !nonce) {
@@ -559,6 +569,11 @@ exports.verifyFreighter = onRequest(
     }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return res.status(429).json({ error: "Too many requests." });
     }
 
     try {
@@ -640,6 +655,11 @@ exports.verifyUnstoppable = onRequest(
     }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return res.status(429).json({ error: "Too many requests." });
     }
 
     try {
