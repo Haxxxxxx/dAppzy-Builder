@@ -161,11 +161,6 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
                   className="edit-content-button"
                   onClick={() => {
                     setViewMode('content');
-                    // Find and expand the content editor section
-                    const contentEditor = document.querySelector('.content-editor-section');
-                    if (contentEditor) {
-                      contentEditor.classList.add('expanded');
-                    }
                   }}
                 >
                   <span className="button-icon">✏️</span>
