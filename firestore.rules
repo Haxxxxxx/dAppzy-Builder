@@ -8,9 +8,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Users can read/write only their own user document
+    // Users can read their own user document; writes restricted to non-sensitive fields
+    // subscriptionStatus, subscriptionPlan, subscriptionExpiry are admin-only (Cloud Functions)
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['subscriptionStatus', 'subscriptionPlan', 'subscriptionExpiry']);
+      allow create: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.keys()
+            .hasAny(['subscriptionStatus', 'subscriptionPlan', 'subscriptionExpiry']);
     }
 
     // Users can read/write only their own projects
