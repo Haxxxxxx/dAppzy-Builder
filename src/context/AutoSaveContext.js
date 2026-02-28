@@ -167,36 +167,33 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       // Clean website settings
       const cleanWebsiteSettings = removeUndefined(websiteSettings || {});
 
-      // First, clear any existing chunks
-      const existingChunks = parseInt(localStorage.getItem('editableElements_chunks') || '0');
-      for (let i = 0; i < existingChunks * 50; i += 50) {
-        localStorage.removeItem(`editableElements_chunk_${i}`);
-      }
-
-      // Save to localStorage in chunks to prevent UI blocking
+      // Save to localStorage in chunks to prevent UI blocking.
+      // Write new chunks FIRST, then clean up old ones to prevent data loss on crash.
       const chunkSize = 50;
+      const oldChunkCount = parseInt(localStorage.getItem('editableElements_chunks') || '0');
+      const newChunkCount = Math.ceil(uniqueElements.length / chunkSize);
+
       for (let i = 0; i < uniqueElements.length; i += chunkSize) {
         const chunk = uniqueElements.slice(i, i + chunkSize);
         await new Promise(resolve => setTimeout(resolve, 0));
         localStorage.setItem(`editableElements_chunk_${i}`, JSON.stringify(chunk));
       }
-      localStorage.setItem('editableElements_chunks', Math.ceil(uniqueElements.length / chunkSize));
+      localStorage.setItem('editableElements_chunks', newChunkCount);
       localStorage.setItem('websiteSettings', JSON.stringify(cleanWebsiteSettings));
 
-      // Save to Firestore
+      // Remove leftover old chunks that exceed the new count
+      for (let i = newChunkCount * chunkSize; i < oldChunkCount * chunkSize; i += chunkSize) {
+        localStorage.removeItem(`editableElements_chunk_${i}`);
+      }
+
+      // Save to Firestore (keep localStorage chunks as fallback — they'll be
+      // overwritten by the next save, so no explicit deletion needed)
       const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       await setDoc(projectRef, {
         elements: uniqueElements,
         websiteSettings: cleanWebsiteSettings,
         lastUpdated: serverTimestamp()
       }, { merge: true });
-
-      // Clean up localStorage backup chunks after successful Firestore save
-      const savedChunks = parseInt(localStorage.getItem('editableElements_chunks') || '0');
-      for (let i = 0; i < savedChunks * chunkSize; i += chunkSize) {
-        localStorage.removeItem(`editableElements_chunk_${i}`);
-      }
-      localStorage.removeItem('editableElements_chunks');
 
       setLastSaved(new Date());
       setSaveStatus('All changes saved');
