@@ -3,10 +3,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../css/SettingsPanel.css';
 import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
 import { storage } from '../../firebase';
-import { pinata, pinataSDK } from '../../utils/configPinata';
+import { pinata, pinataConfig } from '../../utils/configPinata';
 
-// Replace pinataJwt with pinata.jwt
-const jwt = pinata.pinata_jwt;
+const jwt = pinataConfig.jwt;
 
 // 1) Helper: get or create Pinata group
 async function getOrCreateGroup(walletId) {

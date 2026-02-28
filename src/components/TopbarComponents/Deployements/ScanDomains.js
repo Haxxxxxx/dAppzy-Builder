@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
-import { pinataJwt } from '../../../utils/configPinata';
+import { pinataConfig } from '../../../utils/configPinata';
 import './DomainsStyles.css';
 
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
@@ -86,7 +86,7 @@ const ScanDomains = ({
     const response = await fetch(PINATA_PIN_FILE_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${pinataJwt}`,
+        Authorization: `Bearer ${pinataConfig.jwt}`,
       },
       body: formData,
     });

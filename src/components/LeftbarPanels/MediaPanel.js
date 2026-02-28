@@ -25,12 +25,12 @@ function guessTypeFromExtension(filename) {
 // Pinata API base and auth helper
 const PINATA_BASE_URL = 'https://api.pinata.cloud';
 const getAuthHeaders = () => {
-  if (pinataConfig.pinata_jwt) {
-    return { Authorization: `Bearer ${pinataConfig.pinata_jwt}` };
+  if (pinataConfig.jwt) {
+    return { Authorization: `Bearer ${pinataConfig.jwt}` };
   }
   return {
-    pinata_api_key: pinataConfig.pinata_api_key,
-    pinata_secret_api_key: pinataConfig.pinata_secret_api_key,
+    pinata_api_key: pinataConfig.apiKey,
+    pinata_secret_api_key: pinataConfig.secretKey,
   };
 };
 
