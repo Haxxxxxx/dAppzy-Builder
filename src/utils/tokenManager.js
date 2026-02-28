@@ -86,13 +86,11 @@ export class TokenManager {
   static getTokenFromEnv(type) {
     switch (type) {
       case 'PINATA':
-        return process.env.REACT_PINATA_JWT;
-      case 'AUTH':
-        return process.env.REACT_AUTH_TOKEN;
+        return process.env.REACT_APP_PINATA_JWT;
       case 'WEB3':
-        return process.env.REACT_WEB3_TOKEN;
+        return process.env.REACT_APP_WEB3_TOKEN;
       case 'FIREBASE':
-        return process.env.REACT_FIREBASE_TOKEN;
+        return process.env.REACT_APP_FIREBASE_TOKEN;
       default:
         return null;
     }
