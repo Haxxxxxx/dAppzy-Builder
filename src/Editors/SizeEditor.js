@@ -2,6 +2,9 @@ import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
 import "./css/SizeEditor.css";
 
+// Unit options for dimension inputs
+const UNIT_OPTIONS = ["px", "%", "em", "rem", "vw", "vh", "auto", "none"];
+
 // Parses a dimension string (e.g. "300px" => { value: "300", unit: "px" }, "auto", "none", etc.)
 function parseDimension(dim) {
   if (!dim || dim === "auto" || dim === "none") {
@@ -60,8 +63,7 @@ const SizeEditor = () => {
   if (!selectedElement) return null;
   const { id } = selectedElement;
 
-  // Unit options: px, %, em, etc.
-  const unitOptions = ["px", "%", "em", "rem", "vw", "vh", "auto", "none"];
+  const unitOptions = UNIT_OPTIONS;
 
   // Handlers for width
   const handleWidthValueChange = (e) => {

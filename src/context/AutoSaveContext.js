@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import debounce from 'lodash/debounce';
+import { LAYOUT_TYPES_WITH_CHILDREN } from '../constants/elementTypes';
 
 export const AutoSaveContext = createContext();
 
@@ -53,7 +54,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     const hasValidStyles = Object.entries(element.styles || {}).every(([_, value]) => value !== undefined);
     
     // Layout-specific validation
-    if (['navbar', 'hero', 'footer', 'ContentSection', 'cta', 'defiSection'].includes(element.type)) {
+    if (LAYOUT_TYPES_WITH_CHILDREN.includes(element.type)) {
       return hasValidStructure && Array.isArray(element.children) && hasValidStyles;
     }
     

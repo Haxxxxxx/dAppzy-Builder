@@ -15,25 +15,23 @@ import FormElements from './ElementsMapping/FormElements';
 import MediaElements from './ElementsMapping/MediaElements';
 import ContentSectionsPanel from '../SectionsPanels/ContentSectionsPanel';
 
-const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelToggle, handleOpenMediaPanel }) => {
-  // Define default expanded state based on view mode
-  const defaultExpanded = {
-          Navbar: true,
-          Hero: true,
-          CTA: true,
-          Footer: true,
-          'Content Sections': true,
-          'Web3 Sections': true,
-          Footer: true,
-          Structure: true,
-          Basic: true,
-          Typography: true,
-          Media: true,
-          Forms: true,
-          'Web 3 Blocks': true,
-        };
+const DEFAULT_EXPANDED = {
+  Navbar: true,
+  Hero: true,
+  CTA: true,
+  Footer: true,
+  'Content Sections': true,
+  'Web3 Sections': true,
+  Structure: true,
+  Basic: true,
+  Typography: true,
+  Media: true,
+  Forms: true,
+  'Web 3 Blocks': true,
+};
 
-  const [expandedSections, setExpandedSections] = useState(defaultExpanded);
+const NewElementPanel = ({ contentListWidth, viewMode, searchQuery, handlePanelToggle, handleOpenMediaPanel }) => {
+  const [expandedSections, setExpandedSections] = useState(DEFAULT_EXPANDED);
 
   const toggleSection = (sectionName) => {
     setExpandedSections((prev) => ({

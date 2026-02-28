@@ -1,4 +1,5 @@
 import React from 'react';
+import { LAYOUT_TYPES } from '../../constants/elementTypes';
 import {
   Paragraph,
   Heading,
@@ -146,7 +147,7 @@ export const renderElement = (
       });
   };
 
-  if ((type === 'navbar' || type === 'hero' || type === 'mintingSection' || type === 'cta' || type === 'footer'|| type === 'ContentSection') && !configuration) {
+  if (LAYOUT_TYPES.includes(type) && !configuration) {
     if (!warnedElements.has(id)) {
       warnedElements.add(id);
     }
