@@ -322,7 +322,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
           <div className='upgrade-popup-title-box-right'>
             <button className="upgrade-popup-close-button" onClick={onClose}>×</button>
           </div>
-          <i class="bi bi-x-circle" style={{ fontSize: '40px', color: 'var(--purple)' }}></i>
+          <i className="bi bi-x-circle" style={{ fontSize: '40px', color: 'var(--purple)' }}></i>
           <h2 className="upgrade-title">Payment Error</h2>
           <div className="upgrade-section-label">{error}</div>
           <button className="upgrade-confirm-btn" onClick={() => setStep('form')}>Try Again</button>
@@ -394,14 +394,14 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                 <ul className='membership-card-details-check-list'>
                   {getPlanFeatures(selectedPlan).map((f, i) => (
                     <li key={i} className='membership-card-details-check-item'>
-                      <i class="bi bi-check-circle-fill"></i> {f}
+                      <i className="bi bi-check-circle-fill"></i> {f}
                     </li>
                   ))}
                 </ul>
                 {selectedPlan === 'pioneer' ? (
                   <button className="membership-card-details-purchase-btn" onClick={() => setStep('form')}>Purchase Plan</button>
                 ) : (
-                  <button className="membership-card-details-current-plan-btn" disabled><i class="bi bi-lock-fill"></i>Current Plan</button>
+                  <button className="membership-card-details-current-plan-btn" disabled><i className="bi bi-lock-fill"></i>Current Plan</button>
                 )}
               </div>
             </div>
@@ -476,7 +476,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
             </div>
           </div>
           <div className="upgrade-warning modern">
-            <i class="bi bi-exclamation-triangle"></i>
+            <i className="bi bi-exclamation-triangle"></i>
             <p className='upgrade-warning-text'>
               To renew your monthly subscription, you will need to manually sign a message directly on the builder. You'll receive an email notification when it's time to renew, and you'll have <b>14 days</b> to complete the signature process to keep your access.
             </p>
