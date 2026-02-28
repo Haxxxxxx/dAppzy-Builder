@@ -1,6 +1,6 @@
 // src/context/EditableContext.js
 
-import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   generateUniqueId,
   removeElementRecursively,
@@ -23,6 +23,10 @@ export const EditableProvider = ({ children, userId }) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [forceBorder, setForceBorder] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(null);
+
+  // Keep a ref to elements for use in handlers that need fresh state mid-execution
+  const elementsRef = useRef(elements);
+  elementsRef.current = elements;
 
   // Define findElementById function
   const findElementById = useCallback((id, elementsList = elements) => {
@@ -313,11 +317,12 @@ export const EditableProvider = ({ children, userId }) => {
 
     // Helper function to handle style inheritance for children
     const applyChildStyles = (parentId, parentStyles, children, config) => {
-      const parent = findElementById(parentId, elements);
+      const currentElements = elementsRef.current;
+      const parent = currentElements.find(el => el.id === parentId);
       if (!parent?.children) return;
 
       parent.children.forEach((childId, index) => {
-        const child = elements.find(el => el.id === childId);
+        const child = currentElements.find(el => el.id === childId);
         const childConfig = config?.children?.[index];
         
         if (child && childConfig) {
@@ -386,7 +391,7 @@ export const EditableProvider = ({ children, userId }) => {
 
       case 'edit': {
         const { children, styles, ...otherProps } = command.properties || {};
-        const targetElement = findElementById(command.targetId, elements);
+        const targetElement = elementsRef.current.find(el => el.id === command.targetId);
         
         if (!targetElement) {
           console.warn(`Element not found: ${command.targetId}`);
@@ -425,7 +430,7 @@ export const EditableProvider = ({ children, userId }) => {
             const childId = targetElement.children[index];
             if (!childId) return;
 
-            const child = elements.find(el => el.id === childId);
+            const child = elementsRef.current.find(el => el.id === childId);
             if (!child) return;
 
             // Update child content
@@ -457,7 +462,7 @@ export const EditableProvider = ({ children, userId }) => {
         break;
 
       case 'updateStyles': {
-        const targetElement = findElementById(command.targetId, elements);
+        const targetElement = elementsRef.current.find(el => el.id === command.targetId);
         if (!targetElement) {
           console.warn(`Element not found: ${command.targetId}`);
           return;
@@ -487,7 +492,7 @@ export const EditableProvider = ({ children, userId }) => {
       default:
         console.warn('Unknown AI command:', command);
     }
-  }, [elements, addNewElement, updateStyles, findElementById]);
+  }, [addNewElement, updateStyles, updateContent, updateElementProperties, handleRemoveElement, moveElement]);
 
   // Memoize context value after all state and functions are defined
   const contextValue = useMemo(() => ({
