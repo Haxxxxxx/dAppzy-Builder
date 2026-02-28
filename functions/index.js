@@ -97,7 +97,7 @@ exports.sendSupportEmail = onRequest(
       return res.json({ success: true, message: "Email sent & Firestore updated" });
     } catch (error) {
       console.error("Error sending support email:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -162,9 +162,8 @@ exports.reverseLookup = onRequest(
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error fetching domain data from UD API:", response.status, errorText);
-        return res.status(response.status).json({
+        return res.status(502).json({
           error: "Error fetching domain data from UD API",
-          details: errorText,
         });
       }
 
@@ -172,7 +171,7 @@ exports.reverseLookup = onRequest(
       return res.json(data);
     } catch (error) {
       console.error("Error in reverseLookup:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -222,7 +221,7 @@ exports.verifyPhantomV2 = onRequest(
       return res.json({ customToken });
     } catch (error) {
       console.error("Error in verifyPhantomV2:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -398,7 +397,7 @@ exports.verifySubscription = onRequest(
       });
     } catch (error) {
       console.error("Error in verifySubscription:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -438,7 +437,7 @@ exports.verifyMetaMask = onRequest(
       return res.json({ customToken });
     } catch (error) {
       console.error("Error in verifyMetaMask:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -488,7 +487,7 @@ exports.verifyFreighter = onRequest(
       return res.json({ customToken });
     } catch (error) {
       console.error("Error in verifyFreighter:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
@@ -537,7 +536,7 @@ exports.verifyUnstoppable = onRequest(
       return res.json({ customToken });
     } catch (error) {
       console.error("Error in verifyUnstoppable:", error);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
