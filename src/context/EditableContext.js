@@ -50,13 +50,16 @@ export const EditableProvider = ({ children, userId }) => {
     });
   }, [pushToHistory]);
 
-  const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
-    // Generate unique ID for parent element
+  // Build an element and its children into a flat array without recording to history.
+  // Returns { id, allElements } where allElements is the flat list of all created elements.
+  const buildElementTree = useCallback((type, parentId, config, existingIds) => {
     let newId = generateUniqueId(type);
-    while (elements.some((el) => el.id === newId)) {
+    while (existingIds.has(newId)) {
       newId = generateUniqueId(type);
     }
-  
+    existingIds.add(newId);
+
+    let resolvedType = type;
     let configuration = null;
     let structure = null;
     if (typeof config === 'string' && structureConfigurations[config]) {
@@ -65,39 +68,32 @@ export const EditableProvider = ({ children, userId }) => {
     } else if (config && typeof config === 'object') {
       configuration = config.configuration || config;
       structure = config.structure || config.configuration || config;
-      type = config.type || type;
+      resolvedType = config.type || type;
     }
-  
+
     const configStyles = structure && structureConfigurations[structure]?.styles || {};
     const elementStyles = config?.styles || {};
 
     // For mintingSection, inject a candyMachineId child at creation time
-    // so the render function never needs to generate or write one
-    let children = config?.children || [];
-    if (type === 'mintingSection' && Array.isArray(children)) {
-      const hasCandyId = children.some(c => c.type === 'candyMachineId');
+    let childConfigs = config?.children || [];
+    if (resolvedType === 'mintingSection' && Array.isArray(childConfigs)) {
+      const hasCandyId = childConfigs.some(c => c.type === 'candyMachineId');
       if (!hasCandyId) {
-        children = [{ type: 'candyMachineId', content: crypto.randomUUID() }, ...children];
+        childConfigs = [{ type: 'candyMachineId', content: crypto.randomUUID() }, ...childConfigs];
       }
     }
 
-    // Recursively create children if present
-    let childrenIds = [];
-    if (children.length > 0) {
-      childrenIds = children.map(childConfig => {
-        // Generate unique ID for each child
-        const childId = generateUniqueId(childConfig.type);
-        const childWithId = {
-          ...childConfig,
-          id: childId
-        };
-        return addNewElement(childConfig.type, 1, 0, newId, childWithId);
-      });
-    }
-    
+    // Recursively build children
+    const allElements = [];
+    const childrenIds = childConfigs.map(childConfig => {
+      const result = buildElementTree(childConfig.type, newId, childConfig, existingIds);
+      allElements.push(...result.allElements);
+      return result.id;
+    });
+
     const baseElement = {
       id: newId,
-      type,
+      type: resolvedType,
       configuration,
       structure,
       styles: { ...configStyles, ...elementStyles },
@@ -108,14 +104,24 @@ export const EditableProvider = ({ children, userId }) => {
       children: childrenIds,
     };
 
+    allElements.push(baseElement);
+    return { id: newId, allElements };
+  }, []);
+
+  const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
+    // Collect existing IDs for collision checking
+    const existingIds = new Set(elementsRef.current.map(el => el.id));
+    const { id: newId, allElements } = buildElementTree(type, parentId, config, existingIds);
+
+    // Single recordElementsUpdate for the entire tree (one history entry, one save)
     recordElementsUpdate((prev) => {
       let newElements;
       if (!parentId) {
         newElements = [...prev];
-        newElements.splice(index || 0, 0, baseElement);
+        newElements.splice(index || 0, 0, ...allElements);
       } else {
-        // Add element AND update parent's children array in a single pass
-        newElements = [...prev, baseElement].map(el =>
+        // Add all elements AND update parent's children array in a single pass
+        newElements = [...prev, ...allElements].map(el =>
           el.id === parentId
             ? { ...el, children: [...(el.children || []), newId] }
             : el
@@ -125,7 +131,7 @@ export const EditableProvider = ({ children, userId }) => {
     });
 
     return newId;
-  }, [recordElementsUpdate, elements]);
+  }, [recordElementsUpdate, buildElementTree]);
 
   const moveElement = useCallback((id, newIndex, newParentId) => {
     recordElementsUpdate((prevElements) => {
