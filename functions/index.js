@@ -211,7 +211,7 @@ exports.reverseLookup = onRequest(
       }
 
       const address = req.query.address;
-      if (!address || !/^[a-zA-Z0-9]{20,50}$/.test(address)) {
+      if (!address || !/^[a-zA-Z0-9]{20,60}$/.test(address)) {
         return res.status(400).json({ error: "Missing or invalid address parameter" });
       }
 
