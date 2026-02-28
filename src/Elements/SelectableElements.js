@@ -20,20 +20,11 @@ import Anchor from './Basic/Anchor';
 import Textarea from './Forms/Textarea';
 import Select from './Forms/Select';
 import Video from './Media/Video';
-import Audio from './Unused(Yet)/Audio';
-import Iframe from './Unused(Yet)/Iframe';
 import Label from './Forms/Label';
-import Fieldset from './Unused(Yet)/FieldSet';
-import Legend from './Unused(Yet)/Legend';
-import Progress from './Unused(Yet)/Progress';
-import Meter from './Unused(Yet)/Meter';
 import Blockquote from './Typography/Blockquote';
 import Code from './Advanced/Code';
-import Pre from './Unused(Yet)/Pre';
 import Hr from './Basic/HorizotalRule';
-import Caption from './Unused(Yet)/Caption';
 import DraggableWeb3Elements from './DraggableLayout/DraggableMinting';
-import DateComponent from './Unused(Yet)/DateComponent';
 import ConnectWalletButton from './Web3Block/ConnectWalletButton';
 import withSelectable from '../utils/withSelectable';
 import BGVideo from './Advanced/BGVideo';
@@ -75,19 +66,10 @@ const AnchorWithRef = forwardRef((props, ref) => <MemoAnchor {...props} ref={ref
 const TextareaWithRef = forwardRef((props, ref) => <Textarea {...props} ref={ref} />);
 const SelectWithRef = forwardRef((props, ref) => <Select {...props} ref={ref} />);
 const VideoWithRef = forwardRef((props, ref) => <Video {...props} ref={ref} />);
-const AudioWithRef = forwardRef((props, ref) => <Audio {...props} ref={ref} />);
-const IframeWithRef = forwardRef((props, ref) => <Iframe {...props} ref={ref} />);
 const LabelWithRef = forwardRef((props, ref) => <Label {...props} ref={ref} />);
-const FieldsetWithRef = forwardRef((props, ref) => <Fieldset {...props} ref={ref} />);
-const LegendWithRef = forwardRef((props, ref) => <Legend {...props} ref={ref} />);
-const ProgressWithRef = forwardRef((props, ref) => <Progress {...props} ref={ref} />);
-const MeterWithRef = forwardRef((props, ref) => <Meter {...props} ref={ref} />);
 const BlockquoteWithRef = forwardRef((props, ref) => <Blockquote {...props} ref={ref} />);
 const CodeWithRef = forwardRef((props, ref) => <Code {...props} ref={ref} />);
-const PreWithRef = forwardRef((props, ref) => <Pre {...props} ref={ref} />);
 const HrWithRef = forwardRef((props, ref) => <Hr {...props} ref={ref} />);
-const CaptionWithRef = forwardRef((props, ref) => <Caption {...props} ref={ref} />);
-const DateComponentWithRef = forwardRef((props, ref) => <DateComponent {...props} ref={ref} />);
 const ConnectWalletButtonWithRef = forwardRef((props, ref) => <ConnectWalletButton {...props} ref={ref} />);
 const BGVideoWithRef = forwardRef((props, ref) => <BGVideo {...props} ref={ref} />);
 const ContainerWithRef = forwardRef((props, ref) => <Container {...props} ref={ref} />);
@@ -151,19 +133,10 @@ AnchorWithRef.displayName = 'AnchorWithRef';
 TextareaWithRef.displayName = 'TextareaWithRef';
 SelectWithRef.displayName = 'SelectWithRef';
 VideoWithRef.displayName = 'VideoWithRef';
-AudioWithRef.displayName = 'AudioWithRef';
-IframeWithRef.displayName = 'IframeWithRef';
 LabelWithRef.displayName = 'LabelWithRef';
-FieldsetWithRef.displayName = 'FieldsetWithRef';
-LegendWithRef.displayName = 'LegendWithRef';
-ProgressWithRef.displayName = 'ProgressWithRef';
-MeterWithRef.displayName = 'MeterWithRef';
 BlockquoteWithRef.displayName = 'BlockquoteWithRef';
 CodeWithRef.displayName = 'CodeWithRef';
-PreWithRef.displayName = 'PreWithRef';
 HrWithRef.displayName = 'HrWithRef';
-CaptionWithRef.displayName = 'CaptionWithRef';
-DateComponentWithRef.displayName = 'DateComponentWithRef';
 ConnectWalletButtonWithRef.displayName = 'ConnectWalletButtonWithRef';
 BGVideoWithRef.displayName = 'BGVideoWithRef';
 ContainerWithRef.displayName = 'ContainerWithRef';
@@ -202,20 +175,11 @@ const SelectableAnchor = withSelectable(AnchorWithRef);
 const SelectableTextarea = withSelectable(TextareaWithRef);
 const SelectableSelect = withSelectable(SelectWithRef);
 const SelectableVideo = withSelectable(VideoWithRef);
-const SelectableAudio = withSelectable(AudioWithRef);
-const SelectableIframe = withSelectable(IframeWithRef);
 const SelectableLabel = withSelectable(LabelWithRef);
-const SelectableFieldset = withSelectable(FieldsetWithRef);
-const SelectableLegend = withSelectable(LegendWithRef);
-const SelectableProgress = withSelectable(ProgressWithRef);
-const SelectableMeter = withSelectable(MeterWithRef);
 const SelectableBlockquote = withSelectable(BlockquoteWithRef);
 const SelectableCode = withSelectable(CodeWithRef);
-const SelectablePre = withSelectable(PreWithRef);
 const SelectableHr = withSelectable(HrWithRef);
-const SelectableCaption = withSelectable(CaptionWithRef);
 const SelectableDraggableWeb3Elements = withSelectable(DraggableWeb3Elements);
-const SelectableDateComponent = withSelectable(DateComponentWithRef);
 const SelectableConnectWalletButton = withSelectable(ConnectWalletButtonWithRef);
 const SelectableBGVideo = withSelectable(BGVideoWithRef);
 const SelectableContainer = withSelectable(ContainerWithRef);
@@ -257,20 +221,11 @@ export {
   SelectableTextarea as Textarea,
   SelectableSelect as Select,
   SelectableVideo as Video,
-  SelectableAudio as Audio,
-  SelectableIframe as Iframe,
   SelectableLabel as Label,
-  SelectableFieldset as Fieldset,
-  SelectableLegend as Legend,
-  SelectableProgress as Progress,
-  SelectableMeter as Meter,
   SelectableBlockquote as Blockquote,
   SelectableCode as Code,
-  SelectablePre as Pre,
   SelectableHr as Hr,
-  SelectableCaption as Caption,
   SelectableDraggableWeb3Elements as DraggableWeb3Elements,
-  SelectableDateComponent as DateComponent,
   SelectableConnectWalletButton as ConnectWalletButton,
   SelectableBGVideo as BGVideo,
   SelectableContainer as Container,

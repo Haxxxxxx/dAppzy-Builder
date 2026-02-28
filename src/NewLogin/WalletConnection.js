@@ -59,7 +59,6 @@ function WalletConnection({ onUserLogin }) {
         localStorage.setItem('subscriptionEndDate', walletData.subscriptionEndDate);
       }
 
-      console.log("Wallet data saved to Firestore:", walletData);
     } catch (error) {
       console.error("Error saving wallet data:", error);
       throw error;
@@ -128,7 +127,7 @@ function WalletConnection({ onUserLogin }) {
         const response = await window.solana.connect();
         const publicKey = response.publicKey.toString();
         const message = new TextEncoder().encode(
-          "Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time."
+          "Lets create your beta account reserved for testing issues ! Thanks for your QA and enjoy your time."
         );
         const { signature } = await window.solana.signMessage(message);
         const customToken = await getPhantomCustomTokenFromServer(
@@ -220,8 +219,6 @@ function WalletConnection({ onUserLogin }) {
         throw new Error(signResult.error);
       }
       const signature = signResult.signedMessage;
-      console.log("Freighter signature:", signature);
-      
       await saveWalletToFirestore(publicKey, "Freighter");
       processLogin(publicKey, "Freighter");
     } catch (error) {

@@ -176,7 +176,7 @@ exports.verifyPhantomV2 = onRequest(
 
       const signatureBuffer = Buffer.from(signature, "base64");
       const messageBuffer = Buffer.from(
-        "Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time."
+        "Lets create your beta account reserved for testing issues ! Thanks for your QA and enjoy your time."
       );
 
       const pubKey = new PublicKey(publicKey);
