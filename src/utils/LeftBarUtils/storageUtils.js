@@ -28,6 +28,7 @@ export async function renameProjectFolder(oldProjectName, newProjectName, userId
     const movedFiles = await Promise.all(promises);
   } catch (error) {
     console.error("Error renaming folder:", error);
+    throw error;
   }
 }
 
