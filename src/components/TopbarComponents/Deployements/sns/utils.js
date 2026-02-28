@@ -28,14 +28,16 @@ import { pinDirectoryToPinata } from '../../../../utils/ipfs';
 import { SNS_DOMAIN_PROGRAM } from './constants';
 import { SnsError, SnsSimulationError } from './errors';
 
-// Debug logging utility
-export const debugLog = (message, data = null) => {
-  const timestamp = new Date().toISOString();
-  const logMessage = data
-    ? `[SNS Debug ${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`
-    : `[SNS Debug ${timestamp}] ${message}`;
-  console.log(logMessage);
-};
+// Debug logging utility — no-op in production
+export const debugLog = process.env.NODE_ENV === 'development'
+  ? (message, data = null) => {
+      const timestamp = new Date().toISOString();
+      const logMessage = data
+        ? `[SNS Debug ${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`
+        : `[SNS Debug ${timestamp}] ${message}`;
+      console.log(logMessage); // eslint-disable-line no-console
+    }
+  : () => {};
 
 // Domain name validation utility
 export const validateAndFormatDomain = (domainName) => {
@@ -315,11 +317,10 @@ export async function updateOrCreateIpfsRecord(
   wallet,
   domainName,
   ipfsHash,
-  debugLog = console.log
+  debugLog = () => {}
 ) {
   try {
-    // Ensure debugLog is a function
-    const log = typeof debugLog === 'function' ? debugLog : console.log;
+    const log = typeof debugLog === 'function' ? debugLog : () => {};
 
     // Validate wallet
     if (!wallet || !wallet.publicKey) {
@@ -512,7 +513,7 @@ export const verifyIpfsRecordUpdate = async (connection, domainKey, expectedIpfs
   }
 };
 
-export async function getDomainsForWallet(connection, walletPublicKey, debugLog = console.log) {
+export async function getDomainsForWallet(connection, walletPublicKey, debugLog = () => {}) {
     try {
         if (!walletPublicKey) {
             throw new Error('Wallet public key is required');
