@@ -287,6 +287,35 @@ const HELIUS_API_KEY = defineSecret("HELIUS_API_KEY");
 // Plan pricing (must match client-side planConfig)
 const PLAN_PRICES = { monthly: 20, annual: 16 };
 
+// In-memory SOL price cache (60 second TTL) to avoid CoinGecko rate limits
+const solPriceCache = { price: null, fetchedAt: 0 };
+const PRICE_CACHE_TTL_MS = 60 * 1000;
+
+async function getSolPriceUsd() {
+  const now = Date.now();
+  if (solPriceCache.price && now - solPriceCache.fetchedAt < PRICE_CACHE_TTL_MS) {
+    return solPriceCache.price;
+  }
+  try {
+    const priceRes = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
+    );
+    if (!priceRes.ok) throw new Error(`CoinGecko HTTP ${priceRes.status}`);
+    const priceData = await priceRes.json();
+    const price = priceData.solana.usd;
+    solPriceCache.price = price;
+    solPriceCache.fetchedAt = now;
+    return price;
+  } catch (err) {
+    // Fallback to cached price if available
+    if (solPriceCache.price) {
+      console.warn("CoinGecko fetch failed, using cached price:", err.message);
+      return solPriceCache.price;
+    }
+    throw err;
+  }
+}
+
 exports.verifySubscription = onRequest(
   {
     secrets: [SOLANA_ADMIN_WALLET, HELIUS_API_KEY],
@@ -377,16 +406,14 @@ exports.verifySubscription = onRequest(
       const receivedLamports = postBalance - preBalance;
       const receivedSol = receivedLamports / LAMPORTS_PER_SOL;
 
-      // Fetch SOL price for verification (allow 10% tolerance for price fluctuation)
+      // Fetch SOL price with caching and fallback
       const expectedUsd = PLAN_PRICES[billingCycle];
       let solPriceUsd;
       try {
-        const priceRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd");
-        const priceData = await priceRes.json();
-        solPriceUsd = priceData.solana.usd;
+        solPriceUsd = await getSolPriceUsd();
       } catch (priceErr) {
         console.error("Failed to fetch SOL price:", priceErr);
-        return res.status(500).json({ error: "Failed to verify SOL price" });
+        return res.status(503).json({ error: "Unable to verify SOL price. Please retry.", retryAfter: 60 });
       }
 
       const expectedSol = expectedUsd / solPriceUsd;
