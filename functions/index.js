@@ -40,6 +40,10 @@ exports.generateNonce = onRequest(
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkRateLimit(clientIp, 5)) {
+      return res.status(429).json({ error: "Too many requests. Try again later." });
+    }
     const { walletAddress } = req.body;
     if (!walletAddress || typeof walletAddress !== "string") {
       return res.status(400).json({ error: "Missing walletAddress" });
@@ -151,7 +155,7 @@ const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 30; // max requests per window per IP
 
-function checkRateLimit(ip) {
+function checkRateLimit(ip, max = RATE_LIMIT_MAX) {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
   if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
@@ -159,7 +163,7 @@ function checkRateLimit(ip) {
     return true;
   }
   entry.count++;
-  if (entry.count > RATE_LIMIT_MAX) return false;
+  if (entry.count > max) return false;
   return true;
 }
 
