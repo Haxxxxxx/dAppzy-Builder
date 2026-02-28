@@ -480,7 +480,9 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
               To renew your monthly subscription, you will need to manually sign a message directly on the builder. You'll receive an email notification when it's time to renew, and you'll have <b>14 days</b> to complete the signature process to keep your access.
             </p>
           </div>
-          <button className="upgrade-confirm-btn" onClick={handleConfirmUpgrade}>Confirm Upgrade</button>
+          <button className="upgrade-confirm-btn" onClick={handleConfirmUpgrade} disabled={!solUsd || solUsd <= 0}>
+            {!solUsd ? 'SOL price unavailable — try again later' : 'Confirm Upgrade'}
+          </button>
           <div className="upgrade-terms">
             By clicking "Confirm Upgrade", you agree to our <a href='/terms' className='upgrade-terms-link' target='_blank'>Terms of Service</a>.
           </div>
