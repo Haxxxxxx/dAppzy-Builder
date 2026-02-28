@@ -99,11 +99,13 @@ const WalletContextProvider = ({ children }) => {
 
     // Listen for Phantom account changes and disconnect
     if (window.solana && window.solana.isPhantom) {
-      const handleAccountChanged = (newPublicKey) => {
+      const handleAccountChanged = async (newPublicKey) => {
         if (newPublicKey) {
-          const address = newPublicKey.toString();
-          setWalletAddress(address);
-          setWalletId(address);
+          // Account switched — sign out to force re-authentication with new wallet
+          await signOut(auth);
+          setWalletAddress('');
+          setWalletId('');
+          setIsWalletConnected(false);
         } else {
           // Account changed to nothing — treat as disconnect
           setWalletAddress('');
