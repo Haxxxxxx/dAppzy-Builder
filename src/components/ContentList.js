@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, forwardRef, useCallback } from 'react';
+import React, { useContext, useEffect, useRef, forwardRef, useCallback } from 'react';
 import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../context/EditableContext';
 import { AutoSaveContext } from '../context/AutoSaveContext';
@@ -34,6 +34,9 @@ const ContentList = forwardRef(
     } = useContext(EditableContext);
 
     const { saveContent, markPendingChanges } = useContext(AutoSaveContext);
+
+    // Skip auto-save for the initial load from localStorage
+    const isInitialLoadRef = useRef(true);
 
     // Load elements from chunked localStorage on mount
     useEffect(() => {
@@ -79,6 +82,10 @@ const ContentList = forwardRef(
     // Watch for changes in elements and trigger auto-save
     // AutoSaveContext handles its own debouncing — no need for a second debounce here
     useEffect(() => {
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+        return;
+      }
       if (elements.length > 0) {
         markPendingChanges();
         saveContent(elements, websiteSettings);
