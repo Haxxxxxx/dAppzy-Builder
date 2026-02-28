@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
+import '../css/StructurePanel.css';
 
 const StructurePanel = () => {
   const { elements, buildHierarchy, selectedElement, setSelectedElement } = useContext(EditableContext);
@@ -66,37 +67,22 @@ const StructurePanel = () => {
         return (
           <div
             key={element.id}
-            style={{
-              paddingLeft: '16px',
-              borderLeft: '1px solid #ccc',
-              marginBottom: '8px',
-            }}
+            className="structure-tree-node"
           >
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedElement({ id: element.id, type: element.type });
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                backgroundColor: selectedElement?.id === element.id ? '#313031' : 'transparent',
-                padding: '4px 8px',
-                borderRadius: '4px',
-              }}
+              className={`structure-tree-label${selectedElement?.id === element.id ? ' selected' : ''}`}
             >
               {element.children && element.children.length > 0 && (
                 <span
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering parent onClick
+                    e.stopPropagation();
                     toggleExpand(element.id);
                   }}
-                  style={{
-                    marginRight: '8px',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                  }}
+                  className="structure-tree-toggle"
                 >
                   {isExpanded ? '▼' : '▶'}
                 </span>
@@ -104,7 +90,7 @@ const StructurePanel = () => {
               {getFriendlyLabel(element.type, element.content || element.label || element.id)}
             </div>
             {isExpanded && element.children && element.children.length > 0 && (
-              <div style={{ paddingLeft: '16px' }}>
+              <div className="structure-tree-children">
                 {renderStructure(element.children)}
               </div>
             )}
