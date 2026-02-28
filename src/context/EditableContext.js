@@ -120,14 +120,35 @@ export const EditableProvider = ({ children, userId }) => {
     return newId;
   }, [recordElementsUpdate, setElements, elements]);
 
-  const moveElement = useCallback((id, newIndex) => {
+  const moveElement = useCallback((id, newIndex, newParentId) => {
     recordElementsUpdate((prevElements) => {
       const index = prevElements.findIndex((el) => el.id === id);
       if (index === -1) return prevElements;
       const element = prevElements[index];
-      const newElements = [...prevElements];
+      const oldParentId = element.parentId;
+
+      let newElements = [...prevElements];
       newElements.splice(index, 1);
       newElements.splice(newIndex, 0, element);
+
+      // Update parentId and parent children arrays when reparenting
+      if (newParentId !== undefined && newParentId !== oldParentId) {
+        newElements = newElements.map(el => {
+          if (el.id === id) {
+            return { ...el, parentId: newParentId };
+          }
+          // Remove from old parent's children
+          if (el.id === oldParentId && el.children) {
+            return { ...el, children: el.children.filter(cid => cid !== id) };
+          }
+          // Add to new parent's children
+          if (el.id === newParentId && el.children) {
+            return { ...el, children: [...el.children, id] };
+          }
+          return el;
+        });
+      }
+
       return newElements;
     });
   }, [recordElementsUpdate]);
