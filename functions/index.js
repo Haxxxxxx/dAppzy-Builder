@@ -4,6 +4,7 @@ const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const nacl = require("tweetnacl");
 const { PublicKey, Connection, LAMPORTS_PER_SOL } = require("@solana/web3.js");
+const { ethers } = require("ethers");
 const fetch = require("node-fetch");
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -402,4 +403,141 @@ exports.verifySubscription = onRequest(
   }
 );
 
+// MetaMask signature verification endpoint
+exports.verifyMetaMask = onRequest(
+  {
+    region: "us-central1",
+    cors: ALLOWED_ORIGINS,
+    invoker: "public",
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
 
+    try {
+      const { address, signature, message } = req.body;
+      if (!address || !signature || !message) {
+        return res.status(400).json({ error: "Missing parameters: address, signature, message" });
+      }
+
+      // Verify the signature matches the claimed address
+      const recoveredAddress = ethers.verifyMessage(message, signature);
+      if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+        return res.status(401).json({ error: "Signature verification failed" });
+      }
+
+      // Create a Firebase custom token using the wallet address as uid
+      const customToken = await admin.auth().createCustomToken(address.toLowerCase(), {
+        walletType: "MetaMask",
+      });
+
+      return res.json({ customToken });
+    } catch (error) {
+      console.error("Error in verifyMetaMask:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// Freighter (Stellar) signature verification endpoint
+exports.verifyFreighter = onRequest(
+  {
+    region: "us-central1",
+    cors: ALLOWED_ORIGINS,
+    invoker: "public",
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    try {
+      const { publicKey, signature, message } = req.body;
+      if (!publicKey || !signature || !message) {
+        return res.status(400).json({ error: "Missing parameters: publicKey, signature, message" });
+      }
+
+      // Stellar uses ed25519 — verify with tweetnacl
+      const messageBytes = Buffer.from(message);
+      const signatureBytes = Buffer.from(signature, "base64");
+      // Stellar public keys are ed25519 — decode from Stellar format (raw 32 bytes)
+      const publicKeyBytes = Buffer.from(publicKey, "base64");
+
+      const isVerified = nacl.sign.detached.verify(
+        messageBytes,
+        signatureBytes,
+        publicKeyBytes
+      );
+
+      if (!isVerified) {
+        return res.status(401).json({ error: "Signature verification failed" });
+      }
+
+      // Create a Firebase custom token
+      const customToken = await admin.auth().createCustomToken(publicKey, {
+        walletType: "Freighter",
+      });
+
+      return res.json({ customToken });
+    } catch (error) {
+      console.error("Error in verifyFreighter:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// Unstoppable Domains verification endpoint
+// Validates the UAuth idToken server-side before issuing a Firebase custom token
+exports.verifyUnstoppable = onRequest(
+  {
+    region: "us-central1",
+    cors: ALLOWED_ORIGINS,
+    secrets: [udJwt],
+    invoker: "public",
+  },
+  async (req, res) => {
+    if (req.method === "OPTIONS") {
+      return res.status(204).send("");
+    }
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    try {
+      const { idToken, sub } = req.body;
+      if (!idToken || !sub) {
+        return res.status(400).json({ error: "Missing parameters: idToken, sub" });
+      }
+
+      // Verify the idToken by checking with UD's userinfo endpoint
+      const userinfoRes = await fetch("https://auth.unstoppabledomains.com/userinfo", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+
+      if (!userinfoRes.ok) {
+        return res.status(401).json({ error: "Invalid Unstoppable Domains token" });
+      }
+
+      const userinfo = await userinfoRes.json();
+      if (userinfo.sub !== sub) {
+        return res.status(401).json({ error: "Token subject does not match claimed identity" });
+      }
+
+      const customToken = await admin.auth().createCustomToken(sub, {
+        walletType: "Unstoppable",
+      });
+
+      return res.json({ customToken });
+    } catch (error) {
+      console.error("Error in verifyUnstoppable:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+);

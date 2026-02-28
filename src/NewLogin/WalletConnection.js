@@ -81,40 +81,45 @@ function WalletConnection({ onUserLogin }) {
     }
   };
 
-  // --- MetaMask Integration (unchanged) ---
-  const authenticateWithEthereum = async (walletId) => {
-    try {
-      const message = "Please sign this message to confirm your identity.";
-      await window.ethereum.request({
-        method: "personal_sign",
-        params: [message, walletId],
-      });
-      processLogin(walletId, "Ethereum");
-    } catch (error) {
-      console.error("Error during Ethereum authentication:", error);
-      setErrorMessage("Ethereum authentication failed. Please try again");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // --- MetaMask Integration (with server-side signature verification) ---
   const handleLoginWithMetamask = async () => {
     setIsLoading(true);
-    if (window.ethereum) {
-      try {
-        const accounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        const account = accounts[0];
-        await saveWalletToFirestore(account, "Ethereum");
-        await authenticateWithEthereum(account);
-      } catch (error) {
-        console.error("Error with MetaMask login:", error);
-        setErrorMessage("MetaMask authentication failed. Please try again");
-        setIsLoading(false);
-      }
-    } else {
+    if (!window.ethereum) {
       setErrorMessage("MetaMask is not installed. Install it and try again");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const account = accounts[0];
+      const message = "Please sign this message to confirm your identity.";
+      const signature = await window.ethereum.request({
+        method: "personal_sign",
+        params: [message, account],
+      });
+
+      // Verify signature server-side and get Firebase custom token
+      const response = await fetch(
+        `${process.env.REACT_APP_CF_BASE_URL}/verifyMetaMask`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: account, signature, message }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Server verification failed: ${response.status}`);
+      }
+      const { customToken } = await response.json();
+      await signInWithCustomToken(auth, customToken);
+      await saveWalletToFirestore(account, "Ethereum");
+      processLogin(account, "Ethereum");
+    } catch (error) {
+      console.error("Error with MetaMask login:", error);
+      setErrorMessage("MetaMask authentication failed. Please try again");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -165,22 +170,7 @@ function WalletConnection({ onUserLogin }) {
     return data.customToken;
   };
 
-  // --- Unstoppable Integration (unchanged) ---
-  const authenticateWithUnstoppable = async (authorization) => {
-    try {
-      const userId = authorization.idToken.sub;
-      if (!userId) {
-        throw new Error("Username is undefined in the authorization object");
-      }
-      processLogin(userId, "Unstoppable");
-    } catch (error) {
-      console.error("Error during Unstoppable authentication:", error);
-      setErrorMessage("Unstoppable authentication failed. Please try again");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // --- Unstoppable Integration (with server-side token verification) ---
   const handleLoginWithUnstoppable = async () => {
     setIsLoading(true);
     const uauth = new UAuth({
@@ -190,15 +180,39 @@ function WalletConnection({ onUserLogin }) {
     });
     try {
       const authorization = await uauth.loginWithPopup();
-      await authenticateWithUnstoppable(authorization);
+      const userId = authorization.idToken.sub;
+      if (!userId) {
+        throw new Error("Username is undefined in the authorization object");
+      }
+
+      // Verify the token server-side and get Firebase custom token
+      const response = await fetch(
+        `${process.env.REACT_APP_CF_BASE_URL}/verifyUnstoppable`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken: authorization.accessToken,
+            sub: userId,
+          }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Server verification failed: ${response.status}`);
+      }
+      const { customToken } = await response.json();
+      await signInWithCustomToken(auth, customToken);
+      await saveWalletToFirestore(userId, "Unstoppable");
+      processLogin(userId, "Unstoppable");
     } catch (error) {
       console.error("Error with Unstoppable login:", error);
       setErrorMessage("Unstoppable login failed. Please try again");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Freighter Integration Using @stellar/freighter-api ---
+  // --- Freighter Integration (with server-side signature verification) ---
   const handleLoginWithFreighter = async () => {
     setIsLoading(true);
     try {
@@ -211,14 +225,29 @@ function WalletConnection({ onUserLogin }) {
       if (!publicKey) {
         throw new Error("Unable to retrieve public key from Freighter.");
       }
-      
-      // Ask the user to sign a message to mimic other wallet flows
+
+      // Ask the user to sign a message
       const message = "Please sign this message to confirm your identity.";
       const signResult = await signMessage(message, { address: publicKey });
       if (signResult.error) {
         throw new Error(signResult.error);
       }
       const signature = signResult.signedMessage;
+
+      // Verify signature server-side and get Firebase custom token
+      const response = await fetch(
+        `${process.env.REACT_APP_CF_BASE_URL}/verifyFreighter`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ publicKey, signature, message }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Server verification failed: ${response.status}`);
+      }
+      const { customToken } = await response.json();
+      await signInWithCustomToken(auth, customToken);
       await saveWalletToFirestore(publicKey, "Freighter");
       processLogin(publicKey, "Freighter");
     } catch (error) {
