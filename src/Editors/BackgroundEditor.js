@@ -20,7 +20,9 @@ const BackgroundEditor = ({ pageSettings }) => {
   // Utility: Convert "rgb(r,g,b)" to "#rrggbb"
   const rgbToHex = (rgb) => {
     if (!rgb) return "#ffffff";
-    const result = rgb.match(/\d+/g).map(Number);
+    const matches = rgb.match(/\d+/g);
+    if (!matches) return rgb;
+    const result = matches.map(Number);
     return `#${result.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
   };
 
