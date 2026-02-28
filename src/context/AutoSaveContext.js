@@ -270,7 +270,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      debouncedSaveContent.cancel();
+      debouncedSaveContent.flush();
     };
   }, [debouncedSaveContent, pendingChanges, saveQueue]);
 
