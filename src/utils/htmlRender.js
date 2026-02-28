@@ -247,8 +247,3 @@ export function renderElementToHtml(element, collectedStyles = []) {
   // Default: generic tag with content and children
   return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</${tag}>`;
 }
-
-function cleanStyles(styles = {}) {
-  const { outline, boxShadow, ...productionStyles } = styles;
-  return productionStyles;
-}
