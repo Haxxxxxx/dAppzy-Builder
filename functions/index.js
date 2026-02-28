@@ -45,8 +45,8 @@ exports.generateNonce = onRequest(
       return res.status(429).json({ error: "Too many requests. Try again later." });
     }
     const { walletAddress } = req.body;
-    if (!walletAddress || typeof walletAddress !== "string") {
-      return res.status(400).json({ error: "Missing walletAddress" });
+    if (!walletAddress || typeof walletAddress !== "string" || walletAddress.length < 10 || walletAddress.length > 128 || /[\/\.]/.test(walletAddress)) {
+      return res.status(400).json({ error: "Invalid wallet address" });
     }
     const nonce = crypto.randomBytes(32).toString("hex");
     await db.collection("authNonces").doc(walletAddress).set({
