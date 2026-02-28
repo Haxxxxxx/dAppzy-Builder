@@ -4,9 +4,14 @@ import { useSubscription } from '../context/SubscriptionContext';
 import { useWalletContext } from '../context/WalletContext';
 import './css/UpgradePopup.css';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { createTransferInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { getPlanPrice, PLANS, getPlanFeatures } from '../utils/planConfig';
 
 const ADMIN_WALLET = process.env.REACT_APP_SOLANA_ADMIN_WALLET;
+
+// USDC SPL Token mint address on Solana mainnet
+const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+const USDC_DECIMALS = 6;
 
 // Configure RPC endpoints
 const HELIUS_RPC = process.env.REACT_APP_HELIUS_API_KEY
@@ -50,6 +55,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const planBillingCycle = toggleYearly ? 'yearly' : 'monthly';
   const pioneerPrice = getPlanPrice('pioneer', planBillingCycle) || 20;
   const [solUsd, setSolUsd] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('sol'); // 'sol' | 'usdc'
 
   // Fetch SOL price
   useEffect(() => {
@@ -185,52 +191,87 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
       const fromWallet = new PublicKey(displayWallet);
       const toWallet = new PublicKey(ADMIN_WALLET);
 
-      // Calculate price — discounts must be validated server-side
       const usdcPrice = getPlanPrice('pioneer', billingCycle);
-      const solPrice = solUsd ? (usdcPrice / solUsd) : 0;
-      const finalSolPrice = solPrice;
+      let sig;
 
-      const lamports = Math.round(finalSolPrice * LAMPORTS_PER_SOL);
+      if (paymentMethod === 'usdc') {
+        // USDC SPL Token transfer
+        const amount = Math.round(usdcPrice * Math.pow(10, USDC_DECIMALS));
 
-      // Check SOL balance
-      const balanceLamports = await connection.getBalance(fromWallet);
-      if (balanceLamports < lamports) {
-        setStep('error');
-        setError(`Insufficient SOL balance. You need ${finalSolPrice.toFixed(4)} SOL.`);
-        return;
-      }
+        const fromAta = await getAssociatedTokenAddress(USDC_MINT, fromWallet);
+        const toAta = await getAssociatedTokenAddress(USDC_MINT, toWallet);
 
-      // Create SOL transfer transaction
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: fromWallet,
-          toPubkey: toWallet,
-          lamports,
-        })
-      );
+        const transaction = new Transaction().add(
+          createTransferInstruction(
+            fromAta,
+            toAta,
+            fromWallet,
+            amount,
+            [],
+            TOKEN_PROGRAM_ID
+          )
+        );
 
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = fromWallet;
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromWallet;
 
-      const signed = await window.solana.signTransaction(transaction);
-      const sig = await connection.sendRawTransaction(signed.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-        maxRetries: 3
-      });
+        const signed = await window.solana.signTransaction(transaction);
+        sig = await connection.sendRawTransaction(signed.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
 
-      // Store the transaction signature
-      setTransactionSignature(sig);
+        setTransactionSignature(sig);
 
-      const confirmation = await connection.confirmTransaction({
-        signature: sig,
-        blockhash,
-        lastValidBlockHeight
-      }, 'confirmed');
+        const confirmation = await connection.confirmTransaction({
+          signature: sig, blockhash, lastValidBlockHeight
+        }, 'confirmed');
 
-      if (confirmation.value.err) {
-        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+        if (confirmation.value.err) {
+          throw new Error(`Transaction failed: ${confirmation.value.err}`);
+        }
+      } else {
+        // SOL native transfer (existing flow)
+        const solPrice = solUsd ? (usdcPrice / solUsd) : 0;
+        const lamports = Math.round(solPrice * LAMPORTS_PER_SOL);
+
+        const balanceLamports = await connection.getBalance(fromWallet);
+        if (balanceLamports < lamports) {
+          setStep('error');
+          setError(`Insufficient SOL balance. You need ${solPrice.toFixed(4)} SOL.`);
+          return;
+        }
+
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: fromWallet,
+            toPubkey: toWallet,
+            lamports,
+          })
+        );
+
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromWallet;
+
+        const signed = await window.solana.signTransaction(transaction);
+        sig = await connection.sendRawTransaction(signed.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
+
+        setTransactionSignature(sig);
+
+        const confirmation = await connection.confirmTransaction({
+          signature: sig, blockhash, lastValidBlockHeight
+        }, 'confirmed');
+
+        if (confirmation.value.err) {
+          throw new Error(`Transaction failed: ${confirmation.value.err}`);
+        }
       }
 
       // Verify payment and activate subscription server-side
@@ -251,6 +292,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
           transactionSignature: sig,
           walletAddress: displayWallet,
           billingCycle,
+          paymentMethod,
         }),
       });
 
@@ -462,15 +504,54 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
               </label>
             </div>
           </div>
+          <div className="upgrade-popup-section">
+            <p className="upgrade-section-label">Payment Method</p>
+            <div className="membership-toggle-cards modern">
+              <label className={`membership-card ${paymentMethod === 'sol' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  checked={paymentMethod === 'sol'}
+                  onChange={() => setPaymentMethod('sol')}
+                  name="paymentMethod"
+                />
+                <div className="membership-card-content">
+                  <div className="membership-card-title">SOL</div>
+                  <div className="membership-card-price-row">
+                    <div className="membership-card-price">
+                      {solUsd ? (getPlanPrice('pioneer', billingCycle) / solUsd).toFixed(4) : '...'} SOL
+                    </div>
+                  </div>
+                </div>
+              </label>
+              <label className={`membership-card ${paymentMethod === 'usdc' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  checked={paymentMethod === 'usdc'}
+                  onChange={() => setPaymentMethod('usdc')}
+                  name="paymentMethod"
+                />
+                <div className="membership-card-content">
+                  <div className="membership-card-title">USDC</div>
+                  <div className="membership-card-price-row">
+                    <div className="membership-card-price">
+                      <img src='../img/usdc-logo.png' alt="USDC" style={{width: '18px', height: '18px'}} />
+                      {getPlanPrice('pioneer', billingCycle)} USDC
+                    </div>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
           <div className="upgrade-total-row modern">
             <div>
               <p className="upgrade-total-label">Total price</p>
             </div>
             <div className="upgrade-total-value">
               <b>
-                {getPlanPrice('pioneer', billingCycle)} USDC
-                <span style={{ margin: '0 8px', color: '#A9A9B3' }}>≈</span>
-                {solUsd ? (getPlanPrice('pioneer', billingCycle) / solUsd).toFixed(4) : '...'} SOL
+                {paymentMethod === 'usdc'
+                  ? `${getPlanPrice('pioneer', billingCycle)} USDC`
+                  : `${solUsd ? (getPlanPrice('pioneer', billingCycle) / solUsd).toFixed(4) : '...'} SOL`
+                }
               </b>
             </div>
           </div>
@@ -480,8 +561,12 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
               To renew your monthly subscription, you will need to manually sign a message directly on the builder. You'll receive an email notification when it's time to renew, and you'll have <b>14 days</b> to complete the signature process to keep your access.
             </p>
           </div>
-          <button className="upgrade-confirm-btn" onClick={handleConfirmUpgrade} disabled={!solUsd || solUsd <= 0}>
-            {!solUsd ? 'SOL price unavailable — try again later' : 'Confirm Upgrade'}
+          <button
+            className="upgrade-confirm-btn"
+            onClick={handleConfirmUpgrade}
+            disabled={paymentMethod === 'sol' && (!solUsd || solUsd <= 0)}
+          >
+            {paymentMethod === 'sol' && !solUsd ? 'SOL price unavailable — try again later' : 'Confirm Upgrade'}
           </button>
           <div className="upgrade-terms">
             By clicking "Confirm Upgrade", you agree to our <a href='/terms' className='upgrade-terms-link' target='_blank'>Terms of Service</a>.
