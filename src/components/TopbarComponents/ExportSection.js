@@ -114,7 +114,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         const ipfsUrl = await handleDeployToIPFS();
         if (ipfsUrl) {
           // Update the project in Firestore with the new IPFS URL
-          const projectRef = doc(db, 'projects', userId);
+          const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
           await setDoc(projectRef, {
             websiteSettings: {
               ...websiteSettings,
@@ -292,6 +292,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       {showSnsSelector && (
         <SnsDomainSelector
           userId={userId}
+          projectId={projectId}
           walletAddress={walletAddress}
           elements={elements}
           websiteSettings={websiteSettings}
@@ -299,8 +300,8 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
           onCancel={handleSnsCancel}
           setAutoSaveStatus={setOperationStatus}
           generateFullHtml={() => generateProjectHtml(elements, websiteSettings)}
-          saveProjectToFirestore={async (userId, html, type, domain) => {
-            const projectRef = doc(db, 'projects', userId);
+          saveProjectToFirestore={async (uid, html, type, domain) => {
+            const projectRef = doc(db, 'projects', uid, 'ProjectRef', projectId);
             await setDoc(projectRef, {
               elements,
               websiteSettings: {
@@ -309,7 +310,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
                 walletAddress: walletAddress,
               },
               lastUpdated: serverTimestamp(),
-              userId,
+              userId: uid,
             }, { merge: true });
           }}
         />

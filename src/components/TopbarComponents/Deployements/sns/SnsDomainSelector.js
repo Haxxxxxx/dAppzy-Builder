@@ -11,6 +11,7 @@ import './styles.css';
 
 const SnsDomainSelector = ({
   userId,
+  projectId,
   walletAddress,
   elements,
   websiteSettings,
@@ -34,7 +35,7 @@ const SnsDomainSelector = ({
     deploymentProgress,
     deploymentError,
     deployToDomain
-  } = useDeployment(connection, walletAddress, userId);
+  } = useDeployment(connection, walletAddress, userId, projectId);
 
   // Handle domain selection and deployment
   const handleSelectDomain = async () => {

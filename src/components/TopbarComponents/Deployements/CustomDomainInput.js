@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
-const CustomDomainInput = ({ userId, websiteSettings, onDomainUpdated }) => {
+const CustomDomainInput = ({ userId, projectId, websiteSettings, onDomainUpdated }) => {
   const [customDomain, setCustomDomain] = useState(websiteSettings.customDomain || '');
   const [status, setStatus] = useState('');
 
@@ -16,7 +16,7 @@ const CustomDomainInput = ({ userId, websiteSettings, onDomainUpdated }) => {
         setStatus('Error: User ID is missing.');
         return;
       }
-      const projectRef = doc(db, 'projects', userId);
+      const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       const updatedSettings = { ...websiteSettings, customDomain: customDomain.trim() };
       await updateDoc(projectRef, {
         websiteSettings: updatedSettings,

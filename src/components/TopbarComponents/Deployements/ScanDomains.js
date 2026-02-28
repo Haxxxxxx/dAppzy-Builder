@@ -8,6 +8,7 @@ const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 const ScanDomains = ({
   userId,
+  projectId,
   walletAddress,        // <-- New prop: the user's ETH address
   elements,
   buildHierarchy,
@@ -133,7 +134,7 @@ const ScanDomains = ({
   // 4) Link domain in Firestore
   // -----------------------------------------------------
   const linkDomainInFirestore = async (domainValue) => {
-    const projectRef = doc(db, 'projects', userId);
+    const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
     const updatedSettings = { ...websiteSettings, customDomain: domainValue };
     await updateDoc(projectRef, {
       websiteSettings: updatedSettings,

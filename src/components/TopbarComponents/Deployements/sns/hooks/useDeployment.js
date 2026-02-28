@@ -4,7 +4,7 @@ import { db } from '../../../../../firebase';
 import { exportAndUploadToIPFS, updateOrCreateIpfsRecord, verifyIpfsRecordUpdate } from '../utils';
 import { debugLog } from '../utils';
 
-export const useDeployment = (connection, walletAddress, userId) => {
+export const useDeployment = (connection, walletAddress, userId, projectId) => {
   const [deploymentStage, setDeploymentStage] = useState('SELECTING');
   const [deploymentProgress, setDeploymentProgress] = useState({
     preparing: false,
@@ -66,7 +66,7 @@ export const useDeployment = (connection, walletAddress, userId) => {
       );
       
       // Save to Firestore
-      const projectRef = doc(db, 'projects', userId);
+      const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       await updateDoc(projectRef, {
         'websiteSettings.snsDomain': formattedDomain,
         'websiteSettings.walletAddress': walletAddress,
@@ -107,7 +107,7 @@ export const useDeployment = (connection, walletAddress, userId) => {
       setDeploymentError(error);
       
       // Update Firestore with error
-      const projectRef = doc(db, 'projects', userId);
+      const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       try {
         await updateDoc(projectRef, {
           'websiteSettings.deploymentStatus': 'failed',
