@@ -374,6 +374,9 @@ exports.verifySubscription = onRequest(
       if (!transactionSignature || !walletAddress || !billingCycle) {
         return res.status(400).json({ error: "Missing required fields: transactionSignature, walletAddress, billingCycle" });
       }
+      if (!/^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(transactionSignature)) {
+        return res.status(400).json({ error: "Invalid transaction signature format" });
+      }
       if (!["monthly", "annual"].includes(billingCycle)) {
         return res.status(400).json({ error: "Invalid billingCycle" });
       }
