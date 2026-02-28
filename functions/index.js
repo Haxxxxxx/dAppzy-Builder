@@ -343,12 +343,6 @@ exports.verifySubscription = onRequest(
         });
       }
 
-      // Check that this transaction hasn't been used before
-      const txDoc = await db.collection("processedTransactions").doc(transactionSignature).get();
-      if (txDoc.exists) {
-        return res.status(400).json({ error: "Transaction already processed" });
-      }
-
       // All checks passed — write subscription data server-side
       const now = new Date();
       const durationDays = billingCycle === "annual" ? 365 : 30;
@@ -379,13 +373,22 @@ exports.verifySubscription = onRequest(
         verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Mark transaction as processed to prevent replay
-      batch.set(db.collection("processedTransactions").doc(transactionSignature), {
+      // Mark transaction as processed — create() fails if doc already exists,
+      // providing atomic uniqueness and preventing TOCTOU race conditions
+      batch.create(db.collection("processedTransactions").doc(transactionSignature), {
         walletAddress,
         processedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (batchError) {
+        // create() throws if processedTransactions doc already exists (replay attempt)
+        if (batchError.code === 6 || batchError.message?.includes("already exists")) {
+          return res.status(400).json({ error: "Transaction already processed" });
+        }
+        throw batchError;
+      }
 
       return res.json({
         success: true,
