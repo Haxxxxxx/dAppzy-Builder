@@ -350,6 +350,8 @@ exports.verifySubscription = onRequest(
     cors: ALLOWED_ORIGINS,
     invoker: "public",
     region: "us-central1",
+    timeoutSeconds: 120,
+    memory: "512MiB",
   },
   async (req, res) => {
     if (req.method !== "POST") {
