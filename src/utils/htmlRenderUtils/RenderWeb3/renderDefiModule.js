@@ -1,4 +1,4 @@
-import { renderElementToHtml } from '../../htmlRender';
+import { escapeHtml } from '../../export/escapeUtils';
 
 export function renderDefiModule(element, collectedStyles) {
   // Extract content from element
@@ -40,8 +40,8 @@ export function renderDefiModule(element, collectedStyles) {
     <div style="display: grid; gap: 1rem;">
       ${stats.map(stat => `
         <div style="display: flex; justify-content: space-between;">
-          <span style="opacity: 0.8;">${stat.label}</span>
-          <span style="font-weight: bold;">${stat.value}</span>
+          <span style="opacity: 0.8;">${escapeHtml(stat.label)}</span>
+          <span style="font-weight: bold;">${escapeHtml(stat.value)}</span>
         </div>
       `).join('')}
     </div>
@@ -57,7 +57,7 @@ export function renderDefiModule(element, collectedStyles) {
     <div style="position: relative; box-sizing: border-box;">
       <div class="${className}">
         <div style="margin-bottom: 1rem;">
-          <h3 style="margin: 0; font-size: 1.2rem; font-weight: bold; color: rgb(255, 255, 255);">${title}</h3>
+          <h3 style="margin: 0; font-size: 1.2rem; font-weight: bold; color: rgb(255, 255, 255);">${escapeHtml(title)}</h3>
           ${connectedMessageHtml}
           ${errorMessageHtml}
         </div>
