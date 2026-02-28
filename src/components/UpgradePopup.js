@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, arrayUnion, collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getAuth } from 'firebase/auth';
 import { useSubscription } from '../context/SubscriptionContext';
 import { useWalletContext } from '../context/WalletContext';
 import './css/UpgradePopup.css';
@@ -234,31 +233,31 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
         throw new Error(`Transaction failed: ${confirmation.value.err}`);
       }
 
-      // Create transaction record
-      const transactionRecord = {
-        walletId: displayWallet,
-        PlanTitle: 'Pioneer Plan',
-        solAmount: finalSolPrice.toFixed(4),
-        solLink: `https://solscan.io/tx/${sig}`,
-        price: `$ ${usdcPrice.toFixed(2)}`,
-        date: new Date().toISOString()
-      };
+      // Verify payment and activate subscription server-side
+      const auth = getAuth();
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      if (!idToken) {
+        throw new Error('Not authenticated. Please sign in again.');
+      }
 
-      // Add transaction to transactions collection
-      await addDoc(collection(db, "transactions"), transactionRecord);
-
-      // Update Firestore with new subscription
-      const userRef = doc(db, 'users', displayWallet);
-      await updateDoc(userRef, {
-        subscriptionStatus: 'pioneer',
-        upgradedAt: new Date().toISOString(),
-        billingCycle,
-        subscriptionStartDate: new Date().toISOString(),
-        subscriptionEndDate: new Date(Date.now() + (billingCycle === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString(),
-        appliedDiscount: null,
-        originalPrice: usdcPrice,
-        finalPrice: finalSolPrice
+      const cfBaseUrl = process.env.REACT_APP_CF_BASE_URL;
+      const verifyRes = await fetch(`${cfBaseUrl}/verifySubscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          transactionSignature: sig,
+          walletAddress: displayWallet,
+          billingCycle,
+        }),
       });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) {
+        throw new Error(verifyData.error || 'Server verification failed');
+      }
 
       setSubscriptionStatus('pioneer');
       setStep('success');
