@@ -153,7 +153,8 @@ function WalletConnection({ onUserLogin }) {
   };
 
   const getPhantomCustomTokenFromServer = async (publicKey, signature) => {
-    const body = { publicKey, signature: Array.from(signature) };
+    const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+    const body = { publicKey, signature: sigBase64 };
     const response = await fetch(
       `${process.env.REACT_APP_CF_BASE_URL}/verifyPhantomV2`,
       {
