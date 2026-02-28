@@ -38,17 +38,20 @@ const Web3Provider = ({ children }) => {
       init();
 
       // Listen for account changes
-      window.ethereum.on('accountsChanged', (accounts) => {
+      const handleAccountsChanged = (accounts) => {
         setAccount(accounts[0] || null);
-      });
+      };
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
 
       // Listen for chain changes
-      window.ethereum.on('chainChanged', (chainId) => {
-        setChainId(chainId);
-      });
+      const handleChainChanged = (newChainId) => {
+        setChainId(newChainId);
+      };
+      window.ethereum.on('chainChanged', handleChainChanged);
 
       return () => {
-        window.ethereum.removeAllListeners();
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
       };
     }
   }, []);
