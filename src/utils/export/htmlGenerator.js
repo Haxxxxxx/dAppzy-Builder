@@ -1,5 +1,6 @@
 import { buildElementHierarchy, cleanElementData } from './elementUtils';
 import { escapeHtml, escapeAttr } from './escapeUtils';
+import { renderElementToHtml } from '../htmlRender';
 
 /**
  * Converts camelCase to kebab-case
@@ -187,7 +188,7 @@ const generateNavbarHtml = (element) => {
         <img id="${logo.id}" style="width: 40px; height: 40px; border-radius: 50%; color: #1a1a1a" src="${escapeAttr(logo.content)}" alt="">
       ` : ''}
       ${spans[0] ? `
-        <span id="${spans[0].id}" style="color: #1a1a1a; cursor: pointer">${spans[0].content}</span>
+        <span id="${spans[0].id}" style="color: #1a1a1a; cursor: pointer">${escapeHtml(spans[0].content)}</span>
       ` : ''}
     </div>
   `;
@@ -241,13 +242,8 @@ export const generateProjectHtml = (elements, websiteSettings) => {
       } else if (element.type === 'navbar') {
         renderedContent = generateNavbarHtml(element);
       } else {
-        // Handle other element types
-        const styleString = styleObjectToString(element.styles);
-        renderedContent = `
-          <div id="${element.id}" class="${element.className || ''}" style="${styleString}">
-            ${escapeHtml(element.content || '')}
-          </div>
-        `;
+        // Dispatch all other element types to the universal renderer
+        renderedContent = renderElementToHtml(element);
       }
 
       if (renderedContent) {
