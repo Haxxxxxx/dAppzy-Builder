@@ -102,6 +102,12 @@ exports.sendSupportEmail = onRequest(
       if (!text || text.trim().length === 0) {
         return res.status(400).json({ error: "Message text is required" });
       }
+      if (text.length > 5000) {
+        return res.status(400).json({ error: "Message too long (max 5000 chars)" });
+      }
+      if (imageBase64 && imageBase64.length > 5 * 1024 * 1024) {
+        return res.status(413).json({ error: "Image too large (max ~3.5MB)" });
+      }
 
       // 3) Store the text in Firestore (no image)
       await db.collection("supportRequests").add({
