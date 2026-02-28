@@ -96,29 +96,24 @@ export const EditableProvider = ({ children, userId }) => {
       children: childrenIds,
     };
 
-    if (!parentId) {
-      recordElementsUpdate((prev) => {
-        const newElements = [...prev];
+    recordElementsUpdate((prev) => {
+      let newElements;
+      if (!parentId) {
+        newElements = [...prev];
         newElements.splice(index || 0, 0, baseElement);
-        return newElements;
-      });
-    } else {
-      recordElementsUpdate((prev) => [...prev, baseElement]);
-    }
-  
-    // After adding the new element, if it has a parentId, update the parent's children array
-    if (parentId) {
-      setElements(prev =>
-        prev.map(el =>
+      } else {
+        // Add element AND update parent's children array in a single pass
+        newElements = [...prev, baseElement].map(el =>
           el.id === parentId
             ? { ...el, children: [...(el.children || []), newId] }
             : el
-        )
-      );
-    }
-  
+        );
+      }
+      return newElements;
+    });
+
     return newId;
-  }, [recordElementsUpdate, setElements, elements]);
+  }, [recordElementsUpdate, elements]);
 
   const moveElement = useCallback((id, newIndex, newParentId) => {
     recordElementsUpdate((prevElements) => {
