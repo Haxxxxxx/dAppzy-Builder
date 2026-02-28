@@ -265,6 +265,11 @@ exports.verifySubscription = onRequest(
         return res.status(400).json({ error: "Invalid billingCycle" });
       }
 
+      // Verify authenticated user matches the wallet address
+      if (decodedToken.uid !== walletAddress) {
+        return res.status(403).json({ error: "Wallet address does not match authenticated user" });
+      }
+
       // Validate wallet address
       let fromPubkey;
       try {
