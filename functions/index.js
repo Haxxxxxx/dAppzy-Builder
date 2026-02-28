@@ -252,9 +252,6 @@ exports.verifyPhantomV2 = onRequest(
     invoker: "public",
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
@@ -526,9 +523,6 @@ exports.verifyMetaMask = onRequest(
     invoker: "public",
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
@@ -580,9 +574,6 @@ exports.verifyFreighter = onRequest(
     invoker: "public",
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
@@ -666,9 +657,6 @@ exports.verifyUnstoppable = onRequest(
     invoker: "public",
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
