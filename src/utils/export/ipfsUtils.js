@@ -1,4 +1,8 @@
-import { pinataConfig, isPinataConfigured } from '../../utils/configPinata';
+const isPinataConfigured = () => {
+  // Pinata uploads now go through server-side CF proxy
+  // Just check that the CF base URL is configured
+  return !!process.env.REACT_APP_CF_BASE_URL;
+};
 import { cleanElementData } from './elementUtils';
 import { generateProjectHtml } from './htmlGenerator';
 import { pinDirectoryToPinata } from '../../utils/ipfs';
@@ -34,7 +38,7 @@ const isAllowedUrl = (url) => {
  */
 const validatePinataConfig = () => {
   if (!isPinataConfigured()) {
-    throw new Error('Invalid Pinata configuration: Please check your environment variables (REACT_APP_PINATA_JWT, REACT_APP_PINATA_KEY, REACT_APP_PINATA_SECRET)');
+    throw new Error('IPFS upload not configured: Please check REACT_APP_CF_BASE_URL environment variable');
   }
 };
 
