@@ -27,9 +27,7 @@ const ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY;
 // Validate required environment variables
 export const validateEnv = () => {
   const requiredVars = {
-    REACT_APP_PINATA_JWT: pinataConfig.jwt,
-    REACT_APP_PINATA_KEY: pinataConfig.apiKey,
-    REACT_APP_PINATA_SECRET: pinataConfig.secretKey,
+    REACT_APP_CF_BASE_URL: apiConfig.cfBaseUrl,
     REACT_APP_REVERSE_LOOKUP_URL: apiConfig.reverseLookupUrl,
     REACT_APP_ENCRYPTION_KEY: ENCRYPTION_KEY,
   };
