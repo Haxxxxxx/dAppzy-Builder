@@ -3,7 +3,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 const ButtonEditor = () => {
-    const { selectedElement, updateStyles, updateClickEvent, updateAccessibility, elements } = useContext(EditableContext);
+    const { selectedElement, updateStyles, updateElementProperties, elements } = useContext(EditableContext);
 
     // State to store the current styles of the selected element
     const [hoverBackgroundColor, setHoverBackgroundColor] = useState('#ffffff'); // Default to white
@@ -75,19 +75,19 @@ const ButtonEditor = () => {
     const handleClickEventChange = (e) => {
         const newEvent = e.target.value;
         setClickEvent(newEvent);
-        updateClickEvent(id, newEvent);
+        updateElementProperties(id, { clickEvent: newEvent });
     };
 
     const handleAriaLabelChange = (e) => {
         const newLabel = e.target.value;
         setAriaLabel(newLabel);
-        updateAccessibility(id, { ariaLabel: newLabel });
+        updateElementProperties(id,{ ariaLabel: newLabel });
     };
 
     const handleTooltipChange = (e) => {
         const newTooltip = e.target.value;
         setTooltip(newTooltip);
-        updateAccessibility(id, { tooltip: newTooltip });
+        updateElementProperties(id,{ tooltip: newTooltip });
     };
 
     return (
@@ -114,7 +114,7 @@ const ButtonEditor = () => {
                         <input
                             type="color"
                             value={hoverBackgroundColor}
-                            onChange={(e) => handleHoverBackgroundColorChange}
+                            onChange={handleHoverBackgroundColorChange}
                         />
                         <input
                             type="text"
@@ -131,7 +131,7 @@ const ButtonEditor = () => {
                         <input
                             type="color"
                             value={hoverTextColor}
-                            onChange={(e) => handleHoverTextColorChange}
+                            onChange={handleHoverTextColorChange}
                         />
                         <input
                             type="text"
