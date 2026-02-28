@@ -62,13 +62,17 @@ export function renderSection(sectionElement, context) {
   const sectionType = configuration || type;
   const config = configMap[sectionType] || configMap.sectionOne;
 
-  // Group children into parts based on layout
-  const parts = config.layout.reduce((acc, part) => {
-    // Handle both direct children and children referenced by ID
-    acc[part] = children.filter(child => {
-      const childElement = typeof child === 'string' ? context.elements.find(el => el.id === child) : child;
-      return childElement && (childElement.part === part || childElement.layout === part);
-    });
+  // Resolve child IDs to elements
+  const resolvedChildren = children
+    .map(child => typeof child === 'string' ? context.elements.find(el => el.id === child) : child)
+    .filter(Boolean);
+
+  // Distribute children evenly across layout zones by index position
+  const zoneCount = config.layout.length;
+  const parts = config.layout.reduce((acc, part, zoneIndex) => {
+    const chunkSize = Math.ceil(resolvedChildren.length / zoneCount);
+    const start = zoneIndex * chunkSize;
+    acc[part] = resolvedChildren.slice(start, start + chunkSize);
     return acc;
   }, {});
 
