@@ -82,7 +82,7 @@ function WalletConnection({ onUserLogin }) {
 
   // Fetch a one-time nonce for wallet auth challenge-response
   const fetchNonce = async (walletAddress) => {
-    const res = await fetch(`${process.env.REACT_APP_CF_BASE_URL}/generateNonce`, {
+    const res = await fetch(`${process.env.REACT_APP_CF_BASE_URL}/generateNonceV2`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ walletAddress }),
@@ -114,7 +114,7 @@ function WalletConnection({ onUserLogin }) {
 
       // Verify signature server-side and get Firebase custom token
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/verifyMetaMask`,
+        `${process.env.REACT_APP_CF_BASE_URL}/verifyMetaMaskV2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -202,7 +202,7 @@ function WalletConnection({ onUserLogin }) {
 
       // Verify the token server-side and get Firebase custom token
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/verifyUnstoppable`,
+        `${process.env.REACT_APP_CF_BASE_URL}/verifyUnstoppableV2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -252,7 +252,7 @@ function WalletConnection({ onUserLogin }) {
 
       // Verify signature server-side and get Firebase custom token
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/verifyFreighter`,
+        `${process.env.REACT_APP_CF_BASE_URL}/verifyFreighterV2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
