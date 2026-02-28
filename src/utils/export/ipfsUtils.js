@@ -4,6 +4,31 @@ import { generateProjectHtml } from './htmlGenerator';
 import { pinDirectoryToPinata } from '../../utils/ipfs';
 
 /**
+ * Validates a URL is safe to fetch (prevents SSRF via file:/data:/private IPs)
+ */
+const isAllowedUrl = (url) => {
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    // Block private/internal IP ranges
+    const host = parsed.hostname;
+    if (
+      host === 'localhost' ||
+      host.startsWith('127.') ||
+      host.startsWith('10.') ||
+      host.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host === '0.0.0.0' ||
+      host === '[::1]' ||
+      host.endsWith('.local')
+    ) return false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Validates Pinata configuration before making API calls
  * @throws {Error} If Pinata configuration is invalid
  */
@@ -154,7 +179,7 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
     });
 
     // Add favicon if exists
-    if (cleanedWebsiteSettings.faviconUrl) {
+    if (cleanedWebsiteSettings.faviconUrl && isAllowedUrl(cleanedWebsiteSettings.faviconUrl)) {
       try {
         const faviconResponse = await fetch(cleanedWebsiteSettings.faviconUrl);
         const faviconBlob = await faviconResponse.blob();
@@ -169,7 +194,7 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
     }
 
     // Add OG image if exists
-    if (cleanedWebsiteSettings.ogImage) {
+    if (cleanedWebsiteSettings.ogImage && isAllowedUrl(cleanedWebsiteSettings.ogImage)) {
       try {
         const ogImageResponse = await fetch(cleanedWebsiteSettings.ogImage);
         const ogImageBlob = await ogImageResponse.blob();
@@ -185,7 +210,7 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
 
     // Add assets from elements
     const assetPromises = cleanedElements
-      .filter(element => element.type === 'image' && element.src)
+      .filter(element => element.type === 'image' && element.src && isAllowedUrl(element.src))
       .map(async (element) => {
         try {
           const response = await fetch(element.src);
