@@ -418,70 +418,92 @@ export const EditableProvider = ({ children, userId }) => {
       }
 
       case 'edit': {
-        const { children, styles, ...otherProps } = command.properties || {};
+        const { children: childEdits, styles, ...otherProps } = command.properties || {};
         const targetElement = elementsRef.current.find(el => el.id === command.targetId);
-        
+
         if (!targetElement) {
           console.warn(`Element not found: ${command.targetId}`);
           return null;
         }
 
-        // Update element properties
-        if (Object.keys(otherProps).length > 0) {
-          updateElementProperties(command.targetId, otherProps);
-        }
+        // Batch all mutations into a single history entry
+        recordElementsUpdate((prev) => {
+          let updated = [...prev];
 
-        // Update styles if provided
-        if (styles) {
-          const structureConfig = targetElement.configuration ? 
-            structureConfigurations[targetElement.configuration] : null;
-
-          const mergedStyles = mergeStyles(
-            structureConfig?.styles || {},
-            targetElement.styles,
-            styles
-          );
-
-          updateStyles(command.targetId, mergedStyles);
-
-          // Update child styles if this is a structured element
-          if (structureConfig) {
-            applyChildStyles(command.targetId, mergedStyles, children, structureConfig);
+          // Apply element properties
+          if (Object.keys(otherProps).length > 0) {
+            updated = updated.map(el =>
+              el.id === command.targetId ? { ...el, ...otherProps } : el
+            );
           }
-        }
 
-        // Handle child updates
-        if (children && targetElement.children) {
-          children.forEach((childEdit, index) => {
-            if (!childEdit?.type) return;
+          // Apply styles to target
+          if (styles) {
+            const structureConfig = targetElement.configuration ?
+              structureConfigurations[targetElement.configuration] : null;
 
-            const childId = targetElement.children[index];
-            if (!childId) return;
+            const mergedStyles = mergeStyles(
+              structureConfig?.styles || {},
+              targetElement.styles,
+              styles
+            );
 
-            const child = elementsRef.current.find(el => el.id === childId);
-            if (!child) return;
+            updated = updated.map(el =>
+              el.id === command.targetId ? { ...el, styles: mergedStyles } : el
+            );
 
-            // Update child content
-                if (childEdit.content !== undefined) {
-              updateContent(childId, childEdit.content);
+            // Apply child styles if structured element
+            if (structureConfig && targetElement.children) {
+              targetElement.children.forEach((childId, index) => {
+                const child = prev.find(el => el.id === childId);
+                const childConfig = structureConfig.children?.[index];
+                if (child && childConfig) {
+                  const baseStyles = {
+                    color: mergedStyles?.color || structureConfig.styles?.color
+                  };
+                  const childMergedStyles = mergeStyles(baseStyles, child.styles, childConfig.styles);
+                  updated = updated.map(el =>
+                    el.id === childId ? { ...el, styles: childMergedStyles } : el
+                  );
                 }
+              });
+            }
+          }
 
-            // Update child styles
-                if (childEdit.styles) {
-              const structureConfig = targetElement.configuration ? 
-                structureConfigurations[targetElement.configuration] : null;
-              const childConfig = structureConfig?.children?.[index];
+          // Handle child updates
+          if (childEdits && targetElement.children) {
+            childEdits.forEach((childEdit, index) => {
+              if (!childEdit?.type) return;
+              const childId = targetElement.children[index];
+              if (!childId) return;
+              const child = prev.find(el => el.id === childId);
+              if (!child) return;
 
-              const mergedStyles = mergeStyles(
-                childConfig?.styles || {},
-                child.styles,
-                childEdit.styles
-              );
+              const mutations = {};
+              if (childEdit.content !== undefined) {
+                mutations.content = childEdit.content;
+              }
+              if (childEdit.styles) {
+                const structureConfig = targetElement.configuration ?
+                  structureConfigurations[targetElement.configuration] : null;
+                const childConfig = structureConfig?.children?.[index];
+                mutations.styles = mergeStyles(
+                  childConfig?.styles || {},
+                  child.styles,
+                  childEdit.styles
+                );
+              }
 
-              updateStyles(childId, mergedStyles);
+              if (Object.keys(mutations).length > 0) {
+                updated = updated.map(el =>
+                  el.id === childId ? { ...el, ...mutations } : el
+                );
               }
             });
-        }
+          }
+
+          return updated;
+        });
         return command.targetId;
       }
 
