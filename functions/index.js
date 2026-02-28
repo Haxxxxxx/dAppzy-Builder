@@ -100,6 +100,23 @@ exports.sendSupportEmail = onRequest(
     }
   }
 );
+// Simple in-memory rate limiter for public endpoints
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 30; // max requests per window per IP
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return true;
+  }
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) return false;
+  return true;
+}
+
 // 3) Reverse Lookup Function
 exports.reverseLookup = onRequest(
   {
@@ -112,6 +129,12 @@ exports.reverseLookup = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
+    // Rate limit by IP
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return res.status(429).json({ error: "Too many requests. Try again later." });
+    }
+
     try {
       const jwtValue = udJwt.value();
       if (!jwtValue) {
@@ -119,8 +142,8 @@ exports.reverseLookup = onRequest(
       }
 
       const address = req.query.address;
-      if (!address) {
-        return res.status(400).json({ error: "Missing address parameter" });
+      if (!address || !/^[a-zA-Z0-9]{20,50}$/.test(address)) {
+        return res.status(400).json({ error: "Missing or invalid address parameter" });
       }
 
       const apiUrl = `https://api.unstoppabledomains.com/partner/v3/owners/${address}/domains`;
