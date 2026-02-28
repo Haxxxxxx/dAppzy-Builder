@@ -470,10 +470,10 @@ exports.verifySubscription = onRequest(
       const userRef = db.collection("users").doc(walletAddress);
       batch.set(userRef, {
         subscriptionStatus: "pioneer",
-        upgradedAt: now.toISOString(),
+        upgradedAt: admin.firestore.FieldValue.serverTimestamp(),
         billingCycle,
-        subscriptionStartDate: now.toISOString(),
-        subscriptionEndDate: endDate.toISOString(),
+        subscriptionStartDate: admin.firestore.Timestamp.fromDate(now),
+        subscriptionEndDate: admin.firestore.Timestamp.fromDate(endDate),
         originalPrice: expectedUsd,
         finalPrice: receivedSol,
       }, { merge: true });
