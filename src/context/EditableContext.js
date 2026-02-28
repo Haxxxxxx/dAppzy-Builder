@@ -71,10 +71,20 @@ export const EditableProvider = ({ children, userId }) => {
     const configStyles = structure && structureConfigurations[structure]?.styles || {};
     const elementStyles = config?.styles || {};
 
+    // For mintingSection, inject a candyMachineId child at creation time
+    // so the render function never needs to generate or write one
+    let children = config?.children || [];
+    if (type === 'mintingSection' && Array.isArray(children)) {
+      const hasCandyId = children.some(c => c.type === 'candyMachineId');
+      if (!hasCandyId) {
+        children = [{ type: 'candyMachineId', content: crypto.randomUUID() }, ...children];
+      }
+    }
+
     // Recursively create children if present
     let childrenIds = [];
-    if (config && config.children && Array.isArray(config.children)) {
-      childrenIds = config.children.map(childConfig => {
+    if (children.length > 0) {
+      childrenIds = children.map(childConfig => {
         // Generate unique ID for each child
         const childId = generateUniqueId(childConfig.type);
         const childWithId = {

@@ -4,7 +4,6 @@ import React from 'react';
 import { mintingSectionStyles } from '../../../Elements/Sections/Web3Related/DefaultWeb3Styles';
 import { StyleManager } from '../../../styles/styleManager';
 import { SecurityManager } from '../../../security/securityManager';
-import { db, doc, setDoc } from '../../../firebase';
 
 // Helper to compute progress from "remaining"
 function calculateProgress(remainingContent) {
@@ -147,20 +146,10 @@ export function renderMintingSection(mintingElement, context) {
   let candyMachineId = findChild('candyMachineId')?.content || '';
   const nftPrice = totalPrice?.content || '0';
 
-  // Generate a new Candy Machine ID if missing
+  // Use a fallback ID for legacy elements that lack a candyMachineId child.
+  // New elements get this set at creation time via the element config.
   if (!candyMachineId) {
-    const generatedId = crypto.randomUUID();
-    candyMachineId = generatedId;
-    // Save to Firestore asynchronously
-    setDoc(doc(db, 'candyMachineIds', `element-${id}`), {
-      candyMachineId: generatedId,
-      createdAt: new Date().toISOString(),
-    })
-      .then(() => {
-      })
-      .catch(err => {
-        console.error('Error saving generated Candy Machine ID to Firestore:', err);
-      });
+    candyMachineId = `pending-${id}`;
   }
 
   // Apply styles using StyleManager
