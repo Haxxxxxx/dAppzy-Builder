@@ -40,14 +40,15 @@ exports.sendSupportEmail = onRequest(
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "Unauthorized — missing auth token" });
     }
+    let decodedToken;
     try {
-      await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+      decodedToken = await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
     } catch (authError) {
       return res.status(401).json({ error: "Unauthorized — invalid auth token" });
     }
 
     try {
-      const { text, imageBase64, userId } = req.body;
+      const { text, imageBase64 } = req.body;
 
       // Validate
       if (!text || text.trim().length === 0) {
@@ -58,7 +59,7 @@ exports.sendSupportEmail = onRequest(
       await db.collection("supportRequests").add({
         message: text,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        userId:userId,
+        userId: decodedToken.uid,
       });
 
       // 4) Create a Nodemailer transporter
