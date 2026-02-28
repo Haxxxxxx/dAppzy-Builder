@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useWalletContext } from './WalletContext';
@@ -42,9 +42,10 @@ export const SubscriptionProvider = ({ children }) => {
     return now > endDate;
   };
 
-  useEffect(() => {
-    let unsubscribe = () => {};
+  // Use ref to track unsubscribe so cleanup always gets the latest function
+  const unsubscribeRef = useRef(() => {});
 
+  useEffect(() => {
     const checkSubscriptionStatus = async () => {
       if (!walletAddress) {
         setIsLoading(false);
@@ -53,9 +54,9 @@ export const SubscriptionProvider = ({ children }) => {
 
       try {
         const userRef = doc(db, "users", walletAddress);
-        
+
         // Set up real-time listener for user document
-        unsubscribe = onSnapshot(userRef, (userDoc) => {
+        unsubscribeRef.current = onSnapshot(userRef, (userDoc) => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             // Check both profile and direct subscription data
@@ -97,7 +98,7 @@ export const SubscriptionProvider = ({ children }) => {
     checkSubscriptionStatus();
 
     return () => {
-      unsubscribe();
+      unsubscribeRef.current();
     };
   }, [walletAddress]);
 

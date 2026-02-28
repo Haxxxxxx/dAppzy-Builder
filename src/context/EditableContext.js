@@ -33,13 +33,25 @@ export const EditableProvider = ({ children, userId }) => {
     return elementsList.find(el => el.id === id);
   }, [elements]);
 
-  // Initialize functions after state
+  const MAX_HISTORY = 50;
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+
+  // Uses functional setHistory to avoid stale closure over history/currentIndex
   const pushToHistory = useCallback((newElements) => {
-    const truncatedHistory = history.slice(0, currentIndex + 1);
-    const updatedHistory = [...truncatedHistory, { elements: newElements, selectedElement }];
-    setHistory(updatedHistory);
-    setCurrentIndex(updatedHistory.length - 1);
-  }, [history, currentIndex, selectedElement]);
+    setHistory((prev) => {
+      const truncated = prev.slice(0, currentIndexRef.current + 1);
+      const updated = [...truncated, { elements: newElements, selectedElement }];
+      // Cap history to prevent unbounded growth
+      if (updated.length > MAX_HISTORY) {
+        const trimmed = updated.slice(updated.length - MAX_HISTORY);
+        setCurrentIndex(trimmed.length - 1);
+        return trimmed;
+      }
+      setCurrentIndex(updated.length - 1);
+      return updated;
+    });
+  }, [selectedElement]);
 
   const recordElementsUpdate = useCallback((updater) => {
     setElements((prev) => {

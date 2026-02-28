@@ -18,12 +18,27 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const [operationStatus, setOperationStatus] = useState(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const dropdownRef = useRef(null);
+  const statusTimersRef = useRef([]);
   const { findElementById } = useContext(EditableContext);
   const { saveStatus, lastSaved } = useContext(AutoSaveContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
 
   // Get wallet address from session storage
   const walletAddress = sessionStorage.getItem("userAccount");
+
+  // Safe setTimeout that auto-cleans on unmount
+  const safeSetTimeout = (fn, delay) => {
+    const id = setTimeout(fn, delay);
+    statusTimersRef.current.push(id);
+    return id;
+  };
+
+  // Clear all pending timers on unmount
+  useEffect(() => {
+    return () => {
+      statusTimersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // Format the last saved time
   const getLastSavedText = () => {
@@ -57,12 +72,14 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     };
   }, [isDropdownOpen]);
 
-  // Generate preview URL when dropdown opens
+  // Generate preview URL only when dropdown opens (not on every element change)
+  const prevDropdownOpen = useRef(false);
   useEffect(() => {
-    if (isDropdownOpen) {
+    if (isDropdownOpen && !prevDropdownOpen.current) {
       handleGeneratePreview();
     }
-  }, [isDropdownOpen, elements, websiteSettings]);
+    prevDropdownOpen.current = isDropdownOpen;
+  }, [isDropdownOpen]);
 
   const handleGeneratePreview = async () => {
     try {
@@ -71,13 +88,13 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       setPreviewUrl(url);
       setOperationStatus('Preview generated successfully');
       // Clear operation status after 3 seconds
-      setTimeout(() => setOperationStatus(null), 3000);
+      safeSetTimeout(() => setOperationStatus(null), 3000);
     } catch (error) {
       console.error('Error generating preview:', error);
       setOperationStatus('Error generating preview: ' + error.message);
       setPreviewUrl(null);
       // Clear error status after 5 seconds
-      setTimeout(() => setOperationStatus(null), 5000);
+      safeSetTimeout(() => setOperationStatus(null), 5000);
     }
   };
 
@@ -96,13 +113,13 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
 
       setOperationStatus('IPFS deploy complete!');
       // Clear operation status after 3 seconds
-      setTimeout(() => setOperationStatus(null), 3000);
+      safeSetTimeout(() => setOperationStatus(null), 3000);
       return ipfsUrl;
     } catch (error) {
       console.error('Deployment error:', error);
       setOperationStatus('Error during deployment: ' + error.message);
       // Clear error status after 5 seconds
-      setTimeout(() => setOperationStatus(null), 5000);
+      safeSetTimeout(() => setOperationStatus(null), 5000);
       return null;
     }
   };
@@ -130,13 +147,13 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
             onProjectPublished(ipfsUrl);
           }
           // Clear operation status after 3 seconds
-          setTimeout(() => setOperationStatus(null), 3000);
+          safeSetTimeout(() => setOperationStatus(null), 3000);
         }
       } catch (error) {
         console.error('Error deploying to IPFS:', error);
         setOperationStatus('Error during deployment: ' + error.message);
         // Clear error status after 5 seconds
-        setTimeout(() => setOperationStatus(null), 5000);
+        safeSetTimeout(() => setOperationStatus(null), 5000);
       }
     }
     setIsDropdownOpen(false);
@@ -151,7 +168,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     
     if (!walletAddress) {
       setOperationStatus('Error: No Solana wallet connected');
-      setTimeout(() => setOperationStatus(null), 5000);
+      safeSetTimeout(() => setOperationStatus(null), 5000);
       return;
     }
 

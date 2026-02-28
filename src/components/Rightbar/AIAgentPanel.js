@@ -55,8 +55,12 @@ const AIAgentPanel = ({
     initializePanel();
   }, []);
 
+  // Guard ref to prevent circular updates between local/prop message sync
+  const isExternalUpdateRef = useRef(false);
+
   // Update local messages when propMessages or activeConversationId changes
   useEffect(() => {
+    isExternalUpdateRef.current = true;
     const currentConv = conversations.find(c => c.id === activeConversationId);
     if (currentConv && currentConv.messages && currentConv.messages.length > 0) {
       setLocalMessages([...currentConv.messages]);
@@ -65,14 +69,18 @@ const AIAgentPanel = ({
     } else {
       setLocalMessages([]);
     }
-  }, [activeConversationId]);
+  }, [activeConversationId, conversations, propMessages]);
 
-  // Add effect to ensure messages are properly synced with parent
+  // Sync local messages to parent (skip if triggered by propMessages to avoid loops)
   useEffect(() => {
+    if (isExternalUpdateRef.current) {
+      isExternalUpdateRef.current = false;
+      return;
+    }
     if (localMessages.length > 0 && setMessagesProp) {
       setMessagesProp([...localMessages]);
     }
-  }, [localMessages]);
+  }, [localMessages, setMessagesProp]);
 
   // Scroll to bottom when messages change
   useEffect(() => {

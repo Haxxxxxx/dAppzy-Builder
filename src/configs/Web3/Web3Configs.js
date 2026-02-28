@@ -17,7 +17,7 @@ export const Web3Configs = {
             backdropFilter: 'blur(10px)'
         },
         children: [
-          { 
+          {
             type: 'mintingModule',
             moduleType: 'minting',
             styles: {
