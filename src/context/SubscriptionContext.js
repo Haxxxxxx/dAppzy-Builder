@@ -35,7 +35,8 @@ export const SubscriptionProvider = ({ children }) => {
   const { walletAddress } = useWalletContext();
 
   const isSubscriptionExpired = () => {
-    if (!subscriptionEndDate) return true;
+    // Pioneers without a set end date are not expired
+    if (!subscriptionEndDate) return subscriptionStatus !== 'pioneer';
     const endDate = new Date(subscriptionEndDate);
     const now = new Date();
     return now > endDate;
