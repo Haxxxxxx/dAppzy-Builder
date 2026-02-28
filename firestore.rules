@@ -41,10 +41,9 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == walletId;
     }
 
-    // Support requests: authenticated users can create; reads are server-only
+    // Support requests: all client access denied — writes go through CF admin SDK
     match /supportRequests/{requestId} {
-      allow create: if request.auth != null;
-      allow read, update, delete: if false;
+      allow read, write: if false;
     }
 
     // Candy machine IDs: scoped to owner
