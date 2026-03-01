@@ -2,7 +2,7 @@ import { useEffect, useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 export default function useKeyboardShortcuts() {
-  const { undo, redo } = useContext(EditableContext);
+  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement } = useContext(EditableContext);
 
   useEffect(() => {
     const handler = (e) => {
@@ -19,10 +19,16 @@ export default function useKeyboardShortcuts() {
       } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
         e.preventDefault();
         redo();
+      } else if (e.key === 'c' && selectedElement) {
+        e.preventDefault();
+        copyElement(selectedElement.id);
+      } else if (e.key === 'v' && copiedElement) {
+        e.preventDefault();
+        pasteElement(selectedElement?.parentId || null, 0);
       }
     };
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo]);
+  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement]);
 }

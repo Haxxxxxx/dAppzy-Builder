@@ -23,6 +23,7 @@ export const EditableProvider = ({ children, userId }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [forceBorder, setForceBorder] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(null);
+  const [copiedElement, setCopiedElement] = useState(null);
 
   // Keep a ref to elements for use in handlers that need fresh state mid-execution
   const elementsRef = useRef(elements);
@@ -310,6 +311,19 @@ export const EditableProvider = ({ children, userId }) => {
     }
   }, [currentIndex, history]);
 
+  const copyElement = useCallback((elementId) => {
+    const el = findElementById(elementId, elementsRef.current);
+    if (el) {
+      setCopiedElement(JSON.parse(JSON.stringify(el)));
+    }
+  }, [findElementById]);
+
+  const pasteElement = useCallback((parentId, index) => {
+    if (!copiedElement) return;
+    const config = { ...copiedElement, id: undefined };
+    addNewElement(copiedElement.type, copiedElement.level || 0, index, parentId, config);
+  }, [copiedElement, addNewElement]);
+
   const handleAICommand = useCallback((command) => {
     if (!command || !command.action) {
       return null;
@@ -563,7 +577,10 @@ export const EditableProvider = ({ children, userId }) => {
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
     findElementById,
-    generateUniqueId
+    generateUniqueId,
+    copiedElement,
+    copyElement,
+    pasteElement,
   }), [
     elements,
     selectedElement,
@@ -582,7 +599,10 @@ export const EditableProvider = ({ children, userId }) => {
     handleAICommand,
     saveSectionToLocalStorage,
     loadSectionFromLocalStorage,
-    findElementById
+    findElementById,
+    copiedElement,
+    copyElement,
+    pasteElement,
   ]);
 
   // Set elements version on mount
