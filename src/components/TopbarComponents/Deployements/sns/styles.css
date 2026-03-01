@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* SNS Domain Selector Container */
 .sns-domain-selector {
   display: flex;
@@ -344,9 +346,6 @@
   font-weight: 500;
   margin-bottom: 0.75rem;
 }
-
-/* Add font imports at the top of the file */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* Loading Animation */
 @keyframes spin {
