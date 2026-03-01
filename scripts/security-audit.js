@@ -152,5 +152,10 @@ function checkFileForWeb3Security(filePath) {
   });
 }
 
-// Run the audit
-runSecurityAudit(); 
+// Export for testing
+module.exports = { runSecurityAudit };
+
+// Run the audit when called directly
+if (require.main === module) {
+  runSecurityAudit();
+} 

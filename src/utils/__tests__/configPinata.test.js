@@ -1,43 +1,45 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { pinata, pinataConfig, isPinataConfigured } from '../configPinata';
 
 describe('Pinata Configuration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    import.meta.env.VITE_PINATA_JWT = 'test-jwt';
-    import.meta.env.VITE_PINATA_KEY = 'test-key';
-    import.meta.env.VITE_PINATA_SECRET = 'test-secret';
+    vi.clearAllMocks();
   });
 
-  describe('pinata mock client', () => {
-    it('should return mock hash for pinFileToIPFS', async () => {
-      const result = await pinata.pinFileToIPFS();
-      expect(result).toEqual({ IpfsHash: 'mock-hash' });
+  describe('pinata proxy client', () => {
+    it('should throw for pinFileToIPFS (redirects to CF proxy)', async () => {
+      await expect(pinata.pinFileToIPFS()).rejects.toThrow('Use uploadToPinata CF instead');
     });
 
-    it('should return empty array for groups.list', async () => {
-      const result = await pinata.groups.list();
-      expect(result).toEqual([]);
+    it('should throw for pinJSONToIPFS (redirects to CF proxy)', async () => {
+      await expect(pinata.pinJSONToIPFS()).rejects.toThrow('Use uploadToPinata CF instead');
     });
 
-    it('should return groupId for groups.create', async () => {
-      const result = await pinata.groups.create('test-group');
-      expect(result).toEqual({ groupId: 'test-group' });
+    it('should return authenticated for testAuthentication', async () => {
+      const result = await pinata.testAuthentication();
+      expect(result).toEqual({ authenticated: true });
     });
   });
 
   describe('pinataConfig', () => {
-    it('should have the correct configuration from env vars', () => {
+    it('should export empty config (credentials are server-side)', () => {
       expect(pinataConfig).toEqual({
-        jwt: 'test-jwt',
-        apiKey: 'test-key',
-        secretKey: 'test-secret',
+        jwt: '',
+        apiKey: '',
+        secretKey: '',
       });
     });
   });
 
   describe('isPinataConfigured', () => {
-    it('should return true when all env vars are set', () => {
+    it('should return true when VITE_CF_BASE_URL is set', () => {
+      import.meta.env.VITE_CF_BASE_URL = 'https://us-central1-project.cloudfunctions.net';
       expect(isPinataConfigured()).toBe(true);
+    });
+
+    it('should return false when VITE_CF_BASE_URL is not set', () => {
+      import.meta.env.VITE_CF_BASE_URL = '';
+      expect(isPinataConfigured()).toBe(false);
     });
   });
 });
