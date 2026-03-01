@@ -10,6 +10,14 @@ import { initSentry } from './configs/sentry';
 
 initSentry();
 
+if (import.meta.env.MODE === 'development') {
+  Promise.all([import('@axe-core/react'), import('react-dom')]).then(
+    ([{ default: axe }, reactDom]) => {
+      axe(React, reactDom.default || reactDom, 1000);
+    }
+  );
+}
+
 const RootComponent = () => {
   const [userId, setUserId] = useState(() => {
     // Initialize from sessionStorage only — wallet connection sets the real userId
