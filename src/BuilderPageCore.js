@@ -384,7 +384,7 @@ const BuilderPageCore = ({
       setLastFooterId(footerId);
 
     } catch (err) {
-      console.error('[handleFirstPrompt] error:', err);
+      // Error handled silently — prompt failures are non-critical
     }
   };
 
@@ -630,7 +630,6 @@ const BuilderPageCore = ({
         content: `I've updated the ${selectedElement.type} element as requested.`
       };
     } catch (error) {
-      console.error('Error editing element:', error);
       return {
         role: 'assistant',
         content: 'Sorry, there was an error updating the element. Please try again.'
@@ -727,7 +726,6 @@ const BuilderPageCore = ({
                   editCommand.properties.styles.borderRadius === '0' ? 'sharp' : 'standard'} corners.`
       };
     } catch (error) {
-      console.error('Error updating DeFi section:', error);
       return {
         role: 'assistant',
         content: 'There was an error updating the DeFi Dashboard section. Please try again with a different request.'

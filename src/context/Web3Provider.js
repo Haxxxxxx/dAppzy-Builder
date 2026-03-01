@@ -39,7 +39,7 @@ const Web3Provider = ({ children }) => {
           const chainId = await eth.request({ method: 'eth_chainId' });
           setChainId(chainId);
         } catch (error) {
-          console.error('Error initializing Web3:', error);
+          // Silent — Web3 init failure is non-critical
         }
       };
 
@@ -75,7 +75,6 @@ const Web3Provider = ({ children }) => {
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
       setChainId(chainId);
     } catch (error) {
-      console.error('Error connecting to MetaMask:', error);
       throw error;
     }
   };

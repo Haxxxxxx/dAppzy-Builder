@@ -101,7 +101,6 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         setViewState('selection');
       }
     } catch (error) {
-      console.error("Error loading projects:", error);
       setViewState('selection');
     } finally {
       setLoadingState(false);
@@ -136,7 +135,6 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         setViewState('error');
       }
     } catch (error) {
-      console.error("Error loading project:", error);
       setErrorMessage("Failed to load project. Please try again.");
       setViewState('error');
     } finally {
@@ -173,7 +171,6 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
       setViewState('builder');
       return docRef.id;
     } catch (error) {
-      console.error("Error creating project:", error);
       setViewState('selection');
     } finally {
       setLoadingState(false);

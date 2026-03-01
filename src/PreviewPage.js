@@ -40,7 +40,6 @@ const PreviewPage = () => {
           setError("Project not found.");
         }
       } catch (err) {
-        console.error("Error fetching project:", err);
         if (err.code === "permission-denied" && !auth.currentUser) {
           setError("Sign in to preview this project.");
         } else {

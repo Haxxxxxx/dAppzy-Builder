@@ -91,7 +91,7 @@ const WalletContextProvider = ({ children }) => {
           }
         }
       } catch (err) {
-        console.error('Error checking existing connection:', err);
+        // Silent — auto-reconnect failure is not actionable
       }
     };
 
@@ -172,7 +172,6 @@ const WalletContextProvider = ({ children }) => {
         throw new Error('No supported wallet found');
       }
     } catch (err) {
-      console.error('Error connecting wallet:', err);
       setError(err.message || 'Failed to connect wallet');
       throw err;
     } finally {
@@ -206,7 +205,6 @@ const WalletContextProvider = ({ children }) => {
       localStorage.removeItem('subscriptionStatus');
       localStorage.removeItem('subscriptionEndDate');
     } catch (err) {
-      console.error('Error disconnecting wallet:', err);
       setError(err.message || 'Failed to disconnect wallet');
       throw err;
     } finally {
