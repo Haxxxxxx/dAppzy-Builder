@@ -1,13 +1,5 @@
 import { secureStore, secureRetrieve } from '../utils/securityUtils';
 
-// Pinata Configuration
-export const pinataConfig = {
-  jwt: process.env.REACT_APP_PINATA_JWT,
-  gatewayUrl: process.env.REACT_APP_GATEWAY_URL,
-  apiKey: process.env.REACT_APP_PINATA_KEY,
-  secretKey: process.env.REACT_APP_PINATA_SECRET,
-};
-
 // UD Configuration (client ID for login — JWT is server-side only)
 export const udConfig = {
   clientId: process.env.REACT_APP_UD_CLIENT_ID,
@@ -49,7 +41,6 @@ export const storeConfig = () => {
   }
 
   const config = {
-    pinata: pinataConfig,
     ud: udConfig,
     api: apiConfig,
   };
@@ -71,7 +62,6 @@ export const getConfig = () => {
   }
 
   const config = {
-    pinata: pinataConfig,
     ud: udConfig,
     api: apiConfig,
   };
