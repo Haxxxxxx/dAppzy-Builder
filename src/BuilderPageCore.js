@@ -18,6 +18,7 @@ import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { PLACEHOLDER_IMAGES } from "./configs/assetUrls";
+import useKeyboardShortcuts from "./hooks/useKeyboardShortcuts";
 
 const BuilderPageCore = ({
   userId,
@@ -45,6 +46,7 @@ const BuilderPageCore = ({
   const { setSelectedElement, handleAICommand, elements, selectedElement } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
   const { isConnected, walletAddress } = useWalletContext();
+  useKeyboardShortcuts();
   const [showAIInputBar, setShowAIInputBar] = useState(false);
   const [initialAIMessages, setInitialAIMessages] = useState(null);
   const [aiChatStarted, setAIChatStarted] = useState(false);
