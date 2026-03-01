@@ -48,6 +48,8 @@
     "preview": "vite preview",
     "deploy": "vite build && firebase deploy",
     "deploy-test": "vite build && firebase deploy --only hosting:3rd-demo",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "npm cache clean --force && rimraf node_modules package-lock.json && npm install && npm run build"
   },
   "eslintConfig": {
