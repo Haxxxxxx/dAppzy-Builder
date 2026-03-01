@@ -1,7 +1,7 @@
 import { isPinataConfigured } from './configPinata';
 import { getAuth } from 'firebase/auth';
 
-const CF_BASE_URL = process.env.REACT_APP_CF_BASE_URL;
+const CF_BASE_URL = import.meta.env.VITE_CF_BASE_URL;
 
 /**
  * Convert a File/Blob to base64 string

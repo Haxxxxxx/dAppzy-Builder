@@ -25,7 +25,7 @@ import { Metaplex, keypairIdentity } from '@metaplex-foundation/js';
 export const createCandyMachine = async (config, wallet) => {
   try {
     const connection = new Connection(
-      process.env.REACT_APP_SOLANA_RPC_URL || clusterApiUrl('devnet')
+      import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl('devnet')
     );
 
     // Initialize Metaplex with the user's wallet.

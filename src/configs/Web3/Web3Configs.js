@@ -250,7 +250,7 @@ export const Web3Configs = {
         // Helius RPC (Primary)
         helius: {
             endpoint: 'https://mainnet.helius-rpc.com',
-            apiKey: process.env.REACT_APP_HELIUS_API_KEY || '',
+            apiKey: import.meta.env.VITE_HELIUS_API_KEY || '',
             getUrl: function() {
                 return this.apiKey ? `${this.endpoint}/?api-key=${this.apiKey}` : null;
             },

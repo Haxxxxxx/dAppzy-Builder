@@ -3,9 +3,9 @@ import { pinata, pinataConfig, isPinataConfigured } from '../configPinata';
 describe('Pinata Configuration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.REACT_APP_PINATA_JWT = 'test-jwt';
-    process.env.REACT_APP_PINATA_KEY = 'test-key';
-    process.env.REACT_APP_PINATA_SECRET = 'test-secret';
+    import.meta.env.VITE_PINATA_JWT = 'test-jwt';
+    import.meta.env.VITE_PINATA_KEY = 'test-key';
+    import.meta.env.VITE_PINATA_SECRET = 'test-secret';
   });
 
   describe('pinata mock client', () => {

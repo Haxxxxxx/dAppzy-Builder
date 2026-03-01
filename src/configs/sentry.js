@@ -1,10 +1,10 @@
 import * as Sentry from '@sentry/react';
 
 export function initSentry() {
-  if (process.env.REACT_APP_SENTRY_DSN) {
+  if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.init({
-      dsn: process.env.REACT_APP_SENTRY_DSN,
-      environment: process.env.NODE_ENV,
+      dsn: import.meta.env.VITE_SENTRY_DSN,
+      environment: import.meta.env.MODE,
       tracesSampleRate: 0.1,
     });
   }

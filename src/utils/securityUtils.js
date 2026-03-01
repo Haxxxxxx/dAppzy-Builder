@@ -20,7 +20,7 @@ export const encryptData = (data, key) => {
  * @throws {Error} If encryption key is not available
  */
 export const secureStore = async (key, data) => {
-  const encryptionKey = process.env.REACT_APP_ENCRYPTION_KEY;
+  const encryptionKey = import.meta.env.VITE_ENCRYPTION_KEY;
   if (!encryptionKey) {
     throw new Error('Encryption key is required for secure storage');
   }
@@ -77,7 +77,7 @@ export const secureStore = async (key, data) => {
  * @returns {string|null} The decrypted data or null if not found
  */
 export const secureRetrieve = async (key) => {
-  const encryptionKey = process.env.REACT_APP_ENCRYPTION_KEY;
+  const encryptionKey = import.meta.env.VITE_ENCRYPTION_KEY;
   if (!encryptionKey) {
     throw new Error('Encryption key is required for secure retrieval');
   }

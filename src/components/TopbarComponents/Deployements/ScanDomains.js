@@ -38,7 +38,7 @@ const ScanDomains = ({
       setIsLoading(true);
 
       try {
-        const endpoint = `${process.env.REACT_APP_CF_BASE_URL}/reverseLookup?address=${encodeURIComponent(walletAddress)}`;
+        const endpoint = `${import.meta.env.VITE_CF_BASE_URL}/reverseLookup?address=${encodeURIComponent(walletAddress)}`;
 
         const token = await auth.currentUser?.getIdToken();
         const response = await fetch(endpoint, {

@@ -62,7 +62,7 @@ const SupportPopup = ({ onClose }) => {
     try {
       const token = await auth.currentUser?.getIdToken();
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/sendSupportEmail`,
+        `${import.meta.env.VITE_CF_BASE_URL}/sendSupportEmail`,
         {
           method: 'POST',
           headers: {

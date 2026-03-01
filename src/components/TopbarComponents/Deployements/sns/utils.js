@@ -29,7 +29,7 @@ import { SNS_DOMAIN_PROGRAM } from './constants';
 import { SnsError, SnsSimulationError } from './errors';
 
 // Debug logging utility — no-op in production
-export const debugLog = process.env.NODE_ENV === 'development'
+export const debugLog = import.meta.env.MODE === 'development'
   ? (message, data = null) => {
       const timestamp = new Date().toISOString();
       const logMessage = data
@@ -331,7 +331,7 @@ export async function updateOrCreateIpfsRecord(
     }
 
     // Validate RPC endpoint
-    const rpcEndpoint = process.env.REACT_APP_HELIUS_RPC_URL;
+    const rpcEndpoint = import.meta.env.VITE_HELIUS_RPC_URL;
     if (!rpcEndpoint) {
       throw new Error('RPC endpoint not found in environment variables. Please check your .env file.');
     }

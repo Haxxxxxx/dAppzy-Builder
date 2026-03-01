@@ -10,7 +10,7 @@ const pinataConfigObject = {
 
 export const isPinataConfigured = () => {
   // Pinata is configured if the CF proxy endpoint is available
-  return !!process.env.REACT_APP_CF_BASE_URL;
+  return !!import.meta.env.VITE_CF_BASE_URL;
 };
 
 export const pinata = {

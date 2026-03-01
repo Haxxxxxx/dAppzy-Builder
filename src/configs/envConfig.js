@@ -2,19 +2,19 @@ import { secureStore, secureRetrieve } from '../utils/securityUtils';
 
 // UD Configuration (client ID for login — JWT is server-side only)
 export const udConfig = {
-  clientId: process.env.REACT_APP_UD_CLIENT_ID,
-  redirectUri: process.env.REACT_APP_UD_REDIRECT_URI,
+  clientId: import.meta.env.VITE_UD_CLIENT_ID,
+  redirectUri: import.meta.env.VITE_UD_REDIRECT_URI,
 };
 
 // API Configuration
 export const apiConfig = {
-  reverseLookupUrl: process.env.REACT_APP_REVERSE_LOOKUP_URL,
-  cfBaseUrl: process.env.REACT_APP_CF_BASE_URL,
+  reverseLookupUrl: import.meta.env.VITE_REVERSE_LOOKUP_URL,
+  cfBaseUrl: import.meta.env.VITE_CF_BASE_URL,
 };
 
 // Security Configuration
 const SECURE_STORAGE_KEY = 'app_config';
-const ENCRYPTION_KEY = process.env.REACT_APP_ENCRYPTION_KEY;
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
 
 // Validate required environment variables
 export const validateEnv = () => {

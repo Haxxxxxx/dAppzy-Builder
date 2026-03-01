@@ -112,7 +112,7 @@ const FormAdvancedSettings = ({ localSettings, handleInputChange, setElements })
   const onSubmit = async (data) => {
     try {
       // Encrypt password before storage
-      const encryptedPassword = encryptData(data.password, process.env.REACT_APP_ENCRYPTION_KEY);
+      const encryptedPassword = encryptData(data.password, import.meta.env.VITE_ENCRYPTION_KEY);
       // Handle the encrypted password
       // ... rest of the code
     } catch (error) {

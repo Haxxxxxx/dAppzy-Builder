@@ -7,15 +7,15 @@ import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } f
 import { createTransferInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { getPlanPrice, PLANS, getPlanFeatures } from '../utils/planConfig';
 
-const ADMIN_WALLET = process.env.REACT_APP_SOLANA_ADMIN_WALLET;
+const ADMIN_WALLET = import.meta.env.VITE_SOLANA_ADMIN_WALLET;
 
 // USDC SPL Token mint address on Solana mainnet
 const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
 const USDC_DECIMALS = 6;
 
 // Configure RPC endpoints
-const HELIUS_RPC = process.env.REACT_APP_HELIUS_API_KEY
-  ? `https://mainnet.helius-rpc.com/?api-key=${process.env.REACT_APP_HELIUS_API_KEY}`
+const HELIUS_RPC = import.meta.env.VITE_HELIUS_API_KEY
+  ? `https://mainnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`
   : null;
 
 // Fallback RPC endpoints in case Helius fails
@@ -281,7 +281,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
         throw new Error('Not authenticated. Please sign in again.');
       }
 
-      const cfBaseUrl = process.env.REACT_APP_CF_BASE_URL;
+      const cfBaseUrl = import.meta.env.VITE_CF_BASE_URL;
       const verifyRes = await fetch(`${cfBaseUrl}/verifySubscription`, {
         method: 'POST',
         headers: {

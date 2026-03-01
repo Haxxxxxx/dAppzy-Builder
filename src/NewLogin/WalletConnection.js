@@ -83,7 +83,7 @@ function WalletConnection({ onUserLogin }) {
 
   // Fetch a one-time nonce for wallet auth challenge-response
   const fetchNonce = async (walletAddress) => {
-    const res = await fetch(`${process.env.REACT_APP_CF_BASE_URL}/generateNonceV2`, {
+    const res = await fetch(`${import.meta.env.VITE_CF_BASE_URL}/generateNonceV2`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ walletAddress }),
@@ -115,7 +115,7 @@ function WalletConnection({ onUserLogin }) {
 
       // Verify signature server-side and get Firebase custom token
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/verifyMetaMaskV2`,
+        `${import.meta.env.VITE_CF_BASE_URL}/verifyMetaMaskV2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -172,7 +172,7 @@ function WalletConnection({ onUserLogin }) {
     const sigBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
     const body = { publicKey, signature: sigBase64, message, nonce };
     const response = await fetch(
-      `${process.env.REACT_APP_CF_BASE_URL}/verifyPhantomV2`,
+      `${import.meta.env.VITE_CF_BASE_URL}/verifyPhantomV2`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,8 +190,8 @@ function WalletConnection({ onUserLogin }) {
   const handleLoginWithUnstoppable = async () => {
     setIsLoading(true);
     const uauth = new UAuth({
-      clientID: process.env.REACT_APP_UD_CLIENT_ID,
-      redirectUri: process.env.REACT_APP_UD_REDIRECT_URI || window.location.origin,
+      clientID: import.meta.env.VITE_UD_CLIENT_ID,
+      redirectUri: import.meta.env.VITE_UD_REDIRECT_URI || window.location.origin,
       scope: "openid wallet",
     });
     try {
@@ -203,7 +203,7 @@ function WalletConnection({ onUserLogin }) {
 
       // Verify the token server-side and get Firebase custom token
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/verifyUnstoppableV2`,
+        `${import.meta.env.VITE_CF_BASE_URL}/verifyUnstoppableV2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -253,7 +253,7 @@ function WalletConnection({ onUserLogin }) {
 
       // Verify signature server-side and get Firebase custom token
       const response = await fetch(
-        `${process.env.REACT_APP_CF_BASE_URL}/verifyFreighterV2`,
+        `${import.meta.env.VITE_CF_BASE_URL}/verifyFreighterV2`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

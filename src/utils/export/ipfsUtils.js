@@ -5,7 +5,7 @@ import { pinDirectoryToPinata } from '../../utils/ipfs';
 const isPinataConfigured = () => {
   // Pinata uploads now go through server-side CF proxy
   // Just check that the CF base URL is configured
-  return !!process.env.REACT_APP_CF_BASE_URL;
+  return !!import.meta.env.VITE_CF_BASE_URL;
 };
 
 /**
