@@ -1,9 +1,23 @@
-import { defineConfig } from 'vite';
+import { defineConfig, transformWithEsbuild } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
+// Custom plugin to treat .js files as JSX (CRA compatibility)
+const jsxInJs = {
+  name: 'treat-js-as-jsx',
+  enforce: 'pre',
+  async transform(code, id) {
+    if (!/src\/.*\.js$/.test(id)) return null;
+    return transformWithEsbuild(code, id, {
+      loader: 'jsx',
+      jsx: 'automatic',
+    });
+  },
+};
+
 export default defineConfig({
   plugins: [
+    jsxInJs,
     react(),
     nodePolyfills({
       include: ['buffer', 'crypto', 'stream', 'util', 'process', 'events', 'url', 'assert', 'http', 'https', 'os', 'path', 'timers'],
@@ -20,6 +34,11 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: false,
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: { '.js': 'jsx' },
+    },
   },
   resolve: {
     alias: {
