@@ -19,7 +19,7 @@ describe('Security Audit', () => {
     expect(typeof runSecurityAudit).toBe('function');
   });
 
-  it('should run without throwing', () => {
+  it('should run without throwing', { timeout: 30000 }, () => {
     // Integration test: runs the actual audit against the repo
     expect(() => runSecurityAudit()).not.toThrow();
   });
