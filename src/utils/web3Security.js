@@ -24,7 +24,7 @@ export async function validateWeb3Message(message, signature) {
  */
 export async function validateWeb3Transaction(txHash) {
   try {
-    const provider = new ethers.JsonRpcProvider();
+    const provider = new ethers.JsonRpcProvider(process.env.REACT_APP_ETH_RPC_URL || 'https://eth.public-rpc.com');
     const tx = await provider.getTransaction(txHash);
     if (!tx) {
       throw new Error('Transaction not found');
