@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { BrowserProvider } from 'ethers';
 
 const Web3Context = createContext();
@@ -15,6 +15,7 @@ const Web3Provider = ({ children }) => {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState(null);
   const [chainId, setChainId] = useState(null);
+  const ethRef = useRef(null);
 
   useEffect(() => {
     // Prefer MetaMask's provider if multiple providers exist (EIP-6963)
@@ -26,6 +27,7 @@ const Web3Provider = ({ children }) => {
     }
 
     if (eth) {
+      ethRef.current = eth;
       const browserProvider = new BrowserProvider(eth);
       setProvider(browserProvider);
 
@@ -65,18 +67,15 @@ const Web3Provider = ({ children }) => {
   }, []);
 
   const connect = async () => {
-    if (!window.ethereum) {
-      throw new Error('MetaMask is not installed');
+    const eth = ethRef.current || window.ethereum;
+    if (!eth) {
+      throw new Error('No Ethereum wallet detected');
     }
 
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setAccount(accounts[0]);
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      setChainId(chainId);
-    } catch (error) {
-      throw error;
-    }
+    const accounts = await eth.request({ method: 'eth_requestAccounts' });
+    setAccount(accounts[0]);
+    const newChainId = await eth.request({ method: 'eth_chainId' });
+    setChainId(newChainId);
   };
 
   const value = {
