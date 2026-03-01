@@ -29,8 +29,7 @@ export const validateEnv = () => {
     .map(([key]) => key);
 
   if (missingVars.length > 0) {
-    console.error('Missing required environment variables:', missingVars);
-    throw new Error('Missing required environment variables');
+    throw new Error('Missing required environment variables. Check .env.example for required values.');
   }
 };
 

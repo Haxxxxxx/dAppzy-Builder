@@ -115,7 +115,6 @@ export const generatePreviewUrl = async (userId, projectId, elements, websiteSet
 
     return `https://ipfs.io/ipfs/${ipfsHash}`;
   } catch (error) {
-    console.error('Error generating preview URL:', error);
     throw error;
   }
 };
@@ -264,7 +263,6 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
       ipfsHash
     };
   } catch (error) {
-    console.error('Error deploying to IPFS:', error);
     throw error;
   }
 };
@@ -277,8 +275,7 @@ export function formatIpfsUrl(url) {
   try {
     const hash = url.split('/').pop();
     return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
-  } catch (error) {
-    console.error('Error formatting IPFS URL:', error);
+  } catch {
     return url;
   }
 } 
