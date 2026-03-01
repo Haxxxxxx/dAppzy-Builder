@@ -323,6 +323,7 @@ export const generateProjectHtml = (elements, websiteSettings) => {
   const metaTags = `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:;">
     <meta name="description" content="${escapeAttr(websiteSettings.metaDescription || 'A website created with Dappzy')}" />
     <meta name="keywords" content="${escapeAttr(websiteSettings.metaKeywords || '')}" />
     <meta name="author" content="${escapeAttr(websiteSettings.author || 'Dappzy')}" />
