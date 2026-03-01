@@ -1,3 +1,8 @@
+/**
+ * @deprecated This service uses @metaplex-foundation/js v0.20.1 which is deprecated.
+ * TODO: Migrate to @metaplex-foundation/umi for candy machine operations.
+ * See production roadmap Phase 2.1.
+ */
 import { Connection, clusterApiUrl, PublicKey } from '@solana/web3.js';
 import { Metaplex, keypairIdentity } from '@metaplex-foundation/js';
 
@@ -59,8 +64,7 @@ export const createCandyMachine = async (config, wallet) => {
 
     return candyMachine;
   } catch (error) {
-    console.error('Error creating candy machine:', error);
-    throw error;
+    throw new Error(`Candy machine creation failed: ${error.message}`);
   }
 };
 
