@@ -123,7 +123,6 @@ const ConnectWalletButton = ({
       setLocalError(null);
       await connectWallet();
     } catch (error) {
-      console.error('Error connecting wallet:', error);
       setLocalError(error.message || 'Failed to connect wallet');
     }
   }, [connectWallet]);
@@ -134,7 +133,6 @@ const ConnectWalletButton = ({
       setLocalError(null);
       await disconnectWallet();
     } catch (error) {
-      console.error('Error disconnecting wallet:', error);
       setLocalError(error.message || 'Failed to disconnect wallet');
     }
   }, [disconnectWallet]);
@@ -234,7 +232,6 @@ const ConnectWalletButton = ({
                 }
               }
             } catch (err) {
-              console.error('Solana wallet connection error:', err);
               throw new Error(`Failed to connect to Solana wallet: ${err.message}`);
             }
           } else {
@@ -267,7 +264,6 @@ const ConnectWalletButton = ({
           throw new Error(`Unsupported wallet type: ${wallet.type}`);
       }
     } catch (err) {
-      console.error('Wallet connection error:', err);
       setErrorMessage(err.message || 'Failed to connect wallet');
     } finally {
       setIsLoading(false);
@@ -298,7 +294,6 @@ const ConnectWalletButton = ({
         updateContent(id, "Connect Wallet");
       }
     } catch (error) {
-      console.error('Error disconnecting test wallet:', error);
       setErrorMessage(error.message);
     } finally {
       setIsLoading(false);

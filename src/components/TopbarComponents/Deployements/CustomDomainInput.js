@@ -27,7 +27,6 @@ const CustomDomainInput = ({ userId, projectId, websiteSettings, onDomainUpdated
         onDomainUpdated(customDomain);
       }
     } catch (error) {
-      console.error('Error updating domain:', error);
       setStatus('Error updating domain: ' + error.message);
     }
   };

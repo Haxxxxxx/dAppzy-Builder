@@ -38,7 +38,6 @@ export class TokenManager {
     try {
       await secureStore(this.TOKEN_TYPES[type], token);
     } catch (error) {
-      console.warn(`Failed to securely store ${type} token, falling back to localStorage:`, error);
       localStorage.setItem(this.TOKEN_TYPES[type], token);
     }
   }
@@ -72,7 +71,6 @@ export class TokenManager {
       }
       return token;
     } catch (error) {
-      console.warn(`Failed to securely retrieve ${type} token, falling back to localStorage:`, error);
       return localStorage.getItem(this.TOKEN_TYPES[type]);
     }
   }
@@ -109,7 +107,6 @@ export class TokenManager {
     try {
       await secureRemove(this.TOKEN_TYPES[type]);
     } catch (error) {
-      console.warn(`Failed to securely remove ${type} token, falling back to localStorage:`, error);
       localStorage.removeItem(this.TOKEN_TYPES[type]);
     }
   }
@@ -124,7 +121,6 @@ export class TokenManager {
         try {
           await secureRemove(type);
         } catch (error) {
-          console.warn(`Failed to securely remove token ${type}, falling back to localStorage:`, error);
           localStorage.removeItem(type);
         }
       })
@@ -165,7 +161,6 @@ export class TokenManager {
       }
       return newToken;
     } catch (error) {
-      console.error(`Error refreshing token: ${error.message}`);
       return null;
     }
   }

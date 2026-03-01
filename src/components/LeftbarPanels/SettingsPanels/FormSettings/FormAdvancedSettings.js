@@ -116,7 +116,6 @@ const FormAdvancedSettings = ({ localSettings, handleInputChange, setElements })
       // Handle the encrypted password
       // ... rest of the code
     } catch (error) {
-      console.error('Password encryption failed:', error);
     }
   };
 

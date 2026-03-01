@@ -172,12 +172,10 @@ const DraggableFooter = ({
 
     const currentSection = findElementById(id, elements);
     if (!currentSection) {
-      console.warn('Footer section not found');
       return;
     }
 
     if (item.type === 'footer') {
-      console.warn('Cannot add a footer inside another footer');
       return;
     }
 
@@ -190,7 +188,6 @@ const DraggableFooter = ({
     });
 
     if (hasDuplicate) {
-      console.warn(`A ${item.type} with this content already exists in the footer section`);
       return;
     }
 

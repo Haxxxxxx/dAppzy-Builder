@@ -312,7 +312,6 @@ export const EditableProvider = ({ children, userId }) => {
 
   const handleAICommand = useCallback((command) => {
     if (!command || !command.action) {
-      console.warn('Invalid AI command:', command);
       return null;
     }
 
@@ -375,7 +374,6 @@ export const EditableProvider = ({ children, userId }) => {
         if ((command.elementType === 'navbar' || command.elementType === 'footer') && command.properties?.configuration) {
           const structureConfig = structureConfigurations[command.properties.configuration];
           if (!structureConfig) {
-            console.warn(`Configuration not found for ${command.properties.configuration}`);
             return;
           }
 
@@ -422,7 +420,6 @@ export const EditableProvider = ({ children, userId }) => {
         const targetElement = elementsRef.current.find(el => el.id === command.targetId);
 
         if (!targetElement) {
-          console.warn(`Element not found: ${command.targetId}`);
           return null;
         }
 
@@ -514,7 +511,6 @@ export const EditableProvider = ({ children, userId }) => {
       case 'updateStyles': {
         const targetElement = elementsRef.current.find(el => el.id === command.targetId);
         if (!targetElement) {
-          console.warn(`Element not found: ${command.targetId}`);
           return null;
         }
 
@@ -540,7 +536,6 @@ export const EditableProvider = ({ children, userId }) => {
         return command.targetId;
 
       default:
-        console.warn('Unknown AI command:', command);
         return null;
     }
   }, [addNewElement, updateStyles, updateContent, updateElementProperties, handleRemoveElement, moveElement]);

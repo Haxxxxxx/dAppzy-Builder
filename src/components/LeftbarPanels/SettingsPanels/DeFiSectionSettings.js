@@ -48,7 +48,6 @@ const DeFiSectionSettings = ({ selectedElement }) => {
           lastElementId.current = selectedElement.id;
         }
       } catch (error) {
-        console.error('Error loading wallet settings:', error);
         setConnectionError('Failed to load wallet settings');
       }
     }
@@ -84,7 +83,6 @@ const DeFiSectionSettings = ({ selectedElement }) => {
         setConnectionError(null);
       }
     } catch (error) {
-      console.error('Error saving wallet settings:', error);
       setConnectionError('Failed to save wallet settings');
     }
   };
@@ -172,7 +170,6 @@ const DeFiSectionSettings = ({ selectedElement }) => {
                 };
               }
             } catch (e) {
-              console.error('Error parsing module content:', e);
             }
           }
         });
@@ -202,7 +199,6 @@ const DeFiSectionSettings = ({ selectedElement }) => {
           try {
             moduleContent = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
           } catch (e) {
-            console.error('Error parsing module content:', e);
             moduleContent = {
               id: module.id,
               moduleType: moduleType,

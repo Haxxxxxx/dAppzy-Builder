@@ -48,7 +48,6 @@ const TargetValueField = ({
       const actualPDFs = pdfResults.filter(Boolean);
       setPdfFiles(actualPDFs);
     } catch (error) {
-      console.error("Error fetching PDF files:", error);
     }
   };
 
@@ -72,7 +71,6 @@ const TargetValueField = ({
             // Optional: track progress if needed.
           },
           (error) => {
-            console.error("Error uploading file:", error);
             reject(null);
           },
           async () => {
@@ -82,7 +80,6 @@ const TargetValueField = ({
         );
       });
     } catch (error) {
-      console.error("Error in uploadFile:", error);
       return null;
     }
   };

@@ -51,7 +51,6 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
   const categories = ['All', 'Navbar', 'Hero', 'CTA', 'Content', 'Web3', 'Footer'];
 
   const handleImageError = (sectionId) => {
-    console.warn(`Image failed to load for section: ${sectionId}, using default preview`);
     setImageErrors(prev => ({
       ...prev,
       [sectionId]: true
@@ -381,7 +380,6 @@ const UnifiedDropZone = React.memo(({
       // Get the section configuration from structureConfigurations
       const sectionConfig = structureConfigurations[section.id];
       if (!sectionConfig) {
-        console.error('Section configuration not found:', section.id);
         return;
       }
 
@@ -480,7 +478,6 @@ const UnifiedDropZone = React.memo(({
           // Get the section configuration from structureConfigurations
           const sectionConfig = structureConfigurations[item.configuration];
           if (!sectionConfig) {
-            console.error('Section configuration not found:', item.configuration);
             return;
           }
 

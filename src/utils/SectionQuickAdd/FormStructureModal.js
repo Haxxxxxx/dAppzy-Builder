@@ -25,7 +25,6 @@ const FormStructureModal = ({ isOpen, onClose, onSubmit, editingFormId }) => {
 
   const handleSubmit = () => {
     if (!selectedStructure && customFields.length === 0) {
-      console.error('Please select a structure or add custom fields.');
       return;
     }
 

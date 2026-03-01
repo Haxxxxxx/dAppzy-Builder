@@ -29,15 +29,7 @@ import { SNS_DOMAIN_PROGRAM } from './constants';
 import { SnsError, SnsSimulationError } from './errors';
 
 // Debug logging utility — no-op in production
-export const debugLog = import.meta.env.MODE === 'development'
-  ? (message, data = null) => {
-      const timestamp = new Date().toISOString();
-      const logMessage = data
-        ? `[SNS Debug ${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`
-        : `[SNS Debug ${timestamp}] ${message}`;
-      console.log(logMessage); // eslint-disable-line no-console
-    }
-  : () => {};
+export const debugLog = () => {};
 
 // Domain name validation utility
 export const validateAndFormatDomain = (domainName) => {
@@ -476,7 +468,6 @@ export async function updateOrCreateIpfsRecord(
     log('Transaction confirmed:', signature);
     return signature;
   } catch (error) {
-    console.error('Error in updateOrCreateIpfsRecord:', error);
     throw error;
   }
 }

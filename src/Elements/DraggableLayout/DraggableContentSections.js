@@ -437,13 +437,11 @@ const DraggableContentSections = ({
     // Get the current content section element
     const currentSection = findElementById(id, elements);
     if (!currentSection) {
-      console.warn('Content section not found');
       return;
     }
 
     // Check if we're trying to add a content section inside another content section
     if (item.type === 'contentSection') {
-      console.warn('Cannot add a content section inside another content section');
       return;
     }
 
@@ -457,7 +455,6 @@ const DraggableContentSections = ({
 
     const containerType = containerMap[item.type];
     if (!containerType) {
-      console.warn(`No container found for element type: ${item.type}`);
       return;
     }
 
@@ -467,7 +464,6 @@ const DraggableContentSections = ({
       ?.find(el => el?.part === containerType);
 
     if (!container) {
-      console.warn(`Container not found for type: ${containerType}`);
       return;
     }
 
@@ -481,7 +477,6 @@ const DraggableContentSections = ({
     );
 
     if (hasDuplicate) {
-      console.warn(`A ${item.type} with this content already exists in the ${containerType} container`);
       return;
     }
 

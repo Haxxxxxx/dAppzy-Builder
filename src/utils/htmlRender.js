@@ -58,7 +58,7 @@ export function buildAttributesString(type, attributes, src, settings = {}) {
   if (type === 'span' && settings.targetValue) {
     const safeTarget = escapeJsString(settings.targetValue);
     if (settings.actionType === 'pageSection') {
-      attributesString += ` onclick="(function(){ var targetEl = document.getElementById('${safeTarget}'); if(targetEl){ targetEl.scrollIntoView({ behavior: 'smooth' }); } else { console.warn('Target element not found'); } })()" style="cursor: pointer;"`;
+      attributesString += ` onclick="(function(){ var targetEl = document.getElementById('${safeTarget}'); if(targetEl){ targetEl.scrollIntoView({ behavior: 'smooth' }); } })()" style="cursor: pointer;"`;
     } else if (settings.actionType === 'file') {
       if (settings.downloadFile) {
         attributesString += ` onclick="(function(){ var a = document.createElement('a'); a.href='${safeTarget}'; a.download = ''; a.click(); })()" style="cursor: pointer;"`;

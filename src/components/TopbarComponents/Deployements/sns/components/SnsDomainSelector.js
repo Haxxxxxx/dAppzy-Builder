@@ -35,7 +35,6 @@ const handleSelectDomain = async (domain) => {
     // Close modal
     onClose();
   } catch (error) {
-    console.error('Error in handleSelectDomain:', error);
     setError(error.message);
   }
 }; 

@@ -4,7 +4,6 @@ let elementCounter = 0;
 
 export const generateUniqueId = (type = 'element') => {
   if (!type) {
-    console.warn('generateUniqueId called without type, using default "element"');
     type = 'element';
   }
   

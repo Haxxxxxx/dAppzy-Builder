@@ -103,9 +103,8 @@ export const useDeployment = (connection, walletAddress, userId, projectId) => {
       return { signature, formattedDomain };
 
     } catch (error) {
-      console.error('Error deploying to SNS domain:', error);
       setDeploymentError(error);
-      
+
       // Update Firestore with error
       const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       try {
@@ -116,7 +115,6 @@ export const useDeployment = (connection, walletAddress, userId, projectId) => {
           updatedAt: serverTimestamp()
         });
       } catch (firestoreError) {
-        console.error('Error updating Firestore:', firestoreError);
       }
       
       throw error;

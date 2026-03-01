@@ -24,7 +24,6 @@ const ListItem = ({ id }) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (!parentId) {
-        console.error(`Parent ID for element ${id} not found.`);
         return;
       }
       const newId = addNewElement('list-item', 1, null, parentId);

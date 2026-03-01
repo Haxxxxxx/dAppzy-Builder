@@ -36,7 +36,6 @@ export const useConnection = () => {
         setConnectionStatus(CONNECTION_STATUS.CONNECTED);
         setConnectionError(null);
       } catch (error) {
-        console.error('Failed to connect to Solana mainnet:', error);
         setConnectionError(error.message);
         setConnectionStatus(CONNECTION_STATUS.ERROR);
       }

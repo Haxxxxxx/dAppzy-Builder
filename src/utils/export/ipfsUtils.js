@@ -193,7 +193,7 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
           type: 'image/x-icon'
         });
       } catch (error) {
-        console.warn('Failed to fetch favicon:', error);
+        // Favicon fetch failed; skip
       }
     }
 
@@ -208,7 +208,7 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
           type: 'image/jpeg'
         });
       } catch (error) {
-        console.warn('Failed to fetch OG image:', error);
+        // OG image fetch failed; skip
       }
     }
 
@@ -228,7 +228,7 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
           // Update element src to use IPFS path
           element.src = `ipfs://${fileName}`;
         } catch (error) {
-          console.warn(`Failed to fetch asset for element ${element.id}:`, error);
+          // Asset fetch failed; skip
         }
       });
 

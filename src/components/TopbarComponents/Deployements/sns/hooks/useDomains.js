@@ -39,7 +39,6 @@ export const useDomains = (connection, walletAddress) => {
         }
       }
     } catch (error) {
-      console.error('Error fetching domains:', error);
       setError(error);
     } finally {
       setIsLoading(false);

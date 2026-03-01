@@ -27,7 +27,6 @@ export async function renameProjectFolder(oldProjectName, newProjectName, userId
     });
     const movedFiles = await Promise.all(promises);
   } catch (error) {
-    console.error("Error renaming folder:", error);
     throw error;
   }
 }
@@ -43,7 +42,6 @@ export const loadFromLocalStorage = (key) => {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.warn(`Corrupt localStorage data for key "${key}", removing:`, error.message);
     localStorage.removeItem(key);
     return null;
   }

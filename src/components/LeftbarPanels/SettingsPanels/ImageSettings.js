@@ -185,7 +185,6 @@ const ImageSettings = () => {
       const allImages = await Promise.all(imagePromises);
       setExistingImages(allImages.filter(Boolean));
     } catch (error) {
-      console.error("Error fetching existing images:", error);
     }
   };
 
@@ -236,7 +235,6 @@ const ImageSettings = () => {
           setUploadProgress(progress);
         },
         (error) => {
-          console.error("Upload error:", error);
           setIsUploading(false);
         },
         async () => {
@@ -264,7 +262,6 @@ const ImageSettings = () => {
               createdAt: serverTimestamp(),
             });
           } catch (firestoreError) {
-            console.error("Firestore error:", firestoreError);
           }
 
           // Optionally add to media panel
@@ -285,7 +282,6 @@ const ImageSettings = () => {
         }
       );
     } catch (err) {
-      console.error("Error uploading file:", err);
       setIsUploading(false);
     }
   };
@@ -324,7 +320,6 @@ const ImageSettings = () => {
       // Update local state
       setExistingImages((prev) => prev.filter((x) => x.id !== itemId));
     } catch (error) {
-      console.error("Error deleting file from storage:", error);
     }
   };
 

@@ -81,7 +81,6 @@ export const useElementOperations = (elements, setElements, updateStyles) => {
 
       return newElement.id;
     } catch (error) {
-      console.error('Error creating new element:', error);
       throw error;
     }
   }, [setElements]);

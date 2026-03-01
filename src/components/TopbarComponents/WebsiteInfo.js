@@ -71,7 +71,6 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
       }
       return url;
     } catch (error) {
-      console.error('Error formatting SNS URL:', error);
       return url;
     }
   };
@@ -85,7 +84,6 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
       // Return a shorter, more readable format
       return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
     } catch (error) {
-      console.error('Error formatting IPFS URL:', error);
       return url;
     }
   };
@@ -106,7 +104,6 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
 
       return `${hostname}${path}`;
     } catch (error) {
-      console.error('Error formatting URL:', error);
       return url;
     }
   };

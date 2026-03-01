@@ -65,7 +65,6 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
         const data = await res.json();
         setSolUsd(data.solana.usd);
       } catch (err) {
-        console.error('Failed to fetch SOL price:', err);
         setSolUsd(null);
       }
     }
@@ -136,7 +135,6 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
           throw err;
         }
       } catch (error) {
-        console.error('Failed to get wallet address:', error);
         return null;
       }
     }
@@ -162,7 +160,6 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
         setDebug(`Successfully connected to ${endpoint}`);
         return connection;
       } catch (error) {
-        console.warn(`Failed to connect to ${endpoint}:`, error);
         setDebug(`Failed to connect to ${endpoint}: ${error.message}`);
         continue;
       }
@@ -306,7 +303,6 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
     } catch (e) {
       setStep('error');
       setError(`An error occurred while processing your payment: ${e.message}`);
-      console.error('Upgrade payment error:', e);
     }
   };
 

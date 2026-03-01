@@ -85,14 +85,12 @@ const DraggableNavbar = ({
 
     // Check if we're trying to add a navbar inside another navbar
     if (item.type === 'navbar') {
-      console.warn('Cannot add a navbar inside another navbar');
       return;
     }
 
     // Get the current navbar element
     const currentNavbar = findElementById(id, elements);
     if (!currentNavbar) {
-      console.warn('Navbar not found');
       return;
     }
 
@@ -107,7 +105,6 @@ const DraggableNavbar = ({
         el.type === item.type && el.content === item.content
       );
       if (hasDuplicate) {
-        console.warn(`A ${item.type} with this content already exists in the navbar`);
         return;
       }
     }

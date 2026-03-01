@@ -111,7 +111,6 @@ const DeFiNavbar = ({
     if (!item || dropHandledRef.current || !navbarElement) return;
 
     if (item.type === 'navbar') {
-      console.warn('Cannot add a navbar inside another navbar');
       return;
     }
 
@@ -125,7 +124,6 @@ const DeFiNavbar = ({
         el.type === item.type && el.content === item.content
       );
       if (hasDuplicate) {
-        console.warn(`A ${item.type} with this content already exists in the navbar`);
         return;
       }
     }

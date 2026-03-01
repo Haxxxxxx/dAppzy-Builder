@@ -83,14 +83,12 @@ export const SubscriptionProvider = ({ children }) => {
             }
           }
           setIsLoading(false);
-        }, (error) => {
-          console.error('Error in subscription status listener:', error);
+        }, () => {
           setIsLoading(false);
         });
 
         // onSnapshot fires immediately with initial data, no separate getDoc needed
       } catch (error) {
-        console.error('Error checking subscription status:', error);
         setIsLoading(false);
       }
     };

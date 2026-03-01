@@ -236,13 +236,11 @@ const DraggableMinting = ({
     // Get the current minting section element
     const currentSection = findElementById(sectionId, elements);
     if (!currentSection) {
-      console.warn('Minting section not found');
       return;
     }
 
     // Check if we're trying to add a minting section inside another minting section
     if (item.type === 'mintingSection') {
-      console.warn('Cannot add a minting section inside another minting section');
       return;
     }
 
@@ -257,7 +255,6 @@ const DraggableMinting = ({
         el.type === item.type && el.configuration?.id === item.configuration?.id
       );
       if (hasDuplicate) {
-        console.warn(`A ${item.type} with this configuration already exists in the minting section`);
         return;
       }
     }

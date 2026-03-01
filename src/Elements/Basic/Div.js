@@ -119,7 +119,6 @@ const Div = ({
           zIndex: -1,
         }}
         onError={(e) => {
-          console.error('Video background failed to load:', e);
           e.target.style.display = 'none';
         }}
       />

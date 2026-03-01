@@ -90,7 +90,6 @@ const fetchMedia = async () => {
     }));
     setMediaItems(files);
   } catch (err) {
-    console.error('Error listing files from Pinata:', err);
     setError('Failed to load media files. Please try again later.');
     setMediaItems([]);
   } finally {
@@ -134,7 +133,6 @@ const fetchMedia = async () => {
           ipfsHash: response.IpfsHash,
         });
       } catch (err) {
-        console.error('Error uploading file to Pinata:', err);
         setError(`Failed to upload file: ${err.message}`);
       }
     }
@@ -159,7 +157,6 @@ const fetchMedia = async () => {
       if (!res.ok) throw new Error(res.statusText);
       setMediaItems(prev => prev.filter(i => i.id !== itemId));
     } catch (err) {
-      console.error('Error deleting file from Pinata:', err);
       setError('Failed to delete file. Please try again.');
     }
   };

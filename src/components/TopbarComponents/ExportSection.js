@@ -90,7 +90,6 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       // Clear operation status after 3 seconds
       safeSetTimeout(() => setOperationStatus(null), 3000);
     } catch (error) {
-      console.error('Error generating preview:', error);
       setOperationStatus('Error generating preview: ' + error.message);
       setPreviewUrl(null);
       // Clear error status after 5 seconds
@@ -116,7 +115,6 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       safeSetTimeout(() => setOperationStatus(null), 3000);
       return ipfsUrl;
     } catch (error) {
-      console.error('Deployment error:', error);
       setOperationStatus('Error during deployment: ' + error.message);
       // Clear error status after 5 seconds
       safeSetTimeout(() => setOperationStatus(null), 5000);
@@ -150,7 +148,6 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
           safeSetTimeout(() => setOperationStatus(null), 3000);
         }
       } catch (error) {
-        console.error('Error deploying to IPFS:', error);
         setOperationStatus('Error during deployment: ' + error.message);
         // Clear error status after 5 seconds
         safeSetTimeout(() => setOperationStatus(null), 5000);
@@ -208,7 +205,6 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       const hash = url.split('/').pop();
       return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
     } catch (error) {
-      console.error('Error formatting IPFS URL:', error);
       return url;
     }
   };

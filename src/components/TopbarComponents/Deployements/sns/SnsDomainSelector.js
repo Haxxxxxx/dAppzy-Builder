@@ -60,7 +60,6 @@ const SnsDomainSelector = ({
       }, 1000);
 
     } catch (error) {
-      console.error('Error in handleSelectDomain:', error);
     }
   };
 

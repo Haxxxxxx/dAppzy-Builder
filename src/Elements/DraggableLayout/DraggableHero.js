@@ -225,12 +225,10 @@ const DraggableHero = ({
 
     const currentSection = findElementById(id, elements);
     if (!currentSection) {
-      console.warn('Hero section not found');
       return;
     }
 
     if (item.type === 'heroSection') {
-      console.warn('Cannot add a hero section inside another hero section');
       return;
     }
 
@@ -243,7 +241,6 @@ const DraggableHero = ({
     });
 
     if (hasDuplicate) {
-      console.warn(`A ${item.type} with this content already exists in the hero section`);
       return;
     }
 

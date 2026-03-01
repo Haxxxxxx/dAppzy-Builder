@@ -121,7 +121,6 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
       // Check if the element type is in any of the categories
       return allDisplayElements.includes(elementType);
     } catch (error) {
-      console.error('Error in shouldShowDisplaySettings:', error);
       return false;
     }
   };

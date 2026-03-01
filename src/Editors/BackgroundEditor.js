@@ -67,9 +67,7 @@ const BackgroundEditor = ({ pageSettings }) => {
       uploadTask.on(
         "state_changed",
         null,
-        (error) => {
-          console.error("Error uploading background image:", error);
-        },
+        () => {},
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           setBackgroundUrl(downloadURL);

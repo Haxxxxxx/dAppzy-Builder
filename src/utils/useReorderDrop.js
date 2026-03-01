@@ -73,7 +73,7 @@ const useReorderDrop = (findElementById, elements, setElements) => {
                 // Handle layout replacement through the drop handler in ContentList
                 return;
             } catch (err) {
-                console.error('Error parsing layout replacement data:', err);
+                // Ignore malformed layout replacement data
             }
         }
 

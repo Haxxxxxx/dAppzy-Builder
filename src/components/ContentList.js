@@ -71,7 +71,6 @@ const ContentList = forwardRef(
             setElements(allElements);
           }
         } catch (error) {
-          console.error('Error loading chunked elements:', error);
         }
       };
 
@@ -138,7 +137,6 @@ const ContentList = forwardRef(
       // Find the old layout
       const oldLayout = elements.find(el => el.id === oldLayoutId);
       if (!oldLayout) {
-        console.warn('Could not find layout with id:', oldLayoutId);
         return null;
       }
 
@@ -154,11 +152,6 @@ const ContentList = forwardRef(
       const targetIndex = rootElementIds.indexOf(targetId);
 
       if (sourceIndex === -1 || targetIndex === -1) {
-        console.warn('Could not find source or target in root elements:', {
-          sourceId: oldLayoutId,
-          targetId,
-          rootElementIds
-        });
         return null;
       }
 
@@ -328,7 +321,6 @@ const ContentList = forwardRef(
           try {
             item.dataTransfer.setData('application/layout-data', JSON.stringify(layoutData));
           } catch (err) {
-            console.error('Error setting layout data:', err);
           }
         }
       }

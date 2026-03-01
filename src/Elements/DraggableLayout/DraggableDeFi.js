@@ -257,7 +257,6 @@ const DraggableDeFi = forwardRef(({
     // Get the current DeFi section element
     const currentSection = findElementById(sectionId, elements);
     if (!currentSection) {
-      console.warn('DeFi section not found');
       return;
     }
 

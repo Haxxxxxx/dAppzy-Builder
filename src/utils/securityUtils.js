@@ -66,7 +66,6 @@ export const secureStore = async (key, data) => {
       .replace(/=+$/, '');
     localStorage.setItem(key, base64Data);
   } catch (error) {
-    console.error('Error in secureStore:', error);
     throw error;
   }
 };
@@ -126,7 +125,6 @@ export const secureRetrieve = async (key) => {
       return decodedData;
     }
   } catch (error) {
-    console.error('Error in secureRetrieve:', error);
     return null;
   }
 };

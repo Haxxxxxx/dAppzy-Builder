@@ -59,7 +59,6 @@ const ScanDomains = ({
           setStatus('No UD domains found in your wallet.');
         }
       } catch (error) {
-        console.error('Error fetching UD domains:', error);
         setStatus(`Error scanning wallet for UD domains: ${error.message}`);
       } finally {
         setIsLoading(false);
@@ -97,7 +96,6 @@ const ScanDomains = ({
       return ipfsUrl;
     } catch (error) {
       setAutoSaveStatus(`Error publishing to IPFS: ${error.message}`);
-      console.error('IPFS error:', error);
       return null;
     }
   };
@@ -151,7 +149,6 @@ const ScanDomains = ({
       }
 
     } catch (error) {
-      console.error('Error linking domain:', error);
       setStatus('Error linking domain: ' + error.message);
     }
   };

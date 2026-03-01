@@ -366,7 +366,6 @@ export const generateProjectHtml = (elements, websiteSettings) => {
 
             function tryNextGateway() {
               if (currentGatewayIndex >= ipfsGateways.length) {
-                console.error('All IPFS gateways failed');
                 return;
               }
 

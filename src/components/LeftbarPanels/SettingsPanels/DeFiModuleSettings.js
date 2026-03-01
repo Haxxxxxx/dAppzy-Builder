@@ -34,7 +34,6 @@ const DeFiModuleSettings = ({ selectedElement }) => {
 
         form.setFieldsValue(initialValues);
       } catch (e) {
-        console.error('Error parsing module data:', e);
       }
     }
   }, [selectedElement, form]);

@@ -60,7 +60,6 @@ function WalletConnection({ onUserLogin }) {
       }
 
     } catch (error) {
-      console.error("Error saving wallet data:", error);
       throw error;
     }
   };
@@ -72,11 +71,8 @@ function WalletConnection({ onUserLogin }) {
       if (typeof onUserLogin === "function") {
         onUserLogin(userId);
         connectWallet(); // Ensure WalletContext is updated
-      } else {
-        console.error("onUserLogin is not a function");
       }
     } catch (error) {
-      console.error("Error processing login:", error);
       setErrorMessage("Failed to process login. Please try again.");
     }
   };
@@ -130,7 +126,6 @@ function WalletConnection({ onUserLogin }) {
       await saveWalletToFirestore(account, "Ethereum");
       processLogin(account, "Ethereum");
     } catch (error) {
-      console.error("Error with MetaMask login:", error);
       setErrorMessage("MetaMask authentication failed. Please try again");
     } finally {
       setIsLoading(false);
@@ -161,7 +156,6 @@ function WalletConnection({ onUserLogin }) {
         setErrorMessage("Phantom wallet not found. Please install it.");
       }
     } catch (error) {
-      console.error("Error connecting to Phantom or verifying signature:", error);
       setErrorMessage("Phantom authentication failed. Please try again");
     } finally {
       setIsLoading(false);
@@ -221,7 +215,6 @@ function WalletConnection({ onUserLogin }) {
       await saveWalletToFirestore(userId, "Unstoppable");
       processLogin(userId, "Unstoppable");
     } catch (error) {
-      console.error("Error with Unstoppable login:", error);
       setErrorMessage("Unstoppable login failed. Please try again");
     } finally {
       setIsLoading(false);
@@ -268,7 +261,6 @@ function WalletConnection({ onUserLogin }) {
       await saveWalletToFirestore(publicKey, "Freighter");
       processLogin(publicKey, "Freighter");
     } catch (error) {
-      console.error("Error with Freighter login:", error);
       setErrorMessage("Freighter authentication failed. Please try again");
     } finally {
       setIsLoading(false);

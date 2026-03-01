@@ -34,13 +34,6 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
   // Validate IDs are present
   useEffect(() => {
     if (!userId || !projectId) {
-      console.warn('Missing required IDs:', { 
-        userId: userId || 'missing', 
-        projectId: projectId || 'missing',
-        urlParams: getUrlParams(),
-        propUserId,
-        propProjectId
-      });
       setSaveStatus('Cannot save: Missing user or project ID');
     }
   }, [userId, projectId, propUserId, propProjectId]);
@@ -163,7 +156,6 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
 
       // Skip save if no valid elements
       if (uniqueElements.length === 0) {
-        console.warn('No valid elements to save');
         setSaveStatus('Skipped save - invalid data');
         return;
       }
@@ -203,15 +195,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       setSaveStatus('All changes saved');
       setPendingChanges(false);
     } catch (error) {
-      console.error('Error saving content:', error);
       setSaveStatus('Error saving changes - will retry with clean data');
-      
-      // Log detailed error information for debugging
-      console.warn('Save failed with the following data:', {
-        elementsCount: nextSave?.elements?.length,
-        websiteSettingsKeys: nextSave?.websiteSettings ? Object.keys(nextSave.websiteSettings) : [],
-        error: error.message
-      });
     } finally {
       setIsSaving(false);
     }
@@ -229,7 +213,6 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
   const debouncedSaveContent = useCallback(
     debounce((elements, websiteSettings) => {
       if (!userIdRef.current || !projectIdRef.current) {
-        console.warn('Save aborted: missing userId or projectId');
         setSaveStatus('Cannot save: Missing user or project ID');
         return;
       }

@@ -9,8 +9,7 @@ const Code = ({ id }) => {
 
   // Ensure content is a string
   if (typeof content !== 'string') {
-    console.warn(`Invalid content type for code with ID ${id}. Converting to string.`);
-    content = String(content); // Convert to string
+    content = String(content);
   }
 
   const handleSelect = (e) => {

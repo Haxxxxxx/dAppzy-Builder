@@ -22,7 +22,6 @@ async function getOrCreateGroup(walletId) {
       return newGroup;
     }
   } catch (error) {
-    console.error("Error fetching or creating group:", error);
     throw error;
   }
 }
@@ -56,7 +55,6 @@ async function uploadFileToPinata(file, walletId, projectName) {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error uploading file to Pinata:", error);
     throw error;
   }
 }
@@ -84,7 +82,6 @@ async function renameProjectFolder(oldName, newName, userId) {
     });
     await Promise.all(promises);
   } catch (error) {
-    console.error("Error renaming folder:", error);
     throw error;
   }
 }
@@ -125,7 +122,6 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
         await renameProjectFolder(initialProjectNameRef.current, settings.siteTitle, userId);
         initialProjectNameRef.current = settings.siteTitle;
       } catch (error) {
-        console.error("Folder rename failed:", error);
       }
     }
   };
@@ -165,7 +161,6 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
         }
       }
     } catch (error) {
-      console.error("Error uploading favicon via Pinata:", error);
     }
   };
 

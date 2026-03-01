@@ -83,13 +83,11 @@ const DraggableCTA = ({
     // Get the current CTA section element
     const currentSection = findElementById(id, elements);
     if (!currentSection) {
-      console.warn('CTA section not found');
       return;
     }
 
     // Check if we're trying to add a CTA section inside another CTA section
     if (item.type === 'ctaSection') {
-      console.warn('Cannot add a CTA section inside another CTA section');
       return;
     }
 
@@ -104,7 +102,6 @@ const DraggableCTA = ({
         el.type === item.type && el.content === item.content
       );
       if (hasDuplicate) {
-        console.warn(`A ${item.type} with this content already exists in the CTA section`);
         return;
       }
     }
