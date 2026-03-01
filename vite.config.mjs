@@ -1,6 +1,7 @@
 import { defineConfig, transformWithEsbuild } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // Custom plugin to treat .js files as JSX (CRA compatibility)
 const jsxInJs = {
@@ -23,6 +24,7 @@ export default defineConfig({
       include: ['buffer', 'crypto', 'stream', 'util', 'process', 'events', 'url', 'assert', 'http', 'https', 'os', 'path', 'timers'],
       globals: { Buffer: true, process: true },
     }),
+    visualizer({ open: false, filename: 'bundle-stats.html', gzipSize: true }),
   ],
   define: {
     'process.env': {},

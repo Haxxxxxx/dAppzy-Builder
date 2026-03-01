@@ -33,6 +33,9 @@ admin-keypair.json
 .env.local
 .env.*.local
 
+# bundle analysis
+bundle-stats.html
+
 # ralph agent
 .ralph/
 .ralphrc
