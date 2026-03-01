@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "@bonfida/spl-name-service": "3.0.11",
-    "@craco/craco": "7.1.0",
     "@hookform/resolvers": "5.0.1",
     "@metaplex-foundation/js": "0.20.1",
+    "@sentry/react": "^9.0.0",
     "@solana/spl-token": "^0.4.13",
     "@solana/wallet-adapter-base": "0.9.23",
     "@solana/wallet-adapter-react": "0.15.38",
@@ -19,50 +19,40 @@
     "assert": "2.1.0",
     "axios": "1.9.0",
     "buffer": "6.0.3",
-    "crypto-browserify": "3.12.1",
     "dompurify": "3.2.6",
     "ethers": "6.14.3",
     "events": "3.3.0",
     "firebase": "11.8.1",
-    "https-browserify": "1.0.0",
     "jszip": "3.10.1",
-    "os-browserify": "0.3.0",
-    "path-browserify": "1.0.1",
     "pinata": "2.4.2",
     "process": "0.11.10",
     "react": "18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-datepicker": "8.4.0",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "18.2.0",
     "react-hook-form": "7.56.4",
     "react-router-dom": "7.6.1",
-    "react-scripts": "5.0.1",
     "stream-browserify": "3.0.0",
-    "stream-http": "3.2.0",
-    "timers-browserify": "2.0.12",
     "url": "0.11.4",
     "util": "0.12.5",
     "web-vitals": "5.0.1",
     "web3": "4.16.0",
-    "yup": "1.6.1",
-    "@sentry/react": "^9.0.0"
+    "yup": "1.6.1"
   },
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
-    "dev": "npm install && craco start",
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject",
-    "deploy": "craco build && firebase deploy",
-    "deploy-test": "craco build && firebase deploy --only hosting:3rd-demo",
-    "clean": "npm cache clean --force && rimraf node_modules package-lock.json && npm install && npm run build && npm start"
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && firebase deploy",
+    "deploy-test": "vite build && firebase deploy --only hosting:3rd-demo",
+    "clean": "npm cache clean --force && rimraf node_modules package-lock.json && npm install && npm run build"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ],
     "rules": {
       "array-callback-return": "warn",
@@ -70,24 +60,12 @@
       "no-console": "warn"
     }
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
-    "dotenv-webpack": "^8.1.0",
-    "node-polyfill-webpack-plugin": "^4.1.0",
-    "npm-force-resolutions": "^0.0.10",
+    "@vitejs/plugin-react": "^4.3.0",
     "rimraf": "^6.0.1",
-    "typescript": "4.9.5"
+    "typescript": "4.9.5",
+    "vite": "^6.0.0",
+    "vite-plugin-node-polyfills": "^0.23.0"
   },
   "resolutions": {
     "@solana/spl-token": "0.4.13"
