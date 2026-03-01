@@ -67,6 +67,7 @@ const Icon = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} }
         onClick={handleSelect}
         src={currentSrc}
         alt={styles.alt || "Editable icon"}
+        loading="lazy"
         style={{
           width: styles.width || customStyles.width || "auto",
           height: styles.height || customStyles.height || "auto",

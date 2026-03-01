@@ -620,6 +620,7 @@ const DraggableContentSections = ({
         <img
           src={imgSrc}
           alt={label}
+          loading="lazy"
           style={{
             width: '100%',
             height: 'auto',
