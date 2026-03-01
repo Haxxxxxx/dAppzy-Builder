@@ -1,15 +1,16 @@
 // builder project's App.js
 import "./App.css";
 import "./Root.css";
-import React, { useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import PreviewPage from "./PreviewPage";
-import BuilderPageLoader from "./BuilderPageLoader";
 import { WalletProvider, useWalletContext } from './context/WalletContext';
 import { DappWalletProvider } from './context/DappWalletContext';
 import Web3Provider from './context/Web3Provider';
 import { SubscriptionProvider } from './context/SubscriptionContext';
-import WalletConnection from "./NewLogin/WalletConnection";
+
+const PreviewPage = lazy(() => import("./PreviewPage"));
+const BuilderPageLoader = lazy(() => import("./BuilderPageLoader"));
+const WalletConnection = lazy(() => import("./NewLogin/WalletConnection"));
 
 function AppContent({ userId, setUserId, projectId }) {
   const { walletAddress } = useWalletContext();
@@ -17,13 +18,15 @@ function AppContent({ userId, setUserId, projectId }) {
   if (!walletAddress) {
     return (
       <div className="app-container">
-        <WalletConnection
-          onUserLogin={(walletKey) => {
-            if (setUserId) {
-              setUserId(walletKey);
-            }
-          }}
-        />
+        <Suspense fallback={<div className="app-loading">Loading...</div>}>
+          <WalletConnection
+            onUserLogin={(walletKey) => {
+              if (setUserId) {
+                setUserId(walletKey);
+              }
+            }}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -33,13 +36,15 @@ function AppContent({ userId, setUserId, projectId }) {
       <DappWalletProvider>
         <Web3Provider>
           <SubscriptionProvider>
-            <Routes>
-              <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
-              <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
-              <Route path="/:customUrl" element={<PreviewPage />} />
-              <Route path="/preview" element={<PreviewPage />} />
-              <Route path="/export" element={<PreviewPage />} />
-            </Routes>
+            <Suspense fallback={<div className="app-loading">Loading...</div>}>
+              <Routes>
+                <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
+                <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
+                <Route path="/:customUrl" element={<PreviewPage />} />
+                <Route path="/preview" element={<PreviewPage />} />
+                <Route path="/export" element={<PreviewPage />} />
+              </Routes>
+            </Suspense>
           </SubscriptionProvider>
         </Web3Provider>
       </DappWalletProvider>
