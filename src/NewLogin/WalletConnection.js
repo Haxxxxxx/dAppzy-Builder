@@ -156,6 +156,7 @@ function WalletConnection({ onUserLogin }) {
         setErrorMessage("Phantom wallet not found. Please install it.");
       }
     } catch (error) {
+      if (import.meta.env.DEV) console.error("Phantom auth error:", error);
       setErrorMessage("Phantom authentication failed. Please try again");
     } finally {
       setIsLoading(false);

@@ -57,36 +57,40 @@ const WalletContextProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [balance, setBalance] = useState(0);
 
-  // Check for existing wallet connection and URL parameters on mount
+  // Restore wallet session using onAuthStateChanged (async-safe) + Phantom auto-connect
   useEffect(() => {
-    const checkExistingConnection = async () => {
+    const restoreWalletSession = async () => {
       try {
-        // Check for existing wallet connection (URL userId is NOT trusted for auth)
-        // Only restore session if Firebase Auth session is still valid
-        if (!auth.currentUser) return;
+        if (!window.solana || !window.solana.isPhantom) return;
 
-        if (window.solana && window.solana.isPhantom) {
-          const isConnected = window.solana.isConnected;
-          if (isConnected) {
-            const { publicKey } = window.solana;
-            if (publicKey) {
-              const address = publicKey.toString();
-              setWalletAddress(address);
-              setWalletId(address);
-              setIsWalletConnected(true);
-              
-              // Check subscription status in Firestore
-              const userRef = doc(db, 'users', address);
-              const userDoc = await getDoc(userRef);
-              if (userDoc.exists()) {
-                const userData = userDoc.data();
-                if (userData.subscriptionStatus) {
-                  localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
-                  if (userData.subscriptionEndDate) {
-                    localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
-                  }
-                }
-              }
+        // Try to eagerly connect — Phantom remembers trusted apps across origins
+        let publicKey = window.solana.publicKey;
+        if (!publicKey && window.solana.isConnected === false) {
+          try {
+            const resp = await window.solana.connect({ onlyIfTrusted: true });
+            publicKey = resp.publicKey;
+          } catch {
+            // Phantom not previously trusted on this origin — user must login manually
+            return;
+          }
+        }
+        if (!publicKey) return;
+
+        const address = publicKey.toString();
+        setWalletAddress(address);
+        setWalletId(address);
+        setIsWalletConnected(true);
+        sessionStorage.setItem('userAccount', address);
+
+        // Check subscription status in Firestore
+        const userRef = doc(db, 'users', address);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.subscriptionStatus) {
+            localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+            if (userData.subscriptionEndDate) {
+              localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
             }
           }
         }
@@ -95,25 +99,34 @@ const WalletContextProvider = ({ children }) => {
       }
     };
 
-    checkExistingConnection();
+    // Wait for Firebase Auth to hydrate, then try to restore
+    const unsub = auth.onAuthStateChanged((user) => {
+      if (user) {
+        restoreWalletSession();
+      } else {
+        // No Firebase session — still try Phantom auto-connect
+        // (handles cross-origin redirects from CMS where Firebase session doesn't carry)
+        restoreWalletSession();
+      }
+    });
 
     // Listen for Phantom account changes and disconnect
+    let handleAccountChanged;
+    let handleDisconnect;
     if (window.solana && window.solana.isPhantom) {
-      const handleAccountChanged = async (newPublicKey) => {
+      handleAccountChanged = async (newPublicKey) => {
         if (newPublicKey) {
-          // Account switched — sign out to force re-authentication with new wallet
           await signOut(auth);
           setWalletAddress('');
           setWalletId('');
           setIsWalletConnected(false);
         } else {
-          // Account changed to nothing — treat as disconnect
           setWalletAddress('');
           setWalletId('');
           setIsWalletConnected(false);
         }
       };
-      const handleDisconnect = () => {
+      handleDisconnect = () => {
         setWalletAddress('');
         setWalletId('');
         setIsWalletConnected(false);
@@ -121,12 +134,15 @@ const WalletContextProvider = ({ children }) => {
       };
       window.solana.on('accountChanged', handleAccountChanged);
       window.solana.on('disconnect', handleDisconnect);
+    }
 
-      return () => {
+    return () => {
+      unsub();
+      if (window.solana && handleAccountChanged) {
         window.solana.removeListener('accountChanged', handleAccountChanged);
         window.solana.removeListener('disconnect', handleDisconnect);
-      };
-    }
+      }
+    };
   }, []);
 
   const connectWallet = async () => {

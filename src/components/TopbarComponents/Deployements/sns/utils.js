@@ -7,8 +7,6 @@ import {
   createRecordInstruction,
   updateRecordInstruction,
   getAllDomains,
-  getDomainInfo as getSnsDomainInfo,
-  getRecordKey,
   getDomainKey,
   getRecord,
   getIpfsRecord,
