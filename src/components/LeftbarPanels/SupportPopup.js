@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from 'react';
 import './SupportPopup.css';
 import { EditableContext } from '../../context/EditableContext';
 import { auth } from '../../firebase';
+import { SOCIAL_ICONS } from '../../configs/assetUrls';
 
 const SupportPopup = ({ onClose }) => {
   const [text, setText] = useState('');
@@ -146,7 +147,7 @@ const SupportPopup = ({ onClose }) => {
               rel="noopener noreferrer"
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2FVector.png?alt=media&token=a541bac4-81cc-4fc6-9e4e-ce22b16db217"
+                src={SOCIAL_ICONS.discord}
                 alt="Discord"
                 className="contact-icon"
               />
@@ -159,7 +160,7 @@ const SupportPopup = ({ onClose }) => {
               rel="noopener noreferrer"
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2FlogoBlack.png?alt=media&token=13227ae0-7025-4229-b433-fe8187b9c174"
+                src={SOCIAL_ICONS.website}
                 alt="Website"
                 className="contact-icon"
               />
@@ -172,7 +173,7 @@ const SupportPopup = ({ onClose }) => {
               rel="noopener noreferrer"
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fx.png?alt=media&token=55bf09ff-5ae3-419a-ae43-e85c8c6a5982"
+                src={SOCIAL_ICONS.twitter}
                 alt="Twitter"
                 className="contact-icon"
               />
@@ -185,7 +186,7 @@ const SupportPopup = ({ onClose }) => {
               rel="noopener noreferrer"
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2FLinkedIn.png?alt=media&token=3023cb89-8f07-4056-8da1-59701877ee5c"
+                src={SOCIAL_ICONS.linkedin}
                 alt="LinkedIn"
                 className="contact-icon"
               />

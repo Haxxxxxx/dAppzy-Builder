@@ -10,6 +10,7 @@ import { structureConfigurations } from '../../configs/structureConfigurations.j
 import { mergeStyles } from '../../utils/htmlRenderUtils/containerHelpers';
 import { defaultSectionStyles } from '../Sections/ContentSections/defaultSectionStyles';
 import { merge } from 'lodash';
+import { PLACEHOLDER_IMAGES } from '../../configs/assetUrls';
 
 /**
  * DraggableContentSections component for rendering and managing content sections.
@@ -135,7 +136,7 @@ const DraggableContentSections = ({
           {
             id: `${id}-image-${generateUniqueId('image')}`,
             type: 'image',
-            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+            content: PLACEHOLDER_IMAGES.builder,
             styles: mergeStyles(defaultSectionStyles.image, configStyles.image || {}),
             parentId: `${id}-image`,
             configuration: configuration
@@ -376,7 +377,7 @@ const DraggableContentSections = ({
                   {
                     id: `${newSectionId}-image-${generateUniqueId('image')}`,
                     type: 'image',
-                    content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+                    content: PLACEHOLDER_IMAGES.builder,
                     styles: mergeStyles(defaultSectionStyles.image, configStyles.image || {}),
                     parentId: `${newSectionId}-image`,
                     configuration: item.configuration

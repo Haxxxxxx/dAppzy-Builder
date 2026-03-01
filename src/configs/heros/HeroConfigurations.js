@@ -1,3 +1,5 @@
+import { PLACEHOLDER_IMAGES } from '../assetUrls';
+
 export const HeroConfiguration = {
     
     heroOne: {
@@ -5,7 +7,7 @@ export const HeroConfiguration = {
     children: [
       { 
         type: 'image', 
-        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        content: PLACEHOLDER_IMAGES.builder,
         styles: {
           maxWidth: '100%',
           height: '400px',
@@ -94,7 +96,7 @@ export const HeroConfiguration = {
       },
       { 
         type: 'image', 
-        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        content: PLACEHOLDER_IMAGES.builder,
         settings: {
           alt: 'Hero image'
         }

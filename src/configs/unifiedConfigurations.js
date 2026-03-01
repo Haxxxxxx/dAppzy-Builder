@@ -1,4 +1,5 @@
 import { defaultSectionStyles } from '../Elements/Sections/ContentSections/defaultSectionStyles';
+import { PLACEHOLDER_IMAGES } from './assetUrls';
 
 // Unified configuration structure for all components
 export const unifiedConfigurations = {
@@ -16,7 +17,7 @@ export const unifiedConfigurations = {
       children: [
         {
           type: 'image',
-          content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+          content: PLACEHOLDER_IMAGES.builder,
           styles: {
             width: '32px',
             height: '32px',
@@ -66,7 +67,7 @@ export const unifiedConfigurations = {
           children: [
             {
               type: 'image',
-              content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+              content: PLACEHOLDER_IMAGES.builder,
               styles: {
                 width: '32px',
                 height: '32px',
@@ -138,7 +139,7 @@ export const unifiedConfigurations = {
           children: [
             {
               type: 'image',
-              content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+              content: PLACEHOLDER_IMAGES.builder,
               styles: {
                 width: '32px',
                 height: '32px',
@@ -378,7 +379,7 @@ export const unifiedConfigurations = {
           children: [
             {
               type: 'image',
-              content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+              content: PLACEHOLDER_IMAGES.builder,
               styles: {
                 width: '100%',
                 height: 'auto',
@@ -583,7 +584,7 @@ export const unifiedConfigurations = {
           children: [
             {
               type: 'image',
-              content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+              content: PLACEHOLDER_IMAGES.builder,
               styles: {
                 width: '100%',
                 height: 'auto',
@@ -880,7 +881,7 @@ export const unifiedConfigurations = {
       children: [
         {
           type: 'image',
-          content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+          content: PLACEHOLDER_IMAGES.builder,
           styles: {
             width: '32px',
             height: '32px',
@@ -917,7 +918,7 @@ export const unifiedConfigurations = {
       children: [
         {
           type: 'image',
-          content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+          content: PLACEHOLDER_IMAGES.builder,
           styles: {
             width: '32px',
             height: '32px',

@@ -1,3 +1,5 @@
+import { PLACEHOLDER_IMAGES } from '../assetUrls';
+
 export const NavbarConfigurations = {
   customTemplate: {
     styles: {
@@ -13,7 +15,7 @@ export const NavbarConfigurations = {
     children: [
       {
         type: 'image',
-        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        content: PLACEHOLDER_IMAGES.builder,
         styles: {
           width: '40px',
           height: '40px',
@@ -71,7 +73,7 @@ export const NavbarConfigurations = {
   },
   twoColumn: {
     children: [
-      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+      { type: 'image', content: PLACEHOLDER_IMAGES.builder },
       { type: 'span', content: 'Home' },
       { type: 'span', content: 'About' },
       { type: 'span', content: 'Contact' },
@@ -81,7 +83,7 @@ export const NavbarConfigurations = {
     children: [
       { 
         type: 'image', 
-        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        content: PLACEHOLDER_IMAGES.builder,
         styles: {
           width: '40px',
           height: '40px',
@@ -139,7 +141,7 @@ export const NavbarConfigurations = {
       {
         id: 'defi-navbar-logo',
         type: 'image',
-        content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+        content: PLACEHOLDER_IMAGES.builder,
         styles: {
           width: '32px',
           height: '32px',

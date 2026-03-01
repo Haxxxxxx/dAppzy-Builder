@@ -1,3 +1,5 @@
+import { PLACEHOLDER_IMAGES } from '../assetUrls';
+
 export const CtaConfigurations = {  
     ctaOne: {
     children: [
@@ -5,7 +7,7 @@ export const CtaConfigurations = {
       { type: "paragraph", content: "Sign up now and take the first step towards a better future."},
       { type: "button", content: "Join Now"},
       { type: "button", content: "Learn More"},
-      { type: "image", content: "https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7" },
+      { type: "image", content: PLACEHOLDER_IMAGES.builder },
     ],
   },
   
@@ -23,7 +25,7 @@ export const CtaConfigurations = {
       { type: 'paragraph', content: 'Join thousands of successful businesses that have already made the switch. Our platform provides everything you need to grow and succeed.' },
       { type: 'button', content: 'Start Free Trial' },
       { type: 'button', content: 'Schedule Demo' },
-      { type: 'image', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
+      { type: 'image', content: PLACEHOLDER_IMAGES.builder },
     ],
   },
 }

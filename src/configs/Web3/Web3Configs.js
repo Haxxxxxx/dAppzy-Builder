@@ -1,3 +1,5 @@
+import { PLACEHOLDER_IMAGES } from '../assetUrls';
+
 export const Web3Configs = {
     mintingSection: {
         id: 'minting-section',
@@ -64,10 +66,10 @@ export const Web3Configs = {
             content: {
               title: 'Rarest Items',
               items: [
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder }
               ],
               settings: {
                 showTitle: true,
@@ -93,9 +95,9 @@ export const Web3Configs = {
             content: {
               title: 'Document Items',
               items: [
-                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }
+                { type: 'document-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'document-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'document-item', content: PLACEHOLDER_IMAGES.builder }
               ],
               settings: {
                 showTitle: true,
