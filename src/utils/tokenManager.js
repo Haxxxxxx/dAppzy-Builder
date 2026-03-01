@@ -83,8 +83,6 @@ export class TokenManager {
    */
   static getTokenFromEnv(type) {
     switch (type) {
-      case 'PINATA':
-        return import.meta.env.VITE_PINATA_JWT;
       case 'WEB3':
         return import.meta.env.VITE_WEB3_TOKEN;
       case 'FIREBASE':

@@ -21,7 +21,6 @@ describe('TokenManager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset env vars
-    import.meta.env.VITE_PINATA_JWT = undefined;
     import.meta.env.VITE_WEB3_TOKEN = undefined;
     import.meta.env.VITE_FIREBASE_TOKEN = undefined;
   });
