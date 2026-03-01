@@ -1,6 +1,7 @@
 import { buildElementHierarchy, cleanElementData } from './elementUtils';
 import { escapeHtml, escapeAttr } from './escapeUtils';
 import { renderElementToHtml } from '../htmlRender';
+import { IPFS_GATEWAYS } from '../../configs/ipfsConfig';
 
 /**
  * Converts camelCase to kebab-case
@@ -355,12 +356,7 @@ export const generateProjectHtml = (elements, websiteSettings) => {
       ${stylesHtml}
       <script>
         // IPFS Gateway Fallback
-        const ipfsGateways = [
-          'https://ipfs.io/ipfs/',
-          'https://gateway.pinata.cloud/ipfs/',
-          'https://cloudflare-ipfs.com/ipfs/',
-          'https://dweb.link/ipfs/'
-        ];
+        const ipfsGateways = ${JSON.stringify(IPFS_GATEWAYS)};
 
         // Function to handle image loading with fallback
         function handleImageLoad(img) {
