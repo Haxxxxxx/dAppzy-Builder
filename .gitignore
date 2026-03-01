@@ -36,6 +36,9 @@ admin-keypair.json
 # bundle analysis
 bundle-stats.html
 
+# fix plans (operational files)
+fix_plan*.md
+
 # ralph agent
 .ralph/
 .ralphrc
