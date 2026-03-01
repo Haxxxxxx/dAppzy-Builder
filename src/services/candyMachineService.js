@@ -68,4 +68,3 @@ export const createCandyMachine = async (config, wallet) => {
   }
 };
 
-export default { createCandyMachine };
