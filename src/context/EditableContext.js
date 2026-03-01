@@ -546,7 +546,7 @@ export const EditableProvider = ({ children, userId }) => {
         return command.targetId;
 
       case 'move':
-        moveElement(command.targetId, command.newIndex);
+        moveElement(command.targetId, command.newIndex, command.newParentId);
         return command.targetId;
 
       default:
