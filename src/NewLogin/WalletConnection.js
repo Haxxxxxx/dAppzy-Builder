@@ -7,6 +7,7 @@ import { signInWithCustomToken } from "firebase/auth";
 import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighter API methods
 import "./NewLogin.css";
 import { useWalletContext } from '../context/WalletContext';
+import { BRAND_IMAGES } from '../configs/assetUrls';
 
 function WalletConnection({ onUserLogin }) {
   const [errorMessage, setErrorMessage] = useState("");
@@ -278,7 +279,7 @@ function WalletConnection({ onUserLogin }) {
     <div className="popup">
       <img
         className="popup-wallet-main-img"
-        src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2F3s-logo.png?alt=media&token=8a69bcce-2e9f-463e-8cba-f4c2fec1a904"
+        src={BRAND_IMAGES.logo}
         alt="Popup Logo"
       />
       <div className="popup-content">
@@ -300,7 +301,7 @@ function WalletConnection({ onUserLogin }) {
               disabled={isLoading}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fphantom-logo.png?alt=media&token=5ffe611b-3ccd-4663-81e4-59feeb1dbba7"
+                src={BRAND_IMAGES.phantom}
                 alt="phantom"
               />
               {isLoading ? "Connecting..." : "Continue with Phantom"}
@@ -312,7 +313,7 @@ function WalletConnection({ onUserLogin }) {
               disabled={isLoading}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media&token=507097be-0cc4-4d93-a87b-99c67d82cfe5"
+                src={BRAND_IMAGES.metamask}
                 alt="metamask"
               />
               {isLoading ? "Connecting..." : "Continue with Metamask"}
@@ -323,7 +324,7 @@ function WalletConnection({ onUserLogin }) {
               onClick={handleLoginWithFreighter}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Fstellar_logo.png?alt=media&token=320a9042-cb19-4cf9-aab0-3a9b368b5e2c" // Replace with your Freighter logo URL
+                src={BRAND_IMAGES.freighter}
                 alt="freighter"
               />
               Continue with Freighter
@@ -346,7 +347,7 @@ function WalletConnection({ onUserLogin }) {
               disabled={isLoading}
             >
               <img
-                src="https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/ImageWebSite%2FPopup%2Funstoppablelogo.png?alt=media&token=60b8c7c0-d644-4954-be2d-7afe3065b876"
+                src={BRAND_IMAGES.unstoppable}
                 alt="unstoppable"
               />
               {isLoading ? "Connecting..." : "Continue with Unstoppable"}

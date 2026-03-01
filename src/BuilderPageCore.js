@@ -17,6 +17,7 @@ import AIFloatingButton from "./components/AIFloatingButton";
 import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { PLACEHOLDER_IMAGES } from "./configs/assetUrls";
 
 const BuilderPageCore = ({
   userId,
@@ -257,7 +258,7 @@ const BuilderPageCore = ({
           children: [
             {
               type: 'image',
-              content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+              content: PLACEHOLDER_IMAGES.builder,
               styles: {
                 width: '32px',
                 height: '32px',
@@ -402,7 +403,7 @@ const BuilderPageCore = ({
         children: [
           {
             type: 'image',
-            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+            content: PLACEHOLDER_IMAGES.builder,
             styles: { width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }
           },
           {
@@ -459,7 +460,7 @@ const BuilderPageCore = ({
         children: [
           {
             type: 'image',
-            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
+            content: PLACEHOLDER_IMAGES.builder,
             styles: {
               width: '32px',
               height: '32px',

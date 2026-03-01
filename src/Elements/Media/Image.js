@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
 import { EditableContext } from "../../context/EditableContext";
 import { useDrop } from "react-dnd";
+import { PLACEHOLDER_IMAGES } from "../../configs/assetUrls";
 
 const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} }) => {
   const { elements, updateElementProperties, setSelectedElement } = useContext(EditableContext);
   const imageElement = elements.find((el) => el.id === id) || {};
   const { styles = {} } = imageElement;
 
-  const defaultSrc = "https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7";
+  const defaultSrc = PLACEHOLDER_IMAGES.builder;
   const [currentSrc, setCurrentSrc] = useState(imageElement.src || defaultSrc);
   const [errorMessage, setErrorMessage] = useState("");
 
