@@ -17,18 +17,26 @@ const Web3Provider = ({ children }) => {
   const [chainId, setChainId] = useState(null);
 
   useEffect(() => {
-    if (window.ethereum) {
-      const browserProvider = new BrowserProvider(window.ethereum);
+    // Prefer MetaMask's provider if multiple providers exist (EIP-6963)
+    let eth = window.ethereum;
+    if (eth?.providers?.length) {
+      eth = eth.providers.find(p => p.isMetaMask && !p.isPhantom) || null;
+    } else if (eth?.isPhantom) {
+      eth = null; // Skip Phantom's EVM adapter — Solana handled by WalletContext
+    }
+
+    if (eth) {
+      const browserProvider = new BrowserProvider(eth);
       setProvider(browserProvider);
 
-      // Get initial account and chainId
+      // Get initial account and chainId (read-only, no popup)
       const init = async () => {
         try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          const accounts = await eth.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
             setAccount(accounts[0]);
           }
-          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          const chainId = await eth.request({ method: 'eth_chainId' });
           setChainId(chainId);
         } catch (error) {
           console.error('Error initializing Web3:', error);
@@ -41,17 +49,17 @@ const Web3Provider = ({ children }) => {
       const handleAccountsChanged = (accounts) => {
         setAccount(accounts[0] || null);
       };
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      eth.on('accountsChanged', handleAccountsChanged);
 
       // Listen for chain changes
       const handleChainChanged = (newChainId) => {
         setChainId(newChainId);
       };
-      window.ethereum.on('chainChanged', handleChainChanged);
+      eth.on('chainChanged', handleChainChanged);
 
       return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
+        eth.removeListener('accountsChanged', handleAccountsChanged);
+        eth.removeListener('chainChanged', handleChainChanged);
       };
     }
   }, []);
