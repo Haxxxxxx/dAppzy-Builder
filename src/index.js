@@ -6,6 +6,9 @@ import reportWebVitals from './reportWebVitals';
 import { EditableProvider } from './context/EditableContext';
 import { AutoSaveProvider } from './context/AutoSaveContext';
 import Web3Provider from './context/Web3Provider';
+import { initSentry } from './configs/sentry';
+
+initSentry();
 
 const RootComponent = () => {
   const [userId, setUserId] = useState(() => {
