@@ -2,7 +2,7 @@ import { useEffect, useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 export default function useKeyboardShortcuts() {
-  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement } = useContext(EditableContext);
+  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, elements } = useContext(EditableContext);
 
   useEffect(() => {
     const handler = (e) => {
@@ -24,7 +24,12 @@ export default function useKeyboardShortcuts() {
         copyElement(selectedElement.id);
       } else if (e.key === 'v' && copiedElement) {
         e.preventDefault();
-        pasteElement(selectedElement?.parentId || null, 0);
+        const parentId = selectedElement?.parentId || null;
+        // Paste after the selected element's position among its siblings
+        const siblings = elements.filter(el => el.parentId === parentId);
+        const selectedIdx = siblings.findIndex(el => el.id === selectedElement?.id);
+        const insertIndex = selectedIdx >= 0 ? selectedIdx + 1 : 0;
+        pasteElement(parentId, insertIndex);
       }
     };
 
