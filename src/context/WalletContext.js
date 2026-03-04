@@ -38,9 +38,9 @@ export const WalletProvider = ({ children }) => {
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProviderBase 
-        wallets={wallets} 
-        autoConnect={true}  // Enable auto-connect
+      <WalletProviderBase
+        wallets={wallets}
+        autoConnect={false}
         localStorageKey="walletAdapter"
       >
         <WalletContextProvider>{children}</WalletContextProvider>
@@ -59,7 +59,7 @@ const WalletContextProvider = ({ children }) => {
 
   // Restore wallet session using onAuthStateChanged (async-safe) + Phantom auto-connect
   useEffect(() => {
-    const restoreWalletSession = async () => {
+    const restoreWalletSession = async (hasFirebaseUser = false) => {
       try {
         if (!window.solana || !window.solana.isPhantom) return;
 
@@ -82,15 +82,17 @@ const WalletContextProvider = ({ children }) => {
         setIsWalletConnected(true);
         sessionStorage.setItem('userAccount', address);
 
-        // Check subscription status in Firestore
-        const userRef = doc(db, 'users', address);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.subscriptionStatus) {
-            localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
-            if (userData.subscriptionEndDate) {
-              localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+        // Only query Firestore for subscription if Firebase session exists
+        if (hasFirebaseUser) {
+          const userRef = doc(db, 'users', address);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.subscriptionStatus) {
+              localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+              if (userData.subscriptionEndDate) {
+                localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+              }
             }
           }
         }
@@ -101,13 +103,7 @@ const WalletContextProvider = ({ children }) => {
 
     // Wait for Firebase Auth to hydrate, then try to restore
     const unsub = auth.onAuthStateChanged((user) => {
-      if (user) {
-        restoreWalletSession();
-      } else {
-        // No Firebase session — still try Phantom auto-connect
-        // (handles cross-origin redirects from CMS where Firebase session doesn't carry)
-        restoreWalletSession();
-      }
+      restoreWalletSession(!!user);
     });
 
     // Listen for Phantom account changes and disconnect
