@@ -312,16 +312,31 @@ export const EditableProvider = ({ children, userId }) => {
   }, [currentIndex, history]);
 
   const copyElement = useCallback((elementId) => {
-    const el = findElementById(elementId, elementsRef.current);
-    if (el) {
-      setCopiedElement(JSON.parse(JSON.stringify(el)));
-    }
-  }, [findElementById]);
+    const allElements = elementsRef.current;
+    const root = allElements.find(el => el.id === elementId);
+    if (!root) return;
+
+    // Build a deep config tree from the flat elements array so that
+    // buildElementTree (which expects child config objects) can recreate the full tree.
+    const buildConfigTree = (el) => {
+      const { id, ...config } = el;
+      if (el.children && el.children.length > 0) {
+        config.children = el.children
+          .map(childId => allElements.find(c => c.id === childId))
+          .filter(Boolean)
+          .map(child => buildConfigTree(child));
+      } else {
+        config.children = [];
+      }
+      return config;
+    };
+
+    setCopiedElement(buildConfigTree(root));
+  }, []);
 
   const pasteElement = useCallback((parentId, index) => {
     if (!copiedElement) return;
-    const config = { ...copiedElement, id: undefined };
-    addNewElement(copiedElement.type, copiedElement.level || 0, index, parentId, config);
+    addNewElement(copiedElement.type, copiedElement.level || 0, index, parentId, copiedElement);
   }, [copiedElement, addNewElement]);
 
   const handleAICommand = useCallback((command) => {
