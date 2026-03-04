@@ -18,7 +18,7 @@ async function uploadFileToPinata(file, walletId, projectName) {
     keyvalues: { walletId, projectName },
   }));
 
-  const response = await fetch(`${CF_BASE}/uploadPinataMedia`, {
+  const response = await fetch(`${CF_BASE}/uploadToPinata`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}` },
     body: formData,

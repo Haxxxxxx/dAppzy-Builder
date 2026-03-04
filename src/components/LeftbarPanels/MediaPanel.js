@@ -86,7 +86,7 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
     formData.append('file', file, file.name);
     formData.append('metadata', JSON.stringify({ name: file.name, keyvalues: { userId, projectName } }));
 
-    const res = await fetch(`${CF_BASE}/uploadPinataMedia`, {
+    const res = await fetch(`${CF_BASE}/uploadToPinata`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
       body: formData
