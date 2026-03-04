@@ -78,7 +78,6 @@ describe('TokenManager', () => {
       await TokenManager.clearAllTokens();
       expect(secureRemove).toHaveBeenCalledWith('auth_token');
       expect(secureRemove).toHaveBeenCalledWith('web3_token');
-      expect(secureRemove).toHaveBeenCalledWith('pinata_token');
       expect(secureRemove).toHaveBeenCalledWith('firebase_token');
     });
   });

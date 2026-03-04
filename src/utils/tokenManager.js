@@ -13,7 +13,6 @@ export class TokenManager {
   static TOKEN_TYPES = {
     AUTH: 'auth_token',
     WEB3: 'web3_token',
-    PINATA: 'pinata_token',
     FIREBASE: 'firebase_token'
   };
 
@@ -147,9 +146,6 @@ export class TokenManager {
           break;
         case 'WEB3':
           // Implement Web3 token refresh logic
-          break;
-        case 'PINATA':
-          // Implement Pinata token refresh logic
           break;
         case 'FIREBASE':
           // Implement Firebase token refresh logic
