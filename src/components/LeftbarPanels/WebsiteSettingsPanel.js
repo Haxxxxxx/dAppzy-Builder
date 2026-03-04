@@ -58,6 +58,7 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
   });
 
   const initialProjectNameRef = useRef(settings.siteTitle);
+  const [error, setError] = useState('');
   const [previewItem, setPreviewItem] = useState(null);
   const [previewEditingName, setPreviewEditingName] = useState('');
   const [previewHasChanges, setPreviewHasChanges] = useState(false);
@@ -70,9 +71,11 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
   const handleSiteTitleBlur = async () => {
     if (initialProjectNameRef.current !== settings.siteTitle) {
       try {
+        setError('');
         await renameProjectFolder(initialProjectNameRef.current, settings.siteTitle, userId);
         initialProjectNameRef.current = settings.siteTitle;
-      } catch (error) {
+      } catch (err) {
+        setError('Failed to rename project. Please try again.');
       }
     }
   };
@@ -87,6 +90,7 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
     const file = e.target.files[0];
     if (!file) return;
     try {
+      setError('');
       const response = await uploadFileToPinata(file, userId, 'favicon');
       if (response && response.IpfsHash) {
         const ipfsUrl = `${GATEWAY_URL}/${response.IpfsHash}`;
@@ -102,7 +106,8 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
           setPreviewItem(null);
         }
       }
-    } catch (error) {
+    } catch (err) {
+      setError('Failed to upload favicon. Please try again.');
     }
   };
 
@@ -115,6 +120,7 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
 
   return (
     <div className="settings-panel scrollable-panel">
+      {error && <div className="settings-error" style={{ color: '#ff4444', fontSize: '12px', padding: '4px 8px' }}>{error}</div>}
       <div className="settings-group">
         <label htmlFor="siteTitle">Title :</label>
         <input
