@@ -50,6 +50,10 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
 
     try {
       const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        setError('Authentication required. Please reconnect your wallet.');
+        return;
+      }
       const res = await fetch(`${CF_BASE}/listPinataMedia?userId=${encodeURIComponent(userId)}&projectName=${encodeURIComponent(projectName)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -77,6 +81,7 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
   // Upload a single file via CF proxy
   const uploadFile = async (file) => {
     const token = await auth.currentUser?.getIdToken();
+    if (!token) throw new Error('Authentication required. Please reconnect your wallet.');
     const formData = new FormData();
     formData.append('file', file, file.name);
     formData.append('metadata', JSON.stringify({ name: file.name, keyvalues: { userId, projectName } }));
@@ -126,6 +131,10 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
     if (!item) return;
     try {
       const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        setError('Authentication required. Please reconnect your wallet.');
+        return;
+      }
       const res = await fetch(`${CF_BASE}/deletePinataMedia`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

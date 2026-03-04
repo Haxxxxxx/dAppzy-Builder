@@ -10,6 +10,7 @@ const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'https://gateway.pinata.
 // Helper: upload file to Pinata via CF proxy
 async function uploadFileToPinata(file, walletId, projectName) {
   const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('Authentication required. Please reconnect your wallet.');
   const formData = new FormData();
   formData.append('file', file);
   formData.append('metadata', JSON.stringify({
