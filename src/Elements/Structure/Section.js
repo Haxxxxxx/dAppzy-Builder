@@ -146,7 +146,8 @@ const Section = forwardRef(({
         position: 'relative',
         padding: styles.padding || '10px',
         margin: styles.margin || '0',
-        backgroundColor: isOverCurrent ? 'rgba(0, 0, 0, 0.1)' : styles.backgroundColor || 'transparent',
+        backgroundColor: isOverCurrent ? 'rgba(92, 78, 250, 0.06)' : styles.backgroundColor || 'transparent',
+        outline: isOverCurrent ? '2px dashed rgba(92, 78, 250, 0.5)' : 'none',
       }}
     >
       {backgroundContent}
@@ -159,7 +160,8 @@ const Section = forwardRef(({
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100px',
-            background: isOverCurrent ? '#f0f0f0' : 'transparent',
+            background: isOverCurrent ? 'rgba(92, 78, 250, 0.08)' : 'transparent',
+            outline: isOverCurrent ? '2px dashed rgba(92, 78, 250, 0.5)' : 'none',
           }}
         >
           {showDivOptions ? (

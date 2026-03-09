@@ -34,10 +34,13 @@
   pointer-events: auto !important;
 }
 
-/* Hover state */
+/* Hover state — visual feedback when dragging over a valid drop target */
 .dropzone-hover {
-  background-color: #f0f0f0;
-  border-color: #999;
+  background-color: rgba(92, 78, 250, 0.08);
+  border-color: var(--purple, #5C4EFA);
+  border-style: dashed;
+  border-width: 2px;
+  box-shadow: inset 0 0 0 1px rgba(92, 78, 250, 0.15);
 }
 
 /* Active state */

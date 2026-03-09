@@ -155,7 +155,8 @@ const Container = ({ id }) => {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100px',
-            background: isOverCurrent ? '#f0f0f0' : 'transparent',
+            background: isOverCurrent ? 'rgba(92, 78, 250, 0.08)' : 'transparent',
+            outline: isOverCurrent ? '2px dashed rgba(92, 78, 250, 0.5)' : 'none',
           }}
         >
           {showDivOptions ? (
