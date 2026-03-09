@@ -145,6 +145,17 @@ export function renderElementToHtml(element, collectedStyles = []) {
       .join('; ');
   }
 
+  // Web3 element special handling
+  if (type === 'connectWalletButton' || type === 'connectwalletbutton') {
+    return `<button${idString} class="${classString.trim()}" style="${styleString}" data-wallet-connect type="button" ${attrString} ${dataAttrString}>${escapeHtml(content || 'Connect Wallet')}</button>`;
+  }
+  if (type === 'mintingSection') {
+    return `<section${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString}><p style="text-align:center;opacity:0.6;">Minting section — configure in Dappzy Builder</p>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</section>`;
+  }
+  if (type === 'defiSection') {
+    return `<section${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString}><p style="text-align:center;opacity:0.6;">DeFi section — configure in Dappzy Builder</p>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</section>`;
+  }
+
   // Tag mapping for common builder types
   const tagMap = {
     navbar: 'nav',

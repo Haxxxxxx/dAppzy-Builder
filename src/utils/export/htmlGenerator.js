@@ -435,6 +435,24 @@ export const generateProjectHtml = (elements, websiteSettings) => {
     </head>
     <body>
       ${bodyHtml}
+      ${elements.some(el => el.type === 'connectWalletButton' || el.type === 'connectwalletbutton') ? `
+      <script>
+        document.querySelectorAll('[data-wallet-connect]').forEach(function(btn) {
+          btn.addEventListener('click', async function() {
+            try {
+              if (window.solana && window.solana.isPhantom) {
+                var resp = await window.solana.connect();
+                btn.textContent = resp.publicKey.toString().slice(0,4) + '...' + resp.publicKey.toString().slice(-4);
+              } else if (window.ethereum) {
+                var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                btn.textContent = accounts[0].slice(0,6) + '...' + accounts[0].slice(-4);
+              } else {
+                btn.textContent = 'No wallet found';
+              }
+            } catch (e) { btn.textContent = 'Connection failed'; }
+          });
+        });
+      </script>` : ''}
     </body>
     </html>
   `.trim();
