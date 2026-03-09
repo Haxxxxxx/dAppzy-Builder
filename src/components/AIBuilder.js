@@ -77,6 +77,10 @@ const AIBuilder = ({ onProjectGenerated, onClose }) => {
                 <div className="ai-builder-error">
                   <span className="material-symbols-outlined">error</span>
                   <span>{error}</span>
+                  <button className="ai-builder-retry" onClick={handleGenerate}>
+                    <span className="material-symbols-outlined">refresh</span>
+                    Retry
+                  </button>
                 </div>
               )}
             </div>

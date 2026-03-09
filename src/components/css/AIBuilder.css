@@ -108,6 +108,32 @@
 
 .ai-builder-error .material-symbols-outlined {
   font-size: 18px;
+  flex-shrink: 0;
+}
+
+.ai-builder-retry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: var(--radius-sm, 6px);
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-builder-retry:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.ai-builder-retry .material-symbols-outlined {
+  font-size: 14px;
 }
 
 .ai-builder-footer {
