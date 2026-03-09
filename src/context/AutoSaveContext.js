@@ -179,7 +179,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
           Object.keys(localStorage)
             .filter(k => k.startsWith('project_autosave_'))
             .forEach(k => localStorage.removeItem(k));
-          try { localStorage.setItem(key, value); } catch { /* give up */ }
+          try { localStorage.setItem(key, value); } catch (_) { /* quota still exceeded — give up */ }
         }
       };
 
