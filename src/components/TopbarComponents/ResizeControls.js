@@ -61,8 +61,16 @@ const ResizeControls = ({ scale, onResize, onScaleChange }) => {
         onKeyDown={handleCustomResize}
       />
       <div className="scale-control">
-      <span className="scale-percentage">Scale: {Math.round(scale * 100)}%</span>
-        
+        <button className="zoom-btn" onClick={() => onScaleChange(Math.round(Math.max(0.25, scale - 0.1) * 10) / 10)} title="Zoom out">
+          <span className="material-symbols-outlined">remove</span>
+        </button>
+        <span className="scale-percentage">{Math.round(scale * 100)}%</span>
+        <button className="zoom-btn" onClick={() => onScaleChange(Math.round(Math.min(2, scale + 0.1) * 10) / 10)} title="Zoom in">
+          <span className="material-symbols-outlined">add</span>
+        </button>
+        <button className="zoom-btn" onClick={() => onScaleChange(1)} title="Reset zoom">
+          <span className="material-symbols-outlined">fit_screen</span>
+        </button>
       </div>
     </div>
   );
