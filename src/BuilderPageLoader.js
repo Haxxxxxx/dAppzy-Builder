@@ -6,6 +6,7 @@ import { EditableContext } from "./context/EditableContext";
 import BuilderPageCore from "./BuilderPageCore";
 import WalletConnection from "./NewLogin/WalletConnection";
 import { TEMPLATES } from "./configs/templates";
+import AIBuilder from "./components/AIBuilder";
 import "./components/css/ProjectSelection.css";
 
 function getMaxProjects() {
@@ -36,6 +37,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [errorMessage, setErrorMessage] = useState(null);
   const [renamingProjectId, setRenamingProjectId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [showAIBuilder, setShowAIBuilder] = useState(false);
 
   const loadingTimeoutRef = useRef(null);
   const loadingWatchdogRef = useRef(null);
@@ -447,6 +449,14 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
           </div>
           <h3>Create New Project</h3>
           <div className="templates-grid">
+            <button
+              className="template-card ai-template-card"
+              onClick={() => setShowAIBuilder(true)}
+            >
+              <span className="material-symbols-outlined template-icon">auto_awesome</span>
+              <strong>AI Builder</strong>
+              <span className="template-desc">Describe your project in words</span>
+            </button>
             {TEMPLATES.map((template) => (
               <button
                 key={template.name}
@@ -466,6 +476,19 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
               </button>
             ))}
           </div>
+          {showAIBuilder && (
+            <AIBuilder
+              onProjectGenerated={(projectData) => {
+                setShowAIBuilder(false);
+                setViewState('loading');
+                createUserProject({
+                  ...projectData,
+                  thumbnailUrl: "",
+                });
+              }}
+              onClose={() => setShowAIBuilder(false)}
+            />
+          )}
         </div>
       );
     
