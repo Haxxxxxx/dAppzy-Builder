@@ -145,17 +145,6 @@ export function renderElementToHtml(element, collectedStyles = []) {
       .join('; ');
   }
 
-  // Web3 element special handling
-  if (type === 'connectWalletButton' || type === 'connectwalletbutton') {
-    return `<button${idString} class="${classString.trim()}" style="${styleString}" data-wallet-connect type="button" ${attrString} ${dataAttrString}>${escapeHtml(content || 'Connect Wallet')}</button>`;
-  }
-  if (type === 'mintingSection') {
-    return `<section${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString}><p style="text-align:center;opacity:0.6;">Minting section — configure in Dappzy Builder</p>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</section>`;
-  }
-  if (type === 'defiSection') {
-    return `<section${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString}><p style="text-align:center;opacity:0.6;">DeFi section — configure in Dappzy Builder</p>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</section>`;
-  }
-
   // Tag mapping for common builder types
   const tagMap = {
     navbar: 'nav',
@@ -224,9 +213,21 @@ export function renderElementToHtml(element, collectedStyles = []) {
   const dataAttrString = getDataAttributesString(dataAttributes);
   const eventString = getEventsString(events);
 
-  // Special handling for img, input, textarea, select, option, br, hr (self-closing)
+  // Web3 element special handling
+  if (type === 'connectWalletButton' || type === 'connectwalletbutton') {
+    return `<button${idString} class="${classString.trim()}" style="${styleString}" data-wallet-connect type="button" ${attrString} ${dataAttrString}>${escapeHtml(content || 'Connect Wallet')}</button>`;
+  }
+  if (type === 'mintingSection') {
+    return `<section${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString}><p style="text-align:center;opacity:0.6;">Minting section — configure in Dappzy Builder</p>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</section>`;
+  }
+  if (type === 'defiSection') {
+    return `<section${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString}><p style="text-align:center;opacity:0.6;">DeFi section — configure in Dappzy Builder</p>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</section>`;
+  }
+
+  // Special handling for img — ensure alt attribute for accessibility
   if (tag === 'img') {
-    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(element.alt || '')}" loading="lazy" decoding="async" ${attrString} ${dataAttrString} ${eventString}/>`;
+    const altText = element.alt || element.label || '';
+    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(altText)}" loading="lazy" decoding="async" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
   if (tag === 'input') {
     return `<input${idString} class="${classString.trim()}" style="${styleString}" value="${escapeAttr(content || '')}" ${attrString} ${dataAttrString} ${eventString}/>`;
@@ -244,15 +245,29 @@ export function renderElementToHtml(element, collectedStyles = []) {
     return `<${tag}${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
 
-  // For a, button, label, etc. with content and children
+  // Links — add aria-label when no visible text content
   if (tag === 'a') {
-    return `<a${idString} class="${classString.trim()}" style="${styleString}" href="${escapeAttr(element.href || '#')}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</a>`;
+    const linkContent = escapeHtml(content || '');
+    const childrenHtml = children.map(child => renderElementToHtml(child, collectedStyles)).join('');
+    const ariaLabel = !content && children.length === 0 ? ` aria-label="${escapeAttr(element.label || 'Link')}"` : '';
+    return `<a${idString} class="${classString.trim()}" style="${styleString}" href="${escapeAttr(element.href || '#')}"${ariaLabel} ${attrString} ${dataAttrString} ${eventString}>${linkContent}${childrenHtml}</a>`;
   }
+  // Buttons — add type="button" for accessibility
   if (tag === 'button') {
-    return `<button${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</button>`;
+    return `<button${idString} class="${classString.trim()}" style="${styleString}" type="button" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</button>`;
+  }
+  // Footer — add role="contentinfo"
+  if (tag === 'footer') {
+    return `<footer${idString} class="${classString.trim()}" style="${styleString}" role="contentinfo" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</footer>`;
   }
   if (tag === 'label') {
     return `<label${idString} class="${classString.trim()}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</label>`;
+  }
+  // Form — add data-dappzy-form marker
+  if (tag === 'form') {
+    const action = element.settings?.action || '#';
+    const method = element.settings?.method || 'POST';
+    return `<form${idString} class="${classString.trim()}" style="${styleString}" action="${escapeAttr(action)}" method="${escapeAttr(method)}" data-dappzy-form ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(content || '')}${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</form>`;
   }
 
   // Default: generic tag with content and children

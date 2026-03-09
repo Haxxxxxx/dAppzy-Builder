@@ -107,10 +107,12 @@ const generateHeroHtml = (element) => {
     .join('; ');
 
   return `
-    <div id="${element.id}" class="section-hero" style="${heroStyleString}">
-      ${leftContentHtml}
-      ${element.configuration !== 'heroTwo' ? rightContentHtml : ''}
-    </div>
+    <header role="banner">
+      <div id="${element.id}" class="section-hero" style="${heroStyleString}">
+        ${leftContentHtml}
+        ${element.configuration !== 'heroTwo' ? rightContentHtml : ''}
+      </div>
+    </header>
   `;
 };
 
@@ -361,6 +363,22 @@ export const generateProjectHtml = (elements, websiteSettings) => {
       .loaded {
         opacity: 1;
       }
+
+      /* Skip-link for accessibility */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--primary-color);
+        color: #fff;
+        padding: 8px 16px;
+        z-index: 100;
+        text-decoration: none;
+        transition: top 0.2s;
+      }
+      .skip-link:focus {
+        top: 0;
+      }
     </style>
   `;
 
@@ -434,7 +452,10 @@ export const generateProjectHtml = (elements, websiteSettings) => {
       </script>
     </head>
     <body>
+      <a href="#main-content" class="skip-link">Skip to content</a>
+      <main id="main-content">
       ${bodyHtml}
+      </main>
       ${elements.some(el => el.type === 'connectWalletButton' || el.type === 'connectwalletbutton') ? `
       <script>
         document.querySelectorAll('[data-wallet-connect]').forEach(function(btn) {
@@ -450,6 +471,17 @@ export const generateProjectHtml = (elements, websiteSettings) => {
                 btn.textContent = 'No wallet found';
               }
             } catch (e) { btn.textContent = 'Connection failed'; }
+          });
+        });
+      </script>` : ''}
+      ${elements.some(el => el.type === 'form') ? `
+      <script>
+        document.querySelectorAll('form[data-dappzy-form]').forEach(function(form) {
+          form.addEventListener('submit', function(e) {
+            if (!form.getAttribute('action') || form.getAttribute('action') === '#') {
+              e.preventDefault();
+              alert('Form submitted! Configure a form action URL in the builder.');
+            }
           });
         });
       </script>` : ''}
