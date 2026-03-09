@@ -200,6 +200,26 @@ export function renderElementToHtml(element, collectedStyles = []) {
     blockquote: 'blockquote',
     hr: 'hr',
     br: 'br',
+    // Builder-specific types
+    video: 'video',
+    youtubeVideo: 'iframe',
+    bgVideo: 'video',
+    list: 'ul',
+    'list-item': 'li',
+    anchor: 'a',
+    linkBlock: 'a',
+    linkblock: 'a',
+    paragraph: 'p',
+    line: 'hr',
+    horizontalRule: 'hr',
+    icon: 'span',
+    container: 'div',
+    hflex: 'div',
+    vflex: 'div',
+    grid: 'div',
+    hero: 'section',
+    'table-row': 'tr',
+    'table-cell': 'td',
     // fallback
     default: 'div',
   };
@@ -228,6 +248,43 @@ export function renderElementToHtml(element, collectedStyles = []) {
   if (tag === 'img') {
     const altText = element.alt || element.label || '';
     return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(altText)}" loading="lazy" decoding="async" ${attrString} ${dataAttrString} ${eventString}/>`;
+  }
+  // Special handling for video element
+  if (type === 'video') {
+    const videoSrc = element.styles?.src || content || '';
+    const videoAttrs = [];
+    if (element.styles?.controls ?? true) videoAttrs.push('controls');
+    if (element.styles?.autoplay) videoAttrs.push('autoplay');
+    if (element.styles?.muted) videoAttrs.push('muted');
+    if (element.styles?.loop) videoAttrs.push('loop');
+    return `<video${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(videoSrc)}" ${videoAttrs.join(' ')} ${attrString} ${dataAttrString} ${eventString}></video>`;
+  }
+  // Special handling for YouTube embed
+  if (type === 'youtubeVideo') {
+    const videoId = element.settings?.videoId || element.configuration?.videoId || content || '';
+    const aspectRatio = element.settings?.aspectRatio || '16:9';
+    const src = videoId.startsWith('http') ? videoId : `https://www.youtube.com/embed/${escapeAttr(videoId)}`;
+    return `<iframe${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(src)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen ${attrString} ${dataAttrString} ${eventString}></iframe>`;
+  }
+  // Special handling for background video
+  if (type === 'bgVideo') {
+    const bgSrc = element.styles?.src || content || '';
+    return `<video${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(bgSrc)}" autoplay muted loop playsinline ${attrString} ${dataAttrString} ${eventString}></video>`;
+  }
+  // Special handling for list — check ordered vs unordered
+  if (type === 'list') {
+    const listTag = element.configuration?.listType === 'ol' ? 'ol' : 'ul';
+    const listStyle = element.configuration?.listStyleType;
+    const listStyleAttr = listStyle ? `list-style-type: ${listStyle}` : '';
+    const fullStyle = [styleString, listStyleAttr].filter(Boolean).join('; ');
+    const startAttr = listTag === 'ol' && element.configuration?.start ? ` start="${escapeAttr(String(element.configuration.start))}"` : '';
+    const reversedAttr = listTag === 'ol' && element.configuration?.reversed ? ' reversed' : '';
+    return `<${listTag}${idString} class="${classString.trim()}" style="${fullStyle}"${startAttr}${reversedAttr} ${attrString} ${dataAttrString} ${eventString}>${children.map(child => renderElementToHtml(child, collectedStyles)).join('')}</${listTag}>`;
+  }
+  // Special handling for icon
+  if (type === 'icon') {
+    const iconName = content || element.settings?.iconName || 'star';
+    return `<span${idString} class="material-symbols-outlined${classString}" style="${styleString}" ${attrString} ${dataAttrString} ${eventString}>${escapeHtml(iconName)}</span>`;
   }
   if (tag === 'input') {
     return `<input${idString} class="${classString.trim()}" style="${styleString}" value="${escapeAttr(content || '')}" ${attrString} ${dataAttrString} ${eventString}/>`;
