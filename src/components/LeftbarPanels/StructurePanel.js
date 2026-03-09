@@ -6,6 +6,7 @@ import '../css/StructurePanel.css';
 const StructurePanel = () => {
   const { elements, selectedElement, setSelectedElement } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Define a mapping for friendly labels for each type
   const typeToLabel = {
@@ -100,10 +101,50 @@ const StructurePanel = () => {
       });
   };
 
+  const filteredElements = searchQuery.trim()
+    ? elements.filter((el) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (el.label && el.label.toLowerCase().includes(q)) ||
+          (el.type && el.type.toLowerCase().includes(q)) ||
+          (el.content && typeof el.content === 'string' && el.content.toLowerCase().includes(q))
+        );
+      })
+    : null;
+
   return (
     <div className="structure-panel">
       <h3>Page Structure</h3>
-      {renderStructure(nestedElements)}
+      <div className="structure-search">
+        <input
+          type="text"
+          placeholder="Search elements..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="structure-search-input"
+        />
+        {searchQuery && (
+          <button className="structure-search-clear" onClick={() => setSearchQuery('')}>
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        )}
+      </div>
+      {filteredElements ? (
+        <div className="structure-search-results">
+          {filteredElements.length === 0 && <p className="structure-no-results">No elements found</p>}
+          {filteredElements.map((el) => (
+            <div
+              key={el.id}
+              className={`structure-tree-label${selectedElement?.id === el.id ? ' selected' : ''}`}
+              onClick={() => setSelectedElement({ id: el.id, type: el.type })}
+            >
+              {getFriendlyLabel(el.type, el.content || el.label || el.id)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        renderStructure(nestedElements)
+      )}
     </div>
   );
 };

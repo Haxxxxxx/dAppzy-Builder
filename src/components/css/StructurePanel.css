@@ -26,3 +26,51 @@
 .structure-tree-children {
   padding-left: 16px;
 }
+
+/* Search */
+.structure-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.structure-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--white);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.structure-search-input::placeholder {
+  color: var(--not-selected);
+}
+
+.structure-search-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--not-selected);
+  padding: 2px;
+  line-height: 1;
+}
+
+.structure-search-clear .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.structure-search-results {
+  padding-left: 8px;
+}
+
+.structure-no-results {
+  color: var(--not-selected);
+  font-size: 13px;
+  padding: 8px;
+}
