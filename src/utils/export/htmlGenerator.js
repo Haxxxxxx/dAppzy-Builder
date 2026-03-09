@@ -318,6 +318,14 @@ export const generateProjectHtml = (elements, websiteSettings) => {
         .section-navbar span {
           margin: 8px 0;
         }
+        [style*="display: flex"] { flex-wrap: wrap; }
+        [style*="display: grid"] { grid-template-columns: 1fr !important; }
+        body > div > div { max-width: 100% !important; overflow-x: hidden; }
+        img { max-width: 100%; height: auto; }
+      }
+      @media (max-width: 480px) {
+        body { font-size: 14px; }
+        [style*="padding"] { padding-left: 12px !important; padding-right: 12px !important; }
       }
 
       /* IPFS-specific optimizations */
