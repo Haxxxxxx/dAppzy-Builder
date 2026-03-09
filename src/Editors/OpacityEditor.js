@@ -1,9 +1,11 @@
 import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
+import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/OpacityEditor.css";
 
 const OpacityEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
+  const debouncedUpdate = useDebouncedStyle(updateStyles);
   const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ const OpacityEditor = () => {
   const handleChange = (value) => {
     const clamped = Math.min(1, Math.max(0, Number(value)));
     setOpacity(clamped);
-    updateStyles(selectedElement.id, { opacity: clamped });
+    debouncedUpdate(selectedElement.id, { opacity: clamped });
   };
 
   return (

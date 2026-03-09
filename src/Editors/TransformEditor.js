@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
+import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/TransformEditor.css";
 
 function parseTransform(str) {
@@ -31,6 +32,7 @@ function composeTransform(t) {
 
 const TransformEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
+  const debouncedUpdate = useDebouncedStyle(updateStyles);
   const [transform, setTransform] = useState(parseTransform(null));
 
   useEffect(() => {
@@ -44,7 +46,7 @@ const TransformEditor = () => {
   const update = (key, value) => {
     const next = { ...transform, [key]: Number(value) };
     setTransform(next);
-    updateStyles(selectedElement.id, { transform: composeTransform(next) });
+    debouncedUpdate(selectedElement.id, { transform: composeTransform(next) });
   };
 
   const reset = () => {

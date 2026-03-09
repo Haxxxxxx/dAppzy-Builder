@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
+import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/FilterEditor.css";
 
 const FILTER_DEFAULTS = {
@@ -40,6 +41,7 @@ function buildFilter(values) {
 
 const FilterEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
+  const debouncedUpdate = useDebouncedStyle(updateStyles);
   const [filters, setFilters] = useState(() => parseFilter(""));
 
   useEffect(() => {
@@ -53,7 +55,7 @@ const FilterEditor = () => {
   const handleChange = (key, value) => {
     const next = { ...filters, [key]: Number(value) };
     setFilters(next);
-    updateStyles(selectedElement.id, { filter: buildFilter(next) });
+    debouncedUpdate(selectedElement.id, { filter: buildFilter(next) });
   };
 
   const handleReset = () => {

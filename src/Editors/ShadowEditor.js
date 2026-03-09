@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
+import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/ShadowEditor.css";
 
 function parseShadow(shadowStr) {
@@ -25,6 +26,7 @@ function parseShadow(shadowStr) {
 
 const ShadowEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
+  const debouncedUpdate = useDebouncedStyle(updateStyles);
   const [shadow, setShadow] = useState({ x: 0, y: 0, blur: 4, spread: 0, color: "#000000", inset: false });
 
   useEffect(() => {
@@ -40,7 +42,7 @@ const ShadowEditor = () => {
     const next = { ...shadow, [key]: value };
     setShadow(next);
     const str = `${next.inset ? "inset " : ""}${next.x}px ${next.y}px ${next.blur}px ${next.spread}px ${next.color}`;
-    updateStyles(selectedElement.id, { boxShadow: str });
+    debouncedUpdate(selectedElement.id, { boxShadow: str });
   };
 
   const clearShadow = () => {
