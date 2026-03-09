@@ -8,10 +8,15 @@ const BorderEditor = () => {
 
   // Local states for border radius plus width, style, and color.
   const [borderRadius, setBorderRadius] = useState("");
+  const [cornerLinked, setCornerLinked] = useState(true);
+  const [radiusTL, setRadiusTL] = useState("");
+  const [radiusTR, setRadiusTR] = useState("");
+  const [radiusBR, setRadiusBR] = useState("");
+  const [radiusBL, setRadiusBL] = useState("");
   const [borderWidth, setBorderWidth] = useState(""); // stored as a number string (without "px")
   const [borderStyle, setBorderStyle] = useState("");
   const [borderColor, setBorderColor] = useState("");
-  
+
   // Active sides: by default, "all" means the entire element.
   const [activeSides, setActiveSides] = useState(["all"]);
 
@@ -30,6 +35,10 @@ const BorderEditor = () => {
     if (!element) return;
     const {
       borderRadius = "0px",
+      borderTopLeftRadius = "",
+      borderTopRightRadius = "",
+      borderBottomRightRadius = "",
+      borderBottomLeftRadius = "",
       // Global properties:
       borderWidth: globalWidth = "0px",
       borderStyle: globalStyle = "none",
@@ -49,8 +58,25 @@ const BorderEditor = () => {
       borderLeftColor = "#000000",
     } = element.styles || {};
 
-    // Set border radius (universal)
-    setBorderRadius(borderRadius.replace("px", ""));
+    // Set border radius
+    const uniformRadius = borderRadius.replace("px", "");
+    setBorderRadius(uniformRadius);
+
+    // Load per-corner radius values
+    const tl = borderTopLeftRadius ? borderTopLeftRadius.replace("px", "") : "";
+    const tr = borderTopRightRadius ? borderTopRightRadius.replace("px", "") : "";
+    const br = borderBottomRightRadius ? borderBottomRightRadius.replace("px", "") : "";
+    const bl = borderBottomLeftRadius ? borderBottomLeftRadius.replace("px", "") : "";
+    setRadiusTL(tl || uniformRadius);
+    setRadiusTR(tr || uniformRadius);
+    setRadiusBR(br || uniformRadius);
+    setRadiusBL(bl || uniformRadius);
+
+    // Detect if corners are individually set
+    if (tl || tr || br || bl) {
+      const allSame = tl === tr && tr === br && br === bl;
+      setCornerLinked(allSame);
+    }
 
     // For the "all" case, if no border was applied yet, leave inputs blank.
     if (activeSides.includes("all")) {
@@ -174,7 +200,57 @@ const BorderEditor = () => {
   const handleBorderRadiusChange = (e) => {
     const val = e.target.value;
     setBorderRadius(val);
-    updateStyles(id, { borderRadius: val + "px" });
+    if (cornerLinked) {
+      setRadiusTL(val);
+      setRadiusTR(val);
+      setRadiusBR(val);
+      setRadiusBL(val);
+      updateStyles(id, {
+        borderRadius: val + "px",
+        borderTopLeftRadius: "",
+        borderTopRightRadius: "",
+        borderBottomRightRadius: "",
+        borderBottomLeftRadius: "",
+      });
+    }
+  };
+
+  const handleCornerRadiusChange = (corner, val) => {
+    const setters = { TL: setRadiusTL, TR: setRadiusTR, BR: setRadiusBR, BL: setRadiusBL };
+    setters[corner](val);
+    const keys = {
+      TL: "borderTopLeftRadius",
+      TR: "borderTopRightRadius",
+      BR: "borderBottomRightRadius",
+      BL: "borderBottomLeftRadius",
+    };
+    updateStyles(id, { [keys[corner]]: val + "px", borderRadius: "" });
+  };
+
+  const handleToggleCornerLink = () => {
+    if (cornerLinked) {
+      // Switching to unlinked: initialize all corners from uniform value
+      setRadiusTL(borderRadius);
+      setRadiusTR(borderRadius);
+      setRadiusBR(borderRadius);
+      setRadiusBL(borderRadius);
+    } else {
+      // Switching back to linked: use TL value as uniform
+      const val = radiusTL || "0";
+      setBorderRadius(val);
+      setRadiusTL(val);
+      setRadiusTR(val);
+      setRadiusBR(val);
+      setRadiusBL(val);
+      updateStyles(id, {
+        borderRadius: val + "px",
+        borderTopLeftRadius: "",
+        borderTopRightRadius: "",
+        borderBottomRightRadius: "",
+        borderBottomLeftRadius: "",
+      });
+    }
+    setCornerLinked(!cornerLinked);
   };
 
   const handleBorderWidthChange = (e) => {
@@ -230,12 +306,21 @@ const BorderEditor = () => {
       borderRightColor: "#000000",
       borderBottomColor: "#000000",
       borderLeftColor: "#000000",
-      borderRadius: "0px"
+      borderRadius: "0px",
+      borderTopLeftRadius: "",
+      borderTopRightRadius: "",
+      borderBottomRightRadius: "",
+      borderBottomLeftRadius: "",
     });
     setBorderWidth("");
     setBorderStyle("none");
     setBorderColor("#000000");
     setBorderRadius("");
+    setCornerLinked(true);
+    setRadiusTL("");
+    setRadiusTR("");
+    setRadiusBR("");
+    setRadiusBL("");
     setActiveSides(["all"]);
   };
 
@@ -295,16 +380,48 @@ const BorderEditor = () => {
     <div className="border-editor">
       {/* RADIUS SECTION */}
       <div className="border-radius-section">
-        <label>Radius</label>
-        <div className="input-with-suffix">
-          <input
-            type="number"
-            min={0}
-            value={borderRadius}
-            onChange={handleBorderRadiusChange}
-          />
-          <span className="suffix">PX</span>
+        <div className="radius-header">
+          <label>Radius</label>
+          <button
+            className="corner-link-toggle"
+            onClick={handleToggleCornerLink}
+            title={cornerLinked ? "Unlink corners" : "Link corners"}
+          >
+            <span className="material-symbols-outlined">
+              {cornerLinked ? "link" : "link_off"}
+            </span>
+          </button>
         </div>
+        {cornerLinked ? (
+          <div className="input-with-suffix">
+            <input
+              type="number"
+              min={0}
+              value={borderRadius}
+              onChange={handleBorderRadiusChange}
+            />
+            <span className="suffix">PX</span>
+          </div>
+        ) : (
+          <div className="corner-radius-grid">
+            <div className="corner-input" title="Top Left">
+              <span className="corner-label">TL</span>
+              <input type="number" min={0} value={radiusTL} onChange={(e) => handleCornerRadiusChange("TL", e.target.value)} />
+            </div>
+            <div className="corner-input" title="Top Right">
+              <span className="corner-label">TR</span>
+              <input type="number" min={0} value={radiusTR} onChange={(e) => handleCornerRadiusChange("TR", e.target.value)} />
+            </div>
+            <div className="corner-input" title="Bottom Left">
+              <span className="corner-label">BL</span>
+              <input type="number" min={0} value={radiusBL} onChange={(e) => handleCornerRadiusChange("BL", e.target.value)} />
+            </div>
+            <div className="corner-input" title="Bottom Right">
+              <span className="corner-label">BR</span>
+              <input type="number" min={0} value={radiusBR} onChange={(e) => handleCornerRadiusChange("BR", e.target.value)} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* BORDERS SECTION */}

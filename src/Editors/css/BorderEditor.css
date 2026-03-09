@@ -58,6 +58,62 @@
     font-size: 14px;
 }
 
+/* ---------- RADIUS ---------- */
+
+.radius-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.corner-link-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    color: #b3b3b3;
+}
+
+.corner-link-toggle:hover {
+    color: #217bf4;
+}
+
+.corner-link-toggle .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.corner-radius-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.corner-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.corner-input .corner-label {
+    font-size: 11px;
+    color: #b3b3b3;
+    width: 18px;
+    flex-shrink: 0;
+}
+
+.corner-input input[type="number"] {
+    width: 50px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #fff;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
 /* ---------- BORDERS ---------- */
 
 /* Container for all border settings (sides selector + style/width/color) */
