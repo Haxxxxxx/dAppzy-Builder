@@ -350,13 +350,14 @@ const ConnectWalletButton = ({
   };
 
   // Get button text based on connection state
+  const connectedText = settings.connectedText;
   const buttonText = useMemo(() => {
     if (isLoading || contextIsLoading) return 'Connecting...';
     if (isConnected && walletAddress) {
-      return `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+      return connectedText || `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
     }
     return content;
-  }, [isLoading, contextIsLoading, isConnected, walletAddress, content]);
+  }, [isLoading, contextIsLoading, isConnected, walletAddress, content, connectedText]);
 
   // Get button styles based on state
   const buttonStyles = useMemo(() => ({
