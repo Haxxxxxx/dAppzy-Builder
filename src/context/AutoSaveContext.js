@@ -182,19 +182,35 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
         localStorage.removeItem(`editableElements_chunk_${i}`);
       }
 
-      // Save to Firestore (keep localStorage chunks as fallback — they'll be
+      // Save to Firestore with retry (keep localStorage chunks as fallback — they'll be
       // overwritten by the next save, so no explicit deletion needed)
       const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
-      await setDoc(projectRef, {
-        elements: uniqueElements,
-        websiteSettings: cleanWebsiteSettings,
-        lastUpdated: serverTimestamp()
-      }, { merge: true });
+      const maxRetries = 3;
+      let retries = 0;
+      while (retries < maxRetries) {
+        try {
+          await setDoc(projectRef, {
+            elements: uniqueElements,
+            websiteSettings: cleanWebsiteSettings,
+            lastUpdated: serverTimestamp()
+          }, { merge: true });
+          break; // success
+        } catch (firestoreError) {
+          retries++;
+          if (retries >= maxRetries) {
+            console.error('[AutoSave] Firestore save failed after retries:', firestoreError);
+            setSaveStatus('Failed to save — changes cached locally');
+            return;
+          }
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries - 1)));
+        }
+      }
 
       setLastSaved(new Date());
       setSaveStatus('All changes saved');
       setPendingChanges(false);
     } catch (error) {
+      console.error('[AutoSave] Save failed:', error);
       setSaveStatus('Error saving changes - will retry with clean data');
     } finally {
       setIsSaving(false);
