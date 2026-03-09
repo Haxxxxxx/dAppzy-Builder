@@ -817,48 +817,58 @@ const BuilderPageCore = ({
           isPioneer={isPioneer}
         />
         <div className="app">
-          <Topbar
-            onResize={(size) => setContentListWidth(size)}
-            scale={scale}
-            setScale={setScale}
-            isPreviewMode={isPreviewMode}
-            onPreviewToggle={() => setIsPreviewMode((prev) => !prev)}
-            pageSettings={pageSettings}
-            userId={userId}
-            projectId={projectId}
-            isPioneer={isPioneer}
-          />
+          <ErrorBoundary name="Topbar">
+            <Topbar
+              onResize={(size) => setContentListWidth(size)}
+              scale={scale}
+              setScale={setScale}
+              isPreviewMode={isPreviewMode}
+              onPreviewToggle={() => setIsPreviewMode((prev) => !prev)}
+              pageSettings={pageSettings}
+              userId={userId}
+              projectId={projectId}
+              isPioneer={isPioneer}
+            />
+          </ErrorBoundary>
           <div className="content-container">
             {openPanel === "sidebar" && (
               <div className="sidebar" id="sidebar">
-                <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} isPioneer={isPioneer} />
+                <ErrorBoundary name="Sidebar">
+                  <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} isPioneer={isPioneer} />
+                </ErrorBoundary>
               </div>
             )}
             {openPanel === "structure" && (
               <div id="structure-panel">
-                <StructurePanel isPioneer={isPioneer} />
+                <ErrorBoundary name="Structure Panel">
+                  <StructurePanel isPioneer={isPioneer} />
+                </ErrorBoundary>
               </div>
             )}
             {openPanel === "media" && (
               <div id="media-panel">
-                <MediaPanel
-                  projectName={pageSettings.siteTitle}
-                  isOpen={openPanel}
-                  userId={userId}
-                  isPioneer={isPioneer}
-                />
+                <ErrorBoundary name="Media Panel">
+                  <MediaPanel
+                    projectName={pageSettings.siteTitle}
+                    isOpen={openPanel}
+                    userId={userId}
+                    isPioneer={isPioneer}
+                  />
+                </ErrorBoundary>
               </div>
             )}
             {openPanel === "settings" && (
               <div id="settings-panel">
-                <WebsiteSettingsPanel
-                  onUpdateSettings={(updatedSettings) => {
-                    setPageSettings(updatedSettings);
-                    localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
-                  }}
-                  userId={userId}
-                  isPioneer={isPioneer}
-                />
+                <ErrorBoundary name="Settings Panel">
+                  <WebsiteSettingsPanel
+                    onUpdateSettings={(updatedSettings) => {
+                      setPageSettings(updatedSettings);
+                      localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
+                    }}
+                    userId={userId}
+                    isPioneer={isPioneer}
+                  />
+                </ErrorBoundary>
               </div>
             )}
             <div className="main-content" ref={mainContentRef} onClick={handleMainContentClick}>
