@@ -142,33 +142,46 @@
   outline: none;
 }
 
-/* Duplicate Button */
-.project-duplicate-btn {
+/* Card Actions */
+.project-card-actions {
   position: absolute;
   top: var(--space-sm);
   right: var(--space-sm);
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.project-card:hover .project-card-actions {
+  opacity: 1;
+}
+
+.project-duplicate-btn,
+.project-delete-btn {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   cursor: pointer;
   padding: 4px;
   color: var(--not-selected);
-  opacity: 0;
-  transition: opacity 0.15s, color 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   line-height: 1;
 }
 
-.project-duplicate-btn .material-symbols-outlined {
+.project-duplicate-btn .material-symbols-outlined,
+.project-delete-btn .material-symbols-outlined {
   font-size: 18px;
-}
-
-.project-card:hover .project-duplicate-btn {
-  opacity: 1;
 }
 
 .project-duplicate-btn:hover {
   color: var(--purple);
   border-color: var(--purple);
+}
+
+.project-delete-btn:hover {
+  color: var(--error-red);
+  border-color: var(--error-red);
 }
 
 /* Templates Grid */

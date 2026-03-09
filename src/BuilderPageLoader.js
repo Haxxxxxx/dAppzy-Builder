@@ -1,6 +1,6 @@
 // BuilderPageLoader.js
 import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
-import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 import BuilderPageCore from "./BuilderPageCore";
@@ -248,6 +248,24 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     setRenamingProjectId(null);
   }, [userId]);
 
+  // Delete a project.
+  const deleteProject = useCallback(async (project) => {
+    const title = project.websiteSettings?.siteTitle || 'Untitled Project';
+    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    try {
+      const projectRef = doc(db, "projects", userId, "ProjectRef", project.id);
+      await deleteDoc(projectRef);
+      setProjects((prev) => prev.filter((p) => p.id !== project.id));
+      if (activeProjectId === project.id) {
+        setActiveProjectId(null);
+        setInternProjectId(null);
+      }
+    } catch {
+      setErrorMessage("Failed to delete project.");
+      setViewState('error');
+    }
+  }, [userId, activeProjectId]);
+
   // Set logged-in status once userId is available.
   useEffect(() => {
     if (userId) {
@@ -402,16 +420,28 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
                   )}
                   <p>Last updated: {project.lastUpdated ? new Date(project.lastUpdated.toDate()).toLocaleDateString() : 'Never'}</p>
                 </div>
-                <button
-                  className="project-duplicate-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    duplicateProject(project);
-                  }}
-                  title="Duplicate project"
-                >
-                  <span className="material-symbols-outlined">content_copy</span>
-                </button>
+                <div className="project-card-actions">
+                  <button
+                    className="project-duplicate-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      duplicateProject(project);
+                    }}
+                    title="Duplicate project"
+                  >
+                    <span className="material-symbols-outlined">content_copy</span>
+                  </button>
+                  <button
+                    className="project-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteProject(project);
+                    }}
+                    title="Delete project"
+                  >
+                    <span className="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
