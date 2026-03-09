@@ -215,7 +215,7 @@ export function renderElementToHtml(element, collectedStyles = []) {
 
   // Special handling for img, input, textarea, select, option, br, hr (self-closing)
   if (tag === 'img') {
-    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(element.alt || '')}" ${attrString} ${dataAttrString} ${eventString}/>`;
+    return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(element.alt || '')}" loading="lazy" decoding="async" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
   if (tag === 'input') {
     return `<input${idString} class="${classString.trim()}" style="${styleString}" value="${escapeAttr(content || '')}" ${attrString} ${dataAttrString} ${eventString}/>`;
