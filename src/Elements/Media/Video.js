@@ -43,7 +43,10 @@ const Video = ({ id }) => {
       <video
         ref={videoRef}
         src={styles.src || defaultSrc}
-        controls
+        controls={styles.controls ?? true}
+        muted={styles.muted || false}
+        autoPlay={styles.autoplay || false}
+        loop={styles.loop || false}
         style={{
           width: '100%',
           height: '100%',
