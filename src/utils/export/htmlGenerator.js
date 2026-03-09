@@ -256,6 +256,22 @@ export const generateProjectHtml = (elements, websiteSettings) => {
     }
   });
 
+  // Generate hover/focus pseudo-class CSS from element state styles
+  const stateStylesCss = elements
+    .filter(el => (el.hoverStyles && Object.keys(el.hoverStyles).length > 0) ||
+                  (el.focusStyles && Object.keys(el.focusStyles).length > 0))
+    .map(el => {
+      let css = `#${el.id} { transition: all 0.2s ease; }\n`;
+      if (el.hoverStyles && Object.keys(el.hoverStyles).length > 0) {
+        css += `      #${el.id}:hover { ${styleObjectToString(el.hoverStyles)} }\n`;
+      }
+      if (el.focusStyles && Object.keys(el.focusStyles).length > 0) {
+        css += `      #${el.id}:focus { ${styleObjectToString(el.focusStyles)} }\n`;
+      }
+      return css;
+    })
+    .join('      ');
+
   // Generate styles HTML with optimized structure
   const stylesHtml = `
     <style>
@@ -285,6 +301,9 @@ export const generateProjectHtml = (elements, websiteSettings) => {
             .join(';\n          ')}
         }
       `).join('\n')}
+
+      /* Element state styles (hover/focus) */
+      ${stateStylesCss}
 
       /* Section-specific responsive styles */
       @media (max-width: 768px) {

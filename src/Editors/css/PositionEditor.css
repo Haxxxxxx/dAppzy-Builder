@@ -1,0 +1,58 @@
+/* PositionEditor.css */
+
+.position-editor {
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
+
+.position-editor .editor-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.position-editor .editor-group label {
+  font-size: 14px;
+  color: #b3b3b3;
+  margin-bottom: 4px;
+}
+
+.position-editor .editor-group select,
+.position-editor .editor-group input[type="number"] {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: #2a2a2a;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.position-offsets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.position-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.position-field label {
+  font-size: 14px;
+  color: #b3b3b3;
+  margin-bottom: 4px;
+}
+
+.position-field input[type="number"] {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: #2a2a2a;
+  color: #fff;
+  font-size: 14px;
+  box-sizing: border-box;
+  width: 100%;
+}

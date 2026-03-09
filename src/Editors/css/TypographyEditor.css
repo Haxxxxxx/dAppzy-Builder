@@ -30,7 +30,7 @@
 
 /* Make the size input fill available space if needed */
 .typography-editor .size-input {
-  width: 100% !important;
+  width: 100%;
 }
 
 /* Buttons for text decoration or text align, plus the hr between them */
@@ -74,7 +74,7 @@
 .typography-editor .custom-rule {
   width: 1px;
   height: 20px;
-  background: #131313;
+  background: var(--black);
   border: none;
   margin: auto 4px;
 }
@@ -93,7 +93,7 @@
 .typography-editor .editor-group input {
   padding: 8px;
   font-size: 14px;
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   background-color: #2a2a2a;
   color: #fff;
@@ -108,7 +108,7 @@
 .typography-editor .color-group-combined {
   display: flex;
   align-items: center;
-  border: 1px solid #444;      /* One border around the entire group */
+  border: 1px solid var(--border-color);      /* One border around the entire group */
   border-radius: 4px;
   background-color: #2a2a2a;   /* match your dark UI */
   padding: 8px;              /* some horizontal padding */

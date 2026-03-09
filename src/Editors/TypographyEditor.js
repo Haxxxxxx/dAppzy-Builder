@@ -41,10 +41,13 @@ const TypographyEditor = () => {
     fontSize: "",
     fontFamily: "Arial",
     fontWeight: "normal",
-    fontStyle: "normal", // For italic toggling.
+    fontStyle: "normal",
     color: "#217BF4",
     textAlign: "left",
     textDecoration: "none",
+    lineHeight: "normal",
+    letterSpacing: "0px",
+    textTransform: "none",
   });
 
   // When a new element is selected, read its computed styles into local state.
@@ -67,6 +70,9 @@ const TypographyEditor = () => {
             : computedStyles.textDecoration.includes("line-through")
               ? "line-through"
               : "none",
+          lineHeight: computedStyles.lineHeight || "normal",
+          letterSpacing: computedStyles.letterSpacing === "normal" ? "0px" : computedStyles.letterSpacing || "0px",
+          textTransform: computedStyles.textTransform || "none",
         });
       }
     }
@@ -225,6 +231,75 @@ const TypographyEditor = () => {
             onClick={() => handleStyleChange("textAlign", "justify")}
           >
             <span className="material-symbols-outlined">format_align_justify</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Line Height + Letter Spacing */}
+      <div className="editor-regroup">
+        <div className="editor-group">
+          <label>Line Height</label>
+          <input
+            className="size-input"
+            type="number"
+            step="0.1"
+            min="0"
+            value={styles.lineHeight === "normal" ? "" : parseFloat(styles.lineHeight)}
+            placeholder="auto"
+            onChange={(e) => {
+              const val = e.target.value;
+              handleStyleChange("lineHeight", val === "" ? "normal" : val + "px");
+            }}
+          />
+        </div>
+        <div className="editor-group">
+          <label>Letter Spacing</label>
+          <input
+            className="size-input"
+            type="number"
+            step="0.5"
+            value={parseFloat(styles.letterSpacing) || 0}
+            onChange={(e) =>
+              handleStyleChange("letterSpacing", e.target.value + "px")
+            }
+          />
+        </div>
+      </div>
+
+      {/* Text Transform */}
+      <div className="editor-group">
+        <label>Text Transform</label>
+        <div className="text-align-group">
+          <button
+            className={styles.textTransform === "none" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "none")}
+            title="None"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>Aa</span>
+          </button>
+          <hr className="custom-rule" />
+          <button
+            className={styles.textTransform === "uppercase" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "uppercase")}
+            title="Uppercase"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>AA</span>
+          </button>
+          <hr className="custom-rule" />
+          <button
+            className={styles.textTransform === "lowercase" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "lowercase")}
+            title="Lowercase"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>aa</span>
+          </button>
+          <hr className="custom-rule" />
+          <button
+            className={styles.textTransform === "capitalize" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "capitalize")}
+            title="Capitalize"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>Aa</span>
           </button>
         </div>
       </div>

@@ -24,6 +24,13 @@ export const EditableProvider = ({ children, userId }) => {
   const [forceBorder, setForceBorder] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [copiedElement, setCopiedElement] = useState(null);
+  const [styleEditingMode, setStyleEditingMode] = useState('normal'); // 'normal' | 'hover' | 'focus'
+
+  // Wrap setSelectedElement to reset style editing mode when selection changes
+  const selectElement = useCallback((el) => {
+    setSelectedElement(el);
+    setStyleEditingMode('normal');
+  }, []);
 
   // Keep a ref to elements for use in handlers that need fresh state mid-execution
   const elementsRef = useRef(elements);
@@ -221,6 +228,17 @@ export const EditableProvider = ({ children, userId }) => {
       );
     });
   }, [findElementById, recordElementsUpdate]);
+
+  const updateStateStyles = useCallback((id, stateName, newStyles) => {
+    const stateKey = stateName === 'hover' ? 'hoverStyles' : 'focusStyles';
+    recordElementsUpdate(prev =>
+      prev.map(el =>
+        el.id === id
+          ? { ...el, [stateKey]: { ...(el[stateKey] || {}), ...newStyles } }
+          : el
+      )
+    );
+  }, [recordElementsUpdate]);
 
   const updateElementProperties = useCallback((id, newProperties) => {
     recordElementsUpdate((prev) =>
@@ -574,7 +592,7 @@ export const EditableProvider = ({ children, userId }) => {
     elements,
     setElements: recordElementsUpdate,
     selectedElement,
-    setSelectedElement,
+    setSelectedElement: selectElement,
     addNewElement,
     updateContent,
     updateStyles,
@@ -596,12 +614,16 @@ export const EditableProvider = ({ children, userId }) => {
     copiedElement,
     copyElement,
     pasteElement,
+    styleEditingMode,
+    setStyleEditingMode,
+    updateStateStyles,
   }), [
     elements,
     selectedElement,
     forceBorder,
     selectedStyle,
     recordElementsUpdate,
+    selectElement,
     addNewElement,
     updateContent,
     updateStyles,
@@ -618,6 +640,8 @@ export const EditableProvider = ({ children, userId }) => {
     copiedElement,
     copyElement,
     pasteElement,
+    styleEditingMode,
+    updateStateStyles,
   ]);
 
   // Set elements version on mount

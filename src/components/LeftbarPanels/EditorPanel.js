@@ -5,6 +5,10 @@ import BorderEditor from '../../Editors/BorderEditor';
 import SizeEditor from '../../Editors/SizeEditor';
 import SpacingEditor from '../../Editors/SpacingEditor';
 import DisplayEditor from '../../Editors/DisplayEditor';
+import ShadowEditor from '../../Editors/ShadowEditor';
+import OpacityEditor from '../../Editors/OpacityEditor';
+import TransformEditor from '../../Editors/TransformEditor';
+import PositionEditor from '../../Editors/PositionEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettings from './SettingsPanels/WalletSettings';
 import LinkSettings from './SettingsPanels/LinkSettings';
@@ -21,7 +25,7 @@ import FormSettings from './SettingsPanels/FormSettings';
 import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
-  const { selectedElement, setElements, elements } = useContext(EditableContext);
+  const { selectedElement, setElements, elements, styleEditingMode, setStyleEditingMode } = useContext(EditableContext);
 
   const getRelevantEditors = (element) => {
     if (!element) return [];
@@ -41,6 +45,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
     if (containerElements.includes(element.type)) {
       editors.push(
         {
+          title: "Display & Layout",
+          component: <DisplayEditor />
+        },
+        {
           title: "Background & Global Settings",
           component: <BackgroundEditor pageSettings={pageSettings} />
         },
@@ -51,6 +59,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         {
           title: "Size",
           component: <SizeEditor />
+        },
+        {
+          title: "Spacing",
+          component: <SpacingEditor />
         }
       );
     }
@@ -76,6 +88,26 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         }
       );
     }
+
+    // Common editors for all elements
+    editors.push(
+      {
+        title: "Shadow",
+        component: <ShadowEditor />
+      },
+      {
+        title: "Opacity",
+        component: <OpacityEditor />
+      },
+      {
+        title: "Transform",
+        component: <TransformEditor />
+      },
+      {
+        title: "Position",
+        component: <PositionEditor />
+      }
+    );
 
     return editors;
   };
@@ -187,6 +219,22 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'style':
         return (
           <div className="style-editor">
+            <div className="style-state-toggle">
+              {['normal', 'hover', 'focus'].map((mode) => (
+                <button
+                  key={mode}
+                  className={`state-toggle-btn ${styleEditingMode === mode ? 'active' : ''}`}
+                  onClick={() => setStyleEditingMode(mode)}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
+            {styleEditingMode !== 'normal' && (
+              <div className="state-editing-notice">
+                Editing <strong>:{styleEditingMode}</strong> state styles
+              </div>
+            )}
             {getRelevantEditors(selectedElement).map((editor, index) => (
               <CollapsibleSection key={index} title={editor.title}>
                 {editor.component}
