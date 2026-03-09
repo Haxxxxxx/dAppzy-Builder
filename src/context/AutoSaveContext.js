@@ -171,13 +171,25 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       const oldChunkCount = parseInt(localStorage.getItem('editableElements_chunks') || '0');
       const newChunkCount = Math.ceil(uniqueElements.length / chunkSize);
 
+      const safeSetItem = (key, value) => {
+        try {
+          localStorage.setItem(key, value);
+        } catch (quotaErr) {
+          // Storage full — clear old project caches and retry once
+          Object.keys(localStorage)
+            .filter(k => k.startsWith('project_autosave_'))
+            .forEach(k => localStorage.removeItem(k));
+          try { localStorage.setItem(key, value); } catch { /* give up */ }
+        }
+      };
+
       for (let i = 0; i < uniqueElements.length; i += chunkSize) {
         const chunk = uniqueElements.slice(i, i + chunkSize);
         await new Promise(resolve => setTimeout(resolve, 0));
-        localStorage.setItem(`editableElements_chunk_${i}`, JSON.stringify(chunk));
+        safeSetItem(`editableElements_chunk_${i}`, JSON.stringify(chunk));
       }
-      localStorage.setItem('editableElements_chunks', newChunkCount);
-      localStorage.setItem('websiteSettings', JSON.stringify(cleanWebsiteSettings));
+      safeSetItem('editableElements_chunks', newChunkCount);
+      safeSetItem('websiteSettings', JSON.stringify(cleanWebsiteSettings));
 
       // Remove leftover old chunks that exceed the new count
       for (let i = newChunkCount * chunkSize; i < oldChunkCount * chunkSize; i += chunkSize) {
