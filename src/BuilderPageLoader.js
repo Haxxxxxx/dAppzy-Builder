@@ -177,6 +177,44 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     }
   }, [userId, setElements, loadUserProjects, setLoadingState]);
 
+  // Duplicate an existing project.
+  const duplicateProject = useCallback(async (project) => {
+    try {
+      const count = await checkProjectLimit(userId);
+      if (count >= 3) {
+        setErrorMessage("You have reached the maximum number of projects (3). Delete one to duplicate.");
+        setViewState('error');
+        return;
+      }
+      setLoadingState(true);
+      const projectsRef = collection(db, "projects", userId, "ProjectRef");
+      const originalRef = doc(db, "projects", userId, "ProjectRef", project.id);
+      const originalSnap = await getDoc(originalRef);
+      if (!originalSnap.exists()) {
+        setErrorMessage("Original project not found.");
+        setViewState('error');
+        return;
+      }
+      const originalData = originalSnap.data();
+      const clonedElements = JSON.parse(JSON.stringify(originalData.elements || []));
+      const clonedSettings = JSON.parse(JSON.stringify(originalData.websiteSettings || {}));
+      clonedSettings.siteTitle = `Copy of ${clonedSettings.siteTitle || 'Untitled Project'}`;
+      await addDoc(projectsRef, {
+        userId,
+        elements: clonedElements,
+        websiteSettings: clonedSettings,
+        thumbnailUrl: originalData.thumbnailUrl || "",
+        createdAt: serverTimestamp(),
+      });
+      await loadUserProjects(userId);
+    } catch (error) {
+      setErrorMessage("Failed to duplicate project. Please try again.");
+      setViewState('error');
+    } finally {
+      setLoadingState(false);
+    }
+  }, [userId, checkProjectLimit, loadUserProjects, setLoadingState]);
+
   // Set logged-in status once userId is available.
   useEffect(() => {
     if (userId) {
@@ -300,6 +338,16 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
                   <h3>{project.websiteSettings?.siteTitle || 'Untitled Project'}</h3>
                   <p>Last updated: {project.lastUpdated ? new Date(project.lastUpdated.toDate()).toLocaleDateString() : 'Never'}</p>
                 </div>
+                <button
+                  className="project-duplicate-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    duplicateProject(project);
+                  }}
+                  title="Duplicate project"
+                >
+                  <span className="material-symbols-outlined">content_copy</span>
+                </button>
               </div>
             ))}
           </div>
