@@ -258,9 +258,17 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   switch (viewState) {
     case 'loading':
       return (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading your projects, please wait...</p>
+        <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f5f5f5' }}>
+          <div style={{ width: '90%', maxWidth: '1200px', display: 'flex', gap: '12px', height: '80vh' }}>
+            <div style={{ width: '240px', background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ height: '48px', background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+              <div style={{ flex: 1, background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: '0.2s' }} />
+            </div>
+            <div style={{ width: '280px', background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: '0.4s' }} />
+          </div>
+          <p style={{ marginTop: '16px', color: '#666' }}>Loading your project...</p>
+          <style>{`@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }`}</style>
         </div>
       );
     
@@ -340,17 +348,31 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     
     case 'error':
       return (
-        <div className="loading-container">
-          <p style={{ color: '#e74c3c', marginBottom: '16px' }}>{errorMessage}</p>
-          <button
-            className="create-new-project"
-            onClick={() => {
-              setErrorMessage(null);
-              loadUserProjects(userId);
-            }}
-          >
-            Back to Projects
-          </button>
+        <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '12px' }}>
+          <p style={{ color: '#e74c3c', marginBottom: '8px' }}>{errorMessage}</p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className="create-new-project"
+              onClick={() => {
+                setErrorMessage(null);
+                isInitialLoadRef.current = true;
+                setViewState('loading');
+                loadUserProjects(userId);
+              }}
+            >
+              Retry
+            </button>
+            <button
+              className="create-new-project"
+              style={{ background: 'transparent', border: '1px solid #ccc', color: '#333' }}
+              onClick={() => {
+                setErrorMessage(null);
+                loadUserProjects(userId);
+              }}
+            >
+              Back to Projects
+            </button>
+          </div>
         </div>
       );
 
