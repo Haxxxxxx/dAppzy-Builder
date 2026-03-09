@@ -307,6 +307,27 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         </div>
       )}
       {renderContent()}
+      <CollapsibleSection title="Keyboard Shortcuts">
+        <div className="shortcut-hints">
+          {[
+            ['\u2318/Ctrl + Z', 'Undo'],
+            ['\u2318/Ctrl + Shift + Z', 'Redo'],
+            ['\u2318/Ctrl + C', 'Copy'],
+            ['\u2318/Ctrl + V', 'Paste'],
+            ['\u2318/Ctrl + D', 'Duplicate'],
+            ['\u2318/Ctrl + S', 'Save'],
+            ['Delete', 'Remove element'],
+            ['Esc', 'Deselect'],
+            ['\u2190\u2191\u2192\u2193', 'Nudge 1px'],
+            ['Shift + \u2190\u2191\u2192\u2193', 'Nudge 10px'],
+          ].map(([key, desc]) => (
+            <div key={key} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: '12px' }}>
+              <kbd style={{ background: 'var(--bg-tertiary, #f0f0f0)', padding: '1px 6px', borderRadius: '3px', fontFamily: 'monospace', fontSize: '11px' }}>{key}</kbd>
+              <span style={{ color: 'var(--text-secondary, #666)' }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </CollapsibleSection>
       {elements.length > 0 && (
         <button
           onClick={() => {
