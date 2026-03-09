@@ -33,6 +33,8 @@ export const useWalletContext = () => {
 // Create a single instance of the wallet adapter
 const wallets = [new PhantomWalletAdapter()];
 
+const isDevnet = !import.meta.env.VITE_SOLANA_RPC_URL;
+
 export const WalletProvider = ({ children }) => {
   const endpoint = import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(WalletAdapterNetwork.Devnet);
 
@@ -50,6 +52,7 @@ export const WalletProvider = ({ children }) => {
 };
 
 const WalletContextProvider = ({ children }) => {
+  const isDevnet = !import.meta.env.VITE_SOLANA_RPC_URL;
   const [walletAddress, setWalletAddress] = useState('');
   const [walletId, setWalletId] = useState('');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -239,7 +242,9 @@ const WalletContextProvider = ({ children }) => {
     error,
     balance,
     connectWallet,
-    disconnectWallet
+    disconnectWallet,
+    isDevnet,
+    isDevnet
   };
 
   return (

@@ -45,7 +45,7 @@ const BuilderPageCore = ({
   const mainContentRef = useRef(null);
   const { setSelectedElement, handleAICommand, elements, selectedElement } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
-  const { isConnected, walletAddress } = useWalletContext();
+  const { isConnected, walletAddress, isDevnet } = useWalletContext();
   useKeyboardShortcuts();
   const [showAIInputBar, setShowAIInputBar] = useState(false);
   const [initialAIMessages, setInitialAIMessages] = useState(null);
@@ -830,6 +830,11 @@ const BuilderPageCore = ({
               isPioneer={isPioneer}
             />
           </ErrorBoundary>
+          {isDevnet && (
+            <div style={{ background: '#fbbf24', color: '#78350f', textAlign: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: 500 }}>
+              You're on Solana devnet — set VITE_SOLANA_RPC_URL for mainnet
+            </div>
+          )}
           <div className="content-container">
             {openPanel === "sidebar" && (
               <div className="sidebar" id="sidebar">
