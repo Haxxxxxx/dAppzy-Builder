@@ -3,6 +3,7 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import { EditableContext } from "../context/EditableContext";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
+import ColorPicker from "../components/ColorPicker";
 import "./css/BackgroundEditor.css";
 
 const BackgroundEditor = ({ pageSettings }) => {
@@ -107,19 +108,10 @@ const BackgroundEditor = ({ pageSettings }) => {
       {/* COLOR PICKER */}
       <div className="editor-group">
         <label>Color</label>
-        <div className="color-group">
-          <input
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => handleChange("backgroundColor", e.target.value)}
-          />
-          <input
-            type="text"
-            value={backgroundColor}
-            readOnly
-            className="color-hex"
-          />
-        </div>
+        <ColorPicker
+          value={backgroundColor}
+          onChange={(color) => handleChange("backgroundColor", color)}
+        />
       </div>
       <div className="background-editor-image-preview-wrapper" >
 

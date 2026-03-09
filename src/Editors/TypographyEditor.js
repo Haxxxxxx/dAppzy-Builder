@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
+import ColorPicker from "../components/ColorPicker";
 import "./css/TypographyEditor.css";
 
 const TypographyEditor = () => {
@@ -138,14 +139,10 @@ const TypographyEditor = () => {
       {/* Color Picker + Hex Value */}
       <div className="editor-group">
         <label>Color</label>
-        <div className="color-group-combined">
-          <input
-            type="color"
-            value={styles.color}
-            onChange={(e) => handleStyleChange("color", e.target.value)}
-          />
-          <input type="text" value={styles.color} readOnly className="color-hex" />
-        </div>
+        <ColorPicker
+          value={styles.color}
+          onChange={(color) => handleStyleChange("color", color)}
+        />
       </div>
 
       {/* Text Decoration */}

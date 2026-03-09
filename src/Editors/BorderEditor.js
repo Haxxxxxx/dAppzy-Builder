@@ -1,6 +1,7 @@
 // BorderEditor.js
 import React, { useContext, useState, useEffect } from "react";
 import { EditableContext } from "../context/EditableContext";
+import ColorPicker from "../components/ColorPicker";
 import "./css/BorderEditor.css";
 
 const BorderEditor = () => {
@@ -495,19 +496,10 @@ const BorderEditor = () => {
             {/* Color */}
             <div className="border-color-group">
               <label>Color</label>
-              <div className="color-group">
-                <input
-                  type="color"
-                  value={borderColor}
-                  onChange={handleBorderColorChange}
-                />
-                <input
-                  type="text"
-                  readOnly
-                  value={borderColor}
-                  className="color-hex"
-                />
-              </div>
+              <ColorPicker
+                value={borderColor}
+                onChange={(color) => handleBorderColorChange({ target: { value: color } })}
+              />
             </div>
           </div>
         </div>
