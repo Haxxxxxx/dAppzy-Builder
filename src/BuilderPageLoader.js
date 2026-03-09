@@ -7,6 +7,12 @@ import BuilderPageCore from "./BuilderPageCore";
 import WalletConnection from "./NewLogin/WalletConnection";
 import { TEMPLATES } from "./configs/templates";
 
+function getMaxProjects() {
+  const subscriptionStatus = localStorage.getItem('subscriptionStatus');
+  const isPioneer = subscriptionStatus === 'active';
+  return { isPioneer, maxProjects: isPioneer ? 10 : 3 };
+}
+
 function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loadingProject, setLoadingProject] = useState(true);
@@ -182,8 +188,11 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const duplicateProject = useCallback(async (project) => {
     try {
       const count = await checkProjectLimit(userId);
-      if (count >= 3) {
-        setErrorMessage("You have reached the maximum number of projects (3). Delete one to duplicate.");
+      const { isPioneer, maxProjects } = getMaxProjects();
+      if (count >= maxProjects) {
+        setErrorMessage(isPioneer
+          ? `You've reached the Pioneer limit of ${maxProjects} projects.`
+          : `Free plan allows ${maxProjects} projects. Upgrade to Pioneer for more.`);
         setViewState('error');
         return;
       }
@@ -240,8 +249,11 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         if (qProjectId) {
           if (qProjectId === "new") {
             const count = await checkProjectLimit(userId);
-            if (count >= 3) {
-              setErrorMessage("You have reached the maximum number of projects (3).");
+            const { isPioneer: isPioneerUser, maxProjects: maxP } = getMaxProjects();
+            if (count >= maxP) {
+              setErrorMessage(isPioneerUser
+                ? `You've reached the Pioneer limit of ${maxP} projects.`
+                : `Free plan allows ${maxP} projects. Upgrade to Pioneer for more.`);
               setViewState('error');
             } else {
               const newProjectId = await createUserProject({
