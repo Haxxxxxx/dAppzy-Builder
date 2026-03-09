@@ -4,7 +4,7 @@ import { AutoSaveContext } from '../context/AutoSaveContext';
 import { useToast } from '../context/ToastContext';
 
 export default function useKeyboardShortcuts() {
-  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, handleRemoveElement, updateStyles } = useContext(EditableContext);
+  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, handleRemoveElement, updateStyles, selectedElementIds, clearSelection } = useContext(EditableContext);
   const { forceSave } = useContext(AutoSaveContext);
   const { showToast } = useToast();
 
@@ -39,10 +39,16 @@ export default function useKeyboardShortcuts() {
         }
       }
 
-      // Delete/Backspace — no modifier needed
+      // Delete/Backspace — handle multi-select or single select
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
         e.preventDefault();
-        handleRemoveElement(selectedElement.id);
+        if (selectedElementIds.length > 1) {
+          // Delete all selected elements
+          selectedElementIds.forEach(id => handleRemoveElement(id));
+          clearSelection();
+        } else {
+          handleRemoveElement(selectedElement.id);
+        }
         return;
       }
 
@@ -98,5 +104,5 @@ export default function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, forceSave, showToast]);
+  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, forceSave, showToast, selectedElementIds, clearSelection]);
 }

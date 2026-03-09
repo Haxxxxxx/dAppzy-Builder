@@ -26,10 +26,41 @@ export const EditableProvider = ({ children, userId }) => {
   const [copiedElement, setCopiedElement] = useState(null);
   const [styleEditingMode, setStyleEditingMode] = useState('normal'); // 'normal' | 'hover' | 'focus'
   const [activeBreakpoint, setActiveBreakpoint] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
+  const [selectedElementIds, setSelectedElementIds] = useState([]); // Multi-select foundation
 
-  // Wrap setSelectedElement to reset style editing mode when selection changes
+  // Wrap setSelectedElement to reset style editing mode and clear multi-select
   const selectElement = useCallback((el) => {
     setSelectedElement(el);
+    setSelectedElementIds(el ? [el.id] : []);
+    setStyleEditingMode('normal');
+  }, []);
+
+  // Toggle an element in the multi-selection set (for Shift+Click)
+  const toggleElementSelection = useCallback((id) => {
+    setSelectedElementIds(prev => {
+      if (prev.includes(id)) {
+        const updated = prev.filter(eid => eid !== id);
+        // If we deselected the current selectedElement, update it
+        if (updated.length > 0) {
+          const lastId = updated[updated.length - 1];
+          const el = elementsRef.current.find(e => e.id === lastId);
+          if (el) setSelectedElement({ id: el.id, type: el.type });
+        } else {
+          setSelectedElement(null);
+        }
+        return updated;
+      }
+      const updated = [...prev, id];
+      const el = elementsRef.current.find(e => e.id === id);
+      if (el) setSelectedElement({ id: el.id, type: el.type });
+      return updated;
+    });
+  }, []);
+
+  // Clear all selection
+  const clearSelection = useCallback(() => {
+    setSelectedElement(null);
+    setSelectedElementIds([]);
     setStyleEditingMode('normal');
   }, []);
 
@@ -648,6 +679,9 @@ export const EditableProvider = ({ children, userId }) => {
     updateStateStyles,
     activeBreakpoint,
     setActiveBreakpoint,
+    selectedElementIds,
+    toggleElementSelection,
+    clearSelection,
   }), [
     elements,
     selectedElement,
@@ -674,6 +708,9 @@ export const EditableProvider = ({ children, userId }) => {
     styleEditingMode,
     updateStateStyles,
     activeBreakpoint,
+    selectedElementIds,
+    toggleElementSelection,
+    clearSelection,
   ]);
 
   // Set elements version on mount
