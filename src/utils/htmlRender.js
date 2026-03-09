@@ -246,7 +246,7 @@ export function renderElementToHtml(element, collectedStyles = []) {
 
   // Special handling for img — ensure alt attribute for accessibility
   if (tag === 'img') {
-    const altText = element.alt || element.label || '';
+    const altText = element.styles?.alt || element.alt || element.label || '';
     return `<img${idString} class="${classString.trim()}" style="${styleString}" src="${escapeAttr(element.src || content || '')}" alt="${escapeAttr(altText)}" loading="lazy" decoding="async" ${attrString} ${dataAttrString} ${eventString}/>`;
   }
   // Special handling for video element

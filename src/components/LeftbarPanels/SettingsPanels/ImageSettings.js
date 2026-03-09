@@ -113,6 +113,7 @@ const ImageSettings = () => {
   const {
     selectedElement,
     updateElementProperties,
+    updateStyles,
     setSelectedElement,
     userId,
   } = useContext(EditableContext);
@@ -302,7 +303,11 @@ const ImageSettings = () => {
     }
   };
   const handleAltTextChange = (e) => {
-    setAltText(e.target.value);
+    const newAlt = e.target.value;
+    setAltText(newAlt);
+    if (selectedElement) {
+      updateStyles(selectedElement.id, { alt: newAlt });
+    }
   };
 
   /**
