@@ -41,6 +41,16 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          'vendor-antd': ['antd'],
+          'vendor-solana': ['@solana/web3.js'],
+        },
+      },
+    },
   },
   optimizeDeps: {
     esbuildOptions: {
