@@ -1,15 +1,24 @@
 // src/components/ResizeControls.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { EditableContext } from '../../context/EditableContext';
 import '../css/Topbar.css';
 
 const ResizeControls = ({ scale, onResize, onScaleChange }) => {
   const [customSize, setCustomSize] = useState('');
   const [selectedSize, setSelectedSize] = useState(null);
+  const { setActiveBreakpoint } = useContext(EditableContext);
+
+  const sizeToBreakpoint = (size) => {
+    if (size <= 480) return 'mobile';
+    if (size <= 768) return 'tablet';
+    return 'desktop';
+  };
 
   const handleResize = (size) => {
     if (onResize) onResize(size);
     setSelectedSize(size);
     setCustomSize(size);
+    setActiveBreakpoint(sizeToBreakpoint(size));
   };
 
   const handleCustomResize = (e) => {

@@ -25,6 +25,7 @@ export const EditableProvider = ({ children, userId }) => {
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [copiedElement, setCopiedElement] = useState(null);
   const [styleEditingMode, setStyleEditingMode] = useState('normal'); // 'normal' | 'hover' | 'focus'
+  const [activeBreakpoint, setActiveBreakpoint] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
 
   // Wrap setSelectedElement to reset style editing mode when selection changes
   const selectElement = useCallback((el) => {
@@ -208,6 +209,24 @@ export const EditableProvider = ({ children, userId }) => {
       const element = findElementById(id, prev);
       if (!element) return prev;
 
+      // When editing a non-desktop breakpoint, store overrides in breakpointStyles
+      if (activeBreakpoint !== 'desktop') {
+        const bpKey = activeBreakpoint; // 'tablet' or 'mobile'
+        const existingBp = element.breakpointStyles || {};
+        const existingBpStyles = existingBp[bpKey] || {};
+        return prev.map(el =>
+          el.id === id
+            ? {
+                ...el,
+                breakpointStyles: {
+                  ...existingBp,
+                  [bpKey]: { ...existingBpStyles, ...newStyles },
+                },
+              }
+            : el
+        );
+      }
+
       // Get the configuration styles if available
       const configStyles = element.configuration && structureConfigurations[element.configuration]?.styles;
 
@@ -233,7 +252,7 @@ export const EditableProvider = ({ children, userId }) => {
           : el
       );
     });
-  }, [findElementById, recordElementsUpdate]);
+  }, [findElementById, recordElementsUpdate, activeBreakpoint]);
 
   const updateStateStyles = useCallback((id, stateName, newStyles) => {
     const stateKey = stateName === 'hover' ? 'hoverStyles' : 'focusStyles';
@@ -627,6 +646,8 @@ export const EditableProvider = ({ children, userId }) => {
     styleEditingMode,
     setStyleEditingMode,
     updateStateStyles,
+    activeBreakpoint,
+    setActiveBreakpoint,
   }), [
     elements,
     selectedElement,
@@ -652,6 +673,7 @@ export const EditableProvider = ({ children, userId }) => {
     pasteElement,
     styleEditingMode,
     updateStateStyles,
+    activeBreakpoint,
   ]);
 
   // Set elements version on mount

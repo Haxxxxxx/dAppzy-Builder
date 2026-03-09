@@ -27,7 +27,7 @@ import FormSettings from './SettingsPanels/FormSettings';
 import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
-  const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode, activeBreakpoint } = useContext(EditableContext);
 
   const getAncestorPath = (element) => {
     if (!element) return [];
@@ -254,6 +254,11 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
             {styleEditingMode !== 'normal' && (
               <div className="state-editing-notice">
                 Editing <strong>:{styleEditingMode}</strong> state styles
+              </div>
+            )}
+            {activeBreakpoint !== 'desktop' && (
+              <div className="state-editing-notice">
+                Editing <strong>{activeBreakpoint}</strong> breakpoint styles
               </div>
             )}
             {getRelevantEditors(selectedElement).map((editor, index) => (
