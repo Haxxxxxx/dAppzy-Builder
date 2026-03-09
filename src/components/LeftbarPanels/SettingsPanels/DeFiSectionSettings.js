@@ -170,10 +170,11 @@ const DeFiSectionSettings = ({ selectedElement }) => {
                 };
               }
             } catch (e) {
+              console.error('[DeFiSectionSettings] Failed to parse module content:', e);
             }
           }
         });
-        
+
         setModuleSettings(newSettings);
         setModuleOrder(newOrder);
       }
