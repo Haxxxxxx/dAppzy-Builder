@@ -86,6 +86,13 @@ export default function useKeyboardShortcuts() {
           insertIndex = rootElements.length;
         }
         pasteElement(parentId, insertIndex);
+      } else if (e.key === 'a') {
+        // Ctrl+A — select root element (first element with no parentId)
+        e.preventDefault();
+        const rootElement = elements.find(el => !el.parentId);
+        if (rootElement) {
+          setSelectedElement({ id: rootElement.id, type: rootElement.type });
+        }
       }
     };
 
