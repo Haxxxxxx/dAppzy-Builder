@@ -305,6 +305,23 @@ export const generateProjectHtml = (elements, websiteSettings) => {
       /* Element state styles (hover/focus) */
       ${stateStylesCss}
 
+      /* Per-element breakpoint overrides */
+      ${elements
+        .filter(el => el.breakpointStyles && (
+          Object.keys(el.breakpointStyles.tablet || {}).length > 0 ||
+          Object.keys(el.breakpointStyles.mobile || {}).length > 0
+        ))
+        .map(el => {
+          let css = '';
+          if (el.breakpointStyles.tablet && Object.keys(el.breakpointStyles.tablet).length > 0) {
+            css += `@media (max-width: 768px) { #${el.id} { ${styleObjectToString(el.breakpointStyles.tablet)} } }\n`;
+          }
+          if (el.breakpointStyles.mobile && Object.keys(el.breakpointStyles.mobile).length > 0) {
+            css += `      @media (max-width: 480px) { #${el.id} { ${styleObjectToString(el.breakpointStyles.mobile)} } }\n`;
+          }
+          return css;
+        }).join('      ')}
+
       /* Section-specific responsive styles */
       @media (max-width: 768px) {
         .section-navbar {
