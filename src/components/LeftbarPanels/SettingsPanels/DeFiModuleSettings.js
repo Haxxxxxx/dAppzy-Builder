@@ -4,7 +4,7 @@ import { Form, Input, Switch, ColorPicker, Select, InputNumber, Space, Divider, 
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const DeFiModuleSettings = ({ selectedElement }) => {
-  const { updateContent } = useContext(EditableContext);
+  const { updateContent, updateStyles } = useContext(EditableContext);
   const [form] = Form.useForm();
   const [moduleData, setModuleData] = useState(null);
 
@@ -64,14 +64,13 @@ const DeFiModuleSettings = ({ selectedElement }) => {
       }
     };
 
-    updateContent(selectedElement.id, {
-      ...selectedElement,
-      content: JSON.stringify(updatedData),
-      styles: {
-        ...selectedElement.styles,
-        backgroundColor: allValues.customColor || selectedElement.styles?.backgroundColor
-      }
-    });
+    updateContent(selectedElement.id, JSON.stringify(updatedData));
+
+    if (allValues.customColor) {
+      updateStyles(selectedElement.id, {
+        backgroundColor: allValues.customColor
+      });
+    }
 
     setModuleData(updatedData);
   };
