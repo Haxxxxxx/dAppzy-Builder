@@ -1,11 +1,12 @@
 // BuilderPageLoader.js
 import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
-import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 import BuilderPageCore from "./BuilderPageCore";
 import WalletConnection from "./NewLogin/WalletConnection";
 import { TEMPLATES } from "./configs/templates";
+import "./components/css/ProjectSelection.css";
 
 function getMaxProjects() {
   const subscriptionStatus = localStorage.getItem('subscriptionStatus');
@@ -33,6 +34,8 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   });
   const [viewState, setViewState] = useState('loading'); // 'loading', 'selection', 'builder', 'error'
   const [errorMessage, setErrorMessage] = useState(null);
+  const [renamingProjectId, setRenamingProjectId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const loadingTimeoutRef = useRef(null);
   const loadingWatchdogRef = useRef(null);
@@ -225,6 +228,26 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     }
   }, [userId, checkProjectLimit, loadUserProjects, setLoadingState]);
 
+  // Rename a project's title.
+  const renameProject = useCallback(async (projectId, newTitle) => {
+    if (!newTitle.trim()) return;
+    try {
+      const projectRef = doc(db, "projects", userId, "ProjectRef", projectId);
+      await updateDoc(projectRef, { 'websiteSettings.siteTitle': newTitle.trim() });
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId
+            ? { ...p, websiteSettings: { ...p.websiteSettings, siteTitle: newTitle.trim() } }
+            : p
+        )
+      );
+    } catch {
+      setErrorMessage("Failed to rename project.");
+      setViewState('error');
+    }
+    setRenamingProjectId(null);
+  }, [userId]);
+
   // Set logged-in status once userId is available.
   useEffect(() => {
     if (userId) {
@@ -348,7 +371,35 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
                   )}
                 </div>
                 <div className="project-info">
-                  <h3>{project.websiteSettings?.siteTitle || 'Untitled Project'}</h3>
+                  {renamingProjectId === project.id ? (
+                    <input
+                      className="project-rename-input"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') renameProject(project.id, renameValue);
+                        if (e.key === 'Escape') setRenamingProjectId(null);
+                      }}
+                      onBlur={() => renameProject(project.id, renameValue)}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  ) : (
+                    <h3>
+                      {project.websiteSettings?.siteTitle || 'Untitled Project'}
+                      <button
+                        className="project-rename-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenamingProjectId(project.id);
+                          setRenameValue(project.websiteSettings?.siteTitle || '');
+                        }}
+                        title="Rename project"
+                      >
+                        <span className="material-symbols-outlined">edit</span>
+                      </button>
+                    </h3>
+                  )}
                   <p>Last updated: {project.lastUpdated ? new Date(project.lastUpdated.toDate()).toLocaleDateString() : 'Never'}</p>
                 </div>
                 <button
@@ -364,7 +415,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
               </div>
             ))}
           </div>
-          <h3 style={{ marginTop: '24px', color: '#333' }}>Create New Project</h3>
+          <h3>Create New Project</h3>
           <div className="templates-grid">
             {TEMPLATES.map((template) => (
               <button
