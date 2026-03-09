@@ -86,19 +86,28 @@ const WalletContextProvider = ({ children }) => {
         setIsWalletConnected(true);
         sessionStorage.setItem('userAccount', address);
 
-        // Only query Firestore for subscription if Firebase session exists
+        // Verify subscription status against Firestore to prevent localStorage tampering
         if (hasFirebaseUser) {
           const userRef = doc(db, 'users', address);
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            if (userData.subscriptionStatus) {
-              localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
-              if (userData.subscriptionEndDate) {
-                localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
-              }
+            const serverStatus = userData.subscriptionStatus || '';
+            localStorage.setItem('subscriptionStatus', serverStatus);
+            if (userData.subscriptionEndDate) {
+              localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+            } else {
+              localStorage.removeItem('subscriptionEndDate');
             }
+          } else {
+            // No user doc — clear any locally-set subscription
+            localStorage.removeItem('subscriptionStatus');
+            localStorage.removeItem('subscriptionEndDate');
           }
+        } else {
+          // No Firebase session — don't trust localStorage subscription
+          localStorage.removeItem('subscriptionStatus');
+          localStorage.removeItem('subscriptionEndDate');
         }
       } catch (err) {
         // Silent — auto-reconnect failure is not actionable
