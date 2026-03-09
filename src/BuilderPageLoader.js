@@ -5,6 +5,7 @@ import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 import BuilderPageCore from "./BuilderPageCore";
 import WalletConnection from "./NewLogin/WalletConnection";
+import { TEMPLATES } from "./configs/templates";
 
 function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -351,22 +352,27 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
               </div>
             ))}
           </div>
-          <button 
-            className="create-new-project"
-            onClick={() => {
-              const newUrl = `${window.location.origin}${window.location.pathname}?userId=${userId}&projectId=new`;
-              window.history.replaceState(null, "", newUrl);
-              setViewState('loading');
-              createUserProject({
-                elements: [],
-                websiteSettings: pageSettings,
-                thumbnailUrl: "",
-                siteTitle: "Untitled Project",
-              });
-            }}
-          >
-            Create New Project
-          </button>
+          <h3 style={{ marginTop: '24px', color: '#333' }}>Create New Project</h3>
+          <div className="templates-grid">
+            {TEMPLATES.map((template) => (
+              <button
+                key={template.name}
+                className="template-card"
+                onClick={() => {
+                  setViewState('loading');
+                  createUserProject({
+                    elements: template.elements,
+                    websiteSettings: template.websiteSettings,
+                    thumbnailUrl: "",
+                  });
+                }}
+              >
+                <span className="material-symbols-outlined template-icon">{template.icon}</span>
+                <strong>{template.name}</strong>
+                <span className="template-desc">{template.description}</span>
+              </button>
+            ))}
+          </div>
         </div>
       );
     
