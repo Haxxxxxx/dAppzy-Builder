@@ -13,6 +13,7 @@ import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSe
 import WalletSettings from './SettingsPanels/WalletSettings';
 import LinkSettings from './SettingsPanels/LinkSettings';
 import FilterEditor from '../../Editors/FilterEditor';
+import TransitionEditor from '../../Editors/TransitionEditor';
 import BackgroundEditor from '../../Editors/BackgroundEditor';
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
@@ -107,6 +108,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       {
         title: "Transform",
         component: <TransformEditor />
+      },
+      {
+        title: "Transition",
+        component: <TransitionEditor />
       },
       {
         title: "Position",
