@@ -27,6 +27,7 @@ import BackgroundSettings from './SettingsPanels/BackgroundSettings';
 import FormSettings from './SettingsPanels/FormSettings';
 import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 import TableSettings from './SettingsPanels/TableSettings';
+import IconSettings from './SettingsPanels/IconSettings';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode, activeBreakpoint } = useContext(EditableContext);
@@ -191,6 +192,8 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         return <VideoSettings settings={selectedElement.settings || {}} />;
       case 'youtubeVideo':
         return <YoutubeSettings settings={selectedElement.settings || {}} />;
+      case 'icon':
+        return <IconSettings />;
       case 'mintingSection':
         return <CandyMachineSettings settings={selectedElement.settings || {}} />;
       case 'defiNavbar':
