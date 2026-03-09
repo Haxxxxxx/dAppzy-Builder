@@ -284,12 +284,25 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
     };
   }, [debouncedSaveContent, pendingChanges]);
 
+  // Force an immediate save by flushing the debounced function
+  const forceSave = useCallback((elements, websiteSettings) => {
+    if (!userIdRef.current || !projectIdRef.current) {
+      setSaveStatus('Cannot save: Missing user or project ID');
+      return;
+    }
+    setPendingChanges(true);
+    setSaveStatus('Saving changes...');
+    debouncedSaveContent(elements, websiteSettings);
+    debouncedSaveContent.flush();
+  }, [debouncedSaveContent]);
+
   const value = {
     saveStatus,
     lastSaved,
     isSaving,
     pendingChanges,
     saveContent,
+    forceSave,
     markPendingChanges
   };
 

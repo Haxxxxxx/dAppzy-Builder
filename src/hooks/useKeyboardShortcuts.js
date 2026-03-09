@@ -5,7 +5,7 @@ import { useToast } from '../context/ToastContext';
 
 export default function useKeyboardShortcuts() {
   const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, handleRemoveElement, updateStyles } = useContext(EditableContext);
-  const { saveContent } = useContext(AutoSaveContext);
+  const { forceSave } = useContext(AutoSaveContext);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function useKeyboardShortcuts() {
         // Ctrl+S — force save
         e.preventDefault();
         const websiteSettings = JSON.parse(localStorage.getItem('websiteSettings') || '{}');
-        saveContent(elements, websiteSettings);
+        forceSave(elements, websiteSettings);
         showToast('Changes saved', 'success');
       } else if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -91,5 +91,5 @@ export default function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, saveContent, showToast]);
+  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, forceSave, showToast]);
 }
