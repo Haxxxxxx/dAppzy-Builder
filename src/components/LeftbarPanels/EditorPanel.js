@@ -19,6 +19,7 @@ import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
 import VideoSettings from './SettingsPanels/VideoSettings';
+import YoutubeSettings from './SettingsPanels/YoutubeSettings';
 import DeFiSectionSettings from './SettingsPanels/DeFiSectionSettings';
 import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
@@ -187,6 +188,8 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         return <WalletSettings settings={selectedElement.settings || {}} />;
       case 'video':
         return <VideoSettings settings={selectedElement.settings || {}} />;
+      case 'youtubeVideo':
+        return <YoutubeSettings settings={selectedElement.settings || {}} />;
       case 'mintingSection':
         return <CandyMachineSettings settings={selectedElement.settings || {}} />;
       case 'defiNavbar':
