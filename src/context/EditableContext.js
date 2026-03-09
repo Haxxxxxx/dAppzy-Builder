@@ -72,7 +72,13 @@ export const EditableProvider = ({ children, userId }) => {
 
   // Build an element and its children into a flat array without recording to history.
   // Returns { id, allElements } where allElements is the flat list of all created elements.
-  const buildElementTree = useCallback((type, parentId, config, existingIds) => {
+  const buildElementTree = useCallback((type, parentId, config, existingIds, depth = 0) => {
+    if (depth > 20) {
+      // Prevent stack overflow from deeply nested elements
+      const safeId = generateUniqueId(type);
+      existingIds.add(safeId);
+      return { id: safeId, allElements: [{ id: safeId, type, styles: {}, content: '', children: [], parentId, settings: {} }] };
+    }
     let newId = generateUniqueId(type);
     while (existingIds.has(newId)) {
       newId = generateUniqueId(type);
@@ -106,7 +112,7 @@ export const EditableProvider = ({ children, userId }) => {
     // Recursively build children
     const allElements = [];
     const childrenIds = childConfigs.map(childConfig => {
-      const result = buildElementTree(childConfig.type, newId, childConfig, existingIds);
+      const result = buildElementTree(childConfig.type, newId, childConfig, existingIds, depth + 1);
       allElements.push(...result.allElements);
       return result.id;
     });
@@ -336,13 +342,17 @@ export const EditableProvider = ({ children, userId }) => {
 
     // Build a deep config tree from the flat elements array so that
     // buildElementTree (which expects child config objects) can recreate the full tree.
-    const buildConfigTree = (el) => {
+    const buildConfigTree = (el, depth = 0) => {
       const { id, ...config } = el;
+      if (depth > 20) {
+        config.children = [];
+        return config;
+      }
       if (el.children && el.children.length > 0) {
         config.children = el.children
           .map(childId => allElements.find(c => c.id === childId))
           .filter(Boolean)
-          .map(child => buildConfigTree(child));
+          .map(child => buildConfigTree(child, depth + 1));
       } else {
         config.children = [];
       }
