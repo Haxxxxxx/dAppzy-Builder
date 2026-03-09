@@ -77,15 +77,7 @@ const WalletSettingsPanel = () => {
           </div>
         ))}
         <p className="upvote-message">
-          Can't find your wallet?{' '}
-          <a
-            href="https://your-feature-request-page.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="upvote-link"
-          >
-            Check our feature upvote page
-          </a>
+          Can't find your wallet? More wallets coming soon!
         </p>
       </CollapsibleSection>
     </div>
