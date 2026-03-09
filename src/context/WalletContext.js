@@ -33,8 +33,6 @@ export const useWalletContext = () => {
 // Create a single instance of the wallet adapter
 const wallets = [new PhantomWalletAdapter()];
 
-const isDevnet = !import.meta.env.VITE_SOLANA_RPC_URL;
-
 export const WalletProvider = ({ children }) => {
   const endpoint = import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(WalletAdapterNetwork.Devnet);
 
@@ -252,7 +250,6 @@ const WalletContextProvider = ({ children }) => {
     balance,
     connectWallet,
     disconnectWallet,
-    isDevnet,
     isDevnet
   };
 
