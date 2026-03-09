@@ -12,6 +12,7 @@ import PositionEditor from '../../Editors/PositionEditor';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettings from './SettingsPanels/WalletSettings';
 import LinkSettings from './SettingsPanels/LinkSettings';
+import FilterEditor from '../../Editors/FilterEditor';
 import BackgroundEditor from '../../Editors/BackgroundEditor';
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
@@ -98,6 +99,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       {
         title: "Opacity",
         component: <OpacityEditor />
+      },
+      {
+        title: "Filters",
+        component: <FilterEditor />
       },
       {
         title: "Transform",
