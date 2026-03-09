@@ -1,26 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-// Mock crypto-js for encryptData/decryptData
-vi.mock('crypto-js', () => {
-  const encrypt = vi.fn((data, key) => ({ toString: () => `encrypted:${data}:${key}` }));
-  const decrypt = vi.fn((data, key) => ({
-    toString: () => {
-      const parts = data.split(':');
-      return parts.length >= 2 ? parts[1] : data;
-    },
-  }));
-  return {
-    default: {
-      AES: { encrypt, decrypt },
-      enc: { Utf8: 'utf8' },
-    },
-    AES: { encrypt, decrypt },
-    enc: { Utf8: 'utf8' },
-  };
-});
-
 import {
-  encryptData,
   secureStore,
   secureRetrieve,
   secureRemove,
@@ -39,23 +19,10 @@ const localStorageMock = {
 global.localStorage = localStorageMock;
 
 describe('Security Utilities', () => {
-  const testKey = 'test-encryption-key-32-chars-long!';
   const testData = 'sensitive-data-123';
 
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe('encryptData', () => {
-    it('should encrypt data successfully', () => {
-      const encrypted = encryptData(testData, testKey);
-      expect(encrypted).toBeDefined();
-      expect(typeof encrypted).toBe('string');
-    });
-
-    it('should throw an error when key is missing', () => {
-      expect(() => encryptData(testData)).toThrow('Encryption key is required');
-    });
   });
 
   describe('secureStore', () => {

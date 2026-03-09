@@ -1,18 +1,3 @@
-import CryptoJS from 'crypto-js';
-
-/**
- * Encrypts sensitive data using AES-256-CBC
- * @param {string} data - The data to encrypt
- * @param {string} key - The encryption key (should be from environment variables)
- * @returns {string} The encrypted data
- */
-export const encryptData = (data, key) => {
-  if (!key) {
-    throw new Error('Encryption key is required');
-  }
-  return CryptoJS.AES.encrypt(data, key).toString();
-};
-
 /**
  * Encrypts and stores data securely
  * @param {string} key - The key to store the data under
