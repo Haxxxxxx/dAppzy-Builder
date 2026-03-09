@@ -94,6 +94,7 @@ const TableSettings = () => {
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={addRow}
+              aria-label="Add Row"
               style={{
                 flex: 1, padding: '6px', background: 'var(--input-bg, #2a2a3a)',
                 border: '1px solid var(--border-color, #333)', borderRadius: '4px',
@@ -105,6 +106,7 @@ const TableSettings = () => {
             <button
               onClick={removeLastRow}
               disabled={rows <= 1}
+              aria-label="Remove Row"
               style={{
                 flex: 1, padding: '6px', background: 'var(--input-bg, #2a2a3a)',
                 border: '1px solid var(--border-color, #333)', borderRadius: '4px',
@@ -122,6 +124,7 @@ const TableSettings = () => {
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={addColumn}
+              aria-label="Add Column"
               style={{
                 flex: 1, padding: '6px', background: 'var(--input-bg, #2a2a3a)',
                 border: '1px solid var(--border-color, #333)', borderRadius: '4px',
@@ -133,6 +136,7 @@ const TableSettings = () => {
             <button
               onClick={removeLastColumn}
               disabled={cols <= 1}
+              aria-label="Remove Column"
               style={{
                 flex: 1, padding: '6px', background: 'var(--input-bg, #2a2a3a)',
                 border: '1px solid var(--border-color, #333)', borderRadius: '4px',

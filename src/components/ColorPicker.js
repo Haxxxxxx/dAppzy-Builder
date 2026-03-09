@@ -60,6 +60,7 @@ const ColorPicker = ({ value, onChange }) => {
         />
         <button
           onClick={handleAddSwatch}
+          aria-label="Save color"
           title="Save color"
           style={{
             background: 'none',
@@ -89,6 +90,7 @@ const ColorPicker = ({ value, onChange }) => {
               key={color}
               onClick={() => onChange(color)}
               onContextMenu={(e) => handleRemoveSwatch(e, color)}
+              aria-label={`Select color ${color}, right-click to remove`}
               title={`${color} — right-click to remove`}
               style={{
                 width: '20px',
