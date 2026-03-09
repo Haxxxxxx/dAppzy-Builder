@@ -8,6 +8,19 @@ import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 import { generateUniqueId } from '../utils/LeftBarUtils/elementUtils';
 import LayoutReplacementBoundary from './LayoutReplacementBoundary';
 
+const DEVICE_LABELS = {
+  375: 'Phone (375px)',
+  768: 'Tablet (768px)',
+  1200: 'Laptop (1200px)',
+  1440: 'Desktop (1440px)',
+};
+
+function getDeviceClass(width) {
+  if (width === 375) return 'device-frame-phone';
+  if (width === 768) return 'device-frame-tablet';
+  return '';
+}
+
 const ContentList = forwardRef(
   (
     {
@@ -1206,7 +1219,14 @@ const ContentList = forwardRef(
       }
     };
 
+    const deviceClass = getDeviceClass(contentListWidth);
+    const deviceLabel = DEVICE_LABELS[contentListWidth];
+
     return (
+      <div className={`device-frame-wrapper ${deviceClass}`}>
+        {deviceLabel && (
+          <div className="device-label">{deviceLabel}</div>
+        )}
       <div
         ref={ref}
         className="content-list"
@@ -1296,6 +1316,7 @@ const ContentList = forwardRef(
             )}
           </>
         )}
+      </div>
       </div>
     );
   }
