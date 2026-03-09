@@ -26,6 +26,7 @@ import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection
 import BackgroundSettings from './SettingsPanels/BackgroundSettings';
 import FormSettings from './SettingsPanels/FormSettings';
 import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
+import TableSettings from './SettingsPanels/TableSettings';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode, activeBreakpoint } = useContext(EditableContext);
@@ -207,6 +208,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         return <ListSettings settings={selectedElement.settings || {}} />;
       case 'form':
         return <FormSettings settings={selectedElement.settings || {}} />;
+      case 'table':
+      case 'table-row':
+      case 'table-cell':
+        return <TableSettings />;
       default:
         return (
           <div className="no-settings-message">
