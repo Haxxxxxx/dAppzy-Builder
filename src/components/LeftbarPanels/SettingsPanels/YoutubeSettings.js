@@ -20,12 +20,20 @@ const YoutubeSettingsPanel = () => {
   // Extract YouTube video ID from various URL formats
   const parseYouTubeUrl = (url) => {
     if (!url) return url;
-    // Already an embed URL
-    if (url.includes('/embed/')) return url;
-    // Standard watch URL
-    const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const trimmed = url.trim();
+    // Already an embed URL — strip any query params from the video ID portion
+    const embedMatch = trimmed.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
+    if (embedMatch) return `https://www.youtube.com/embed/${embedMatch[1]}`;
+    // Standard watch URL: youtube.com/watch?v=ID (possibly with &t=123 etc.)
+    const watchMatch = trimmed.match(/youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/);
     if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
-    return url;
+    // Short URL: youtu.be/ID (possibly with ?list=... or ?t=... etc.)
+    const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+    if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
+    // Raw video ID (exactly 11 valid chars)
+    const rawMatch = trimmed.match(/^([a-zA-Z0-9_-]{11})$/);
+    if (rawMatch) return `https://www.youtube.com/embed/${rawMatch[1]}`;
+    return trimmed;
   };
 
   const handleUrlChange = (e) => {
