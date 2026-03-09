@@ -22,6 +22,7 @@ const nodemailer = require("nodemailer");
 const udJwt = defineSecret("UD_JWT");
 const EMAIL_USER = defineSecret("EMAIL_USER");
 const EMAIL_PASS = defineSecret("EMAIL_PASS");
+const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
 // 2) Initialize Firebase Admin
 admin.initializeApp();
 const db = admin.firestore(); // Firestore instance
@@ -694,6 +695,128 @@ exports.verifyUnstoppable = onRequest(
       return res.json({ customToken });
     } catch (error) {
       console.error("Error in verifyUnstoppable:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// AI rate limiter — separate from general rate limiter (3 per hour)
+const aiRateLimitMap = new Map();
+const AI_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const AI_RATE_LIMIT_MAX = 3;
+
+function checkAIRateLimit(ip) {
+  const now = Date.now();
+  const entry = aiRateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > AI_RATE_LIMIT_WINDOW_MS) {
+    aiRateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return true;
+  }
+  entry.count++;
+  if (entry.count > AI_RATE_LIMIT_MAX) return false;
+  return true;
+}
+
+// AI Project Generation — proxies to Claude API
+exports.generateAIProject = onRequest(
+  {
+    secrets: [ANTHROPIC_API_KEY],
+    cors: ALLOWED_ORIGINS,
+    invoker: "public",
+    region: "us-central1",
+    timeoutSeconds: 120,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    // Require Firebase Auth
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized — missing auth token" });
+    }
+    try {
+      await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+    } catch (authError) {
+      return res.status(401).json({ error: "Unauthorized — invalid auth token" });
+    }
+
+    // AI-specific rate limit (3 per hour)
+    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    if (!checkAIRateLimit(clientIp)) {
+      return res.status(429).json({ error: "AI generation limit reached (3 per hour). Try again later." });
+    }
+
+    try {
+      const { prompt, systemPrompt } = req.body;
+
+      if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+      if (prompt.length > 2000) {
+        return res.status(400).json({ error: "Prompt too long (max 2000 chars)" });
+      }
+
+      const apiKey = ANTHROPIC_API_KEY.value();
+      if (!apiKey) {
+        return res.status(500).json({ error: "AI service not configured" });
+      }
+
+      // Call Claude API
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4096,
+          system: systemPrompt || "You are a web page builder AI. Return only valid JSON arrays.",
+          messages: [
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+
+      if (!anthropicRes.ok) {
+        const errText = await anthropicRes.text();
+        console.error("Anthropic API error:", anthropicRes.status, errText);
+        return res.status(502).json({ error: "AI service error" });
+      }
+
+      const anthropicData = await anthropicRes.json();
+      const aiText = anthropicData.content?.[0]?.text || "";
+
+      // Parse the AI response as JSON
+      let sections;
+      try {
+        sections = JSON.parse(aiText);
+      } catch (parseErr) {
+        console.error("AI response not valid JSON:", aiText.substring(0, 500));
+        return res.status(400).json({ error: "AI returned invalid JSON. Please try a different prompt." });
+      }
+
+      // Validate structure
+      if (!Array.isArray(sections) || sections.length === 0) {
+        return res.status(400).json({ error: "AI returned empty or non-array response." });
+      }
+
+      for (const section of sections) {
+        if (!section.type) {
+          return res.status(400).json({ error: "AI returned a section without a type." });
+        }
+        if (!section.styles || typeof section.styles !== "object") {
+          section.styles = {};
+        }
+      }
+
+      return res.json({ sections });
+    } catch (error) {
+      console.error("Error in generateAIProject:", error);
       return res.status(500).json({ error: "Internal server error" });
     }
   }
