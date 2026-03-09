@@ -69,8 +69,9 @@ const WalletContextProvider = ({ children }) => {
           try {
             const resp = await window.solana.connect({ onlyIfTrusted: true });
             publicKey = resp.publicKey;
-          } catch {
+          } catch (err) {
             // Phantom not previously trusted on this origin — user must login manually
+            if (import.meta.env.DEV) console.debug('[WalletContext] Eager connect skipped:', err.message);
             return;
           }
         }

@@ -3,10 +3,12 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import debounce from 'lodash/debounce';
 import { LAYOUT_TYPES_WITH_CHILDREN } from '../constants/elementTypes';
+import { useToast } from './ToastContext';
 
 export const AutoSaveContext = createContext();
 
 export const AutoSaveProvider = ({ children, userId: propUserId, projectId: propProjectId }) => {
+  const { showToast } = useToast();
   // Get URL parameters as fallback
   const getUrlParams = () => {
     const params = new URLSearchParams(window.location.search);
@@ -199,6 +201,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
           retries++;
           if (retries >= maxRetries) {
             console.error('[AutoSave] Firestore save failed after retries:', firestoreError);
+            showToast('Failed to save after multiple attempts. Your changes are cached locally.', 'error');
             setSaveStatus('Failed to save — changes cached locally');
             return;
           }

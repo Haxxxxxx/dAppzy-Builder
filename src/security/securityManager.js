@@ -26,7 +26,8 @@ export const SecurityManager = {
   validateEthAddress: (address) => {
     try {
       return isAddress(address);
-    } catch {
+    } catch (_) {
+      /* security: fail silently by design */
       return false;
     }
   },
@@ -39,7 +40,8 @@ export const SecurityManager = {
   validateSolanaAddress: (address) => {
     try {
       return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-    } catch {
+    } catch (_) {
+      /* security: fail silently by design */
       return false;
     }
   },
@@ -74,7 +76,8 @@ export const SecurityManager = {
     try {
       new URL(url);
       return true;
-    } catch {
+    } catch (_) {
+      /* security: fail silently by design */
       return false;
     }
   },

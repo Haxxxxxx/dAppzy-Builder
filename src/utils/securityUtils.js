@@ -106,7 +106,8 @@ export const secureRetrieve = async (key) => {
     const decodedData = new TextDecoder().decode(decryptedData);
     try {
       return JSON.parse(decodedData);
-    } catch {
+    } catch (_) {
+      /* security: fail silently by design — data is not JSON, return raw string */
       return decodedData;
     }
   } catch (error) {

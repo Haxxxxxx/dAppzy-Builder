@@ -26,8 +26,8 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
         if (ALLOWED_RETURN_HOSTS.includes(parsed.hostname)) {
           returnUrl = rawReturnUrl;
         }
-      } catch {
-        // Invalid URL — use default
+      } catch (err) {
+        console.error('[WebsiteInfo] Invalid returnUrl:', err);
       }
     }
   }

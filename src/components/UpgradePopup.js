@@ -36,7 +36,8 @@ const isValidSolanaAddress = (address) => {
     if (!address) return false;
     new PublicKey(address);
     return true;
-  } catch {
+  } catch (err) {
+    /* security: fail silently by design */
     return false;
   }
 };

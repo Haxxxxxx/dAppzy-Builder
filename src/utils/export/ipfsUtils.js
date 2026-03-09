@@ -28,7 +28,8 @@ const isAllowedUrl = (url) => {
       host.endsWith('.local')
     ) return false;
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[ipfsUtils] URL validation failed:', err);
     return false;
   }
 };
@@ -275,7 +276,8 @@ export function formatIpfsUrl(url) {
   try {
     const hash = url.split('/').pop();
     return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
-  } catch {
+  } catch (err) {
+    console.error('[ipfsUtils] Failed to format IPFS URL:', err);
     return url;
   }
 } 
