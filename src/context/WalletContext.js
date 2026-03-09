@@ -142,6 +142,9 @@ const WalletContextProvider = ({ children }) => {
     };
   }, []);
 
+  const withTimeout = (promise, ms) =>
+    Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Wallet connection timed out')), ms))]);
+
   const connectWallet = async () => {
     try {
       setIsLoading(true);
@@ -149,7 +152,7 @@ const WalletContextProvider = ({ children }) => {
 
       if (window.ethereum) {
         // Handle Ethereum wallet
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts = await withTimeout(window.ethereum.request({ method: 'eth_requestAccounts' }), 30000);
         if (accounts && accounts.length > 0) {
           setWalletAddress(accounts[0]);
           setWalletId(accounts[0]);
@@ -158,7 +161,7 @@ const WalletContextProvider = ({ children }) => {
       } else if (window.solana) {
         // Handle Solana wallet - only connect when explicitly requested
         if (window.solana.isPhantom) {
-          const { publicKey } = await window.solana.connect();
+          const { publicKey } = await withTimeout(window.solana.connect(), 15000);
           if (publicKey) {
             const address = publicKey.toString();
             setWalletAddress(address);
