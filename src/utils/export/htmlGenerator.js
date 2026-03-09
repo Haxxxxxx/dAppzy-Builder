@@ -77,7 +77,7 @@ const generateHeroHtml = (element) => {
 
   const rightContentHtml = image ? `
     <div style="background-color: transparent; max-width: 40%; width: 40%; display: flex; justify-content: flex-end; align-items: center;">
-      <img id="${image.id}" style="max-width: 100%; height: 400px; background-color: #334155; object-fit: cover; border-radius: 8px" src="${escapeAttr(image.content)}" alt="">
+      <img id="${image.id}" style="max-width: 100%; height: auto; max-height: 400px; width: 100%; background-color: #334155; object-fit: cover; border-radius: 8px" src="${escapeAttr(image.content)}" alt="">
     </div>
   ` : '';
 
