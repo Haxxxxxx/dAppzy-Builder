@@ -17,6 +17,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const [isTestDomainEnabled, setIsTestDomainEnabled] = useState(false);
   const [operationStatus, setOperationStatus] = useState(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
   const dropdownRef = useRef(null);
   const statusTimersRef = useRef([]);
   const { findElementById } = useContext(EditableContext);
@@ -98,6 +99,8 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   };
 
   const handleDeployToIPFS = async () => {
+    if (isDeploying) return null;
+    setIsDeploying(true);
     setOperationStatus('Publishing to IPFS...');
     try {
       const { ipfsUrl, ipfsHash } = await deployToIPFS(userId, projectId, elements, websiteSettings);
@@ -119,6 +122,8 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
       // Clear error status after 5 seconds
       safeSetTimeout(() => setOperationStatus(null), 5000);
       return null;
+    } finally {
+      setIsDeploying(false);
     }
   };
 
@@ -292,12 +297,12 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
                 </button>
               </div>
             </div>
-            <button 
+            <button
               className='dropdown-menu-button'
               onClick={handleUpdate}
-              disabled={!isTestDomainEnabled}
+              disabled={!isTestDomainEnabled || isDeploying}
             >
-              Update
+              {isDeploying ? 'Deploying...' : 'Update'}
             </button>
           </div>
         )}
