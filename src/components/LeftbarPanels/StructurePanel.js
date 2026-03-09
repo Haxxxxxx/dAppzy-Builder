@@ -4,7 +4,7 @@ import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import '../css/StructurePanel.css';
 
 const StructurePanel = () => {
-  const { elements, selectedElement, setSelectedElement } = useContext(EditableContext);
+  const { elements, selectedElement, setSelectedElement, setElements } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -59,12 +59,31 @@ const StructurePanel = () => {
     }));
   };
 
+  // Reorder an element among its siblings
+  const reorderElement = (elementId, direction) => {
+    setElements((prev) => {
+      const el = prev.find((e) => e.id === elementId);
+      if (!el) return prev;
+      const parent = prev.find((e) => e.id === el.parentId);
+      if (!parent || !parent.children) return prev;
+      const idx = parent.children.indexOf(elementId);
+      if (idx < 0) return prev;
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= parent.children.length) return prev;
+      const newChildren = [...parent.children];
+      [newChildren[idx], newChildren[newIdx]] = [newChildren[newIdx], newChildren[idx]];
+      return prev.map((e) => e.id === parent.id ? { ...e, children: newChildren } : e);
+    });
+  };
+
   // Recursive function to render structure
-  const renderStructure = (elements) => {
-    return elements
-      .filter((element) => element) // Ensure the element is valid
-      .map((element) => {
+  const renderStructure = (elems) => {
+    const valid = elems.filter((element) => element);
+    return valid.map((element, idx) => {
         const isExpanded = expandedElements[element.id] || false;
+        const isFirst = idx === 0;
+        const isLast = idx === valid.length - 1;
+        const hasParent = !!element.parentId;
 
         return (
           <div
@@ -89,7 +108,29 @@ const StructurePanel = () => {
                   {isExpanded ? '▼' : '▶'}
                 </span>
               )}
-              {getFriendlyLabel(element.type, element.content || element.label || element.id)}
+              <span className="structure-tree-text">
+                {getFriendlyLabel(element.type, element.content || element.label || element.id)}
+              </span>
+              {hasParent && (
+                <span className="structure-reorder-btns">
+                  <button
+                    className="reorder-btn"
+                    disabled={isFirst}
+                    onClick={(e) => { e.stopPropagation(); reorderElement(element.id, -1); }}
+                    title="Move up"
+                  >
+                    <span className="material-symbols-outlined">arrow_upward</span>
+                  </button>
+                  <button
+                    className="reorder-btn"
+                    disabled={isLast}
+                    onClick={(e) => { e.stopPropagation(); reorderElement(element.id, 1); }}
+                    title="Move down"
+                  >
+                    <span className="material-symbols-outlined">arrow_downward</span>
+                  </button>
+                </span>
+              )}
             </div>
             {isExpanded && element.children && element.children.length > 0 && (
               <div className="structure-tree-children">
