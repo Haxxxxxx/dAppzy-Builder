@@ -7,6 +7,7 @@ import { WalletProvider, useWalletContext } from './context/WalletContext';
 import { DappWalletProvider } from './context/DappWalletContext';
 import Web3Provider from './context/Web3Provider';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { ToastProvider } from './context/ToastContext';
 
 const PreviewPage = lazy(() => import("./PreviewPage"));
 const BuilderPageLoader = lazy(() => import("./BuilderPageLoader"));
@@ -55,7 +56,9 @@ function AppContent({ userId, setUserId, projectId }) {
 function App(props) {
   return (
     <WalletProvider>
-      <AppContent {...props} />
+      <ToastProvider>
+        <AppContent {...props} />
+      </ToastProvider>
     </WalletProvider>
   );
 }
