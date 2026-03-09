@@ -4,7 +4,7 @@
 
 import { generateUniqueId } from '../utils/LeftBarUtils/elementUtils';
 
-function buildFlatElements(sectionConfigs) {
+export function buildFlatElements(sectionConfigs) {
   const elements = [];
   const existingIds = new Set();
 
