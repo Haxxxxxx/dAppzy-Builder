@@ -106,7 +106,7 @@ const LayoutReplacementBoundary = ({
         }
       });
     } catch (err) {
-      console.error('Layout drop failed:', err);
+      // Layout drop failed — non-critical, drop is cancelled
     }
 
     setIsHovering(false);

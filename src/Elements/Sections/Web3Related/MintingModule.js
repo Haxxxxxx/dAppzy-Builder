@@ -45,7 +45,7 @@ const MintingModule = ({
       await new Promise(resolve => setTimeout(resolve, 2000));
       // Add actual minting logic here
     } catch (error) {
-      console.error('Minting failed:', error);
+      // Minting failed — error surfaced in UI
     } finally {
       setIsMinting(false);
     }

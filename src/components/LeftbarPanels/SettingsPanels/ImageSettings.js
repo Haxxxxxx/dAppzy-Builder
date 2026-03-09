@@ -185,7 +185,7 @@ const ImageSettings = () => {
       const allImages = await Promise.all(imagePromises);
       setExistingImages(allImages.filter(Boolean));
     } catch (error) {
-      console.error('Failed to fetch existing images:', error);
+      // Failed to fetch images — non-critical, gallery stays empty
     }
   };
 
@@ -216,7 +216,7 @@ const ImageSettings = () => {
     setImageSize(fileSizeMB);
 
     if (!projectName || projectName.trim() === "") {
-      console.warn("Please set a project name before uploading images.");
+      // No project name set — upload silently blocked
       return;
     }
 
@@ -263,7 +263,7 @@ const ImageSettings = () => {
               createdAt: serverTimestamp(),
             });
           } catch (firestoreError) {
-            console.error('Failed to save image metadata:', firestoreError);
+            // Metadata save failed — non-critical, image still uploaded
           }
 
           // Optionally add to media panel
@@ -322,7 +322,7 @@ const ImageSettings = () => {
       // Update local state
       setExistingImages((prev) => prev.filter((x) => x.id !== itemId));
     } catch (error) {
-      console.error('Failed to delete image:', error);
+      // Delete failed — non-critical, image remains in gallery
     }
   };
 

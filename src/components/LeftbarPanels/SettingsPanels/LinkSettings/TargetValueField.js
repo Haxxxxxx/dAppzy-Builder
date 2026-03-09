@@ -47,7 +47,7 @@ const TargetValueField = ({
       const actualPDFs = pdfResults.filter(Boolean);
       setPdfFiles(actualPDFs);
     } catch (error) {
-      console.error('Failed to fetch PDF files:', error);
+      // PDF fetch failed — non-critical, list stays empty
     }
   };
 

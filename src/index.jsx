@@ -47,7 +47,7 @@ const RootComponent = () => {
           setUserId(storedUserId);
         }
       } catch (error) {
-        console.error("Error initializing user data:", error);
+        // Initialization error — non-critical, defaults apply
       } finally {
         setIsLoading(false);
       }
