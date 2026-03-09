@@ -2,16 +2,24 @@ import { useEffect, useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 
 export default function useKeyboardShortcuts() {
-  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, elements } = useContext(EditableContext);
+  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, elements, handleRemoveElement } = useContext(EditableContext);
 
   useEffect(() => {
     const handler = (e) => {
+      // Don't intercept when user is typing in an input/textarea/select
+      const tag = e.target.tagName;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+      if (e.target.isContentEditable) return;
+
+      // Delete/Backspace — no modifier needed
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
+        e.preventDefault();
+        handleRemoveElement(selectedElement.id);
+        return;
+      }
+
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
-
-      // Don't intercept when user is typing in an input/textarea
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
 
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -35,5 +43,5 @@ export default function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement]);
+  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, handleRemoveElement, elements]);
 }
