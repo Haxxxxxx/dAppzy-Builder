@@ -1,4 +1,4 @@
-/* global solanaWeb3, Metaplex */
+/* global solanaWeb3 */
 
 import React from 'react';
 import { mintingSectionStyles } from '../../../Elements/Sections/Web3Related/DefaultWeb3Styles';

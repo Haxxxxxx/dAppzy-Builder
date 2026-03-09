@@ -43,7 +43,7 @@
 
 .project-url {
   font-size: 12px;
-  color: #5C4EFA;
+  color: var(--purple);
   transition: color 0.2s ease;
   font-weight: 500;
   text-decoration: none;
@@ -68,7 +68,7 @@
 }
 
 .project-details-url .material-symbols-outlined {
-  color: #5C4EFA;
+  color: var(--purple);
   transition: transform 0.2s ease;
 }
 
@@ -118,7 +118,7 @@
 }
 
 .scale-percentage {
-  color: #D9D9D9;
+  color: var(--editor-text);
   text-align: center;
   font-family: Montserrat;
   font-size: 12px;
@@ -156,7 +156,7 @@
   border: none;
   border-radius: 5px;
   background: var(--purple, #5C4EFA);
-  color: var(----white, #FFF);
+  color: var(--white, #FFF);
   text-align: center;
   font-family: Montserrat;
   font-size: 14px;
@@ -210,7 +210,7 @@
   top: 100%;
   right: 0;
   margin-top: 5px;
-  z-index: 1000;
+  z-index: var(--z-modal);
   min-width: 150px;
   display: flex;
   width: 289px;
@@ -219,7 +219,7 @@
   align-items: flex-start;
   gap: 19px;
   border-radius: 15px;
-  background: #2B2B2B;
+  background: var(--panel-bg);
 }
 
 .dropdown-menu-item {
@@ -335,7 +335,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   gap: 10px;
   align-self: stretch;
   border-radius: 8px;
-  background: #838389;
+  background: var(--not-selected);
   color: var(--white, #FFF);
   text-align: center;
   font-family: Satoshi;
@@ -394,7 +394,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
 }
 
 .preview-url-container .dropdown-menu-item-content-left-text:hover {
-  color: #5C4EFA;
+  color: var(--purple);
 }
 
 .copy-url-button {

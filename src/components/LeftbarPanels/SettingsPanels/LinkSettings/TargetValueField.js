@@ -6,7 +6,6 @@ const TargetValueField = ({
   actionType,
   targetValue,
   onChange,
-  updateStyles,
   settings = {}
 }) => {
   const [pdfFiles, setPdfFiles] = useState([]);
@@ -48,6 +47,7 @@ const TargetValueField = ({
       const actualPDFs = pdfResults.filter(Boolean);
       setPdfFiles(actualPDFs);
     } catch (error) {
+      console.error('Failed to fetch PDF files:', error);
     }
   };
 

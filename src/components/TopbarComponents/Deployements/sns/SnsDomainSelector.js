@@ -60,6 +60,7 @@ const SnsDomainSelector = ({
       }, 1000);
 
     } catch (error) {
+      console.error('Domain deployment failed:', error);
     }
   };
 

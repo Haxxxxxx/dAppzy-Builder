@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { Form, Input, Button, Select, Switch, Space, Divider, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useWalletContext } from '../../../context/WalletContext';
 import './css/DeFiSectionSettings.css';
 

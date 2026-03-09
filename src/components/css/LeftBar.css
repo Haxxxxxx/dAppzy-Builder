@@ -9,12 +9,12 @@
   justify-content: space-between;
   /* Distribute the content evenly */
   align-items: center;
-  background-color: #313031;
-  border-right: 1px solid #57575B;
+  background-color: var(--builder-bg);
+  border-right: 1px solid var(--dark-gray);
   padding: 10px 5px;
   /* Ensure some padding */
   box-sizing: border-box;
-  z-index: 20;
+  z-index: var(--z-sidebar);
   overflow: hidden;
 }
 

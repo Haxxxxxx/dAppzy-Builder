@@ -72,7 +72,7 @@ p {
 .sidebar {
   max-width: 300px;
   min-width: 300px;
-  background-color: #313031;
+  background-color: var(--builder-bg);
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -150,13 +150,13 @@ p {
   max-height: 100vh;
   /* Restrict the height to the viewport */
   padding: 16px;
-  background-color: #313031;
+  background-color: var(--builder-bg);
   overflow-y: auto;
   /* Enable vertical scrolling */
   box-sizing: border-box;
   /* Ensure padding and border are included in height */
 
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   text-align: left;
   font-family: Montserrat;
   font-style: normal;
@@ -192,9 +192,9 @@ p {
   width: 300px;
   max-width: 350px;
   min-width: 300px;
-  background-color: #313031;
+  background-color: var(--builder-bg);
 
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   text-align: left;
   font-family: Montserrat;
   font-style: normal;
@@ -212,7 +212,7 @@ p {
 .media-item {
   border: 1px solid #ccc;
   padding: 8px;
-  background-color: #313031;
+  background-color: var(--builder-bg);
 }
 
 .media-item img,
@@ -253,10 +253,10 @@ p {
   min-width: 300px;
   height: 100%;
   max-height: 100vh;
-  background-color: #313031;
+  background-color: var(--builder-bg);
   overflow-y: auto;
   box-sizing: border-box;
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   text-align: left;
   font-family: Montserrat;
   font-style: normal;
@@ -270,20 +270,20 @@ p {
   max-width: 350px;
   min-width: 300px;
   height: 100vh;
-  background-color: #313031;
+  background-color: var(--builder-bg);
   overflow-y: auto;
   box-sizing: border-box;
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   text-align: left;
   font-family: Montserrat;
   font-style: normal;
   font-weight: 500;
   line-height: normal;
-  border-left: 1px solid #444;
+  border-left: 1px solid var(--border-color);
   position: fixed;
   right: 0;
   top: 0;
-  z-index: 1000;
+  z-index: var(--z-modal);
   display: flex;
   flex-direction: column;
 }
@@ -307,7 +307,7 @@ p {
 
 .ai-panel-footer {
   padding: 16px;
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--border-color);
 }
 
 .ai-panel-footer-inputbar {
@@ -366,8 +366,8 @@ p {
   display: flex;
   gap: 16px;
   align-items: center;
-  border-top: 1px solid #444;
-  z-index: 1000;
+  border-top: 1px solid var(--border-color);
+  z-index: var(--z-modal);
 }
 
 .ai-intermediate-input {
@@ -379,10 +379,10 @@ p {
 .ai-intermediate-input input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #444;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   background-color: #1A1A1A;
-  color: #D9D9D9;
+  color: var(--editor-text);
 }
 
 .ai-intermediate-input button {
@@ -406,8 +406,8 @@ p {
 .ai-intermediate-actions button {
   padding: 8px;
   background-color: transparent;
-  color: #D9D9D9;
-  border: 1px solid #444;
+  color: var(--editor-text);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -416,7 +416,7 @@ p {
 }
 
 .ai-intermediate-actions button:hover {
-  background-color: #444;
+  background-color: var(--border-color);
 }
 
 .ai-absolute-input-bar-container {
@@ -429,7 +429,7 @@ p {
   background: #1F2937;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1001;
+  z-index: var(--z-popover);
   overflow: visible;
   padding: 0;
 }
@@ -516,7 +516,7 @@ p {
   align-items: center;
   flex-shrink: 0;
   border-radius: 125px;
-  background: #FFF;
+  background: var(--white);
   cursor: pointer;
   border: none;
 }
@@ -554,7 +554,7 @@ p {
 }
 
 .ai-input-img-label-text {
-  color: #FFF;
+  color: var(--white);
   font-family: Inter;
   font-size: 12px;
   font-style: normal;

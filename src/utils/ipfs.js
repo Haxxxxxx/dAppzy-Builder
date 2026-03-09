@@ -35,7 +35,7 @@ const getAuthToken = async () => {
  */
 export const pinDirectoryToPinata = async (files, metadata = {}) => {
   if (!CF_BASE_URL) {
-    throw new Error('REACT_APP_CF_BASE_URL not configured');
+    throw new Error('VITE_CF_BASE_URL not configured');
   }
 
   const token = await getAuthToken();
@@ -86,7 +86,7 @@ export const pinDirectoryToPinata = async (files, metadata = {}) => {
  */
 export const uploadFileToPinata = async (file, walletId, projectName) => {
   if (!CF_BASE_URL) {
-    throw new Error('REACT_APP_CF_BASE_URL not configured');
+    throw new Error('VITE_CF_BASE_URL not configured');
   }
 
   const token = await getAuthToken();

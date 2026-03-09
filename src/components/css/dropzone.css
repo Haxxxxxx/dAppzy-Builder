@@ -21,7 +21,7 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
   pointer-events: auto !important;
 }
 
@@ -50,7 +50,7 @@
 .dropzone-text {
   font-family: Montserrat;
   font-size: 14px;
-  color: #5C4EFA;
+  color: var(--purple);
   transition: all 0.2s ease;
 }
 
@@ -130,7 +130,7 @@
   width: 100vw;
   height: 100vh;
   background: rgba(20, 20, 20, 0.95);
-  z-index: 99999;
+  z-index: var(--z-tooltip);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -145,7 +145,7 @@
   align-items: flex-start;
   gap: 19px;
   border-radius: 15px;
-  background: #2B2B2B;
+  background: var(--panel-bg);
   overflow: hidden;
 }
 
@@ -199,7 +199,7 @@
   align-items: center;
   border-radius: 3px;
   border: 0.7px solid var(--not-selected, #838389);
-  background: #313031;
+  background: var(--builder-bg);
   color: rgba(255, 255, 255, 0.50);
   font-family: Montserrat;
   font-size: 12px;
@@ -304,7 +304,7 @@ border: none;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 99999;
+  z-index: var(--z-tooltip);
   display: flex;
   justify-content: center;
   align-items: center;

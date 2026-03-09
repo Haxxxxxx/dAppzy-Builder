@@ -29,14 +29,14 @@
 
 .background-preview-wrapper {
     display: flex;
-    flex-direction: column !important;
-    border: 1px solid var(----dark-gray, #57575B);
+    flex-direction: column;
+    border: 1px solid var(--dark-gray, #57575B);
     padding: 5px;
     justify-content: center;
     align-items: flex-start;
     gap: 10px;
     align-self: stretch;
-    color: var(----editor-text, #D9D9D9);
+    color: var(--editor-text, #D9D9D9);
     font-family: Montserrat;
     font-style: normal;
     font-weight: 500;
@@ -51,9 +51,9 @@
     gap: 10px;
     align-self: stretch;
     border-radius: 3px;
-    background: var(----dark-gray, #57575B);
+    background: var(--dark-gray, #57575B);
     border: none;
-    color: var(----editor-text, #D9D9D9);
+    color: var(--editor-text, #D9D9D9);
 
     font-family: Montserrat;
     font-size: 10px;
@@ -64,8 +64,8 @@
 }
 
 .backgroundcolor-preview{
-    padding: 0px !important;
-    border: none !important;
+    padding: 0px;
+    border: none;
 }
 
 .background-color-preview{
@@ -97,7 +97,7 @@
     width: 40px;  /* square */
 
     padding: 0;
-    border: none !important;
+    border: none;
   }
   
   .color-code-input {

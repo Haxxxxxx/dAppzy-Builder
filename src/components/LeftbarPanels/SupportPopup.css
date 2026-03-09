@@ -9,13 +9,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-tooltip);
 }
 
 /* Popup container */
 .support-popup-content {
   border-radius: 15px;
-  background: #FFF;
+  background: var(--white);
   box-shadow: 0px 0px 2px 0px rgba(175, 178, 206, 0.56), 0px 1px 4px 0px rgba(4, 4, 52, 0.10);
   padding: 30px 35px;
   border-radius: 10px;
@@ -79,7 +79,7 @@
   cursor: pointer;
   margin-bottom: 16px;
   transition: background-color 0.3s;
-  color: #57575B;
+  color: var(--dark-gray);
 }
 
 .dropzone:hover {
@@ -134,7 +134,7 @@
 /* Cancel & Submit buttons */
 .cancel-btn,
 .submit-btn {
-  background-color: #57575B;
+  background-color: var(--dark-gray);
   border: 1px solid #ccc;
   padding: 8px 16px;
   border-radius: 4px;
@@ -153,8 +153,8 @@
 }
 
 .submit-btn {
-  border-color: #5C4EFA;
-  background-color: #5C4EFA;
+  border-color: var(--purple);
+  background-color: var(--purple);
   color: #fff;
 }
 

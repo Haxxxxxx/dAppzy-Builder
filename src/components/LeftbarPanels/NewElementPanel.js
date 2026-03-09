@@ -10,7 +10,6 @@ import TypographyElements from './ElementsMapping/TypographyElements';
 import StructureElements from './ElementsMapping/StructureElements';
 import BasicElements from './ElementsMapping/BasicElements';
 import Web3Elements from './ElementsMapping/Web3Elements';
-import AdvancedElements from './ElementsMapping/AdvancedElements';
 import FormElements from './ElementsMapping/FormElements';
 import MediaElements from './ElementsMapping/MediaElements';
 import ContentSectionsPanel from '../SectionsPanels/ContentSectionsPanel';

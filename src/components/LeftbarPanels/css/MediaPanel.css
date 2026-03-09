@@ -70,7 +70,7 @@
 
 /* All button selected (active) */
 .filter-buttons button.all-button.active {
-  background-color: #5C4EFA;
+  background-color: var(--purple);
   /* example color */
   color: #FFF;
 }
@@ -161,16 +161,16 @@
   padding: 6px;
   border-radius: 4px;
   cursor: pointer;
-  color: #fff !important;
+  color: #fff;
   font-size: 14px;
 }
 
 .overlay-button:hover {
-  background-color: #5C4EFA;
+  background-color: var(--purple);
 }
 
 .remove-button {
-  background-color: #dc35465e;
+  background-color: rgba(220, 53, 70, 0.37);
 }
 
 .remove-button:hover {
@@ -208,8 +208,8 @@
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: #dc3545;
-  color: #fff;
+  background-color: var(--error-red);
+  color: var(--white);
   border: none;
   padding: 6px 12px;
   border-radius: 4px;
@@ -286,11 +286,11 @@
   align-items: center;
   gap: 4px;
   align-self: stretch;
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
 
   border-radius: 3px;
-  border: 0.7px solid var(----not-selected, #838389);
-  background: #313031;
+  border: 0.7px solid var(--not-selected, #838389);
+  background: var(--builder-bg);
 }
 
 .media-panel-search-bar input {

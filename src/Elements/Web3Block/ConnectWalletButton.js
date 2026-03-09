@@ -85,7 +85,6 @@ const ConnectWalletButton = ({
       { name: 'Solflare', enabled: true, type: 'solana' },
       { name: 'Backpack', enabled: true, type: 'solana' },
       { name: 'Glow', enabled: true, type: 'solana' },
-      { name: 'Slope', enabled: true, type: 'solana' },
       { name: 'MetaMask', enabled: true, type: 'ethereum' },
       { name: 'Freighter', enabled: true, type: 'stellar' },
     ],
@@ -348,17 +347,6 @@ const ConnectWalletButton = ({
     ...propStyles,
     cursor: isEditing ? 'text' : 'pointer',
     outline: isEditing ? '2px solid #3b82f6' : 'none',
-  };
-
-  // Determine button text based on mode and connection state
-  const getButtonText = () => {
-    if (isLoading || contextIsLoading) return "Connecting...";
-    if (isBuilderMode) {
-      if (isTestConnected) return "Disconnect";
-      return content || "Connect Wallet";
-    }
-    if (isConnected) return "Disconnect";
-    return content || "Connect Wallet";
   };
 
   // Get button text based on connection state

@@ -14,7 +14,7 @@
 }
 
 .structure-tree-label.selected {
-  background-color: #313031;
+  background-color: var(--builder-bg);
 }
 
 .structure-tree-toggle {

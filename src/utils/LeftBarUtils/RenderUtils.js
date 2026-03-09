@@ -45,7 +45,6 @@ import {
 
 import { structureConfigurations } from '../../configs/structureConfigurations';
 import { elementTypes } from '../../core/configs/elementConfigs';
-const warnedElements = new Set();
 
 export const renderElement = (
   element,
@@ -148,9 +147,6 @@ export const renderElement = (
   };
 
   if (LAYOUT_TYPES.includes(type) && !configuration) {
-    if (!warnedElements.has(id)) {
-      warnedElements.add(id);
-    }
     return null;
   }
 

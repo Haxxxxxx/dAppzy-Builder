@@ -62,7 +62,6 @@ export const removeElementById = (id, elements) => {
     }
   });
 
-  console.info(`Element with id ${id} has been removed.`);
   return updatedElements;
 };
 

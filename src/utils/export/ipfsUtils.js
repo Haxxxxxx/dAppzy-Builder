@@ -39,7 +39,7 @@ const isAllowedUrl = (url) => {
  */
 const validatePinataConfig = () => {
   if (!isPinataConfigured()) {
-    throw new Error('IPFS upload not configured: Please check REACT_APP_CF_BASE_URL environment variable');
+    throw new Error('IPFS upload not configured: Please check VITE_CF_BASE_URL environment variable');
   }
 };
 

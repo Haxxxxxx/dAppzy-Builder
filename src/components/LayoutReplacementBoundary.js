@@ -106,6 +106,7 @@ const LayoutReplacementBoundary = ({
         }
       });
     } catch (err) {
+      console.error('Layout drop failed:', err);
     }
 
     setIsHovering(false);

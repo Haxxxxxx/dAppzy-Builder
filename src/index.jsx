@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+
 import { EditableProvider } from './context/EditableContext';
 import { AutoSaveProvider } from './context/AutoSaveContext';
 import Web3Provider from './context/Web3Provider';
@@ -81,4 +81,3 @@ const RootComponent = () => {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<RootComponent />);
 
-reportWebVitals();

@@ -21,8 +21,8 @@
 
 .drop-indicator {
   position: absolute;
-  background-color: #5C4EFA;
-  z-index: 1000;
+  background-color: var(--purple);
+  z-index: var(--z-modal);
   pointer-events: none;
   transition: all 0.2s ease;
   box-shadow: 0 0 8px rgba(92, 78, 250, 0.5);

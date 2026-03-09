@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .upgrade-popup.wide {
@@ -475,7 +475,7 @@
   align-items: center;
   gap: 6.249px;
   border-radius: 4.296px;
-  background: var(----light-purple, #E4E0F9);
+  background: var(--light-purple, #E4E0F9);
   color: var(--purple, #5C4EFA);
   font-family: Inter;
   font-size: 7.499px;

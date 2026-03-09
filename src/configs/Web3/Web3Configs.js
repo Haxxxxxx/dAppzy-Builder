@@ -239,7 +239,6 @@ export const Web3Configs = {
                 { name: 'Solflare', enabled: true, type: 'solana' },
                 { name: 'Backpack', enabled: true, type: 'solana' },
                 { name: 'Glow', enabled: true, type: 'solana' },
-                { name: 'Slope', enabled: true, type: 'solana' },
                 { name: 'MetaMask', enabled: true, type: 'ethereum' },
                 { name: 'Freighter', enabled: true, type: 'stellar' }
             ]
