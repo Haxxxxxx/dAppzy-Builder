@@ -27,7 +27,18 @@ import FormSettings from './SettingsPanels/FormSettings';
 import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
-  const { selectedElement, setElements, elements, styleEditingMode, setStyleEditingMode } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode } = useContext(EditableContext);
+
+  const getAncestorPath = (element) => {
+    if (!element) return [];
+    const path = [];
+    let current = elements.find((el) => el.id === element.parentId);
+    while (current && path.length < 4) {
+      path.unshift(current);
+      current = elements.find((el) => el.id === current.parentId);
+    }
+    return path;
+  };
 
   const getRelevantEditors = (element) => {
     if (!element) return [];
@@ -270,8 +281,26 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
     }
   };
 
+  const ancestorPath = getAncestorPath(selectedElement);
+
   return (
     <div className="editor-panel">
+      {selectedElement && ancestorPath.length > 0 && (
+        <div className="editor-breadcrumb">
+          {ancestorPath.map((ancestor, i) => (
+            <span key={ancestor.id}>
+              <button
+                className="breadcrumb-link"
+                onClick={() => setSelectedElement({ id: ancestor.id, type: ancestor.type })}
+              >
+                {ancestor.label || ancestor.type}
+              </button>
+              <span className="breadcrumb-sep">/</span>
+            </span>
+          ))}
+          <span className="breadcrumb-current">{selectedElement.label || selectedElement.type}</span>
+        </div>
+      )}
       {renderContent()}
       {elements.length > 0 && (
         <button
