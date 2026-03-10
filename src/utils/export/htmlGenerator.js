@@ -456,10 +456,10 @@ export const generateProjectHtml = (elements, websiteSettings) => {
           btn.addEventListener('click', async function() {
             try {
               if (window.solana && window.solana.isPhantom) {
-                var resp = await window.solana.connect();
+                const resp = await window.solana.connect();
                 btn.textContent = resp.publicKey.toString().slice(0,4) + '...' + resp.publicKey.toString().slice(-4);
               } else if (window.ethereum) {
-                var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 btn.textContent = accounts[0].slice(0,6) + '...' + accounts[0].slice(-4);
               } else {
                 btn.textContent = 'No wallet found';
@@ -474,7 +474,7 @@ export const generateProjectHtml = (elements, websiteSettings) => {
           form.addEventListener('submit', function(e) {
             if (!form.getAttribute('action') || form.getAttribute('action') === '#') {
               e.preventDefault();
-              var msgEl = document.createElement('div');
+              const msgEl = document.createElement('div');
               msgEl.textContent = 'Form submitted successfully!';
               msgEl.style.cssText = 'padding:12px;background:#4CAF50;color:#fff;text-align:center;border-radius:4px;margin-top:8px;';
               this.parentNode.insertBefore(msgEl, this.nextSibling);
