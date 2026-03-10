@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { Form, Input, Button, Select, Switch, Space, Divider, Alert } from 'antd';
-import { PlusOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useWalletContext } from '../../../context/WalletContext';
 import './css/DeFiSectionSettings.css';
+import './css/SettingsForm.css';
 
 const DeFiSectionSettings = () => {
   const { selectedElement, elements, updateContent } = useContext(EditableContext);
   const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
-  
+
   // Wallet connection state
   const [isSigned, setIsSigned] = useState(false);
   const [requireSignature, setRequireSignature] = useState(true);
@@ -117,31 +116,31 @@ const DeFiSectionSettings = () => {
   const effectiveIsSigned = requireSignature ? (simulateSigned || isSigned) : true;
 
   const [moduleSettings, setModuleSettings] = useState({
-    aggregator: { 
-      enabled: true, 
-      showStats: true, 
-      showButton: true, 
+    aggregator: {
+      enabled: true,
+      showStats: true,
+      showButton: true,
       customColor: '#2A2A3C',
       stats: []
     },
-    simulation: { 
-      enabled: true, 
-      showStats: true, 
-      showButton: true, 
+    simulation: {
+      enabled: true,
+      showStats: true,
+      showButton: true,
       customColor: '#2A2A3C',
       stats: []
     },
-    bridge: { 
-      enabled: true, 
-      showStats: true, 
-      showButton: true, 
+    bridge: {
+      enabled: true,
+      showStats: true,
+      showButton: true,
       customColor: '#2A2A3C',
       stats: []
     }
   });
 
   const [moduleOrder, setModuleOrder] = useState(['aggregator', 'simulation', 'bridge']);
-  const [form] = Form.useForm();
+  const [newModuleType, setNewModuleType] = useState('');
 
   useEffect(() => {
     if (selectedElement) {
@@ -150,10 +149,10 @@ const DeFiSectionSettings = () => {
         const modules = element.children
           ?.map(childId => elements.find(el => el.id === childId))
           ?.filter(module => module?.type === 'defiModule') || [];
-        
+
         const newSettings = { ...moduleSettings };
         const newOrder = [];
-        
+
         modules.forEach(module => {
           if (module.content) {
             try {
@@ -343,130 +342,141 @@ const DeFiSectionSettings = () => {
   return (
     <div className="settings-panel">
       <h3 className="settings-title">DeFi Dashboard Settings</h3>
-      
+
       {connectionError && (
-        <Alert
-          message="Connection Error"
-          description={connectionError}
-          type="error"
-          showIcon
-          style={{ marginBottom: '1rem' }}
-        />
+        <div className="settings-alert settings-alert-error" style={{ marginBottom: '1rem' }}>
+          <strong>Connection Error:</strong> {connectionError}
+        </div>
       )}
 
-      <Divider orientation="left">Wallet Connection</Divider>
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <div>
-          <span style={{ marginRight: 8 }}>Require Signature to Unlock</span>
-          <Switch 
-            checked={requireSignature} 
-            onChange={handleRequireSignatureChange}
-          />
-        </div>
-        
-        <div>
-          <span style={{ marginRight: 8 }}>Simulate Connected</span>
-          <Switch 
-            checked={simulateConnected} 
-            onChange={handleSimulateConnection}
-            disabled={isLoading}
-          />
-        </div>
+      <hr className="settings-divider" />
+      <div className="settings-field"><label>Wallet Connection</label></div>
 
-        {simulateConnected && (
-          <div>
-            <span style={{ marginRight: 8 }}>Simulate Signed</span>
-            <Switch 
-              checked={simulateSigned} 
-              onChange={handleSimulateSignature}
+      <div className="settings-field">
+        <div className="settings-row">
+          <span>Require Signature to Unlock</span>
+          <input
+            type="checkbox"
+            className="settings-switch"
+            checked={requireSignature}
+            onChange={e => handleRequireSignatureChange(e.target.checked)}
+          />
+        </div>
+      </div>
+
+      <div className="settings-field">
+        <div className="settings-row">
+          <span>Simulate Connected</span>
+          <input
+            type="checkbox"
+            className="settings-switch"
+            checked={simulateConnected}
+            disabled={isLoading}
+            onChange={e => handleSimulateConnection(e.target.checked)}
+          />
+        </div>
+      </div>
+
+      {simulateConnected && (
+        <div className="settings-field">
+          <div className="settings-row">
+            <span>Simulate Signed</span>
+            <input
+              type="checkbox"
+              className="settings-switch"
+              checked={simulateSigned}
               disabled={isLoading}
+              onChange={e => handleSimulateSignature(e.target.checked)}
             />
           </div>
-        )}
-
-        <div>
-          <span>Current Status: </span>
-          <span style={{ 
-            color: isConnected ? '#52c41a' : '#ff4d4f',
-            fontWeight: 'bold'
-          }}>
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </span>
-          {isConnected && (
-            <span style={{ marginLeft: '1rem' }}>
-              {effectiveIsSigned ? '(Signed)' : '(Not Signed)'}
-            </span>
-          )}
         </div>
-      </Space>
+      )}
 
-      <Form form={form} layout="vertical">
-        <Divider orientation="left">Module Management</Divider>
-        
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="modules">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                {moduleOrder.map((type, index) => (
-                  <Draggable key={type} draggableId={type} index={index}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="module-item"
-                      >
-                        <Space>
-                          <DragOutlined />
-                          <span>{type === 'aggregator' ? 'Pool Aggregator' :
-                                type === 'simulation' ? 'Investment Simulator' :
-                                type === 'bridge' ? 'Cross-Chain Bridge' : type}</span>
-                          <Switch
-                            checked={moduleSettings[type]?.enabled}
-                            onChange={(checked) => handleModuleToggle(type, checked)}
-                          />
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleModuleRemove(type)}
-                          />
-                        </Space>
+      <div className="settings-field">
+        <span>Current Status: </span>
+        <span style={{ color: isConnected ? '#52c41a' : '#ff4d4f', fontWeight: 'bold' }}>
+          {isConnected ? 'Connected' : 'Disconnected'}
+        </span>
+        {isConnected && (
+          <span style={{ marginLeft: '1rem' }}>
+            {effectiveIsSigned ? '(Signed)' : '(Not Signed)'}
+          </span>
+        )}
+      </div>
+
+      <hr className="settings-divider" />
+      <div className="settings-field"><label>Module Management</label></div>
+
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="modules">
+          {(provided) => (
+            <div {...provided.droppableProps} ref={provided.innerRef}>
+              {moduleOrder.map((type, index) => (
+                <Draggable key={type} draggableId={type} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="module-item"
+                    >
+                      <div className="settings-row">
+                        <span style={{ cursor: 'grab', marginRight: '4px' }}>⠿</span>
+                        <span>{type === 'aggregator' ? 'Pool Aggregator' :
+                              type === 'simulation' ? 'Investment Simulator' :
+                              type === 'bridge' ? 'Cross-Chain Bridge' : type}</span>
+                        <input
+                          type="checkbox"
+                          className="settings-switch"
+                          checked={moduleSettings[type]?.enabled}
+                          onChange={e => handleModuleToggle(type, e.target.checked)}
+                        />
+                        <button
+                          className="settings-btn-icon"
+                          onClick={() => handleModuleRemove(type)}
+                          title="Remove module"
+                        >
+                          ×
+                        </button>
                       </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
-        <Divider orientation="left">Add New Module</Divider>
-        <Space>
-          <Select
-            style={{ width: 200 }}
-            placeholder="Select module type"
-            options={[
-              { value: 'aggregator', label: 'Pool Aggregator' },
-              { value: 'simulation', label: 'Investment Simulator' },
-              { value: 'bridge', label: 'Cross-Chain Bridge' }
-            ]}
-          />
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              const type = form.getFieldValue('newModuleType');
-              if (type) handleModuleAdd(type);
-            }}
-          >
-            Add Module
-          </Button>
-        </Space>
-      </Form>
+      <hr className="settings-divider" />
+      <div className="settings-field"><label>Add New Module</label></div>
+      <div className="settings-row">
+        <select
+          className="settings-select"
+          value={newModuleType}
+          onChange={e => setNewModuleType(e.target.value)}
+          style={{ width: '200px' }}
+        >
+          <option value="">Select module type</option>
+          <option value="aggregator">Pool Aggregator</option>
+          <option value="simulation">Investment Simulator</option>
+          <option value="bridge">Cross-Chain Bridge</option>
+        </select>
+        <button
+          className="settings-btn"
+          onClick={() => {
+            if (newModuleType) {
+              handleModuleAdd(newModuleType);
+              setNewModuleType('');
+            }
+          }}
+        >
+          + Add Module
+        </button>
+      </div>
     </div>
   );
 };
 
-export default DeFiSectionSettings; 
+export default DeFiSectionSettings;
