@@ -9,7 +9,7 @@ import { TEMPLATES } from "./configs/templates";
 const AIBuilder = React.lazy(() => import("./components/AIBuilder"));
 import "./components/css/ProjectSelection.css";
 import { subscriptionStorage, projectStorage, authStorage } from './utils/storageManager';
-import { Modal } from 'antd';
+import ConfirmModal from './components/common/ConfirmModal';
 
 function getMaxProjects() {
   const subscriptionStatus = subscriptionStorage.getStatus();
@@ -41,6 +41,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [renamingProjectId, setRenamingProjectId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [showAIBuilder, setShowAIBuilder] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
 
   const loadingTimeoutRef = useRef(null);
   const loadingWatchdogRef = useRef(null);
@@ -254,13 +255,13 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // Delete a project.
   const deleteProject = useCallback((project) => {
     const title = project.websiteSettings?.siteTitle || 'Untitled Project';
-    Modal.confirm({
+    setConfirmModal({
       title: 'Delete Project',
       content: `Delete "${title}"? This cannot be undone.`,
       okText: 'Delete',
       okType: 'danger',
-      cancelText: 'Cancel',
       onOk: async () => {
+        setConfirmModal(null);
         try {
           const projectRef = doc(db, "projects", userId, "ProjectRef", project.id);
           await deleteDoc(projectRef);
@@ -377,6 +378,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     
     case 'selection':
       return (
+      <>
         <div className="project-selection-container">
           <h2>Select a Project to Edit</h2>
           <div className="projects-grid">
@@ -501,6 +503,14 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
             </Suspense>
           )}
         </div>
+        {confirmModal && (
+          <ConfirmModal
+            open={true}
+            {...confirmModal}
+            onCancel={() => setConfirmModal(null)}
+          />
+        )}
+      </>
       );
     
     case 'builder':
