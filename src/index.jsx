@@ -5,6 +5,7 @@ import App from './App';
 
 import { EditableProvider } from './context/EditableContext';
 import { AutoSaveProvider } from './context/AutoSaveContext';
+import { ToastProvider } from './context/ToastContext';
 import { initSentry } from './configs/sentry';
 import { authStorage } from './utils/storageManager';
 
@@ -67,11 +68,13 @@ const RootComponent = () => {
 
   return (
     <React.StrictMode>
-      <EditableProvider userId={userId}>
-        <AutoSaveProvider userId={userId} projectId={projectId}>
-          <App userId={userId} setUserId={setUserId} projectId={projectId} />
-        </AutoSaveProvider>
-      </EditableProvider>
+      <ToastProvider>
+        <EditableProvider userId={userId}>
+          <AutoSaveProvider userId={userId} projectId={projectId}>
+            <App userId={userId} setUserId={setUserId} projectId={projectId} />
+          </AutoSaveProvider>
+        </EditableProvider>
+      </ToastProvider>
     </React.StrictMode>
   );
 };

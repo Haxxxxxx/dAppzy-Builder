@@ -6,7 +6,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { WalletProvider, useWalletContext } from './context/WalletContext';
 import Web3Provider from './context/Web3Provider';
 import { SubscriptionProvider } from './context/SubscriptionContext';
-import { ToastProvider } from './context/ToastContext';
+
 
 const PreviewPage = lazy(() => import("./PreviewPage"));
 const BuilderPageLoader = lazy(() => import("./BuilderPageLoader"));
@@ -53,9 +53,7 @@ function AppContent({ userId, setUserId, projectId }) {
 function App(props) {
   return (
     <WalletProvider>
-      <ToastProvider>
-        <AppContent {...props} />
-      </ToastProvider>
+      <AppContent {...props} />
     </WalletProvider>
   );
 }
