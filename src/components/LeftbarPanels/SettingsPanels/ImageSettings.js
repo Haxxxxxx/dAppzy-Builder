@@ -13,8 +13,7 @@ import {
 } from "firebase/storage";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
-import { useDrag, DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend"; // or other backend if needed
+import { useDrag } from "react-dnd";
 
 /**
  * Helper to guess if a file is an image from its extension.
@@ -141,7 +140,12 @@ const ImageSettings = () => {
   const fileInputRef = useRef(null);
 
   // Retrieve project name
-  const websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+  let websiteSettings = {};
+  try {
+    websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+  } catch {
+    websiteSettings = {};
+  }
   const projectName = websiteSettings.siteTitle || "Default Project Name";
 
   useEffect(() => {
@@ -363,7 +367,6 @@ const ImageSettings = () => {
   };
 
   return (
-    // Wrap with DndProvider if you want drag-and-drop to work here
       <div className="image-settings-panel">
         <hr />
         <div className="settings-group">

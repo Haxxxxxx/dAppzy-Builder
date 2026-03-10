@@ -189,8 +189,12 @@ const DeFiSectionSettings = ({ selectedElement }) => {
         ?.filter(module => module?.type === 'defiModule') || [];
 
       const moduleIndex = modules.findIndex(m => {
-        const moduleContent = m.content ? JSON.parse(m.content) : {};
-        return moduleContent.functionality?.type === moduleType;
+        try {
+          const moduleContent = m.content ? JSON.parse(m.content) : {};
+          return moduleContent.functionality?.type === moduleType;
+        } catch (e) {
+          return false;
+        }
       });
 
       if (moduleIndex !== -1) {
@@ -284,8 +288,12 @@ const DeFiSectionSettings = ({ selectedElement }) => {
         ?.filter(module => module?.type === 'defiModule') || [];
 
       const updatedModules = modules.filter(module => {
-        const moduleContent = module.content ? JSON.parse(module.content) : {};
-        return moduleContent.functionality?.type !== type;
+        try {
+          const moduleContent = module.content ? JSON.parse(module.content) : {};
+          return moduleContent.functionality?.type !== type;
+        } catch (e) {
+          return true;
+        }
       });
 
       updateContent(selectedElement.id, JSON.stringify(updatedModules));

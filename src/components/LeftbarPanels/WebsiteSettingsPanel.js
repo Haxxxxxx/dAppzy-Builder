@@ -55,7 +55,12 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('websiteSettings');
-    return saved ? JSON.parse(saved) : defaultSettings;
+    if (!saved) return defaultSettings;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return defaultSettings;
+    }
   });
 
   const initialProjectNameRef = useRef(settings.siteTitle);
