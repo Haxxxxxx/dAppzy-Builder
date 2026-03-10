@@ -212,7 +212,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
         } catch (firestoreError) {
           retries++;
           if (retries >= maxRetries) {
-            console.error('[AutoSave] Firestore save failed after retries:', firestoreError);
+            if (import.meta.env.DEV) console.error('[AutoSave] Firestore save failed after retries:', firestoreError);
             showToast('Failed to save after multiple attempts. Your changes are cached locally.', 'error');
             setSaveStatus('Failed to save — changes cached locally');
             return;

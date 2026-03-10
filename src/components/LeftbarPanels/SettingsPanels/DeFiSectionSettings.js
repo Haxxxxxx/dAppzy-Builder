@@ -170,7 +170,7 @@ const DeFiSectionSettings = () => {
                 };
               }
             } catch (e) {
-              console.error('[DeFiSectionSettings] Failed to parse module content:', e);
+              if (import.meta.env.DEV) console.error('[DeFiSectionSettings] Failed to parse module content:', e);
             }
           }
         });

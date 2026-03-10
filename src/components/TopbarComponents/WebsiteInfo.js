@@ -30,7 +30,7 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
           returnUrl = rawReturnUrl;
         }
       } catch (err) {
-        console.error('[WebsiteInfo] Invalid returnUrl:', err);
+        if (import.meta.env.DEV) console.error('[WebsiteInfo] Invalid returnUrl:', err);
       }
     }
   }

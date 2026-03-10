@@ -11,7 +11,7 @@ class DropZoneErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('DropZone Error:', error, errorInfo);
+    if (import.meta.env.DEV) console.error('DropZone Error:', error, errorInfo);
   }
 
   render() {

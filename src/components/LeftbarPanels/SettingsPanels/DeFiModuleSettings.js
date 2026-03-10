@@ -34,7 +34,7 @@ const DeFiModuleSettings = () => {
 
         form.setFieldsValue(initialValues);
       } catch (e) {
-        console.error('[DeFiModuleSettings] Failed to parse module data:', e);
+        if (import.meta.env.DEV) console.error('[DeFiModuleSettings] Failed to parse module data:', e);
       }
     }
   }, [selectedElement, form]);

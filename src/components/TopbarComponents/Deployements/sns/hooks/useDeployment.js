@@ -115,7 +115,7 @@ export const useDeployment = (connection, walletAddress, userId, projectId) => {
           updatedAt: serverTimestamp()
         });
       } catch (firestoreError) {
-        console.error('[useDeployment] Firestore status update failed:', firestoreError);
+        if (import.meta.env.DEV) console.error('[useDeployment] Firestore status update failed:', firestoreError);
       }
       
       throw error;

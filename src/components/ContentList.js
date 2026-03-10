@@ -84,7 +84,7 @@ const ContentList = forwardRef(
             setElements(allElements);
           }
         } catch (error) {
-          console.error('[ContentList] Failed to load chunked elements:', error);
+          if (import.meta.env.DEV) console.error('[ContentList] Failed to load chunked elements:', error);
         }
       };
 
@@ -335,7 +335,7 @@ const ContentList = forwardRef(
           try {
             item.dataTransfer.setData('application/layout-data', JSON.stringify(layoutData));
           } catch (err) {
-            console.error('[ContentList] Failed to set layout drag data:', err);
+            if (import.meta.env.DEV) console.error('[ContentList] Failed to set layout drag data:', err);
           }
         }
       }

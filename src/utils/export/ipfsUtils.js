@@ -29,7 +29,7 @@ const isAllowedUrl = (url) => {
     ) return false;
     return true;
   } catch (err) {
-    console.error('[ipfsUtils] URL validation failed:', err);
+    if (import.meta.env.DEV) console.error('[ipfsUtils] URL validation failed:', err);
     return false;
   }
 };
@@ -277,7 +277,7 @@ export function formatIpfsUrl(url) {
     const hash = url.split('/').pop();
     return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
   } catch (err) {
-    console.error('[ipfsUtils] Failed to format IPFS URL:', err);
+    if (import.meta.env.DEV) console.error('[ipfsUtils] Failed to format IPFS URL:', err);
     return url;
   }
 } 
