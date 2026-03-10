@@ -1,6 +1,7 @@
 import React, { useContext, forwardRef, useState, useCallback, useRef, useEffect } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import ResizeHandles from '../components/ResizeHandles';
+import ElementContextMenu from '../components/ElementContextMenu';
 
 const withSelectable = (WrappedComponent) => {
   const WithSelectable = forwardRef((props, ref) => {
@@ -11,7 +12,12 @@ const withSelectable = (WrappedComponent) => {
       handleRemoveElement,
       updateStyles,
       elements,
+      setElements,
+      copyElement,
+      pasteElement,
+      copiedElement,
     } = useContext(EditableContext);
+    const [contextMenu, setContextMenu] = useState(null);
 
     const isSelected = selectedElement?.id === id;
     const elementData = elements?.find(el => el.id === id);
@@ -31,6 +37,54 @@ const withSelectable = (WrappedComponent) => {
       if (isLocked) return;
       e.stopPropagation();
       handleRemoveElement(id);
+    };
+
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setSelectedElement({ id, type });
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    };
+
+    const reorderElement = (direction) => {
+      setElements((prev) => {
+        const el = prev.find(e => e.id === id);
+        if (!el) return prev;
+        const parent = prev.find(e => e.id === el.parentId);
+        if (!parent?.children) return prev;
+        const idx = parent.children.indexOf(id);
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= parent.children.length) return prev;
+        const newChildren = [...parent.children];
+        [newChildren[idx], newChildren[newIdx]] = [newChildren[newIdx], newChildren[idx]];
+        return prev.map(e => e.id === parent.id ? { ...e, children: newChildren } : e);
+      });
+    };
+
+    const getMenuItems = () => {
+      const el = elements.find(e => e.id === id);
+      const siblings = el ? elements.filter(e => e.parentId === el.parentId) : [];
+      const idx = siblings.findIndex(e => e.id === id);
+      const isFirst = idx === 0;
+      const isLast = idx === siblings.length - 1;
+
+      return [
+        { label: 'Copy', icon: 'content_copy', action: () => copyElement(id) },
+        {
+          label: 'Paste', icon: 'content_paste',
+          disabled: !copiedElement,
+          action: () => pasteElement(el?.parentId || null, idx >= 0 ? idx + 1 : 0),
+        },
+        {
+          label: 'Duplicate', icon: 'copy_all',
+          action: () => { copyElement(id); pasteElement(el?.parentId || null, idx >= 0 ? idx + 1 : 0); },
+        },
+        'divider',
+        { label: 'Move Up', icon: 'arrow_upward', disabled: isFirst || !el?.parentId, action: () => reorderElement(-1) },
+        { label: 'Move Down', icon: 'arrow_downward', disabled: isLast || !el?.parentId, action: () => reorderElement(1) },
+        'divider',
+        { label: 'Delete', icon: 'delete', disabled: isLocked, action: () => handleRemoveElement(id) },
+      ];
     };
 
     const handleResizeMouseDown = useCallback((position, e) => {
@@ -96,6 +150,7 @@ const withSelectable = (WrappedComponent) => {
       <div
         ref={containerRef}
         onClick={handleSelect}
+        onContextMenu={handleContextMenu}
         style={{
           position: 'relative',
           ...forcedSelectedStyle,
@@ -173,6 +228,14 @@ const withSelectable = (WrappedComponent) => {
           </>
         )}
         <WrappedComponent {...props} ref={ref} />
+        {contextMenu && (
+          <ElementContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onClose={() => setContextMenu(null)}
+            items={getMenuItems()}
+          />
+        )}
       </div>
     );
   });
