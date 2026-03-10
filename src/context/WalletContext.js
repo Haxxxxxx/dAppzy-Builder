@@ -1,9 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ConnectionProvider, WalletProvider as WalletProviderBase } from '@solana/wallet-adapter-react';
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
-import { clusterApiUrl } from '@solana/web3.js';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { db, auth } from '../firebase';
@@ -31,23 +26,8 @@ export const useWalletContext = () => {
   return context;
 };
 
-// Create a single instance of the wallet adapter
-const wallets = [new PhantomWalletAdapter()];
-
 export const WalletProvider = ({ children }) => {
-  const endpoint = import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(WalletAdapterNetwork.Devnet);
-
-  return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProviderBase
-        wallets={wallets}
-        autoConnect={false}
-        localStorageKey="walletAdapter"
-      >
-        <WalletContextProvider>{children}</WalletContextProvider>
-      </WalletProviderBase>
-    </ConnectionProvider>
-  );
+  return <WalletContextProvider>{children}</WalletContextProvider>;
 };
 
 const WalletContextProvider = ({ children }) => {
