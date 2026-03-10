@@ -55,7 +55,7 @@ const SnsDomainSelector = ({
 
       // Open the new domain
       setTimeout(() => {
-        const domainUrl = `https://${formattedDomain}`;
+        const domainUrl = `https://${formattedDomain.replace(/\.sol$/, '')}.sol.limo`;
         window.open(domainUrl, '_blank');
       }, 1000);
 
@@ -67,7 +67,7 @@ const SnsDomainSelector = ({
   // Handle view site action
   const handleViewSite = () => {
     if (selectedDomain) {
-      const domainUrl = `https://${selectedDomain.name}`;
+      const domainUrl = `https://${selectedDomain.name.replace(/\.sol$/, '')}.sol.limo`;
       window.open(domainUrl, '_blank');
     }
   };
