@@ -11,7 +11,7 @@ import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
 import { useSubscription } from "./context/SubscriptionContext";
 import Topbar from "./components/TopBar";
-import SideBar from './components/SideBar';
+const SideBar = React.lazy(() => import('./components/SideBar'));
 const AIAgentPanel = React.lazy(() => import("./components/Rightbar/AIAgentPanel"));
 import AIFloatingButton from "./components/AIFloatingButton";
 import { useWalletContext } from "./context/WalletContext";
@@ -838,7 +838,9 @@ const BuilderPageCore = ({
             {openPanel === "sidebar" && (
               <div className="sidebar" id="sidebar">
                 <ErrorBoundary name="Sidebar">
-                  <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} isPioneer={isPioneer} />
+                  <Suspense fallback={null}>
+                    <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} isPioneer={isPioneer} />
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             )}

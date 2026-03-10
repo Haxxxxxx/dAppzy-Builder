@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, Suspense } from 'react';
 import './css/LeftBar.css';
-import SupportPopup from './LeftbarPanels/SupportPopup';
-import UpgradePopup from './UpgradePopup';
+const SupportPopup = React.lazy(() => import('./LeftbarPanels/SupportPopup'));
+const UpgradePopup = React.lazy(() => import('./UpgradePopup'));
 import { EditableContext } from '../context/EditableContext';
 import { useSubscription } from '../context/SubscriptionContext';
 
@@ -94,12 +94,16 @@ const LeftBar = ({
 
       {/* Conditionally render the SupportPopup */}
       {showSupportPopup && (
-        <SupportPopup onClose={handleClosePopup} />
+        <Suspense fallback={null}>
+          <SupportPopup onClose={handleClosePopup} />
+        </Suspense>
       )}
 
       {/* Conditionally render the UpgradePopup */}
       {showUpgradePopup && (
-        <UpgradePopup onClose={handleCloseUpgradePopup} />
+        <Suspense fallback={null}>
+          <UpgradePopup onClose={handleCloseUpgradePopup} />
+        </Suspense>
       )}
     </div>
   );
