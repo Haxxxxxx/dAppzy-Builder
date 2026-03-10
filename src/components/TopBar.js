@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useContext, Suspense } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import ResizeControls from './TopbarComponents/ResizeControls';
-import ExportSection from './TopbarComponents/ExportSection';
+const ExportSection = React.lazy(() => import('./TopbarComponents/ExportSection'));
 import WebsiteInfo from './TopbarComponents/WebsiteInfo';
 import Visibility from './TopbarComponents/Visibility';
 import './css/Topbar.css';
@@ -28,12 +28,14 @@ const Topbar = ({
       />
       <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} />
       <ResizeControls scale={scale} onResize={onResize} onScaleChange={setScale} />
-      <ExportSection
-        elements={elements}
-        websiteSettings={pageSettings}
-        userId={userId}
-        projectId={projectId}
-      />
+      <Suspense fallback={<div style={{padding: '8px'}}>Loading...</div>}>
+        <ExportSection
+          elements={elements}
+          websiteSettings={pageSettings}
+          userId={userId}
+          projectId={projectId}
+        />
+      </Suspense>
     </div>
   );
 };
