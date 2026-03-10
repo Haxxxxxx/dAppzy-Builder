@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { db, doc, getDoc, setDoc } from "../firebase";
 import { serverTimestamp } from "firebase/firestore";
-import UAuth from "@uauth/js";
 import { auth } from "../firebase";
 import { signInWithCustomToken } from "firebase/auth";
 import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighter API methods
@@ -185,6 +184,7 @@ function WalletConnection({ onUserLogin }) {
   // --- Unstoppable Integration (with server-side token verification) ---
   const handleLoginWithUnstoppable = async () => {
     setIsLoading(true);
+    const { default: UAuth } = await import("@uauth/js");
     const uauth = new UAuth({
       clientID: import.meta.env.VITE_UD_CLIENT_ID,
       redirectUri: import.meta.env.VITE_UD_REDIRECT_URI || window.location.origin,
