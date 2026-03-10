@@ -3,7 +3,7 @@ import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import MintingSection from '../Sections/Web3Related/MintingSection';
 import { Web3Configs } from '../../configs/Web3/Web3Configs';
-import merge from 'lodash/merge';
+import deepMerge from '../../utils/deepMerge';
 import '../../components/css/LeftBar.css';
 
 // Default styles for Minting components

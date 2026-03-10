@@ -4,7 +4,7 @@ import { useWalletContext } from '../../../context/WalletContext';
 import { Image, Span, Button, DeFiModule, Section, Div } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import useReorderDrop from '../../../utils/useReorderDrop';
-import merge from 'lodash/merge';
+import deepMerge from '../../../utils/deepMerge';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
 import { Web3Configs } from '../../../configs/Web3/Web3Configs';
 import { defaultDeFiStyles } from './defaultDeFiStyles';

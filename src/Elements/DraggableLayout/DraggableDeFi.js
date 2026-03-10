@@ -6,7 +6,7 @@ import DeFiSection from '../Sections/Web3Related/DeFiSection';
 import { Web3Configs } from '../../configs/Web3/Web3Configs';
 import { defaultDeFiStyles } from '../Sections/Web3Related/defaultDeFiStyles';
 import '../../components/css/LeftBar.css';
-import merge from 'lodash/merge';
+import deepMerge from '../../utils/deepMerge';
 
 // Default modules with specific functionality
 const defaultModules = [

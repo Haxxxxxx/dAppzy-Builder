@@ -1,5 +1,5 @@
 // helpers/containerHelpers.js
-import merge from 'lodash/merge';
+import deepMerge from '../deepMerge';
 
 /**
  * Registers a container element if it doesn't exist.

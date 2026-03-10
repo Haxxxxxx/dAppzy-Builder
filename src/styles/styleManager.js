@@ -1,4 +1,4 @@
-import merge from 'lodash/merge';
+import deepMerge from '../utils/deepMerge';
 
 /**
  * Centralized style management system

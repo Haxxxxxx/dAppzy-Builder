@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect, forwardRef } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import { useWalletContext } from '../../../context/WalletContext';
 import { Div } from '../../SelectableElements';
-import merge from 'lodash/merge';
+import deepMerge from '../../../utils/deepMerge';
 import { defaultDeFiStyles } from './defaultDeFiStyles';
 
 const DeFiModule = forwardRef(({

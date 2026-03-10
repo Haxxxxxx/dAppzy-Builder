@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
-import merge from 'lodash/merge';
+import deepMerge from '../../../utils/deepMerge';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
 import { Div, Heading, Paragraph, Button, Span, LinkBlock, Icon, HFlexLayout } from '../../SelectableElements';
