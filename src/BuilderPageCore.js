@@ -1,5 +1,5 @@
 // BuilderPageCore.js
-import React, { useRef, useEffect, useContext, useState } from "react";
+import React, { useRef, useEffect, useContext, useState, Suspense } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import "./BuilderPage.css";
@@ -12,7 +12,7 @@ import { EditableContext } from "./context/EditableContext";
 import { useSubscription } from "./context/SubscriptionContext";
 import Topbar from "./components/TopBar";
 import SideBar from './components/SideBar';
-import AIAgentPanel from "./components/Rightbar/AIAgentPanel";
+const AIAgentPanel = React.lazy(() => import("./components/Rightbar/AIAgentPanel"));
 import AIFloatingButton from "./components/AIFloatingButton";
 import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
@@ -946,22 +946,24 @@ const BuilderPageCore = ({
             ) : openPanel === "ai" && isPioneer && (
               <div className="right-panel" id="ai-panel">
                 <ErrorBoundary name="Editor Panel">
-                <AIAgentPanel
-                  messages={activeConversation.messages}
-                  conversations={conversations}
-                  activeConversationId={activeConversationId}
-                  onSelectConversation={handleSelectConversation}
-                  onNewChat={handleNewChat}
-                  setMessages={handleSetMessages}
-                  lastNavbarId={lastNavbarId}
-                  lastDefiId={lastDefiId}
-                  onClosePanel={handleCloseAIPanel}
-                  onFirstPrompt={handleFirstPrompt}
-                  onSecondPrompt={handleSecondPrompt}
-                  onSelectedElementEdit={handleSelectedElementEdit}
-                  onThirdPrompt={handleThirdPrompt}
-                  isPioneer={isPioneer}
-                />
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <AIAgentPanel
+                      messages={activeConversation.messages}
+                      conversations={conversations}
+                      activeConversationId={activeConversationId}
+                      onSelectConversation={handleSelectConversation}
+                      onNewChat={handleNewChat}
+                      setMessages={handleSetMessages}
+                      lastNavbarId={lastNavbarId}
+                      lastDefiId={lastDefiId}
+                      onClosePanel={handleCloseAIPanel}
+                      onFirstPrompt={handleFirstPrompt}
+                      onSecondPrompt={handleSecondPrompt}
+                      onSelectedElementEdit={handleSelectedElementEdit}
+                      onThirdPrompt={handleThirdPrompt}
+                      isPioneer={isPioneer}
+                    />
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             )}
