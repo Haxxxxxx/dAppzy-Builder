@@ -19,7 +19,7 @@ import { useWalletContext } from "./context/WalletContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { PLACEHOLDER_IMAGES } from "./configs/assetUrls";
 import useKeyboardShortcuts from "./hooks/useKeyboardShortcuts";
-import KeyboardShortcutsHelp from "./components/KeyboardShortcutsHelp";
+const KeyboardShortcutsHelp = React.lazy(() => import("./components/KeyboardShortcutsHelp"));
 
 const BuilderPageCore = ({
   userId,
@@ -973,7 +973,9 @@ const BuilderPageCore = ({
           <AIFloatingButton onClick={handleAIFloatingButtonClick} />
         )}
         {showShortcutsHelp && (
-          <KeyboardShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />
+          <Suspense fallback={null}>
+            <KeyboardShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />
+          </Suspense>
         )}
       </div>
     </DndProvider>
