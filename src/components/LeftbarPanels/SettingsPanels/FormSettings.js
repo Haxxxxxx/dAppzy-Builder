@@ -3,7 +3,6 @@ import { EditableContext } from '../../../context/EditableContext';
 import FormAdvancedSettings from './FormSettings/FormAdvancedSettings';
 import FormFieldsManager from './FormSettings/FormFieldsManager';
 import '../../css/SettingsPanel.css';
-import './css/FormSettings.css';
 
 const FormSettings = ({ onUpdateSettings }) => {
   const { selectedElement, elements, updateConfiguration, setElements } = useContext(EditableContext);

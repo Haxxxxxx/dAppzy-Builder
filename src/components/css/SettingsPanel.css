@@ -256,3 +256,29 @@
   height: 100%;
   object-fit: contain;  /* keeps aspect ratio, no cropping */
 }
+
+/* Merged from HeadingSettings.css */
+.header-settings-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.header-settings-wrapper .content{
+    align-items: flex-start
+}
+
+/* Merged from FormSettings.css */
+.form-settings-panel{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.form-general-settings,
+.form-advanced-settings{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}

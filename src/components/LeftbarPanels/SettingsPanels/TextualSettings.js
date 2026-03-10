@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import '../../css/SettingsPanel.css'; // Common styles
-import './css/HeadingSettings.css'; // Specific styles for textual settings
 import CollapsibleSection from './LinkSettings/CollapsibleSection';
 
 const TextualSettings = () => {
