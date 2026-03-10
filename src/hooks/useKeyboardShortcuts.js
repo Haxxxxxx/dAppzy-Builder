@@ -48,6 +48,8 @@ export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
 
       // Delete/Backspace — handle multi-select or single select
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
+        const el = elements.find(el => el.id === selectedElement.id);
+        if (el?.settings?.locked || el?.configuration?.locked) return;
         e.preventDefault();
         if (selectedElementIds.length > 1) {
           // Delete all selected elements

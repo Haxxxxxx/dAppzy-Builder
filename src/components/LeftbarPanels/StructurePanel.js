@@ -98,6 +98,7 @@ const StructurePanel = () => {
         const isLast = idx === valid.length - 1;
         const hasParent = !!element.parentId;
         const isHidden = element.configuration?.hidden || element.settings?.hidden;
+        const isLocked = element.configuration?.locked || element.settings?.locked;
 
         return (
           <div
@@ -109,7 +110,7 @@ const StructurePanel = () => {
                 e.stopPropagation();
                 setSelectedElement({ id: element.id, type: element.type });
               }}
-              className={`structure-tree-label${selectedElement?.id === element.id ? ' selected' : ''}${isHidden ? ' hidden-element' : ''}`}
+              className={`structure-tree-label${selectedElement?.id === element.id ? ' selected' : ''}${isHidden ? ' hidden-element' : ''}${isLocked ? ' locked-element' : ''}`}
             >
               {element.children && element.children.length > 0 && (
                 <span
@@ -126,6 +127,13 @@ const StructurePanel = () => {
                 {getFriendlyLabel(element.type, element.content || element.label || element.id)}
               </span>
               <span className="structure-reorder-btns">
+                  <button
+                    className="reorder-btn"
+                    onClick={(e) => { e.stopPropagation(); updateConfiguration(element.id, 'locked', !isLocked); }}
+                    title={isLocked ? 'Unlock element' : 'Lock element'}
+                  >
+                    <span className="material-symbols-outlined">{isLocked ? 'lock' : 'lock_open'}</span>
+                  </button>
                   <button
                     className="reorder-btn"
                     onClick={(e) => { e.stopPropagation(); toggleVisibility(element); }}

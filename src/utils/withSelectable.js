@@ -10,21 +10,25 @@ const withSelectable = (WrappedComponent) => {
       setSelectedElement,
       handleRemoveElement,
       updateStyles,
+      elements,
     } = useContext(EditableContext);
 
     const isSelected = selectedElement?.id === id;
+    const elementData = elements?.find(el => el.id === id);
+    const isLocked = elementData?.settings?.locked || elementData?.configuration?.locked;
     const containerRef = useRef(null);
     const [isResizing, setIsResizing] = useState(false);
     const resizeStart = useRef(null);
     const [resizeTooltip, setResizeTooltip] = useState(null);
 
     const handleSelect = (e) => {
-      if (isResizing) return;
+      if (isResizing || isLocked) return;
       e.stopPropagation();
       setSelectedElement({ id, type });
     };
 
     const handleRemove = (e) => {
+      if (isLocked) return;
       e.stopPropagation();
       handleRemoveElement(id);
     };
