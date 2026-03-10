@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { projectStorage } from '../../utils/storageManager';
 import '../css/SettingsPanel.css';
 import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
 import { storage, auth } from '../../firebase';
@@ -53,13 +54,8 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
   };
 
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('websiteSettings');
-    if (!saved) return defaultSettings;
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return defaultSettings;
-    }
+    const saved = projectStorage.getWebsiteSettings();
+    return Object.keys(saved).length > 0 ? saved : defaultSettings;
   });
 
   const initialProjectNameRef = useRef(settings.siteTitle);
@@ -104,7 +100,7 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
   };
 
   const handleSave = () => {
-    localStorage.setItem('websiteSettings', JSON.stringify(settings));
+    projectStorage.setWebsiteSettings(settings);
     if (onUpdateSettings) {
       onUpdateSettings(settings);
     }

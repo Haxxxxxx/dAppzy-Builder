@@ -12,7 +12,7 @@ export const STORAGE_KEYS = {
   ELEMENTS_CHUNKS: 'editableElements_chunks',
   WEBSITE_SETTINGS: 'websiteSettings',
   // UI (localStorage)
-  COLOR_SWATCHES: 'colorSwatches',
+  COLOR_SWATCHES: 'dappzy_saved_colors',
 };
 
 // ── Auth ───────────────────────────────────────────────────

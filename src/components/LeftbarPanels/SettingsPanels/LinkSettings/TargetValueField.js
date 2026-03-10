@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ref, uploadBytesResumable, getDownloadURL, listAll } from "firebase/storage";
 import { storage } from "../../../../firebase";
+import { authStorage, projectStorage } from "../../../../utils/storageManager";
 
 const TargetValueField = ({
   actionType,
@@ -16,9 +17,9 @@ const TargetValueField = ({
    */
   const fetchExistingPDFFiles = async () => {
     try {
-      const userId = sessionStorage.getItem("userAccount");
+      const userId = authStorage.getUserAccount();
       if (!userId) return;
-      const websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+      const websiteSettings = projectStorage.getWebsiteSettings();
       const projectName = websiteSettings.siteTitle || "DefaultProject";
 
       // Path to your user’s project folder
@@ -57,8 +58,8 @@ const TargetValueField = ({
    */
   const uploadFile = async (file) => {
     try {
-      const userId = sessionStorage.getItem("userAccount");
-      const websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+      const userId = authStorage.getUserAccount();
+      const websiteSettings = projectStorage.getWebsiteSettings();
       const projectName = websiteSettings.siteTitle || "DefaultProject";
       const storagePath = `usersProjectData/${userId}/projects/${projectName}/${file.name}`;
       const storageRef = ref(storage, storagePath);

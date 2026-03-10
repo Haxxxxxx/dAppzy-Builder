@@ -5,10 +5,11 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
 import ColorPicker from "../components/ColorPicker";
 import "./css/BackgroundEditor.css";
+import { authStorage } from "../utils/storageManager";
 
 const BackgroundEditor = ({ pageSettings }) => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
-  const userId = sessionStorage.getItem("userAccount") || "anonymous";
+  const userId = authStorage.getUserAccount() || "anonymous";
   // Assume the project name is provided as pageSettings.siteTitle.
   const projectName = pageSettings?.siteTitle || "defaultProject";
 

@@ -6,6 +6,7 @@ import App from './App';
 import { EditableProvider } from './context/EditableContext';
 import { AutoSaveProvider } from './context/AutoSaveContext';
 import { initSentry } from './configs/sentry';
+import { authStorage } from './utils/storageManager';
 
 initSentry();
 
@@ -20,7 +21,7 @@ if (import.meta.env.MODE === 'development') {
 const RootComponent = () => {
   const [userId, setUserId] = useState(() => {
     // Initialize from sessionStorage only — wallet connection sets the real userId
-    return sessionStorage.getItem("userAccount") || null;
+    return authStorage.getUserAccount() || null;
   });
   
   const [projectId, setProjectId] = useState(() => {
@@ -41,7 +42,7 @@ const RootComponent = () => {
           setProjectId(queryProjectId);
         }
 
-        const storedUserId = sessionStorage.getItem("userAccount");
+        const storedUserId = authStorage.getUserAccount();
         if (storedUserId) {
           setUserId(storedUserId);
         }

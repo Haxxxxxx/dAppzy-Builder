@@ -2,6 +2,7 @@ import { useEffect, useContext } from 'react';
 import { EditableContext } from '../context/EditableContext';
 import { AutoSaveContext } from '../context/AutoSaveContext';
 import { useToast } from '../context/ToastContext';
+import { projectStorage } from '../utils/storageManager';
 
 export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
   const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, handleRemoveElement, updateStyles, selectedElementIds, clearSelection } = useContext(EditableContext);
@@ -67,7 +68,7 @@ export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
       if (e.key === 's') {
         // Ctrl+S — force save
         e.preventDefault();
-        const websiteSettings = JSON.parse(localStorage.getItem('websiteSettings') || '{}');
+        const websiteSettings = projectStorage.getWebsiteSettings();
         forceSave(elements, websiteSettings);
         showToast('Changes saved', 'success');
       } else if (e.key === 'z' && !e.shiftKey) {

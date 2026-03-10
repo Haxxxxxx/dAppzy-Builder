@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { uiStorage, STORAGE_KEYS } from '../utils/storageManager';
 
-const STORAGE_KEY = 'dappzy_saved_colors';
 const MAX_SWATCHES = 12;
 
-const loadSwatches = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
+const loadSwatches = () => uiStorage.getColorSwatches();
 
 const saveSwatches = (swatches) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(swatches));
+  uiStorage.setColorSwatches(swatches);
 };
 
 const ColorPicker = ({ value, onChange }) => {
@@ -22,7 +15,7 @@ const ColorPicker = ({ value, onChange }) => {
   // Reload swatches from localStorage when another picker saves
   useEffect(() => {
     const handleStorage = (e) => {
-      if (e.key === STORAGE_KEY) {
+      if (e.key === STORAGE_KEYS.COLOR_SWATCHES) {
         setSwatches(loadSwatches());
       }
     };

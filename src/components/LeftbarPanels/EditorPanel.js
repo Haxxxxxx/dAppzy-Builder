@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { EditableContext } from '../../context/EditableContext';
+import { projectStorage } from '../../utils/storageManager';
 import TypographyEditor from '../../Editors/TypographyEditor';
 import BorderEditor from '../../Editors/BorderEditor';
 import SizeEditor from '../../Editors/SizeEditor';
@@ -398,7 +399,7 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         <button
           onClick={() => {
             if (!window.confirm('Are you sure you want to clear all elements? This cannot be undone.')) return;
-            localStorage.removeItem('editableElements');
+            projectStorage.removeElements();
             // Clear chunked storage keys
             const chunkKeys = [];
             for (let i = 0; i < localStorage.length; i++) {
@@ -407,8 +408,8 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
                 chunkKeys.push(key);
               }
             }
-            chunkKeys.forEach(key => localStorage.removeItem(key));
-            localStorage.removeItem('editableElements_chunks');
+            chunkKeys.forEach(key => projectStorage.removeChunk(key));
+            projectStorage.removeChunk('editableElements_chunks');
             setElements([]);
           }}
           style={{

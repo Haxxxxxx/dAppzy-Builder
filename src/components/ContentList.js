@@ -7,6 +7,7 @@ import DropZoneErrorBoundary from '../utils/DropZoneErrorBoundary';
 import { renderElement } from '../utils/LeftBarUtils/RenderUtils';
 import { generateUniqueId } from '../utils/LeftBarUtils/elementUtils';
 import LayoutReplacementBoundary from './LayoutReplacementBoundary';
+import { projectStorage } from '../utils/storageManager';
 
 const DEVICE_LABELS = {
   375: 'Phone (375px)',
@@ -56,10 +57,10 @@ const ContentList = forwardRef(
       const loadChunkedElements = () => {
         try {
           // Get the number of chunks
-          const numChunks = parseInt(localStorage.getItem('editableElements_chunks') || '0');
+          const numChunks = projectStorage.getChunkCount();
           if (numChunks === 0) {
             // Try to load from the old single-item storage
-            const oldElements = localStorage.getItem('editableElements');
+            const oldElements = projectStorage.getElements();
             if (oldElements) {
               const parsedElements = JSON.parse(oldElements);
               if (Array.isArray(parsedElements) && parsedElements.length > 0) {
@@ -72,7 +73,7 @@ const ContentList = forwardRef(
           // Load and combine all chunks
           let allElements = [];
           for (let i = 0; i < numChunks * 50; i += 50) {
-            const chunkData = localStorage.getItem(`editableElements_chunk_${i}`);
+            const chunkData = projectStorage.getChunk(i);
             if (chunkData) {
               const chunk = JSON.parse(chunkData);
               allElements = [...allElements, ...chunk];

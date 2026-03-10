@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { EditableContext } from "../../../context/EditableContext";
+import { projectStorage } from "../../../utils/storageManager";
 import "./css/ImageSettings.css";
 import CollapsibleSection from "./LinkSettings/CollapsibleSection";
 // Firebase imports
@@ -140,12 +141,7 @@ const ImageSettings = () => {
   const fileInputRef = useRef(null);
 
   // Retrieve project name
-  let websiteSettings = {};
-  try {
-    websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
-  } catch {
-    websiteSettings = {};
-  }
+  const websiteSettings = projectStorage.getWebsiteSettings();
   const projectName = websiteSettings.siteTitle || "Default Project Name";
 
   useEffect(() => {

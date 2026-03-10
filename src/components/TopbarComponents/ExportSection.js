@@ -8,6 +8,7 @@ import { AutoSaveContext } from '../../context/AutoSaveContext';
 import { useSubscription } from '../../context/SubscriptionContext';
 import SnsDomainSelector from './Deployements/sns/SnsDomainSelector';
 import '../css/Topbar.css';
+import { authStorage, projectStorage } from '../../utils/storageManager';
 import UpgradePopup from '../UpgradePopup';
 
 const ExportSection = ({ elements, websiteSettings, userId, projectId, onProjectPublished }) => {
@@ -26,7 +27,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
 
   // Get wallet address from session storage
-  const walletAddress = sessionStorage.getItem("userAccount");
+  const walletAddress = authStorage.getUserAccount();
 
   // Safe setTimeout that auto-cleans on unmount
   const safeSetTimeout = (fn, delay) => {
@@ -230,7 +231,7 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
         }
         setElements(() => data.elements);
         if (data.websiteSettings) {
-          localStorage.setItem('websiteSettings', JSON.stringify(data.websiteSettings));
+          projectStorage.setWebsiteSettings(data.websiteSettings);
         }
         setIsDropdownOpen(false);
       } catch (err) {
