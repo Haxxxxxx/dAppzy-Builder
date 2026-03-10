@@ -129,7 +129,7 @@ border: none;
 .content-section h4 {
   color: var(--editor-text, #D9D9D9);
   text-align: left;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
@@ -169,7 +169,7 @@ border: none;
 
 .element-name {
   color: var(--editor-text, #D9D9D9);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

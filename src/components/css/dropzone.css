@@ -51,7 +51,7 @@
 
 /* Text styles */
 .dropzone-text {
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 14px;
   color: var(--purple);
   transition: all 0.2s ease;
@@ -204,7 +204,7 @@
   border: 0.7px solid var(--not-selected, #838389);
   background: var(--builder-bg);
   color: rgba(255, 255, 255, 0.50);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

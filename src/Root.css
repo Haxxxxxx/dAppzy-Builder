@@ -1,4 +1,8 @@
 :root {
+  /* Typography */
+  --font-primary: 'Montserrat', sans-serif;
+  --font-secondary: 'Inter', sans-serif;
+
   /* Brand Colors */
   --purple: #5C4EFA;
   --purple-hover: #4a3afa;

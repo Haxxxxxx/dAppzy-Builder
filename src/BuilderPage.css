@@ -109,7 +109,7 @@ p {
 
 .device-label {
   color: var(--editor-text, #D9D9D9);
-  font-family: Montserrat, sans-serif;
+  font-family: var(--font-primary);
   font-size: 12px;
   text-align: center;
   padding: 6px 12px;
@@ -189,7 +189,7 @@ p {
 
   color: var(--editor-text, #D9D9D9);
   text-align: left;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -227,7 +227,7 @@ p {
 
   color: var(--editor-text, #D9D9D9);
   text-align: left;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -289,7 +289,7 @@ p {
   box-sizing: border-box;
   color: var(--editor-text, #D9D9D9);
   text-align: left;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -306,7 +306,7 @@ p {
   box-sizing: border-box;
   color: var(--editor-text, #D9D9D9);
   text-align: left;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -586,7 +586,7 @@ p {
 
 .ai-input-img-label-text {
   color: var(--white);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
