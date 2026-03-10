@@ -104,7 +104,7 @@ const TargetValueField = ({
         return "Twitter";
       } else if (hostname.includes("instagram.com")) {
         return "Instagram";
-      }else if (hostname.includes("X.com")) {
+      } else if (hostname.includes("x.com")) {
         return "X";
       } else if (hostname.includes("facebook.com")) {
         return "Facebook";
