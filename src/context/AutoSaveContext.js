@@ -226,7 +226,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       setSaveStatus('All changes saved');
       setPendingChanges(false);
     } catch (error) {
-      console.error('[AutoSave] Save failed:', error);
+      if (import.meta.env.DEV) console.error('[AutoSave] Save failed:', error);
       setSaveStatus('Error saving changes - will retry with clean data');
     } finally {
       setIsSaving(false);
