@@ -44,7 +44,7 @@
   display: inline-block;
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   background: #f5a623;
   flex-shrink: 0;
 }
@@ -70,7 +70,7 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   background-color: rgba(92, 78, 250, 0.1);
 }
@@ -115,7 +115,7 @@
   color: rgba(131, 131, 137, 1);
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -138,7 +138,7 @@
 .zoom-btn {
   background: transparent;
   border: 1px solid var(--border-color, #57575B);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: rgba(131, 131, 137, 1);
   padding: 2px;
@@ -168,7 +168,7 @@
 
 .input {
   padding: 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   width: 80px;
   height: 10px;
   color: rgba(255, 255, 255, 0.72);
@@ -365,7 +365,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
 }
 
 .dropdown-menu-item-content-round:before {
-  border-radius: 50%;
+  border-radius: var(--radius-round);
 }
 
 .dropdown-menu-item-content-button {
@@ -375,7 +375,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   align-items: center;
   gap: 10px;
   align-self: stretch;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--not-selected);
   color: var(--white, #FFF);
   text-align: center;
@@ -396,7 +396,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   align-items: center;
   gap: 10px;
   align-self: stretch;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--purple, #5C4EFA);
   border: none;
   color: var(--white, #FFF);
@@ -414,7 +414,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   align-items: center;
   background-color: rgba(255, 255, 255, 0.1);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: background-color 0.2s ease;
 }
 
@@ -470,7 +470,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   background-color: rgba(0, 0, 0, 0.8);
   color: var(--white);
   font-size: 12px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
@@ -489,7 +489,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   font-size: 14px;
   margin: 0 16px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -508,7 +508,7 @@ input:checked+.dropdown-menu-item-content-slider:before {
   align-items: center;
   background: var(--dark-gray);
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 1rem;
   cursor: pointer;
 }
