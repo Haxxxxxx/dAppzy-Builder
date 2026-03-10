@@ -2,22 +2,9 @@ import React, { useContext, Suspense } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { projectStorage } from '../../utils/storageManager';
 import editorRegistry from '../../Editors/editorRegistry';
-import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
-import WalletSettings from './SettingsPanels/WalletSettings';
-import LinkSettings from './SettingsPanels/LinkSettings';
-import TextualSettings from './SettingsPanels/TextualSettings';
-import ListSettings from './SettingsPanels/ListSettings';
-import ImageSettings from './SettingsPanels/ImageSettings';
-import VideoSettings from './SettingsPanels/VideoSettings';
-import YoutubeSettings from './SettingsPanels/YoutubeSettings';
-import DeFiSectionSettings from './SettingsPanels/DeFiSectionSettings';
+import settingsRegistry from './SettingsPanels/settingsRegistry';
 import '../css/EditorPanel.css';
 import CollapsibleSection from './SettingsPanels/LinkSettings/CollapsibleSection';
-import BackgroundSettings from './SettingsPanels/BackgroundSettings';
-import FormSettings from './SettingsPanels/FormSettings';
-import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
-import TableSettings from './SettingsPanels/TableSettings';
-import IconSettings from './SettingsPanels/IconSettings';
 import ErrorBoundary from '../ErrorBoundary';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
@@ -160,37 +147,41 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
                              selectedElement.type === 'defiSection' ||
                              selectedElement.type === 'defiModule';
 
+    const { DeFiSectionSettings, DeFiModuleSettings, LinkSettings, TextualSettings,
+      WalletSettings, VideoSettings, YoutubeSettings, IconSettings, CandyMachineSettings,
+      ListSettings, FormSettings, TableSettings } = settingsRegistry;
+
     // Handle DeFi elements first
     if (selectedElement.type === 'defiSection') {
-      return <DeFiSectionSettings />;
+      return <Suspense fallback={null}><DeFiSectionSettings /></Suspense>;
     }
     if (selectedElement.type === 'defiModule') {
-      return <DeFiModuleSettings />;
+      return <Suspense fallback={null}><DeFiModuleSettings /></Suspense>;
     }
 
     // Handle link elements (including buttons)
-    if (selectedElement.type === 'a' || selectedElement.type === 'link' || 
+    if (selectedElement.type === 'a' || selectedElement.type === 'link' ||
         selectedElement.type === 'linkblock' || selectedElement.type === 'anchor' ||
         selectedElement.type === 'button') {
-      return <LinkSettings settings={selectedElement.settings || {}} />;
+      return <Suspense fallback={null}><LinkSettings settings={selectedElement.settings || {}} /></Suspense>;
     }
 
     // Handle text elements
     if (isTextualElement(selectedElement)) {
-      return <TextualSettings settings={selectedElement.settings || {}} />;
+      return <Suspense fallback={null}><TextualSettings settings={selectedElement.settings || {}} /></Suspense>;
     }
 
     switch (selectedElement.type) {
       case 'connectWalletButton':
-        return <WalletSettings settings={selectedElement.settings || {}} />;
+        return <Suspense fallback={null}><WalletSettings settings={selectedElement.settings || {}} /></Suspense>;
       case 'video':
-        return <VideoSettings settings={selectedElement.settings || {}} />;
+        return <Suspense fallback={null}><VideoSettings settings={selectedElement.settings || {}} /></Suspense>;
       case 'youtubeVideo':
-        return <YoutubeSettings settings={selectedElement.settings || {}} />;
+        return <Suspense fallback={null}><YoutubeSettings settings={selectedElement.settings || {}} /></Suspense>;
       case 'icon':
-        return <IconSettings />;
+        return <Suspense fallback={null}><IconSettings /></Suspense>;
       case 'mintingSection':
-        return <CandyMachineSettings settings={selectedElement.settings || {}} />;
+        return <Suspense fallback={null}><CandyMachineSettings settings={selectedElement.settings || {}} /></Suspense>;
       case 'defiNavbar':
       case 'defiFooter':
         return (
@@ -203,13 +194,13 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         );
       case 'list':
       case 'list-item':
-        return <ListSettings settings={selectedElement.settings || {}} />;
+        return <Suspense fallback={null}><ListSettings settings={selectedElement.settings || {}} /></Suspense>;
       case 'form':
-        return <FormSettings settings={selectedElement.settings || {}} />;
+        return <Suspense fallback={null}><FormSettings settings={selectedElement.settings || {}} /></Suspense>;
       case 'table':
       case 'table-row':
       case 'table-cell':
-        return <TableSettings />;
+        return <Suspense fallback={null}><TableSettings /></Suspense>;
       default:
         return (
           <div className="no-settings-message">
