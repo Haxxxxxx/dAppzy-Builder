@@ -9,7 +9,7 @@ import StructurePanel from '../../components/LeftbarPanels/StructurePanel';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
 import { mergeStyles } from '../../utils/htmlRenderUtils/containerHelpers';
 import { defaultSectionStyles } from '../Sections/ContentSections/defaultSectionStyles';
-import { merge } from 'lodash';
+import merge from 'lodash/merge';
 import { PLACEHOLDER_IMAGES } from '../../configs/assetUrls';
 
 /**
