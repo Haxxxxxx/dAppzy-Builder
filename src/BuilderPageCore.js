@@ -4,9 +4,9 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import "./BuilderPage.css";
 import LeftBar from "./components/LeftBar";
-import StructurePanel from "./components/LeftbarPanels/StructurePanel";
-import MediaPanel from "./components/LeftbarPanels/MediaPanel";
-import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPanel";
+const StructurePanel = React.lazy(() => import("./components/LeftbarPanels/StructurePanel"));
+const MediaPanel = React.lazy(() => import("./components/LeftbarPanels/MediaPanel"));
+const WebsiteSettingsPanel = React.lazy(() => import("./components/LeftbarPanels/WebsiteSettingsPanel"));
 import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
 import { useSubscription } from "./context/SubscriptionContext";
@@ -846,33 +846,39 @@ const BuilderPageCore = ({
             {openPanel === "structure" && (
               <div id="structure-panel">
                 <ErrorBoundary name="Structure Panel">
-                  <StructurePanel isPioneer={isPioneer} />
+                  <Suspense fallback={null}>
+                    <StructurePanel isPioneer={isPioneer} />
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             )}
             {openPanel === "media" && (
               <div id="media-panel">
                 <ErrorBoundary name="Media Panel">
-                  <MediaPanel
-                    projectName={pageSettings.siteTitle}
-                    isOpen={openPanel}
-                    userId={userId}
-                    isPioneer={isPioneer}
-                  />
+                  <Suspense fallback={null}>
+                    <MediaPanel
+                      projectName={pageSettings.siteTitle}
+                      isOpen={openPanel}
+                      userId={userId}
+                      isPioneer={isPioneer}
+                    />
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             )}
             {openPanel === "settings" && (
               <div id="settings-panel">
                 <ErrorBoundary name="Settings Panel">
-                  <WebsiteSettingsPanel
-                    onUpdateSettings={(updatedSettings) => {
-                      setPageSettings(updatedSettings);
-                      projectStorage.setWebsiteSettings(updatedSettings);
-                    }}
-                    userId={userId}
-                    isPioneer={isPioneer}
-                  />
+                  <Suspense fallback={null}>
+                    <WebsiteSettingsPanel
+                      onUpdateSettings={(updatedSettings) => {
+                        setPageSettings(updatedSettings);
+                        projectStorage.setWebsiteSettings(updatedSettings);
+                      }}
+                      userId={userId}
+                      isPioneer={isPioneer}
+                    />
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             )}
