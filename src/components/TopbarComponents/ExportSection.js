@@ -377,19 +377,6 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
           onCancel={handleSnsCancel}
           setAutoSaveStatus={setOperationStatus}
           generateFullHtml={() => generateProjectHtml(elements, websiteSettings)}
-          saveProjectToFirestore={async (uid, html, type, domain) => {
-            const projectRef = doc(db, 'projects', uid, 'ProjectRef', projectId);
-            await setDoc(projectRef, {
-              elements,
-              websiteSettings: {
-                ...websiteSettings,
-                snsDomain: domain,
-                walletAddress: walletAddress,
-              },
-              lastUpdated: serverTimestamp(),
-              userId: uid,
-            }, { merge: true });
-          }}
         />
       )}
       {showUpgradePopup && (
