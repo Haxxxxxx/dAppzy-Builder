@@ -8,6 +8,7 @@ import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighte
 import "./NewLogin.css";
 import { useWalletContext } from '../context/WalletContext';
 import { BRAND_IMAGES } from '../configs/assetUrls';
+import { subscriptionStorage } from '../utils/storageManager';
 
 function WalletConnection({ onUserLogin }) {
   const [errorMessage, setErrorMessage] = useState("");
@@ -54,9 +55,9 @@ function WalletConnection({ onUserLogin }) {
       await setDoc(walletRef, walletData, { merge: true });
       
       // Store subscription data in localStorage
-      localStorage.setItem('subscriptionStatus', walletData.subscriptionStatus);
+      subscriptionStorage.setStatus(walletData.subscriptionStatus);
       if (walletData.subscriptionEndDate) {
-        localStorage.setItem('subscriptionEndDate', walletData.subscriptionEndDate);
+        subscriptionStorage.setEndDate(walletData.subscriptionEndDate);
       }
 
     } catch (error) {

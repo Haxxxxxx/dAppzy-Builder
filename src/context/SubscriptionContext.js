@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useWalletContext } from './WalletContext';
+import { subscriptionStorage } from '../utils/storageManager';
 
 const SubscriptionContext = createContext();
 
@@ -15,20 +16,19 @@ export const useSubscription = () => {
 
 export const SubscriptionProvider = ({ children }) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState(() => {
-    const storedStatus = localStorage.getItem('subscriptionStatus');
-    const storedEndDate = localStorage.getItem('subscriptionEndDate');
-    
+    const storedStatus = subscriptionStorage.getStatus();
+    const storedEndDate = subscriptionStorage.getEndDate();
+
     if (storedEndDate && new Date(storedEndDate) < new Date()) {
-      localStorage.removeItem('subscriptionStatus');
-      localStorage.removeItem('subscriptionEndDate');
+      subscriptionStorage.clear();
       return 'freemium';
     }
-    
+
     return storedStatus || 'freemium';
   });
-  
+
   const [subscriptionEndDate, setSubscriptionEndDate] = useState(() => {
-    return localStorage.getItem('subscriptionEndDate') || null;
+    return subscriptionStorage.getEndDate() || null;
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -68,18 +68,18 @@ export const SubscriptionProvider = ({ children }) => {
               // Only update if we have both status and end date
               if (new Date(newEndDate) < new Date()) {
                 setSubscriptionStatus('freemium');
-                localStorage.setItem('subscriptionStatus', 'freemium');
-                localStorage.removeItem('subscriptionEndDate');
+                subscriptionStorage.setStatus('freemium');
+                subscriptionStorage.setEndDate(null);
               } else {
                 setSubscriptionStatus(newStatus);
                 setSubscriptionEndDate(newEndDate);
-                localStorage.setItem('subscriptionStatus', newStatus);
-                localStorage.setItem('subscriptionEndDate', newEndDate);
+                subscriptionStorage.setStatus(newStatus);
+                subscriptionStorage.setEndDate(newEndDate);
               }
             } else if (isPioneer) {
               // If isPioneer is true but no subscription dates, set as pioneer
               setSubscriptionStatus('pioneer');
-              localStorage.setItem('subscriptionStatus', 'pioneer');
+              subscriptionStorage.setStatus('pioneer');
             }
           }
           setIsLoading(false);
@@ -104,16 +104,12 @@ export const SubscriptionProvider = ({ children }) => {
     subscriptionStatus,
     setSubscriptionStatus: (status) => {
       setSubscriptionStatus(status);
-      localStorage.setItem('subscriptionStatus', status);
+      subscriptionStorage.setStatus(status);
     },
     subscriptionEndDate,
     setSubscriptionEndDate: (date) => {
       setSubscriptionEndDate(date);
-      if (date) {
-        localStorage.setItem('subscriptionEndDate', date);
-      } else {
-        localStorage.removeItem('subscriptionEndDate');
-      }
+      subscriptionStorage.setEndDate(date);
     },
     isLoading,
     isPioneer: subscriptionStatus === 'pioneer' && !isSubscriptionExpired()

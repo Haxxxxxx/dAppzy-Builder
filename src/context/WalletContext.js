@@ -7,6 +7,7 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { db, auth } from '../firebase';
+import { subscriptionStorage, authStorage } from '../utils/storageManager';
 
 const WalletContext = createContext({
   walletAddress: '',
@@ -82,7 +83,7 @@ const WalletContextProvider = ({ children }) => {
         setWalletAddress(address);
         setWalletId(address);
         setIsWalletConnected(true);
-        sessionStorage.setItem('userAccount', address);
+        authStorage.setUserAccount(address);
 
         // Verify subscription status against Firestore to prevent localStorage tampering
         if (hasFirebaseUser) {
@@ -91,21 +92,15 @@ const WalletContextProvider = ({ children }) => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const serverStatus = userData.subscriptionStatus || '';
-            localStorage.setItem('subscriptionStatus', serverStatus);
-            if (userData.subscriptionEndDate) {
-              localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
-            } else {
-              localStorage.removeItem('subscriptionEndDate');
-            }
+            subscriptionStorage.setStatus(serverStatus);
+            subscriptionStorage.setEndDate(userData.subscriptionEndDate || null);
           } else {
             // No user doc — clear any locally-set subscription
-            localStorage.removeItem('subscriptionStatus');
-            localStorage.removeItem('subscriptionEndDate');
+            subscriptionStorage.clear();
           }
         } else {
           // No Firebase session — don't trust localStorage subscription
-          localStorage.removeItem('subscriptionStatus');
-          localStorage.removeItem('subscriptionEndDate');
+          subscriptionStorage.clear();
         }
       } catch (err) {
         // Silent — auto-reconnect failure is not actionable
@@ -175,9 +170,9 @@ const WalletContextProvider = ({ children }) => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             if (userData.subscriptionStatus) {
-              localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+              subscriptionStorage.setStatus(userData.subscriptionStatus);
               if (userData.subscriptionEndDate) {
-                localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+                subscriptionStorage.setEndDate(userData.subscriptionEndDate);
               }
             }
           }
@@ -199,10 +194,9 @@ const WalletContextProvider = ({ children }) => {
               const userData = userDoc.data();
               // Store subscription status in localStorage for persistence
               if (userData.subscriptionStatus) {
-                localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
-                // Also store subscription end date
+                subscriptionStorage.setStatus(userData.subscriptionStatus);
                 if (userData.subscriptionEndDate) {
-                  localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+                  subscriptionStorage.setEndDate(userData.subscriptionEndDate);
                 }
               }
             }
@@ -242,8 +236,7 @@ const WalletContextProvider = ({ children }) => {
       await signOut(auth);
 
       // Clear subscription status from localStorage
-      localStorage.removeItem('subscriptionStatus');
-      localStorage.removeItem('subscriptionEndDate');
+      subscriptionStorage.clear();
     } catch (err) {
       setError(err.message || 'Failed to disconnect wallet');
       throw err;
