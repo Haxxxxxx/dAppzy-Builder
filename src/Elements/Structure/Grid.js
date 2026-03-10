@@ -231,7 +231,7 @@ const GridLayout = ({ id }) => {
           }}
         >
           {showDivOptions ? (
-            <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%', padding: '16px' }}>
+            <div className="inline-div-options-grid u-flex-wrap" style={{ justifyContent: 'center', padding: '16px' }}>
               {gridConfigurations.map((config) => (
                 <div
                   key={config.id}

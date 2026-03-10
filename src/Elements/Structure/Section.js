@@ -165,7 +165,7 @@ const Section = forwardRef(({
           }}
         >
           {showDivOptions ? (
-            <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%' }}>
+            <div className="inline-div-options-grid u-flex-wrap" style={{ justifyContent: 'center' }}>
               {divConfigurations.map((config) => (
                 <div
                   key={config.id}
