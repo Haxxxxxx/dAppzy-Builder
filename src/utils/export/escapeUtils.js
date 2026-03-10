@@ -28,6 +28,29 @@ export const escapeAttr = (str) => {
 };
 
 /**
+ * Sanitizes a CSS style value to prevent injection attacks.
+ * Returns empty string if the value contains dangerous patterns.
+ * Safe values (rgba, calc, url with http/https) pass through unchanged.
+ * @param {string} value - The style value to sanitize
+ * @returns {string} - Sanitized value or empty string if dangerous
+ */
+export const sanitizeStyleValue = (value) => {
+  if (!value || typeof value !== 'string') return '';
+  // Block dangerous patterns
+  if (
+    value.includes('<') ||
+    value.includes('>') ||
+    value.includes('"') ||
+    /expression\s*\(/i.test(value) ||
+    /behavior\s*:/i.test(value) ||
+    /javascript\s*:/i.test(value)
+  ) {
+    return '';
+  }
+  return value;
+};
+
+/**
  * Escapes a string for use inside a JavaScript string literal (single-quoted)
  * Prevents breaking out of JS string context in onclick handlers etc.
  * @param {string} str - The string to escape

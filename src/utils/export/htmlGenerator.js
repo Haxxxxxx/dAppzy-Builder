@@ -1,5 +1,5 @@
 import { buildElementHierarchy, cleanElementData } from './elementUtils';
-import { escapeHtml, escapeAttr } from './escapeUtils';
+import { escapeHtml, escapeAttr, sanitizeStyleValue } from './escapeUtils';
 import { renderElementToHtml } from '../htmlRender';
 import { IPFS_GATEWAYS } from '../../configs/ipfsConfig';
 
@@ -22,7 +22,11 @@ const styleObjectToString = (styles) => {
   if (!styles) return '';
   return Object.entries(styles)
     .filter(([_, value]) => value != null)
-    .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+    .map(([key, value]) => {
+      const safe = sanitizeStyleValue(String(value));
+      return safe ? `${camelToKebab(key)}: ${safe}` : null;
+    })
+    .filter(Boolean)
     .join('; ');
 };
 

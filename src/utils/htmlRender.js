@@ -1,4 +1,4 @@
-import { escapeHtml, escapeAttr, escapeJsString } from './export/escapeUtils';
+import { escapeHtml, escapeAttr, escapeJsString, sanitizeStyleValue } from './export/escapeUtils';
 
 export function buildAttributesString(type, attributes, src, settings = {}) {
   let attributesString = '';
@@ -141,7 +141,11 @@ export function renderElementToHtml(element, collectedStyles = []) {
     // Convert to style string
     return Object.entries(merged)
       .filter(([k, v]) => k && v)
-      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+      .map(([k, v]) => {
+        const safe = sanitizeStyleValue(String(v));
+        return safe ? `${camelToKebab(k)}: ${safe}` : null;
+      })
+      .filter(Boolean)
       .join('; ');
   }
 
