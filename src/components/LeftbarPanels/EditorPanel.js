@@ -1,21 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, Suspense } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { projectStorage } from '../../utils/storageManager';
-import TypographyEditor from '../../Editors/TypographyEditor';
-import BorderEditor from '../../Editors/BorderEditor';
-import SizeEditor from '../../Editors/SizeEditor';
-import SpacingEditor from '../../Editors/SpacingEditor';
-import DisplayEditor from '../../Editors/DisplayEditor';
-import ShadowEditor from '../../Editors/ShadowEditor';
-import OpacityEditor from '../../Editors/OpacityEditor';
-import TransformEditor from '../../Editors/TransformEditor';
-import PositionEditor from '../../Editors/PositionEditor';
+import editorRegistry from '../../Editors/editorRegistry';
 import CandyMachineSettings from '../LeftbarPanels/SettingsPanels/CandyMachineSettings';
 import WalletSettings from './SettingsPanels/WalletSettings';
 import LinkSettings from './SettingsPanels/LinkSettings';
-import FilterEditor from '../../Editors/FilterEditor';
-import TransitionEditor from '../../Editors/TransitionEditor';
-import BackgroundEditor from '../../Editors/BackgroundEditor';
 import TextualSettings from './SettingsPanels/TextualSettings';
 import ListSettings from './SettingsPanels/ListSettings';
 import ImageSettings from './SettingsPanels/ImageSettings';
@@ -48,12 +37,16 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const getRelevantEditors = (element) => {
     if (!element) return [];
 
+    const { TypographyEditor, DisplayEditor, BackgroundEditor, BorderEditor, SizeEditor,
+      SpacingEditor, ShadowEditor, OpacityEditor, FilterEditor, TransformEditor,
+      TransitionEditor, PositionEditor } = editorRegistry;
+
     const editors = [];
 
     // Common editors for all elements
     editors.push({
       title: "Typography",
-      component: <TypographyEditor />
+      component: <Suspense fallback={null}><TypographyEditor /></Suspense>
     });
 
     // Container elements (div, section, etc.)
@@ -64,23 +57,23 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       editors.push(
         {
           title: "Display & Layout",
-          component: <DisplayEditor />
+          component: <Suspense fallback={null}><DisplayEditor /></Suspense>
         },
         {
           title: "Background & Global Settings",
-          component: <BackgroundEditor pageSettings={pageSettings} />
+          component: <Suspense fallback={null}><BackgroundEditor pageSettings={pageSettings} /></Suspense>
         },
         {
           title: "Borders",
-          component: <BorderEditor />
+          component: <Suspense fallback={null}><BorderEditor /></Suspense>
         },
         {
           title: "Size",
-          component: <SizeEditor />
+          component: <Suspense fallback={null}><SizeEditor /></Suspense>
         },
         {
           title: "Spacing",
-          component: <SpacingEditor />
+          component: <Suspense fallback={null}><SpacingEditor /></Suspense>
         }
       );
     }
@@ -91,7 +84,7 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       editors.push(
         {
           title: "Background & Global Settings",
-          component: <BackgroundEditor pageSettings={pageSettings} />
+          component: <Suspense fallback={null}><BackgroundEditor pageSettings={pageSettings} /></Suspense>
         }
       );
     }
@@ -102,7 +95,7 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       editors.push(
         {
           title: "Size",
-          component: <SizeEditor />
+          component: <Suspense fallback={null}><SizeEditor /></Suspense>
         }
       );
     }
@@ -111,27 +104,27 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
     editors.push(
       {
         title: "Shadow",
-        component: <ShadowEditor />
+        component: <Suspense fallback={null}><ShadowEditor /></Suspense>
       },
       {
         title: "Opacity",
-        component: <OpacityEditor />
+        component: <Suspense fallback={null}><OpacityEditor /></Suspense>
       },
       {
         title: "Filters",
-        component: <FilterEditor />
+        component: <Suspense fallback={null}><FilterEditor /></Suspense>
       },
       {
         title: "Transform",
-        component: <TransformEditor />
+        component: <Suspense fallback={null}><TransformEditor /></Suspense>
       },
       {
         title: "Transition",
-        component: <TransitionEditor />
+        component: <Suspense fallback={null}><TransitionEditor /></Suspense>
       },
       {
         title: "Position",
-        component: <PositionEditor />
+        component: <Suspense fallback={null}><PositionEditor /></Suspense>
       }
     );
 
@@ -202,10 +195,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'defiFooter':
         return (
           <>
-            <BackgroundEditor pageSettings={pageSettings} />
-            <BorderEditor />
-            <SizeEditor />
-            <TypographyEditor />
+            <Suspense fallback={null}><editorRegistry.BackgroundEditor pageSettings={pageSettings} /></Suspense>
+            <Suspense fallback={null}><editorRegistry.BorderEditor /></Suspense>
+            <Suspense fallback={null}><editorRegistry.SizeEditor /></Suspense>
+            <Suspense fallback={null}><editorRegistry.TypographyEditor /></Suspense>
           </>
         );
       case 'list':
