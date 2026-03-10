@@ -83,6 +83,27 @@
   --purple-10: rgba(92, 78, 250, 0.1);  /* Purple 10% opacity */
   --purple-20: rgba(92, 78, 250, 0.2);  /* Purple 20% opacity */
   --white-10: rgba(255, 255, 255, 0.1); /* White 10% opacity */
+
+  /* Login Colors */
+  --login-bg: #030014;
+  --login-text: #F4F0FF;
+  --login-btn-border: #24292E;
+  --login-btn-bg: #1A1D21;
+
+  /* Extended Editor Colors */
+  --accent-blue-hover: #217cf4a2;       /* Blue accent with opacity for hover states */
+  --editor-bg-darker: #1f1f1f;          /* Darkest editor background (padding box) */
+  --surface-dark: #4a4a4a;              /* Dark hover surface */
+
+  /* Extended Purple */
+  --purple-darker: #6d28d9;             /* Darkest purple variant */
+
+  /* Error Variants */
+  --error-400: #ef4444;                 /* Tailwind red-400 */
+
+  /* Blue Gradient Colors */
+  --blue-600: #2563EB;                  /* Upgrade button gradient start */
+  --blue-700: #1D4ED8;                  /* Upgrade button gradient end */
 }
 
 * {

@@ -81,7 +81,7 @@
 }
 
 .help-center .upgrade-button {
-  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
   color: white;
   border: none;
   border-radius: 8px;

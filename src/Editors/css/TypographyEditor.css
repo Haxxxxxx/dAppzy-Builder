@@ -58,7 +58,7 @@
 
 .typography-editor .text-decoration-group button.active:hover,
 .typography-editor .text-align-group button.active:hover {
-  background: #217cf4a2;
+  background: var(--accent-blue-hover);
 }
 .typography-editor .text-decoration-group button:hover,
 .typography-editor .text-align-group button:hover {
