@@ -1,12 +1,12 @@
 // BuilderPageLoader.js
-import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
+import React, { useState, useEffect, useContext, useCallback, useRef, Suspense } from "react";
 import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 import BuilderPageCore from "./BuilderPageCore";
 import WalletConnection from "./NewLogin/WalletConnection";
 import { TEMPLATES } from "./configs/templates";
-import AIBuilder from "./components/AIBuilder";
+const AIBuilder = React.lazy(() => import("./components/AIBuilder"));
 import "./components/css/ProjectSelection.css";
 import { subscriptionStorage, projectStorage, authStorage } from './utils/storageManager';
 
@@ -475,17 +475,19 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
             ))}
           </div>
           {showAIBuilder && (
-            <AIBuilder
-              onProjectGenerated={(projectData) => {
-                setShowAIBuilder(false);
-                setViewState('loading');
-                createUserProject({
-                  ...projectData,
-                  thumbnailUrl: "",
-                });
-              }}
-              onClose={() => setShowAIBuilder(false)}
-            />
+            <Suspense fallback={<div className="app-loading">Loading AI Builder...</div>}>
+              <AIBuilder
+                onProjectGenerated={(projectData) => {
+                  setShowAIBuilder(false);
+                  setViewState('loading');
+                  createUserProject({
+                    ...projectData,
+                    thumbnailUrl: "",
+                  });
+                }}
+                onClose={() => setShowAIBuilder(false)}
+              />
+            </Suspense>
           )}
         </div>
       );
