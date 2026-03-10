@@ -830,7 +830,7 @@ const BuilderPageCore = ({
             />
           </ErrorBoundary>
           {isDevnet && (
-            <div style={{ background: '#fbbf24', color: '#78350f', textAlign: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: 500 }}>
+            <div className="devnet-banner">
               You're on Solana devnet — set VITE_SOLANA_RPC_URL for mainnet
             </div>
           )}
