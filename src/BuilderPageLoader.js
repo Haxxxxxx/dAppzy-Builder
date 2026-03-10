@@ -4,7 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, updateD
 import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
 const BuilderPageCore = React.lazy(() => import("./BuilderPageCore"));
-import WalletConnection from "./NewLogin/WalletConnection";
+const WalletConnection = React.lazy(() => import("./NewLogin/WalletConnection"));
 import { TEMPLATES } from "./configs/templates";
 const AIBuilder = React.lazy(() => import("./components/AIBuilder"));
 import "./components/css/ProjectSelection.css";
@@ -344,14 +344,16 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // If not logged in, render the WalletConnection.
   if (!isLoggedIn) {
     return (
-      <WalletConnection
-        onUserLogin={(walletKey) => {
-          setIsLoggedIn(true);
-          setUserId(walletKey);
-          authStorage.setLoggedIn("true");
-          authStorage.setUserAccount(walletKey);
-        }}
-      />
+      <Suspense fallback={<div className="app-loading">Connecting...</div>}>
+        <WalletConnection
+          onUserLogin={(walletKey) => {
+            setIsLoggedIn(true);
+            setUserId(walletKey);
+            authStorage.setLoggedIn("true");
+            authStorage.setUserAccount(walletKey);
+          }}
+        />
+      </Suspense>
     );
   }
 
