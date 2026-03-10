@@ -1,7 +1,7 @@
-import React, { useContext, Suspense } from 'react';
+import React, { useState, useContext, Suspense } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { projectStorage } from '../../utils/storageManager';
-import { Modal } from 'antd';
+import ConfirmModal from '../common/ConfirmModal';
 import editorRegistry from '../../Editors/editorRegistry';
 import settingsRegistry from './SettingsPanels/settingsRegistry';
 import '../css/EditorPanel.css';
@@ -10,6 +10,7 @@ import ErrorBoundary from '../ErrorBoundary';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode, activeBreakpoint } = useContext(EditableContext);
+  const [confirmModal, setConfirmModal] = useState(null);
 
   const getAncestorPath = (element) => {
     if (!element) return [];
@@ -383,13 +384,13 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       {elements.length > 0 && (
         <button
           onClick={() => {
-            Modal.confirm({
+            setConfirmModal({
               title: 'Clear All Elements',
               content: 'Are you sure you want to clear all elements? This cannot be undone.',
               okText: 'Clear All',
               okType: 'danger',
-              cancelText: 'Cancel',
               onOk: () => {
+                setConfirmModal(null);
                 projectStorage.removeElements();
                 // Clear chunked storage keys
                 const chunkKeys = [];
@@ -417,6 +418,13 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
         >
           Clear All Elements
         </button>
+      )}
+      {confirmModal && (
+        <ConfirmModal
+          open={true}
+          {...confirmModal}
+          onCancel={() => setConfirmModal(null)}
+        />
       )}
     </div>
   );
