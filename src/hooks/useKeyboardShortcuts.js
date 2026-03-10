@@ -3,7 +3,7 @@ import { EditableContext } from '../context/EditableContext';
 import { AutoSaveContext } from '../context/AutoSaveContext';
 import { useToast } from '../context/ToastContext';
 
-export default function useKeyboardShortcuts() {
+export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
   const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, handleRemoveElement, updateStyles, selectedElementIds, clearSelection } = useContext(EditableContext);
   const { forceSave } = useContext(AutoSaveContext);
   const { showToast } = useToast();
@@ -14,6 +14,13 @@ export default function useKeyboardShortcuts() {
       const tag = e.target.tagName;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
       if (e.target.isContentEditable) return;
+
+      // ? — toggle keyboard shortcuts help
+      if (e.key === '?' && onToggleHelp) {
+        e.preventDefault();
+        onToggleHelp();
+        return;
+      }
 
       // Escape — deselect current element
       if (e.key === 'Escape' && selectedElement) {
@@ -104,5 +111,5 @@ export default function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, forceSave, showToast, selectedElementIds, clearSelection]);
+  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, forceSave, showToast, selectedElementIds, clearSelection, onToggleHelp]);
 }

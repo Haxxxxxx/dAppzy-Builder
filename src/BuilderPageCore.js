@@ -19,6 +19,7 @@ import { useWalletContext } from "./context/WalletContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { PLACEHOLDER_IMAGES } from "./configs/assetUrls";
 import useKeyboardShortcuts from "./hooks/useKeyboardShortcuts";
+import KeyboardShortcutsHelp from "./components/KeyboardShortcutsHelp";
 
 const BuilderPageCore = ({
   userId,
@@ -46,7 +47,8 @@ const BuilderPageCore = ({
   const { setSelectedElement, handleAICommand, elements, selectedElement } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
   const { isConnected, walletAddress, isDevnet } = useWalletContext();
-  useKeyboardShortcuts();
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  useKeyboardShortcuts({ onToggleHelp: () => setShowShortcutsHelp((v) => !v) });
   const [showAIInputBar, setShowAIInputBar] = useState(false);
   const [initialAIMessages, setInitialAIMessages] = useState(null);
   const [aiChatStarted, setAIChatStarted] = useState(false);
@@ -967,6 +969,9 @@ const BuilderPageCore = ({
         </div>
         {!(showAIInputBar || openPanel === "ai") && isPioneer && (
           <AIFloatingButton onClick={handleAIFloatingButtonClick} />
+        )}
+        {showShortcutsHelp && (
+          <KeyboardShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />
         )}
       </div>
     </DndProvider>
