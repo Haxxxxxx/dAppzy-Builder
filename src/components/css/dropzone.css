@@ -2,7 +2,7 @@
 .unified-dropzone {
   position: absolute;
   transition: all 0.2s ease;
-  border: 1px dashed #ccc;
+  border: 1px dashed var(--border-color);
   background-color: #f9f9f9;
   border-radius: 4px;
   font-size: 14px;
@@ -92,7 +92,7 @@
 }
 
 .library-button {
-  background-color: #ccc;
+  background-color: var(--border-color);
   color: #333;
 }
 
@@ -102,7 +102,7 @@
 
 .configure-button {
   background: var(--purple);
-  color: #fff;
+  color: var(--white);
 }
 
 .configure-button:hover {
@@ -174,7 +174,7 @@
 .section-selection-close-button {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--white);
   font-size: 2rem;
   cursor: pointer;
   padding: 0 8px;
@@ -267,7 +267,7 @@
   z-index: 2;
   width: 92%;
   height: 95%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--overlay-dark);
   
 }
 
