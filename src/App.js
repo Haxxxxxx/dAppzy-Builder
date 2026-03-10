@@ -4,7 +4,6 @@ import "./Root.css";
 import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { WalletProvider, useWalletContext } from './context/WalletContext';
-import { DappWalletProvider } from './context/DappWalletContext';
 import Web3Provider from './context/Web3Provider';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { ToastProvider } from './context/ToastContext';
@@ -34,21 +33,19 @@ function AppContent({ userId, setUserId, projectId }) {
 
   return (
     <Router>
-      <DappWalletProvider>
-        <Web3Provider>
-          <SubscriptionProvider>
-            <Suspense fallback={<div className="app-loading">Loading...</div>}>
-              <Routes>
-                <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
-                <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
-                <Route path="/:customUrl" element={<PreviewPage />} />
-                <Route path="/preview" element={<PreviewPage />} />
-                <Route path="/export" element={<PreviewPage />} />
-              </Routes>
-            </Suspense>
-          </SubscriptionProvider>
-        </Web3Provider>
-      </DappWalletProvider>
+      <Web3Provider>
+        <SubscriptionProvider>
+          <Suspense fallback={<div className="app-loading">Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<BuilderPageLoader userId={userId} setUserId={setUserId} projectId={projectId} />} />
+              <Route path="/:userId/ProjectRef/:projectId/:projectName" element={<PreviewPage />} />
+              <Route path="/:customUrl" element={<PreviewPage />} />
+              <Route path="/preview" element={<PreviewPage />} />
+              <Route path="/export" element={<PreviewPage />} />
+            </Routes>
+          </Suspense>
+        </SubscriptionProvider>
+      </Web3Provider>
     </Router>
   );
 }

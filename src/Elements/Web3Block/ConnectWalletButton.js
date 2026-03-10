@@ -1,7 +1,6 @@
 import React, { useContext, useRef, useEffect, useState, useCallback, useMemo, forwardRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { useWalletContext } from '../../context/WalletContext';
-import { useDappWallet } from '../../context/DappWalletContext';
 import { useWeb3 } from '../../context/Web3Provider';
 import { structureConfigurations } from '../../configs/structureConfigurations';
 import { validateEthAddress } from '../../utils/securityUtils';
@@ -59,13 +58,8 @@ const ConnectWalletButton = ({
   // Determine if we're in builder mode or dapp mode
   const isBuilderMode = !window.location.pathname.includes('/preview') && !window.location.pathname.includes('/export');
   
-  // Always call hooks at the top level
-  const builderWallet = useWalletContext();
-  const dappWallet = useDappWallet();
+  const walletContext = useWalletContext();
   const { account, connect, isConnected: isWeb3Connected, provider } = useWeb3();
-  
-  // Select the appropriate wallet context based on mode
-  const walletContext = isBuilderMode ? builderWallet : dappWallet;
   const { walletAddress, isConnected, disconnect, isLoading: contextIsLoading, walletId, connectWallet, disconnectWallet, error: walletError } = walletContext || {};
 
   const buttonRef = useRef(null);
