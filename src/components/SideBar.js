@@ -1,23 +1,19 @@
-import React, { useState, useContext } from 'react';
-import NewElementPanel from './LeftbarPanels/NewElementPanel';
-import EditorPanel from './LeftbarPanels/EditorPanel';
+import React, { useState, useContext, Suspense } from 'react';
 import { EditableContext } from '../context/EditableContext';
-import SpacingEditor from '../Editors/SpacingEditor';
-import DisplayEditor from '../Editors/DisplayEditor';
 import './css/Sidebar.css';
 import CollapsibleSection from './LeftbarPanels/SettingsPanels/LinkSettings/CollapsibleSection';
-import TextualSettings from './LeftbarPanels/SettingsPanels/TextualSettings';
-import './LeftbarPanels/SettingsPanels/css/ImageSettings.css';
-import LinkSettings from './LeftbarPanels/SettingsPanels/LinkSettings';
-import WalletSettingsPanel from './LeftbarPanels/SettingsPanels/WalletSettings';
-import ImageSettings from './LeftbarPanels/SettingsPanels/ImageSettings';
-import FormSettings from './LeftbarPanels/SettingsPanels/FormSettings';
-import ListSettings from './LeftbarPanels/SettingsPanels/ListSettings';
-import VideoSettings from './LeftbarPanels/SettingsPanels/VideoSettings';
-import DeFiSectionSettings from './LeftbarPanels/SettingsPanels/DeFiSectionSettings';
-import DeFiModuleSettings from './LeftbarPanels/SettingsPanels/DeFiModuleSettings';
-import BackgroundSettings from './LeftbarPanels/SettingsPanels/BackgroundSettings';
-import CandyMachineSettings from './LeftbarPanels/SettingsPanels/CandyMachineSettings';
+import editorRegistry from '../Editors/editorRegistry';
+import settingsRegistry from './LeftbarPanels/SettingsPanels/settingsRegistry';
+
+const NewElementPanel = React.lazy(() => import('./LeftbarPanels/NewElementPanel'));
+const EditorPanel = React.lazy(() => import('./LeftbarPanels/EditorPanel'));
+
+const { SpacingEditor, DisplayEditor } = editorRegistry;
+const {
+  TextualSettings, LinkSettings, WalletSettings,
+  ImageSettings, FormSettings, ListSettings, VideoSettings,
+  DeFiSectionSettings, DeFiModuleSettings, BackgroundSettings, CandyMachineSettings,
+} = settingsRegistry;
 
 const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpenMediaPanel }) => {
   // State for when no element is selected
@@ -136,22 +132,22 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
         return (
           <>
             <CollapsibleSection title="Layout Settings">
-              <DisplayEditor />
-              <SpacingEditor />
+              <Suspense fallback={null}><DisplayEditor /></Suspense>
+              <Suspense fallback={null}><SpacingEditor /></Suspense>
             </CollapsibleSection>
-            <DeFiSectionSettings selectedElement={selectedElement} />
+            <Suspense fallback={null}><DeFiSectionSettings selectedElement={selectedElement} /></Suspense>
           </>
         );
       } else if (selectedElement.type === 'defiModule') {
-        return <DeFiModuleSettings selectedElement={selectedElement} />;
+        return <Suspense fallback={null}><DeFiModuleSettings selectedElement={selectedElement} /></Suspense>;
       } else if (selectedElement.type === 'mintingSection') {
         return (
           <>
             <CollapsibleSection title="Layout Settings">
-              <DisplayEditor />
-              <SpacingEditor />
+              <Suspense fallback={null}><DisplayEditor /></Suspense>
+              <Suspense fallback={null}><SpacingEditor /></Suspense>
             </CollapsibleSection>
-            <DeFiSectionSettings selectedElement={selectedElement} />
+            <Suspense fallback={null}><DeFiSectionSettings selectedElement={selectedElement} /></Suspense>
           </>
         );
       }
@@ -162,14 +158,14 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
       return (
         <>
           <CollapsibleSection title="Layout Settings">
-            <DisplayEditor />
-            <SpacingEditor />
+            <Suspense fallback={null}><DisplayEditor /></Suspense>
+            <Suspense fallback={null}><SpacingEditor /></Suspense>
           </CollapsibleSection>
           <CollapsibleSection title="Content Settings">
             {selectedElement.children?.map((childId, index) => (
               <div key={childId} className="child-element-settings">
                 <h4>Element {index + 1}</h4>
-                <TextualSettings elementId={childId} />
+                <Suspense fallback={null}><TextualSettings elementId={childId} /></Suspense>
               </div>
             ))}
           </CollapsibleSection>
@@ -181,12 +177,12 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
     if (isTextualElement(selectedElement)) {
       return (
         <>
-          <TextualSettings />
+          <Suspense fallback={null}><TextualSettings /></Suspense>
           {/* Show specific settings based on element type */}
           {selectedElement.type === 'button' || selectedElement.type === 'a' || selectedElement.type === 'link' || selectedElement.type === 'linkblock' ? (
-            <LinkSettings />
+            <Suspense fallback={null}><LinkSettings /></Suspense>
           ) : selectedElement.type === 'connectWalletButton' ? (
-            <WalletSettingsPanel />
+            <Suspense fallback={null}><WalletSettings /></Suspense>
           ) : null}
         </>
       );
@@ -194,42 +190,42 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
 
     // Handle form elements
     if (isFormElement(selectedElement)) {
-      return <FormSettings />;
+      return <Suspense fallback={null}><FormSettings /></Suspense>;
     }
 
     // Handle list elements
     if (isListElement(selectedElement)) {
-      return <ListSettings />;
+      return <Suspense fallback={null}><ListSettings /></Suspense>;
     }
 
     // Handle video elements
     if (isVideoElement(selectedElement)) {
-      return <VideoSettings />;
+      return <Suspense fallback={null}><VideoSettings /></Suspense>;
     }
 
     // Handle image elements
     if (selectedElement.type === 'image') {
-      return <ImageSettings />;
+      return <Suspense fallback={null}><ImageSettings /></Suspense>;
     }
 
     // Handle background elements
     if (selectedElement.type === 'bgvideo') {
-      return <BackgroundSettings />;
+      return <Suspense fallback={null}><BackgroundSettings /></Suspense>;
     }
 
     // Handle candy machine elements
     if (selectedElement.type === 'candymachine') {
-      return <CandyMachineSettings />;
+      return <Suspense fallback={null}><CandyMachineSettings /></Suspense>;
     }
 
     // For other elements (like containers, etc.)
     return (
       <>
         <CollapsibleSection title="Display Settings">
-          <DisplayEditor />
+          <Suspense fallback={null}><DisplayEditor /></Suspense>
         </CollapsibleSection>
         <CollapsibleSection title="Spacing Settings">
-          <SpacingEditor />
+          <Suspense fallback={null}><SpacingEditor /></Suspense>
         </CollapsibleSection>
       </>
     );
@@ -297,9 +293,9 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
             <div className="settings-panel">
               {isDeFiElement(selectedElement) ? (
                 selectedElement.type === 'defiSection' ? (
-                  <DeFiSectionSettings selectedElement={selectedElement} />
+                  <Suspense fallback={null}><DeFiSectionSettings selectedElement={selectedElement} /></Suspense>
                 ) : selectedElement.type === 'defiModule' ? (
-                  <DeFiModuleSettings selectedElement={selectedElement} />
+                  <Suspense fallback={null}><DeFiModuleSettings selectedElement={selectedElement} /></Suspense>
                 ) : null
               ) : (
               <CollapsibleSection
@@ -331,23 +327,27 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
               )}
             </div>
           ) : (
-            <EditorPanel
-              searchQuery={searchQuery}
-              pageSettings={pageSettings}
-              viewMode={editorViewMode}
-              setViewMode={setEditorViewMode}
-            />
+            <Suspense fallback={null}>
+              <EditorPanel
+                searchQuery={searchQuery}
+                pageSettings={pageSettings}
+                viewMode={editorViewMode}
+                setViewMode={setEditorViewMode}
+              />
+            </Suspense>
           )}
         </div>
       ) : (
         <div className="default-sidebar-container">
-          <NewElementPanel
-            viewMode={sidebarViewMode}
-            contentListWidth={contentListWidth}
-            searchQuery={searchQuery}
-            handlePanelToggle={handlePanelToggle}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-          />
+          <Suspense fallback={null}>
+            <NewElementPanel
+              viewMode={sidebarViewMode}
+              contentListWidth={contentListWidth}
+              searchQuery={searchQuery}
+              handlePanelToggle={handlePanelToggle}
+              handleOpenMediaPanel={handleOpenMediaPanel}
+            />
+          </Suspense>
         </div>
       )}
     </div>
