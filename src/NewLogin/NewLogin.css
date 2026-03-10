@@ -42,7 +42,7 @@
     margin: 10px;
     display: flex;
     justify-content: center;
-    color: #FF4747;
+    color: var(--error-alt);
     text-align: center;
     font-family: Inter, sans-serif;
     font-style: normal;

@@ -41,7 +41,7 @@
 }
 
 .ai-icon {
-  color: #a78bfa;
+  color: var(--purple-light);
   font-size: 24px;
 }
 
@@ -79,7 +79,7 @@
 
 .ai-builder-textarea:focus {
   outline: none;
-  border-color: #a78bfa;
+  border-color: var(--purple-light);
 }
 
 .ai-builder-textarea::placeholder {
@@ -162,7 +162,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 20px;
-  background: #7c3aed;
+  background: var(--purple-dark);
   border: none;
   border-radius: var(--radius-sm, 6px);
   color: #fff;
@@ -195,7 +195,7 @@
 
 .ai-loading-icon {
   font-size: 48px;
-  color: #a78bfa;
+  color: var(--purple-light);
   animation: ai-spin 2s ease-in-out infinite;
 }
 
@@ -212,22 +212,22 @@
 }
 
 .ai-loading-sub {
-  color: var(--not-selected, #888) !important;
-  font-size: 13px !important;
-  font-weight: 400 !important;
+  color: var(--not-selected, #888);
+  font-size: 13px;
+  font-weight: 400;
 }
 
 /* AI Builder card in template grid */
 .template-card.ai-template-card {
-  border: 1px dashed #7c3aed;
+  border: 1px dashed var(--purple-dark);
   background: rgba(124, 58, 237, 0.05);
 }
 
 .template-card.ai-template-card:hover {
-  border-color: #a78bfa;
+  border-color: var(--purple-light);
   background: rgba(124, 58, 237, 0.1);
 }
 
 .template-card.ai-template-card .template-icon {
-  color: #a78bfa;
+  color: var(--purple-light);
 }
