@@ -48,6 +48,8 @@ export default defineConfig({
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
           'vendor-antd': ['antd'],
           'vendor-solana': ['@solana/web3.js'],
+          'vendor-ethers': ['ethers'],
+          'vendor-dnd': ['react-dnd', 'react-dnd-html5-backend'],
         },
       },
     },
