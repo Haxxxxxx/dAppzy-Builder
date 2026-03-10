@@ -1,8 +1,7 @@
 // src/components/Settings/CandyMachineSettings.jsx
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import './css/SettingsForm.css';
 
 const CandyMachineSettings = () => {
   const { updateContent, selectedElement, elements } = useContext(EditableContext);
@@ -56,13 +55,9 @@ const CandyMachineSettings = () => {
 
   const handleDateChange = (date) => {
     setLocalSettings(prev => ({ ...prev, timer: date }));
-  };
-
-  const handleDateClose = () => {
     if (!selectedElement) return;
     const childElement = elements.find(el => el.parentId === selectedElement.id && el.type === 'timer');
     if (childElement) {
-      const date = localSettings.timer;
       updateContent(childElement.id, date ? date.toISOString() : '');
     }
   };
@@ -104,16 +99,13 @@ const CandyMachineSettings = () => {
           return (
             <div className="settings-group" key={key}>
               <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
-              <DatePicker
-                selected={localSettings.timer}
-                onChange={handleDateChange}
-                onCalendarClose={handleDateClose}
-                dateFormat="MMMM d, yyyy h:mm aa"
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                timeCaption="Time"
+              <input
+                type="datetime-local"
                 className="settings-input"
+                value={localSettings.timer instanceof Date && !isNaN(localSettings.timer)
+                  ? localSettings.timer.toISOString().slice(0, 16)
+                  : ''}
+                onChange={e => handleDateChange(e.target.value ? new Date(e.target.value) : null)}
               />
             </div>
           );
