@@ -28,6 +28,19 @@
   --warning-yellow: #FFC107;
   --info-blue: #4A90E2;
 
+  /* Editor Colors */
+  --editor-bg: #2a2a2a;           /* Editor panel backgrounds */
+  --editor-bg-dark: #3a3a3a;      /* Darker editor inputs/containers */
+  --accent-blue: #217bf4;         /* Blue accent in editors */
+
+  /* Extended Palette */
+  --purple-dark: #7c3aed;         /* Darker purple variant */
+  --purple-light: #a78bfa;        /* Lighter purple variant */
+  --overlay-dark: rgba(0, 0, 0, 0.5); /* Dark overlay for modals */
+  --error-alt: #FF4747;           /* Alternative error red */
+  --surface-light: #f5f5f5;       /* Light gray surfaces */
+  --border-dark: #555;            /* Darker border color */
+
   /* Z-Index Scale */
   --z-base: 1;
   --z-dropdown: 10;
