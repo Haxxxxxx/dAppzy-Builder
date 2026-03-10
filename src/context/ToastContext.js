@@ -10,10 +10,9 @@ export const useToast = () => {
   return context;
 };
 
-let toastId = 0;
-
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const toastIdRef = useRef(0);
   const timersRef = useRef({});
 
   const removeToast = useCallback((id) => {
@@ -23,7 +22,7 @@ export const ToastProvider = ({ children }) => {
   }, []);
 
   const showToast = useCallback((message, type = 'info', duration = 4000) => {
-    const id = ++toastId;
+    const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { id, message, type }]);
     timersRef.current[id] = setTimeout(() => removeToast(id), duration);
     return id;
