@@ -17,15 +17,14 @@ p {
 
 .container {
   width: 100%;
-  /* or use a specific width like 300px */
   max-width: 500px;
-  /* Sets a maximum width to control wrapping */
   overflow: hidden;
-  /* Ensures any overflowed content remains contained */
-  padding: 10px;
-  /* Optional padding for better readability */
   box-sizing: border-box;
-  /* Ensures padding is included in total width */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--container-bg);
 }
 
 .editor {
@@ -78,7 +77,7 @@ p {
   box-sizing: border-box;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: darkgrey;
+  background-color: var(--dark-gray);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -126,22 +125,11 @@ p {
 }
 
 
-/* General container styling */
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  /* Space between each section */
-  padding: 16px;
-  background-color: #e0e0e0;
-  /* Example background color */
-}
-
 /* Section styling */
 .section {
   background-color: var(--surface-light);
   padding: 16px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
@@ -158,7 +146,7 @@ p {
 
 /* Item styling */
 .item {
-  background-color: #c0c0c0;
+  background-color: var(--container-bg);
   /* Example item background */
   padding: 16px;
   border-radius: 4px;
@@ -236,7 +224,7 @@ p {
 }
 
 .media-item {
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   padding: 8px;
   background-color: var(--builder-bg);
 }
@@ -260,7 +248,7 @@ p {
 /* The spinner circle */
 .spinner {
   border: 4px solid #f3f3f3;   /* Light grey */
-  border-top: 4px solid #3498db; /* Blue */
+  border-top: 4px solid var(--button-blue); /* Blue */
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -344,11 +332,11 @@ p {
 
 .ai-panel-input {
   flex: 1;
-  background: #2D3748;
+  background: var(--editor-bg-dark);
   border: none;
   border-radius: 6px;
   padding: 8px 12px;
-  color: #fff;
+  color: var(--white);
   font-size: 14px;
 }
 
@@ -366,19 +354,19 @@ p {
 }
 
 .ai-panel-footer-sendbtn:hover {
-  background: #357ABD;
+  background: var(--button-blue-hover);
 }
 
 
 .user-message {
   background: var(--info-blue);
-  color: #fff;
+  color: var(--white);
   align-self: flex-end;
 }
 
 .assistant-message {
-  background: #2D3748;
-  color: #fff;
+  background: var(--editor-bg-dark);
+  color: var(--white);
   align-self: flex-start;
 }
 
@@ -407,7 +395,7 @@ p {
   padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #1A1A1A;
+  background-color: var(--black);
   color: var(--editor-text);
 }
 
@@ -421,7 +409,7 @@ p {
 }
 
 .ai-intermediate-input button:hover {
-  background-color: #357ABD;
+  background-color: var(--button-blue-hover);
 }
 
 .ai-intermediate-actions {
@@ -452,7 +440,7 @@ p {
   transform: translateX(-50%);
   width: 500px;
   max-width: 90vw;
-  background: #1F2937;
+  background: var(--modal-bg);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: var(--z-popover);
@@ -502,7 +490,7 @@ p {
 }
 
 .ai-input-icon-left {
-  color: #9CA3AF;
+  color: var(--text-muted);
   font-size: 20px;
 }
 
@@ -515,14 +503,14 @@ p {
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
+  color: var(--white);
   font-size: 14px;
   padding: 8px 0;
   min-width: 0;
 }
 
 .ai-input-action {
-  color: #9CA3AF;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -530,8 +518,8 @@ p {
 }
 
 .ai-input-action:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
+  background: var(--white-10);
 }
 
 .ai-input-send-btn {
@@ -564,7 +552,7 @@ p {
   align-items: center;
   gap: 10px;
   border-radius: 20px;
-  background: #4D4D4D;
+  background: var(--tag-bg);
   max-height: 25px;
 }
 
