@@ -41,7 +41,7 @@ exports.generateNonce = onRequest(
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkRateLimit(clientIp, 5)) {
       return res.status(429).json({ error: "Too many requests. Try again later." });
     }
@@ -200,7 +200,7 @@ exports.reverseLookup = onRequest(
     }
 
     // Rate limit by IP
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkRateLimit(clientIp)) {
       return res.status(429).json({ error: "Too many requests. Try again later." });
     }
@@ -258,7 +258,7 @@ exports.verifyPhantomV2 = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkRateLimit(clientIp)) {
       return res.status(429).json({ error: "Too many requests." });
     }
@@ -529,7 +529,7 @@ exports.verifyMetaMask = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkRateLimit(clientIp)) {
       return res.status(429).json({ error: "Too many requests." });
     }
@@ -580,7 +580,7 @@ exports.verifyFreighter = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkRateLimit(clientIp)) {
       return res.status(429).json({ error: "Too many requests." });
     }
@@ -663,7 +663,7 @@ exports.verifyUnstoppable = onRequest(
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkRateLimit(clientIp)) {
       return res.status(429).json({ error: "Too many requests." });
     }
@@ -744,7 +744,7 @@ exports.generateAIProject = onRequest(
     }
 
     // AI-specific rate limit (3 per hour)
-    const clientIp = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    const clientIp = req.ip || "unknown";
     if (!checkAIRateLimit(clientIp)) {
       return res.status(429).json({ error: "AI generation limit reached (3 per hour). Try again later." });
     }
