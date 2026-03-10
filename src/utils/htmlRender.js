@@ -1,4 +1,4 @@
-import { escapeHtml, escapeAttr, escapeJsString, sanitizeStyleValue } from './export/escapeUtils';
+import { escapeHtml, escapeAttr, escapeJsString, sanitizeStyleValue, camelToKebab } from './export/escapeUtils';
 
 export function buildAttributesString(type, attributes, src, settings = {}) {
   let attributesString = '';
@@ -89,11 +89,6 @@ export function renderElementToHtml(element, collectedStyles = []) {
     inlineStyles = {},
     id
   } = element;
-
-  // Helper to convert camelCase to kebab-case
-  function camelToKebab(str) {
-    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-  }
 
   // Helper to generate attributes string
   function getAttributesString(attrs) {

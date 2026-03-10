@@ -51,6 +51,16 @@ export const sanitizeStyleValue = (value) => {
 };
 
 /**
+ * Converts camelCase property names to kebab-case CSS property names
+ * @param {string} str - The camelCase string to convert
+ * @returns {string} - kebab-case string
+ */
+export const camelToKebab = (str) => {
+  if (!str || typeof str !== 'string') return '';
+  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+};
+
+/**
  * Escapes a string for use inside a JavaScript string literal (single-quoted)
  * Prevents breaking out of JS string context in onclick handlers etc.
  * @param {string} str - The string to escape

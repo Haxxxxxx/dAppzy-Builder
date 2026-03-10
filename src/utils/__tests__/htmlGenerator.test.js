@@ -9,6 +9,8 @@ vi.mock('../export/elementUtils', () => ({
 vi.mock('../export/escapeUtils', () => ({
   escapeHtml: vi.fn((str) => str || ''),
   escapeAttr: vi.fn((str) => str || ''),
+  sanitizeStyleValue: vi.fn((val) => val || ''),
+  camelToKebab: vi.fn((str) => str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : ''),
 }));
 
 vi.mock('../htmlRender', () => ({

@@ -1,17 +1,7 @@
 import { buildElementHierarchy, cleanElementData } from './elementUtils';
-import { escapeHtml, escapeAttr, sanitizeStyleValue } from './escapeUtils';
+import { escapeHtml, escapeAttr, sanitizeStyleValue, camelToKebab } from './escapeUtils';
 import { renderElementToHtml } from '../htmlRender';
 import { IPFS_GATEWAYS } from '../../configs/ipfsConfig';
-
-/**
- * Converts camelCase to kebab-case
- * @param {string} str - The string to convert
- * @returns {string} - Converted string
- */
-const camelToKebab = (str) => {
-  if (!str || typeof str !== 'string') return '';
-  return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-};
 
 /**
  * Converts style object to CSS string
