@@ -14,8 +14,8 @@ Available element types:
 
 Section types (top-level only):
 - hero: configurations: heroOne, heroTwo, heroThree
-- navbar: configurations: twoColumnNavbar, threeColumnNavbar, customTemplateNavbar, defiNavbar
-- footer: configurations: simpleFooter, detailedFooter, templateFooter, defiFooter
+- navbar: configurations: twoColumn, threeColumn, customTemplateNavbar, defiNavbar
+- footer: configurations: simpleFooter, detailedFooter, advancedFooter, defiFooter
 - section: configurations: ctaOne, ctaTwo, sectionOne, sectionTwo, sectionThree, sectionFour
 - mintingSection: configuration: mintingSection
 - defiSection: configuration: defiSection

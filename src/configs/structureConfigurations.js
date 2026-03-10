@@ -3,7 +3,7 @@ import { HeroConfiguration } from "./heros/HeroConfigurations";
 import { CtaConfigurations } from "./ctasections/CtaConfigurations";
 import { FooterConfigurations } from "./footers/FooterConfigurations";
 import { Web3Configs } from "./Web3/Web3Configs";
-import { SectionConfiguration } from "./contentSections/SectionConfiguration"; // <-- New import
+import { SectionConfiguration } from "./contentSections/SectionConfiguration";
 
 export const structureConfigurations = {
   // Navbar configs

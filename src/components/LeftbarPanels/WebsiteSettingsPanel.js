@@ -1,4 +1,3 @@
-// src/components/LeftbarPanels/WebsiteSettingsPanel.js
 import React, { useState, useRef } from 'react';
 import '../css/SettingsPanel.css';
 import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
@@ -65,9 +64,6 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
 
   const initialProjectNameRef = useRef(settings.siteTitle);
   const [error, setError] = useState('');
-  const [previewItem, setPreviewItem] = useState(null);
-  const [previewEditingName, setPreviewEditingName] = useState('');
-  const [previewHasChanges, setPreviewHasChanges] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -101,16 +97,6 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
       if (response && response.IpfsHash) {
         const ipfsUrl = `${GATEWAY_URL}/${response.IpfsHash}`;
         setSettings((prev) => ({ ...prev, faviconUrl: ipfsUrl }));
-
-        const extension = file.name.toLowerCase().split('.').pop();
-        const images = ["png", "jpg", "jpeg", "webp", "gif", "svg", "bmp", "ico", "tiff"];
-        if (images.includes(extension)) {
-          setPreviewItem({ type: 'image', src: ipfsUrl, name: file.name });
-          setPreviewEditingName(file.name);
-          setPreviewHasChanges(false);
-        } else {
-          setPreviewItem(null);
-        }
       }
     } catch (err) {
       setError('Failed to upload favicon. Please try again.');
@@ -173,26 +159,6 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
           </div>
         </div>
       </div>
-
-      {/*
-      <div className="settings-group">
-        <label>Description:</label>
-        <textarea
-          name="description"
-          value={settings.description}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div className="settings-group">
-        <label>Author:</label>
-        <input
-          type="text"
-          name="author"
-          value={settings.author}
-          onChange={handleInputChange}
-        />
-      </div>
-      */}
 
       <button onClick={handleSave} className="save-button">
         Save Settings

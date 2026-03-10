@@ -53,8 +53,8 @@ const BuilderPageCore = ({
   const [lastNavbarId, setLastNavbarId] = useState(null);
   const [lastDefiId, setLastDefiId] = useState(null);
   const [lastFooterId, setLastFooterId] = useState(null);
-  const [lastNavbarSpanId, setLastNavbarSpanId] = useState(null);
-  const [lastFooterSpanId, setLastFooterSpanId] = useState(null);
+  const lastNavbarSpanIdRef = useRef(null);
+  const lastFooterSpanIdRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [conversations, setConversations] = useState([
     { id: 1, name: 'Conversation 1', messages: [] }
@@ -160,7 +160,7 @@ const BuilderPageCore = ({
         const navbarChildren = elements.filter(el => navbar.children.includes(el.id));
         const spanElement = navbarChildren.find(el => el.type === 'span');
         if (spanElement) {
-          setLastNavbarSpanId(spanElement.id);
+          lastNavbarSpanIdRef.current = (spanElement.id);
         }
       }
 
@@ -377,7 +377,7 @@ const BuilderPageCore = ({
         const footerChildren = elements.filter(el => footer.children.includes(el.id));
         const spanElement = footerChildren.find(el => el.type === 'span');
         if (spanElement) {
-          setLastFooterSpanId(spanElement.id);
+          lastFooterSpanIdRef.current = (spanElement.id);
         }
       }
 
@@ -617,9 +617,6 @@ const BuilderPageCore = ({
       properties: {
         styles: {
           ...selectedElement.styles,
-          // Add any style changes based on user message
-          // This is a placeholder - we'll need to parse the user message
-          // to determine what changes to make
         }
       }
     };
