@@ -6,8 +6,8 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useWalletContext } from '../../../context/WalletContext';
 import './css/DeFiSectionSettings.css';
 
-const DeFiSectionSettings = ({ selectedElement }) => {
-  const { elements, updateContent } = useContext(EditableContext);
+const DeFiSectionSettings = () => {
+  const { selectedElement, elements, updateContent } = useContext(EditableContext);
   const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
   
   // Wallet connection state

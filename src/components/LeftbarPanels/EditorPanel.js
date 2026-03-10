@@ -167,10 +167,10 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
 
     // Handle DeFi elements first
     if (selectedElement.type === 'defiSection') {
-      return <DeFiSectionSettings selectedElement={selectedElement} />;
+      return <DeFiSectionSettings />;
     }
     if (selectedElement.type === 'defiModule') {
-      return <DeFiModuleSettings selectedElement={selectedElement} />;
+      return <DeFiModuleSettings />;
     }
 
     // Handle link elements (including buttons)

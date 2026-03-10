@@ -3,8 +3,8 @@ import { EditableContext } from '../../../context/EditableContext';
 import { Form, Input, Switch, ColorPicker, Select, InputNumber, Space, Divider, Button } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
-const DeFiModuleSettings = ({ selectedElement }) => {
-  const { updateContent, updateStyles } = useContext(EditableContext);
+const DeFiModuleSettings = () => {
+  const { selectedElement, updateContent, updateStyles } = useContext(EditableContext);
   const [form] = Form.useForm();
   const [moduleData, setModuleData] = useState(null);
 
