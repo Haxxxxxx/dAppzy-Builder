@@ -20,7 +20,8 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
   const [isDeploying, setIsDeploying] = useState(false);
   const dropdownRef = useRef(null);
   const statusTimersRef = useRef([]);
-  const { findElementById } = useContext(EditableContext);
+  const { findElementById, setElements } = useContext(EditableContext);
+  const jsonImportRef = useRef(null);
   const { saveStatus, lastSaved } = useContext(AutoSaveContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
 
@@ -203,6 +204,44 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
     setIsDropdownOpen(false);
   };
 
+  const handleExportJson = () => {
+    const backup = { elements, websiteSettings, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${websiteSettings?.siteTitle || 'project'}-backup.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setIsDropdownOpen(false);
+  };
+
+  const handleImportJson = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!Array.isArray(data.elements)) {
+          throw new Error('Invalid backup: missing elements array');
+        }
+        setElements(() => data.elements);
+        if (data.websiteSettings) {
+          localStorage.setItem('websiteSettings', JSON.stringify(data.websiteSettings));
+        }
+        setIsDropdownOpen(false);
+      } catch (err) {
+        setOperationStatus(`Import failed: ${err.message}`);
+        safeSetTimeout(() => setOperationStatus(null), 4000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   // Helper function to format IPFS URL for display
   const formatIpfsUrl = (url) => {
     if (!url) return '';
@@ -304,6 +343,26 @@ const ExportSection = ({ elements, websiteSettings, userId, projectId, onProject
             >
               {isDeploying ? 'Deploying...' : 'Update'}
             </button>
+            <hr className='dropdown-menu-divider' />
+            <button
+              className='dropdown-menu-button'
+              onClick={handleExportJson}
+            >
+              Download JSON Backup
+            </button>
+            <button
+              className='dropdown-menu-button'
+              onClick={() => jsonImportRef.current?.click()}
+            >
+              Import JSON Backup
+            </button>
+            <input
+              type='file'
+              ref={jsonImportRef}
+              accept='.json'
+              style={{ display: 'none' }}
+              onChange={handleImportJson}
+            />
           </div>
         )}
       </div>
