@@ -11,7 +11,8 @@ import "./components/css/ProjectSelection.css";
 
 function getMaxProjects() {
   const subscriptionStatus = localStorage.getItem('subscriptionStatus');
-  const isPioneer = subscriptionStatus === 'active';
+  // 'pioneer' is the current status value; 'active' is kept as legacy fallback
+  const isPioneer = subscriptionStatus === 'pioneer' || subscriptionStatus === 'active';
   return { isPioneer, maxProjects: isPioneer ? 10 : 3 };
 }
 
