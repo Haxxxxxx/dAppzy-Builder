@@ -474,7 +474,11 @@ export const generateProjectHtml = (elements, websiteSettings) => {
           form.addEventListener('submit', function(e) {
             if (!form.getAttribute('action') || form.getAttribute('action') === '#') {
               e.preventDefault();
-              alert('Form submitted! Configure a form action URL in the builder.');
+              var msgEl = document.createElement('div');
+              msgEl.textContent = 'Form submitted successfully!';
+              msgEl.style.cssText = 'padding:12px;background:#4CAF50;color:#fff;text-align:center;border-radius:4px;margin-top:8px;';
+              this.parentNode.insertBefore(msgEl, this.nextSibling);
+              setTimeout(function(){ msgEl.remove(); }, 3000);
             }
           });
         });
