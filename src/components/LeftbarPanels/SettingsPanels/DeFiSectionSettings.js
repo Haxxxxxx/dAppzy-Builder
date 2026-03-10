@@ -301,6 +301,35 @@ const DeFiSectionSettings = ({ selectedElement }) => {
     items.splice(result.destination.index, 0, reorderedItem);
 
     setModuleOrder(items);
+
+    // Persist the new order to element content
+    if (selectedElement) {
+      const element = elements.find(el => el.id === selectedElement.id);
+      if (element) {
+        const modules = element.children
+          ?.map(childId => elements.find(el => el.id === childId))
+          ?.filter(module => module?.type === 'defiModule') || [];
+
+        // Build a lookup from moduleType → module
+        const moduleByType = {};
+        modules.forEach(module => {
+          try {
+            const data = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
+            const moduleType = data?.functionality?.type || data?.moduleType;
+            if (moduleType) moduleByType[moduleType] = module;
+          } catch (e) {
+            // skip unparseable modules
+          }
+        });
+
+        // Reorder according to items
+        const reorderedModules = items
+          .map(type => moduleByType[type])
+          .filter(Boolean);
+
+        updateContent(selectedElement.id, JSON.stringify(reorderedModules));
+      }
+    }
   };
 
   return (
