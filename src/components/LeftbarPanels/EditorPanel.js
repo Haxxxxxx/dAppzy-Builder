@@ -1,6 +1,7 @@
 import React, { useContext, Suspense } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { projectStorage } from '../../utils/storageManager';
+import { Modal } from 'antd';
 import editorRegistry from '../../Editors/editorRegistry';
 import settingsRegistry from './SettingsPanels/settingsRegistry';
 import '../css/EditorPanel.css';
@@ -382,19 +383,27 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       {elements.length > 0 && (
         <button
           onClick={() => {
-            if (!window.confirm('Are you sure you want to clear all elements? This cannot be undone.')) return;
-            projectStorage.removeElements();
-            // Clear chunked storage keys
-            const chunkKeys = [];
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key && key.startsWith('editableElements_chunk_')) {
-                chunkKeys.push(key);
-              }
-            }
-            chunkKeys.forEach(key => projectStorage.removeChunk(key));
-            projectStorage.removeChunk('editableElements_chunks');
-            setElements([]);
+            Modal.confirm({
+              title: 'Clear All Elements',
+              content: 'Are you sure you want to clear all elements? This cannot be undone.',
+              okText: 'Clear All',
+              okType: 'danger',
+              cancelText: 'Cancel',
+              onOk: () => {
+                projectStorage.removeElements();
+                // Clear chunked storage keys
+                const chunkKeys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                  const key = localStorage.key(i);
+                  if (key && key.startsWith('editableElements_chunk_')) {
+                    chunkKeys.push(key);
+                  }
+                }
+                chunkKeys.forEach(key => projectStorage.removeChunk(key));
+                projectStorage.removeChunk('editableElements_chunks');
+                setElements([]);
+              },
+            });
           }}
           style={{
             marginTop: '16px',

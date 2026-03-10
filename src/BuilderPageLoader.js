@@ -9,6 +9,7 @@ import { TEMPLATES } from "./configs/templates";
 const AIBuilder = React.lazy(() => import("./components/AIBuilder"));
 import "./components/css/ProjectSelection.css";
 import { subscriptionStorage, projectStorage, authStorage } from './utils/storageManager';
+import { Modal } from 'antd';
 
 function getMaxProjects() {
   const subscriptionStatus = subscriptionStorage.getStatus();
@@ -251,21 +252,29 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   }, [userId]);
 
   // Delete a project.
-  const deleteProject = useCallback(async (project) => {
+  const deleteProject = useCallback((project) => {
     const title = project.websiteSettings?.siteTitle || 'Untitled Project';
-    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) return;
-    try {
-      const projectRef = doc(db, "projects", userId, "ProjectRef", project.id);
-      await deleteDoc(projectRef);
-      setProjects((prev) => prev.filter((p) => p.id !== project.id));
-      if (activeProjectId === project.id) {
-        setActiveProjectId(null);
-        setInternProjectId(null);
-      }
-    } catch {
-      setErrorMessage("Failed to delete project.");
-      setViewState('error');
-    }
+    Modal.confirm({
+      title: 'Delete Project',
+      content: `Delete "${title}"? This cannot be undone.`,
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          const projectRef = doc(db, "projects", userId, "ProjectRef", project.id);
+          await deleteDoc(projectRef);
+          setProjects((prev) => prev.filter((p) => p.id !== project.id));
+          if (activeProjectId === project.id) {
+            setActiveProjectId(null);
+            setInternProjectId(null);
+          }
+        } catch {
+          setErrorMessage("Failed to delete project.");
+          setViewState('error');
+        }
+      },
+    });
   }, [userId, activeProjectId]);
 
   // Set logged-in status once userId is available.
