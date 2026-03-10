@@ -28,7 +28,7 @@
   width: 14px;
   height: 14px;
   background: var(--accent-blue);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   cursor: pointer;
   border: none;
 }
@@ -37,7 +37,7 @@
   width: 14px;
   height: 14px;
   background: var(--accent-blue);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   cursor: pointer;
   border: none;
 }

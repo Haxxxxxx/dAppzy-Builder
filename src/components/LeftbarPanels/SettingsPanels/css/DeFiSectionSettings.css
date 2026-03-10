@@ -10,7 +10,7 @@
 
 .defi-section-settings  .module-settings {
   background-color: #f5f5f5;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -26,13 +26,13 @@
   flex: 1;
   padding: 0.5rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
 }
 
 .defi-section-settings .stats-container {
   background-color: white;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   padding: 1rem;
 }
 
@@ -52,7 +52,7 @@
   flex: 1;
   padding: 0.5rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
 }
 
@@ -109,7 +109,7 @@
 }
 
 .defi-section-settings .slider.round:before {
-  border-radius: 50%;
+  border-radius: var(--radius-round);
 }
 
 /* Input focus styles */
@@ -149,7 +149,7 @@
   padding: 12px;
   margin-bottom: 8px;
   background-color: #f5f5f5;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: move;
   display: flex;
   align-items: center;
@@ -177,7 +177,7 @@
   margin-bottom: 24px;
   padding: 16px;
   background-color: #f5f5f5;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .defi-section-settings .settings-group.disabled {
@@ -203,7 +203,7 @@
   width: 150px;
   padding: 8px;
   border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .defi-section-settings .settings-input:disabled {
@@ -220,7 +220,7 @@
   color: #333;
   background-color: #fff;
   border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .defi-section-settings .draggable-item.dragging {
@@ -231,6 +231,6 @@
 .defi-section-settings .droppable-area {
   padding: 8px;
   background-color: #f5f5f5;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   min-height: 100px;
 } 

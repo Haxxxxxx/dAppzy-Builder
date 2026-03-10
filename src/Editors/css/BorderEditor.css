@@ -40,7 +40,7 @@
     padding-right: 30px;
     /* leaves room for the “PX” text on the right */
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
     color: var(--white);
     box-sizing: border-box;
@@ -107,7 +107,7 @@
     width: 50px;
     padding: 4px 6px;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
     color: var(--white);
     font-size: 13px;
@@ -190,7 +190,7 @@
     padding: 6px;
     font-size: 14px;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
     color: var(--white);
     box-sizing: border-box;
@@ -201,7 +201,7 @@
     display: flex;
     align-items: center;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
     padding: 0 8px;
     height: 36px;
@@ -248,7 +248,7 @@
     padding: 5px 8px;
     justify-content: center;
     align-items: center;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--not-selected, #64748B);
     background: var(--not-selected, #64748B);
     width: 50%;

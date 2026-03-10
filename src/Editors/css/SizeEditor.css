@@ -36,7 +36,7 @@
     position: relative;
     border: 1px solid var(--border-color);
     background-color: var(--editor-bg);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     padding: 0 8px; /* horizontal padding inside the group */
   }
   
@@ -103,7 +103,7 @@
     height: 36px;
     background: transparent;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: var(--white);
     cursor: pointer;
     display: flex;

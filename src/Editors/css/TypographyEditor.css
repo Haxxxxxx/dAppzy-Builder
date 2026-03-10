@@ -2,7 +2,7 @@
 
 /* --- Base Container --- */
 .typography-editor {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-family: Arial, sans-serif;
   color: var(--white);
 }
@@ -47,7 +47,7 @@
   height: 36px;
   background: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--white);
   cursor: pointer;
   display: flex;
@@ -94,7 +94,7 @@
   padding: 8px;
   font-size: 14px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background-color: var(--editor-bg);
   color: var(--white);
   box-sizing: border-box;
@@ -109,7 +109,7 @@
   display: flex;
   align-items: center;
   border: 1px solid var(--border-color);      /* One border around the entire group */
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background-color: var(--editor-bg);   /* match your dark UI */
   padding: 8px;              /* some horizontal padding */
   width: 100%;

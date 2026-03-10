@@ -37,7 +37,7 @@
     width: 16px;
     height: 16px;
     background-color: var(--purple, #5C4EFA);
-    border-radius: 50%;
+    border-radius: var(--radius-round);
     position: absolute;
     top: 2px;
     left: 2px;
@@ -90,7 +90,7 @@
 .link-item {
     position: relative;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;

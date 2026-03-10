@@ -8,7 +8,7 @@
   padding: 20px;
   z-index: var(--z-modal);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
 
@@ -35,7 +35,7 @@
   border: none;
   background: grey;
   color: white;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -132,7 +132,7 @@
   bottom: 3px;
   background-color: white;
   transition: 0.4s;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
 }
 
 input:checked+.slider {
