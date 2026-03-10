@@ -47,7 +47,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
           'vendor-antd': ['antd'],
-          'vendor-solana': ['@solana/web3.js'],
+          'vendor-solana': ['@solana/web3.js', '@solana/wallet-adapter-base', '@solana/wallet-adapter-react', '@solana/wallet-adapter-phantom'],
           'vendor-ethers': ['ethers'],
           'vendor-dnd': ['react-dnd', 'react-dnd-html5-backend'],
         },
