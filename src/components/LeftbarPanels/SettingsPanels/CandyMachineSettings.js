@@ -3,7 +3,6 @@ import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import './css/CandyMachineSettings.css';
 
 const CandyMachineSettings = () => {
   const { updateContent, selectedElement, elements } = useContext(EditableContext);
