@@ -304,6 +304,34 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
 
   const ancestorPath = getAncestorPath(selectedElement);
 
+  const moveSelectedElement = (direction) => {
+    if (!selectedElement) return;
+    setElements((prev) => {
+      const el = prev.find(e => e.id === selectedElement.id);
+      if (!el?.parentId) return prev;
+      const parent = prev.find(e => e.id === el.parentId);
+      if (!parent?.children) return prev;
+      const idx = parent.children.indexOf(selectedElement.id);
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= parent.children.length) return prev;
+      const newChildren = [...parent.children];
+      [newChildren[idx], newChildren[newIdx]] = [newChildren[newIdx], newChildren[idx]];
+      return prev.map(e => e.id === parent.id ? { ...e, children: newChildren } : e);
+    });
+  };
+
+  const getSiblingInfo = () => {
+    if (!selectedElement) return { isFirst: true, isLast: true, hasParent: false };
+    const el = elements.find(e => e.id === selectedElement.id);
+    if (!el?.parentId) return { isFirst: true, isLast: true, hasParent: false };
+    const parent = elements.find(e => e.id === el.parentId);
+    if (!parent?.children) return { isFirst: true, isLast: true, hasParent: false };
+    const idx = parent.children.indexOf(selectedElement.id);
+    return { isFirst: idx === 0, isLast: idx === parent.children.length - 1, hasParent: true };
+  };
+
+  const { isFirst, isLast, hasParent } = getSiblingInfo();
+
   return (
     <div className="editor-panel">
       {selectedElement && ancestorPath.length > 0 && (
@@ -320,6 +348,28 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
             </span>
           ))}
           <span className="breadcrumb-current">{selectedElement.label || selectedElement.type}</span>
+        </div>
+      )}
+      {selectedElement && hasParent && (
+        <div className="editor-reorder-bar">
+          <button
+            className="editor-reorder-btn"
+            disabled={isFirst}
+            onClick={() => moveSelectedElement(-1)}
+            title="Move element up"
+          >
+            <span className="material-symbols-outlined">arrow_upward</span>
+            Move Up
+          </button>
+          <button
+            className="editor-reorder-btn"
+            disabled={isLast}
+            onClick={() => moveSelectedElement(1)}
+            title="Move element down"
+          >
+            <span className="material-symbols-outlined">arrow_downward</span>
+            Move Down
+          </button>
         </div>
       )}
       {renderContent()}
