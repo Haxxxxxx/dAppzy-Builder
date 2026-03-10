@@ -90,18 +90,19 @@ const List = ({ id }) => {
     </li>
   );
 
-  return React.createElement(
-    tagName,
-    {
-      id,
-      onClick: handleSelect,
-      style: {
+  const Tag = tagName;
+  return (
+    <Tag
+      id={id}
+      onClick={handleSelect}
+      style={{
         listStyleType: listType === 'ol' ? (listStyleType || 'decimal') : (listStyleType || 'disc'),
-      },
-      start: listType === 'ol' ? start : undefined,
-      reversed: listType === 'ol' ? reversed : undefined,
-    },
-    children.length === 0 ? placeholderItem : children.map((childId) => <ListItem key={childId} id={childId} />)
+      }}
+      start={listType === 'ol' ? start : undefined}
+      reversed={listType === 'ol' ? reversed : undefined}
+    >
+      {children.length === 0 ? placeholderItem : children.map((childId) => <ListItem key={childId} id={childId} />)}
+    </Tag>
   );
 };
 
