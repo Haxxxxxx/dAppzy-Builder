@@ -4,7 +4,7 @@ import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import '../css/StructurePanel.css';
 
 const StructurePanel = () => {
-  const { elements, selectedElement, setSelectedElement, setElements } = useContext(EditableContext);
+  const { elements, selectedElement, setSelectedElement, setElements, copyElement, pasteElement } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -111,26 +111,42 @@ const StructurePanel = () => {
               <span className="structure-tree-text">
                 {getFriendlyLabel(element.type, element.content || element.label || element.id)}
               </span>
-              {hasParent && (
-                <span className="structure-reorder-btns">
+              <span className="structure-reorder-btns">
                   <button
                     className="reorder-btn"
-                    disabled={isFirst}
-                    onClick={(e) => { e.stopPropagation(); reorderElement(element.id, -1); }}
-                    title="Move up"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyElement(element.id);
+                      const parentId = element.parentId || null;
+                      const siblings = elements.filter(el => el.parentId === parentId);
+                      const idx = siblings.findIndex(el => el.id === element.id);
+                      pasteElement(parentId, idx >= 0 ? idx + 1 : siblings.length);
+                    }}
+                    title="Duplicate"
                   >
-                    <span className="material-symbols-outlined">arrow_upward</span>
+                    <span className="material-symbols-outlined">content_copy</span>
                   </button>
-                  <button
-                    className="reorder-btn"
-                    disabled={isLast}
-                    onClick={(e) => { e.stopPropagation(); reorderElement(element.id, 1); }}
-                    title="Move down"
-                  >
-                    <span className="material-symbols-outlined">arrow_downward</span>
-                  </button>
+                  {hasParent && (
+                    <>
+                      <button
+                        className="reorder-btn"
+                        disabled={isFirst}
+                        onClick={(e) => { e.stopPropagation(); reorderElement(element.id, -1); }}
+                        title="Move up"
+                      >
+                        <span className="material-symbols-outlined">arrow_upward</span>
+                      </button>
+                      <button
+                        className="reorder-btn"
+                        disabled={isLast}
+                        onClick={(e) => { e.stopPropagation(); reorderElement(element.id, 1); }}
+                        title="Move down"
+                      >
+                        <span className="material-symbols-outlined">arrow_downward</span>
+                      </button>
+                    </>
+                  )}
                 </span>
-              )}
             </div>
             {isExpanded && element.children && element.children.length > 0 && (
               <div className="structure-tree-children">
