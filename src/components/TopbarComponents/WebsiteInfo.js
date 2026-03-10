@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AutoSaveContext } from '../../context/AutoSaveContext';
 
 const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownToggle, isDeployed, snsDomain }) => {
+  const { saveStatus } = useContext(AutoSaveContext);
+  const hasUnsavedChanges = saveStatus && saveStatus !== 'All changes saved';
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const [projectUrl, setProjectUrl] = useState(url || 'Not deployed yet');
@@ -143,7 +146,16 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
       </button>
       {faviconUrl && <img src={faviconUrl} alt="Favicon" className="favicon" />}
       <div className="project-details" onClick={handleDropdownClick}>
-        <span className="project-name">{projectName}</span>
+        <span className="project-name">
+          {projectName}
+          {hasUnsavedChanges && (
+            <span
+              className="unsaved-dot"
+              title={saveStatus}
+              aria-label="Unsaved changes"
+            />
+          )}
+        </span>
         {shouldShowUrl() && (
           <div 
             className="project-details-url clickable"
