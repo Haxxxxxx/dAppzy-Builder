@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, Suspense } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useWalletContext } from '../../../context/WalletContext';
+
+const DeFiSectionDragList = React.lazy(() => import('./DeFiSectionDragList'));
 import './css/DeFiSectionSettings.css';
 import './css/SettingsForm.css';
 
@@ -407,47 +408,15 @@ const DeFiSectionSettings = () => {
       <hr className="settings-divider" />
       <div className="settings-field"><label>Module Management</label></div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="modules">
-          {(provided) => (
-            <div {...provided.droppableProps} ref={provided.innerRef}>
-              {moduleOrder.map((type, index) => (
-                <Draggable key={type} draggableId={type} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className="module-item"
-                    >
-                      <div className="settings-row">
-                        <span style={{ cursor: 'grab', marginRight: '4px' }}>⠿</span>
-                        <span>{type === 'aggregator' ? 'Pool Aggregator' :
-                              type === 'simulation' ? 'Investment Simulator' :
-                              type === 'bridge' ? 'Cross-Chain Bridge' : type}</span>
-                        <input
-                          type="checkbox"
-                          className="settings-switch"
-                          checked={moduleSettings[type]?.enabled}
-                          onChange={e => handleModuleToggle(type, e.target.checked)}
-                        />
-                        <button
-                          className="settings-btn-icon"
-                          onClick={() => handleModuleRemove(type)}
-                          title="Remove module"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <Suspense fallback={<div>Loading...</div>}>
+        <DeFiSectionDragList
+          moduleOrder={moduleOrder}
+          moduleSettings={moduleSettings}
+          onDragEnd={handleDragEnd}
+          onModuleToggle={handleModuleToggle}
+          onModuleRemove={handleModuleRemove}
+        />
+      </Suspense>
 
       <hr className="settings-divider" />
       <div className="settings-field"><label>Add New Module</label></div>
