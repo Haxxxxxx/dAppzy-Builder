@@ -2,7 +2,7 @@
 
 .transform-editor {
   font-family: Arial, sans-serif;
-  color: #fff;
+  color: var(--white);
 }
 
 .transform-row {
@@ -19,7 +19,7 @@
 
 .transform-field label {
   font-size: 14px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   margin-bottom: 4px;
 }
 
@@ -27,8 +27,8 @@
   padding: 6px 8px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--editor-bg);
+  color: var(--white);
   font-size: 14px;
   box-sizing: border-box;
   width: 100%;
@@ -48,7 +48,7 @@
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: #b3b3b3;
+  color: var(--not-selected);
   pointer-events: none;
   font-size: 12px;
 }
@@ -59,12 +59,12 @@
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: transparent;
-  color: #b3b3b3;
+  color: var(--not-selected);
   cursor: pointer;
   font-size: 13px;
   transition: background 0.2s ease;
 }
 
 .transform-reset:hover {
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
 }

@@ -2,7 +2,7 @@
 
 /* Main container */
 .border-editor {
-    color: #fff;
+    color: var(--white);
     font-family: Arial, sans-serif;
     margin-top: 3vh;
 }
@@ -21,7 +21,7 @@
 .borders-section label {
     font-size: 14px;
     margin-bottom: 8px;
-    color: #b3b3b3;
+    color: var(--not-selected);
     display: block;
 }
 
@@ -41,8 +41,8 @@
     /* leaves room for the “PX” text on the right */
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: var(--editor-bg);
+    color: var(--white);
     box-sizing: border-box;
 }
 
@@ -52,7 +52,7 @@
     /* adjust as needed to position “PX” inside the input */
     top: 50%;
     transform: translateY(-50%);
-    color: #b3b3b3;
+    color: var(--not-selected);
     pointer-events: none;
     /* ignore clicks so user can still edit input */
     font-size: 14px;
@@ -73,11 +73,11 @@
     padding: 2px;
     display: flex;
     align-items: center;
-    color: #b3b3b3;
+    color: var(--not-selected);
 }
 
 .corner-link-toggle:hover {
-    color: #217bf4;
+    color: var(--accent-blue);
 }
 
 .corner-link-toggle .material-symbols-outlined {
@@ -98,7 +98,7 @@
 
 .corner-input .corner-label {
     font-size: 11px;
-    color: #b3b3b3;
+    color: var(--not-selected);
     width: 18px;
     flex-shrink: 0;
 }
@@ -108,8 +108,8 @@
     padding: 4px 6px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: var(--editor-bg);
+    color: var(--white);
     font-size: 13px;
     box-sizing: border-box;
 }
@@ -146,7 +146,7 @@
 .side-button {
     width: 20px;
     height: 20px;
-    background-color: #2a2a2a;
+    background-color: var(--editor-bg);
     border: 1px solid var(--border-color);
     border-radius: 2px;
     cursor: pointer;
@@ -155,8 +155,8 @@
 
 /* Indicate “active” with a highlight color */
 .side-button.active {
-    background-color: #217bf4;
-    border-color: #217bf4;
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
 }
 
 /* The area where style, width, color controls appear side-by-side */
@@ -180,7 +180,7 @@
 .border-width-group label,
 .border-color-group label {
     font-size: 14px;
-    color: #b3b3b3;
+    color: var(--not-selected);
     margin-bottom: 4px;
 }
 
@@ -191,8 +191,8 @@
     font-size: 14px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: var(--editor-bg);
+    color: var(--white);
     box-sizing: border-box;
 }
 
@@ -202,7 +202,7 @@
     align-items: center;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #2a2a2a;
+    background-color: var(--editor-bg);
     padding: 0 8px;
     height: 36px;
     box-sizing: border-box;
@@ -234,7 +234,7 @@
     flex: 1;
     border: none;
     background-color: transparent;
-    color: #fff;
+    color: var(--white);
     font-size: 14px;
     cursor: default;
     outline: none;

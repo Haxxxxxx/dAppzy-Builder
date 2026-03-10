@@ -2,7 +2,7 @@
 
 .opacity-editor {
   font-family: Arial, sans-serif;
-  color: #fff;
+  color: var(--white);
 }
 
 .opacity-row {
@@ -16,7 +16,7 @@
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -27,7 +27,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  background: #217bf4;
+  background: var(--accent-blue);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -36,7 +36,7 @@
 .opacity-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: #217bf4;
+  background: var(--accent-blue);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -44,7 +44,7 @@
 
 .opacity-value {
   font-size: 14px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   min-width: 36px;
   text-align: right;
 }

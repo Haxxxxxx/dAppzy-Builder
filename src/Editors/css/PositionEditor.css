@@ -2,7 +2,7 @@
 
 .position-editor {
   font-family: Arial, sans-serif;
-  color: #fff;
+  color: var(--white);
 }
 
 .position-editor .editor-group {
@@ -13,7 +13,7 @@
 
 .position-editor .editor-group label {
   font-size: 14px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   margin-bottom: 4px;
 }
 
@@ -23,8 +23,8 @@
   font-size: 14px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--editor-bg);
+  color: var(--white);
   box-sizing: border-box;
 }
 
@@ -42,7 +42,7 @@
 
 .position-field label {
   font-size: 14px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   margin-bottom: 4px;
 }
 
@@ -50,8 +50,8 @@
   padding: 6px 8px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--editor-bg);
+  color: var(--white);
   font-size: 14px;
   box-sizing: border-box;
   width: 100%;

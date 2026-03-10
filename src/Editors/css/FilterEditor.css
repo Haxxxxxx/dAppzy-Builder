@@ -2,7 +2,7 @@
 
 .filter-editor {
   font-family: Arial, sans-serif;
-  color: #fff;
+  color: var(--white);
 }
 
 .filter-row {
@@ -14,7 +14,7 @@
 
 .filter-row label {
   font-size: 13px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   min-width: 72px;
   flex-shrink: 0;
 }
@@ -24,7 +24,7 @@
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -35,7 +35,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  background: #217bf4;
+  background: var(--accent-blue);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -44,7 +44,7 @@
 .filter-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: #217bf4;
+  background: var(--accent-blue);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -52,7 +52,7 @@
 
 .filter-value {
   font-size: 13px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   min-width: 42px;
   text-align: right;
 }

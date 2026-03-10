@@ -4,7 +4,7 @@
 .typography-editor {
   border-radius: 8px;
   font-family: Arial, sans-serif;
-  color: #ffffff;
+  color: var(--white);
 }
 
 /* Editor group container */
@@ -18,7 +18,7 @@
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
-  color: #b3b3b3; /* soft gray */
+  color: var(--not-selected); /* soft gray */
 }
 
 /* Combine weight + size in a row */
@@ -48,7 +48,7 @@
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: #fff;
+  color: var(--white);
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -62,12 +62,12 @@
 }
 .typography-editor .text-decoration-group button:hover,
 .typography-editor .text-align-group button:hover {
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
 }
 .text-decoration-group button.active,
 .text-align-group button.active {
-  background-color: #217bf4;
-  border-color: #217bf4;
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 /* The vertical line between icon buttons */
@@ -95,8 +95,8 @@
   font-size: 14px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--editor-bg);
+  color: var(--white);
   box-sizing: border-box;
 }
 
@@ -110,7 +110,7 @@
   align-items: center;
   border: 1px solid var(--border-color);      /* One border around the entire group */
   border-radius: 4px;
-  background-color: #2a2a2a;   /* match your dark UI */
+  background-color: var(--editor-bg);   /* match your dark UI */
   padding: 8px;              /* some horizontal padding */
   width: 100%;
   box-sizing: border-box;
@@ -140,7 +140,7 @@
   flex: 1;
   border: none;
   background-color: transparent;
-  color: #fff;
+  color: var(--white);
   font-size: 14px;
   cursor: default;
   outline: none;

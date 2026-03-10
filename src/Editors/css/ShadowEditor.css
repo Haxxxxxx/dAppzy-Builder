@@ -2,7 +2,7 @@
 
 .shadow-editor {
   font-family: Arial, sans-serif;
-  color: #fff;
+  color: var(--white);
 }
 
 .shadow-grid {
@@ -19,7 +19,7 @@
 
 .shadow-field label {
   font-size: 14px;
-  color: #b3b3b3;
+  color: var(--not-selected);
   margin-bottom: 4px;
 }
 
@@ -27,8 +27,8 @@
   padding: 6px 8px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--editor-bg);
+  color: var(--white);
   font-size: 14px;
   box-sizing: border-box;
   width: 100%;
@@ -65,8 +65,8 @@
   padding: 6px 8px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  background-color: var(--editor-bg);
+  color: var(--white);
   font-size: 14px;
 }
 
@@ -75,20 +75,20 @@
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: transparent;
-  color: #b3b3b3;
+  color: var(--not-selected);
   cursor: pointer;
   font-size: 13px;
   transition: background 0.2s ease;
 }
 
 .shadow-color-row button:hover {
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
 }
 
 .shadow-color-row button.active {
-  background-color: #217bf4;
-  border-color: #217bf4;
-  color: #fff;
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: var(--white);
 }
 
 .shadow-clear {
@@ -97,12 +97,12 @@
   border: 1px solid var(--border-color);
   border-radius: 4px;
   background: transparent;
-  color: #b3b3b3;
+  color: var(--not-selected);
   cursor: pointer;
   font-size: 13px;
   transition: background 0.2s ease;
 }
 
 .shadow-clear:hover {
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
 }
