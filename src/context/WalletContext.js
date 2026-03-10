@@ -164,9 +164,23 @@ const WalletContextProvider = ({ children }) => {
         // Handle Ethereum wallet
         const accounts = await withTimeout(window.ethereum.request({ method: 'eth_requestAccounts' }), 30000);
         if (accounts && accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setWalletId(accounts[0]);
+          const address = accounts[0];
+          setWalletAddress(address);
+          setWalletId(address);
           setIsWalletConnected(true);
+
+          // Check subscription status in Firestore (same as Solana path)
+          const userRef = doc(db, 'users', address);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.subscriptionStatus) {
+              localStorage.setItem('subscriptionStatus', userData.subscriptionStatus);
+              if (userData.subscriptionEndDate) {
+                localStorage.setItem('subscriptionEndDate', userData.subscriptionEndDate);
+              }
+            }
+          }
         }
       } else if (window.solana) {
         // Handle Solana wallet - only connect when explicitly requested
