@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext, useCallback, useRef, Suspense }
 import { doc, getDoc, collection, query, where, getDocs, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 import { EditableContext } from "./context/EditableContext";
-import BuilderPageCore from "./BuilderPageCore";
+const BuilderPageCore = React.lazy(() => import("./BuilderPageCore"));
 import WalletConnection from "./NewLogin/WalletConnection";
 import { TEMPLATES } from "./configs/templates";
 const AIBuilder = React.lazy(() => import("./components/AIBuilder"));
@@ -503,26 +503,28 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     
     case 'builder':
       return (
-        <BuilderPageCore
-          userId={userId}
-          projectId={internProjectId}
-          setUserId={setUserId}
-          openPanel={openPanel}
-          setOpenPanel={setOpenPanel}
-          contentListWidth={contentListWidth}
-          setContentListWidth={setContentListWidth}
-          projects={projects}
-          activeProjectId={activeProjectId}
-          setActiveProjectId={setActiveProjectId}
-          pageSettings={pageSettings}
-          setPageSettings={setPageSettings}
-          scale={scale}
-          setScale={setScale}
-          isPreviewMode={isPreviewMode}
-          setIsPreviewMode={setIsPreviewMode}
-          availableCanvasWidth={availableCanvasWidth}
-          setAvailableCanvasWidth={setAvailableCanvasWidth}
-        />
+        <Suspense fallback={<div className="app-loading">Loading Builder...</div>}>
+          <BuilderPageCore
+            userId={userId}
+            projectId={internProjectId}
+            setUserId={setUserId}
+            openPanel={openPanel}
+            setOpenPanel={setOpenPanel}
+            contentListWidth={contentListWidth}
+            setContentListWidth={setContentListWidth}
+            projects={projects}
+            activeProjectId={activeProjectId}
+            setActiveProjectId={setActiveProjectId}
+            pageSettings={pageSettings}
+            setPageSettings={setPageSettings}
+            scale={scale}
+            setScale={setScale}
+            isPreviewMode={isPreviewMode}
+            setIsPreviewMode={setIsPreviewMode}
+            availableCanvasWidth={availableCanvasWidth}
+            setAvailableCanvasWidth={setAvailableCanvasWidth}
+          />
+        </Suspense>
       );
     
     case 'error':
