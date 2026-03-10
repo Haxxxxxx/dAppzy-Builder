@@ -47,7 +47,7 @@ const FormSettings = ({ onUpdateSettings }) => {
     } else {
       const { name, value } = eOrUpdater.target;
       setLocalSettings((prev) => ({ ...prev, [name]: value }));
-      updateConfiguration(localSettings.id, name, value);
+      updateConfiguration(selectedElement.id, name, value);
     }
   };
 
