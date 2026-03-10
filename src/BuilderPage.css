@@ -23,7 +23,7 @@ p {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
+  padding: var(--space-md);
   background-color: var(--container-bg);
 }
 
@@ -128,7 +128,7 @@ p {
 /* Section styling */
 .section {
   background-color: var(--surface-light);
-  padding: 16px;
+  padding: var(--space-md);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   display: flex;
@@ -148,7 +148,7 @@ p {
 .item {
   background-color: var(--container-bg);
   /* Example item background */
-  padding: 16px;
+  padding: var(--space-md);
   border-radius: 4px;
   flex: 1;
   /* Grow and shrink as needed */
@@ -163,7 +163,7 @@ p {
   /* Make the panel fill the available height */
   max-height: 100vh;
   /* Restrict the height to the viewport */
-  padding: 16px;
+  padding: var(--space-md);
   background-color: var(--builder-bg);
   overflow-y: auto;
   /* Enable vertical scrolling */
@@ -180,7 +180,7 @@ p {
 
 .structure-panel h3 {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 }
 
 .structure-panel div {
@@ -197,7 +197,7 @@ p {
   /* Constrain to viewport height */
   box-sizing: border-box;
   /* Include padding and border in height calculation */
-  padding: 16px;
+  padding: var(--space-md);
 }
 
 /* Media Panel */
@@ -225,7 +225,7 @@ p {
 
 .media-item {
   border: 1px solid var(--border-color);
-  padding: 8px;
+  padding: var(--space-sm);
   background-color: var(--builder-bg);
 }
 
@@ -313,14 +313,14 @@ p {
 .ai-agent-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 .ai-panel-footer {
-  padding: 16px;
+  padding: var(--space-md);
   border-top: 1px solid var(--border-color);
 }
 
@@ -376,7 +376,7 @@ p {
   left: 0;
   right: 0;
   background-color: var(--editor-bg);
-  padding: 16px;
+  padding: var(--space-md);
   display: flex;
   gap: 16px;
   align-items: center;
@@ -418,7 +418,7 @@ p {
 }
 
 .ai-intermediate-actions button {
-  padding: 8px;
+  padding: var(--space-sm);
   background-color: transparent;
   color: var(--editor-text);
   border: 1px solid var(--border-color);
@@ -512,7 +512,7 @@ p {
 .ai-input-action {
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
+  padding: var(--space-xs);
   border-radius: 4px;
   transition: all 0.2s;
 }
