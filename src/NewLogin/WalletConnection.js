@@ -3,7 +3,6 @@ import { db, doc, getDoc, setDoc } from "../firebase";
 import { serverTimestamp } from "firebase/firestore";
 import { auth } from "../firebase";
 import { signInWithCustomToken } from "firebase/auth";
-import { requestAccess, signMessage } from "@stellar/freighter-api"; // Freighter API methods
 import "./NewLogin.css";
 import { useWalletContext } from '../context/WalletContext';
 import { BRAND_IMAGES } from '../configs/assetUrls';
@@ -227,6 +226,7 @@ function WalletConnection({ onUserLogin }) {
   const handleLoginWithFreighter = async () => {
     setIsLoading(true);
     try {
+      const { requestAccess, signMessage } = await import("@stellar/freighter-api");
       // Request access to Freighter (this will prompt the user if not already allowed)
       const accessObj = await requestAccess();
       if (accessObj.error) {
