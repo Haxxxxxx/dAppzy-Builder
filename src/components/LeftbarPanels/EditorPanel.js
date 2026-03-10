@@ -28,6 +28,7 @@ import FormSettings from './SettingsPanels/FormSettings';
 import DeFiModuleSettings from './SettingsPanels/DeFiModuleSettings';
 import TableSettings from './SettingsPanels/TableSettings';
 import IconSettings from './SettingsPanels/IconSettings';
+import ErrorBoundary from '../ErrorBoundary';
 
 const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
   const { selectedElement, setSelectedElement, setElements, elements, styleEditingMode, setStyleEditingMode, activeBreakpoint } = useContext(EditableContext);
@@ -282,14 +283,18 @@ const EditorPanel = ({ pageSettings, viewMode, setViewMode, searchQuery }) => {
       case 'settings':
         return (
           <div className="settings-view">
-            {renderSettingsView()}
+            <ErrorBoundary name={`${selectedElement.type} settings`}>
+              {renderSettingsView()}
+            </ErrorBoundary>
           </div>
         );
       case 'content':
       case 'display':
         return (
           <div className="content-view">
-            {renderSettingsView()}
+            <ErrorBoundary name={`${selectedElement.type} settings`}>
+              {renderSettingsView()}
+            </ErrorBoundary>
           </div>
         );
       default:
