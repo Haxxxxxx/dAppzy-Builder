@@ -17,6 +17,10 @@
   background-color: var(--builder-bg);
 }
 
+.structure-tree-label.hidden-element {
+  opacity: 0.45;
+}
+
 .structure-tree-toggle {
   margin-right: 8px;
   cursor: pointer;

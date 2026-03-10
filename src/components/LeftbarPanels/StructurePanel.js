@@ -4,7 +4,7 @@ import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
 import '../css/StructurePanel.css';
 
 const StructurePanel = () => {
-  const { elements, selectedElement, setSelectedElement, setElements, copyElement, pasteElement } = useContext(EditableContext);
+  const { elements, selectedElement, setSelectedElement, setElements, copyElement, pasteElement, updateStyles, updateConfiguration } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -59,6 +59,19 @@ const StructurePanel = () => {
     }));
   };
 
+  const toggleVisibility = (element) => {
+    const isHidden = element.configuration?.hidden || element.settings?.hidden;
+    if (isHidden) {
+      updateStyles(element.id, { display: element.configuration?.previousDisplay || '' });
+      updateConfiguration(element.id, 'hidden', false);
+    } else {
+      const prev = element.styles?.display || '';
+      updateConfiguration(element.id, 'previousDisplay', prev);
+      updateConfiguration(element.id, 'hidden', true);
+      updateStyles(element.id, { display: 'none' });
+    }
+  };
+
   // Reorder an element among its siblings
   const reorderElement = (elementId, direction) => {
     setElements((prev) => {
@@ -84,6 +97,7 @@ const StructurePanel = () => {
         const isFirst = idx === 0;
         const isLast = idx === valid.length - 1;
         const hasParent = !!element.parentId;
+        const isHidden = element.configuration?.hidden || element.settings?.hidden;
 
         return (
           <div
@@ -95,7 +109,7 @@ const StructurePanel = () => {
                 e.stopPropagation();
                 setSelectedElement({ id: element.id, type: element.type });
               }}
-              className={`structure-tree-label${selectedElement?.id === element.id ? ' selected' : ''}`}
+              className={`structure-tree-label${selectedElement?.id === element.id ? ' selected' : ''}${isHidden ? ' hidden-element' : ''}`}
             >
               {element.children && element.children.length > 0 && (
                 <span
@@ -112,6 +126,13 @@ const StructurePanel = () => {
                 {getFriendlyLabel(element.type, element.content || element.label || element.id)}
               </span>
               <span className="structure-reorder-btns">
+                  <button
+                    className="reorder-btn"
+                    onClick={(e) => { e.stopPropagation(); toggleVisibility(element); }}
+                    title={isHidden ? 'Show element' : 'Hide element'}
+                  >
+                    <span className="material-symbols-outlined">{isHidden ? 'visibility_off' : 'visibility'}</span>
+                  </button>
                   <button
                     className="reorder-btn"
                     onClick={(e) => {
