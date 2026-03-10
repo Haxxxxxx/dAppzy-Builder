@@ -14,7 +14,6 @@ import Topbar from "./components/TopBar";
 import SideBar from './components/SideBar';
 const AIAgentPanel = React.lazy(() => import("./components/Rightbar/AIAgentPanel"));
 import AIFloatingButton from "./components/AIFloatingButton";
-import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
 import { projectStorage } from "./utils/storageManager";
 import ErrorBoundary from "./components/ErrorBoundary";
