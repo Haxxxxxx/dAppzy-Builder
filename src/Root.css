@@ -68,6 +68,21 @@
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+
+  /* Extended Neutral Colors */
+  --text-muted: #9CA3AF;          /* Muted text/icons */
+  --container-bg: #e0e0e0;        /* Container placeholder bg */
+  --modal-bg: #1F2937;            /* Modal/popup backgrounds */
+  --tag-bg: #4D4D4D;              /* Tag/chip backgrounds */
+
+  /* Button Colors */
+  --button-blue: #3498db;         /* Blue action buttons */
+  --button-blue-hover: #357ABD;   /* Blue button hover */
+
+  /* Purple Transparent Variants */
+  --purple-10: rgba(92, 78, 250, 0.1);  /* Purple 10% opacity */
+  --purple-20: rgba(92, 78, 250, 0.2);  /* Purple 20% opacity */
+  --white-10: rgba(255, 255, 255, 0.1); /* White 10% opacity */
 }
 
 * {
