@@ -235,13 +235,6 @@ const DraggableNavbar = ({
   }, [isModalOpen]);
 
 
-  //const titles = {
-  //  twoColumn: 'Two Columns',
-  //  threeColumn: 'Three Columns',
-  //  customTemplate: '3S Navbar',
-  //  defiNavbar: 'DeFi Navbar',
-  //};
-
   // Inside DraggableNavbar.js
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
