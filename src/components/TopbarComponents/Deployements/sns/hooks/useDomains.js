@@ -29,8 +29,8 @@ export const useDomains = (connection, walletAddress) => {
       if (domains.length > 0) {
         setDomains(domains);
         
-        // Get primary domain
-        const primaryDomain = domains.find(d => d.name === 'dappzy');
+        // Get primary domain — use the first domain owned by the wallet
+        const primaryDomain = domains[0] || null;
         if (primaryDomain) {
           setPrimaryDomain(primaryDomain.name);
           debugLog('Primary domain set', {
