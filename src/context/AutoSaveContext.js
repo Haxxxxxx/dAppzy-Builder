@@ -1,7 +1,35 @@
 import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import debounce from 'lodash/debounce';
+function debounce(fn, delay) {
+  let timer;
+  let pendingArgs;
+  let pendingThis;
+  const debounced = function (...args) {
+    pendingArgs = args;
+    pendingThis = this;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(pendingThis, pendingArgs);
+      pendingArgs = undefined;
+      pendingThis = undefined;
+    }, delay);
+  };
+  debounced.flush = () => {
+    clearTimeout(timer);
+    if (pendingArgs !== undefined) {
+      fn.apply(pendingThis, pendingArgs);
+      pendingArgs = undefined;
+      pendingThis = undefined;
+    }
+  };
+  debounced.cancel = () => {
+    clearTimeout(timer);
+    pendingArgs = undefined;
+    pendingThis = undefined;
+  };
+  return debounced;
+}
 import { LAYOUT_TYPES_WITH_CHILDREN } from '../constants/elementTypes';
 import { useToast } from './ToastContext';
 import { projectStorage } from '../utils/storageManager';
