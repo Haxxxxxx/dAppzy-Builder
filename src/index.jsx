@@ -5,7 +5,6 @@ import App from './App';
 
 import { EditableProvider } from './context/EditableContext';
 import { AutoSaveProvider } from './context/AutoSaveContext';
-import Web3Provider from './context/Web3Provider';
 import { initSentry } from './configs/sentry';
 
 initSentry();
@@ -69,9 +68,7 @@ const RootComponent = () => {
     <React.StrictMode>
       <EditableProvider userId={userId}>
         <AutoSaveProvider userId={userId} projectId={projectId}>
-          <Web3Provider>
-            <App userId={userId} setUserId={setUserId} projectId={projectId} />
-          </Web3Provider>
+          <App userId={userId} setUserId={setUserId} projectId={projectId} />
         </AutoSaveProvider>
       </EditableProvider>
     </React.StrictMode>
