@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import debounce from 'lodash/debounce';
 import { LAYOUT_TYPES_WITH_CHILDREN } from '../constants/elementTypes';
 import { useToast } from './ToastContext';
+import { projectStorage } from '../utils/storageManager';
 
 export const AutoSaveContext = createContext();
 
@@ -168,7 +169,7 @@ export const AutoSaveProvider = ({ children, userId: propUserId, projectId: prop
       // Save to localStorage in chunks to prevent UI blocking.
       // Write new chunks FIRST, then clean up old ones to prevent data loss on crash.
       const chunkSize = 50;
-      const oldChunkCount = parseInt(localStorage.getItem('editableElements_chunks') || '0');
+      const oldChunkCount = projectStorage.getChunkCount();
       const newChunkCount = Math.ceil(uniqueElements.length / chunkSize);
 
       const safeSetItem = (key, value) => {

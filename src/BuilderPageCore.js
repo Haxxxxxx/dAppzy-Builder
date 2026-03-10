@@ -16,6 +16,7 @@ const AIAgentPanel = React.lazy(() => import("./components/Rightbar/AIAgentPanel
 import AIFloatingButton from "./components/AIFloatingButton";
 import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
+import { projectStorage } from "./utils/storageManager";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { PLACEHOLDER_IMAGES } from "./configs/assetUrls";
 import useKeyboardShortcuts from "./hooks/useKeyboardShortcuts";
@@ -867,7 +868,7 @@ const BuilderPageCore = ({
                   <WebsiteSettingsPanel
                     onUpdateSettings={(updatedSettings) => {
                       setPageSettings(updatedSettings);
-                      localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
+                      projectStorage.setWebsiteSettings(updatedSettings);
                     }}
                     userId={userId}
                     isPioneer={isPioneer}

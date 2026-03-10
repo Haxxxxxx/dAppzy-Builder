@@ -10,6 +10,7 @@ import {
   loadFromLocalStorage,
 } from '../utils/LeftBarUtils/storageUtils';
 import { structureConfigurations } from '../configs/structureConfigurations';
+import { projectStorage } from '../utils/storageManager';
 
 export const EditableContext = createContext();
 export const ELEMENTS_VERSION = '1.0.0'; // Define the version constant
@@ -715,7 +716,7 @@ export const EditableProvider = ({ children, userId }) => {
 
   // Set elements version on mount
   useEffect(() => {
-    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
+    projectStorage.setElementsVersion(ELEMENTS_VERSION);
   }, []);
 
   return (

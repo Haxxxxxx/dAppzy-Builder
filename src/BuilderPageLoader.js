@@ -8,9 +8,10 @@ import WalletConnection from "./NewLogin/WalletConnection";
 import { TEMPLATES } from "./configs/templates";
 import AIBuilder from "./components/AIBuilder";
 import "./components/css/ProjectSelection.css";
+import { subscriptionStorage, projectStorage, authStorage } from './utils/storageManager';
 
 function getMaxProjects() {
-  const subscriptionStatus = localStorage.getItem('subscriptionStatus');
+  const subscriptionStatus = subscriptionStorage.getStatus();
   // 'pioneer' is the current status value; 'active' is kept as legacy fallback
   const isPioneer = subscriptionStatus === 'pioneer' || subscriptionStatus === 'active';
   return { isPioneer, maxProjects: isPioneer ? 10 : 3 };
@@ -136,9 +137,9 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         }
         if (projectData?.websiteSettings) {
           setPageSettings(projectData.websiteSettings);
-          localStorage.setItem("websiteSettings", JSON.stringify(projectData.websiteSettings));
+          projectStorage.setWebsiteSettings(projectData.websiteSettings);
         } else {
-          localStorage.setItem("websiteSettings", JSON.stringify(pageSettings));
+          projectStorage.setWebsiteSettings(pageSettings);
         }
         setActiveProjectId(projId);
         setInternProjectId(projId);
@@ -159,10 +160,8 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const createUserProject = useCallback(async (projectData) => {
     setLoadingState(true);
     try {
-      localStorage.removeItem('editableElements');
-      localStorage.removeItem('elementsVersion');
-      localStorage.removeItem('websiteSettings');
-      
+      projectStorage.clearProject();
+
       const projectsRef = collection(db, "projects", userId, "ProjectRef");
       const newProjectData = {
         userId,
@@ -283,10 +282,8 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     const loadProject = async () => {
       setLoadingState(true);
       try {
-        localStorage.removeItem('editableElements');
-        localStorage.removeItem('elementsVersion');
-        localStorage.removeItem('websiteSettings');
-        
+        projectStorage.clearProject();
+
         const params = new URLSearchParams(window.location.search);
         const qProjectId = params.get("projectId");
         
@@ -342,8 +339,8 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         onUserLogin={(walletKey) => {
           setIsLoggedIn(true);
           setUserId(walletKey);
-          sessionStorage.setItem("isLoggedIn", "true");
-          sessionStorage.setItem("userAccount", walletKey);
+          authStorage.setLoggedIn("true");
+          authStorage.setUserAccount(walletKey);
         }}
       />
     );
