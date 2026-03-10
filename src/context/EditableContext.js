@@ -7,7 +7,6 @@ import {
 } from '../utils/LeftBarUtils/elementUtils';
 import {
   saveToLocalStorage,
-  loadFromLocalStorage,
 } from '../utils/LeftBarUtils/storageUtils';
 import { structureConfigurations } from '../configs/structureConfigurations';
 import { projectStorage } from '../utils/storageManager';
@@ -301,41 +300,6 @@ export const EditableProvider = ({ children, userId }) => {
     recordElementsUpdate((prev) =>
       prev.map((el) => (el.id === id ? { ...el, ...newProperties } : el))
     );
-  }, [recordElementsUpdate]);
-
-  const saveSectionToLocalStorage = useCallback((sectionId) => {
-    const section = findElementById(sectionId, elements);
-    if (section) {
-      const buildNestedStructure = (parentId) => {
-        const parent = findElementById(parentId, elements);
-        if (!parent) return null;
-        const children = parent.children.map((childId) => buildNestedStructure(childId));
-        return {
-          id: parent.id,
-          type: parent.type,
-          styles: parent.styles,
-          content: parent.content,
-          children,
-        };
-      };
-      const navbarHierarchy = buildNestedStructure(sectionId);
-      saveToLocalStorage(`section-${sectionId}`, navbarHierarchy);
-    }
-  }, [elements]);
-
-  const loadSectionFromLocalStorage = useCallback((sectionId) => {
-    const savedSection = loadFromLocalStorage(`section-${sectionId}`);
-    if (savedSection) {
-      const flattenNestedStructure = (node, accumulator = []) => {
-        if (!node) return accumulator;
-        const { children, ...rest } = node;
-        accumulator.push(rest);
-        children.forEach((child) => flattenNestedStructure(child, accumulator));
-        return accumulator;
-      };
-      const flattenedElements = flattenNestedStructure(savedSection);
-      recordElementsUpdate(flattenedElements);
-    }
   }, [recordElementsUpdate]);
 
   const updateConfiguration = useCallback((id, key, value) => {
@@ -668,8 +632,6 @@ export const EditableProvider = ({ children, userId }) => {
     selectedStyle,
     setSelectedStyle,
     handleAICommand,
-    saveSectionToLocalStorage,
-    loadSectionFromLocalStorage,
     findElementById,
     generateUniqueId,
     copiedElement,
@@ -700,8 +662,6 @@ export const EditableProvider = ({ children, userId }) => {
     undo,
     redo,
     handleAICommand,
-    saveSectionToLocalStorage,
-    loadSectionFromLocalStorage,
     findElementById,
     copiedElement,
     copyElement,
