@@ -8,7 +8,7 @@ import { defaultNavbarStyles, CustomTemplateNavbarStyles } from '../Elements/Sec
 import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../Elements/Sections/Heros/defaultHeroStyles';
 import { sectionPopupConfigs, SECTION_POPUP_CATEGORIES, ALL_DROPPABLE_TYPES, SECTION_TYPES, resolveConfigType } from '../core/elementRegistry';
 import { NAVBAR, HERO, BUTTON, VFLEX_LAYOUT, DIV } from '../constants/elementTypes';
-import { isDescendantOf } from './dndUtils';
+import { isDescendantOf, buildSectionData } from './dndUtils';
 
 // Section Selection Popup Component
 const SectionSelectionPopup = ({ onClose, onSelect }) => {
@@ -297,85 +297,18 @@ const UnifiedDropZone = React.memo(({
 
   const handleSectionSelect = (section) => {
     if (onDrop) {
-      // Get the section configuration from structureConfigurations
-      const sectionConfig = structureConfigurations[section.id];
-      if (!sectionConfig) {
-        return;
-      }
+      const navbarStyles = section.id === 'customTemplateNavbar'
+        ? CustomTemplateNavbarStyles
+        : defaultNavbarStyles;
 
-      // Resolve canonical type from registry (single source of truth)
-      const resolvedType = resolveConfigType(section.id);
+      const sectionData = buildSectionData(
+        section.id,
+        structureConfigurations,
+        resolveConfigType,
+        { navbarStyles, NAVBAR, HERO, BUTTON }
+      );
 
-      // Create a properly structured section object that matches the EditableContext expectations
-      const sectionData = {
-        type: resolvedType,
-        configuration: section.id,
-        structure: section.id,
-        styles: {
-          ...(sectionConfig.styles || {}),
-          position: 'relative',
-          display: 'flex',
-          boxSizing: 'border-box',
-          flexDirection: sectionConfig.direction || 'column',
-        },
-        children: (sectionConfig.children || []).map(child => {
-          // Special handling for navbar elements
-          if (sectionConfig.type === NAVBAR) {
-            const navbarStyles = section.id === 'customTemplateNavbar' ? CustomTemplateNavbarStyles : defaultNavbarStyles;
-            
-            // Handle button styles specifically
-            if (child.type === BUTTON) {
-              return {
-                type: child.type,
-                content: child.content || '',
-                styles: {
-                  ...navbarStyles.buttonContainer,
-                  ...child.styles,
-                  position: 'relative',
-          boxSizing: 'border-box'
-        },
-                settings: child.content?.settings || {},
-                configuration: {
-                  ...child.content?.settings,
-                  enabled: true
-                }
-              };
-            }
-            
-            return {
-              type: child.type,
-              content: child.content || '',
-              styles: {
-                ...navbarStyles[child.type] || {},
-                position: 'relative',
-                boxSizing: 'border-box'
-              },
-              settings: child.content?.settings || {},
-              configuration: {
-                ...child.content?.settings,
-                enabled: true
-              }
-            };
-          }
-          
-          return {
-          type: child.type,
-          content: child.content || '',
-          styles: {
-            ...child.styles,
-            position: 'relative',
-            boxSizing: 'border-box'
-          },
-          settings: child.content?.settings || {},
-          configuration: {
-            ...child.content?.settings,
-            enabled: true
-          }
-          };
-        }),
-        settings: sectionConfig.settings || {},
-        label: sectionConfig.label || section.name
-      };
+      if (!sectionData) return;
 
       onDrop(sectionData, parentId);
     }
@@ -405,102 +338,23 @@ const UnifiedDropZone = React.memo(({
       if (onDrop) {
         // For sections, ensure we pass the full configuration
         if (SECTION_TYPES.has(item.type)) {
-          // Get the section configuration from structureConfigurations
-          const sectionConfig = structureConfigurations[item.configuration];
-          if (!sectionConfig) {
-            return;
-          }
+          const navbarStyles = item.configuration === 'customTemplateNavbar'
+            ? CustomTemplateNavbarStyles
+            : defaultNavbarStyles;
+          const heroStyles = item.configuration === 'heroTwo'
+            ? heroTwoStyles
+            : (item.configuration === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
 
-          // Resolve canonical type from registry (single source of truth)
-          const type = resolveConfigType(item.configuration);
+          const sectionData = buildSectionData(
+            item.configuration,
+            structureConfigurations,
+            resolveConfigType,
+            { navbarStyles, heroStyles, NAVBAR, HERO, BUTTON }
+          );
 
-          onDrop({
-            type,
-            configuration: item.configuration,
-            structure: item.configuration,
-            styles: {
-              ...(sectionConfig.styles || {}),
-              position: 'relative',
-              display: 'flex',
-              boxSizing: 'border-box',
-              flexDirection: sectionConfig.direction || 'column',
-            },
-            children: (sectionConfig.children || []).map(child => {
-              // Special handling for navbar elements
-              if (type === NAVBAR) {
-                const navbarStyles = item.configuration === 'customTemplateNavbar' ? CustomTemplateNavbarStyles : defaultNavbarStyles;
-                
-                // Handle button styles specifically
-                if (child.type === BUTTON) {
-                  const buttonStyle = child.content?.settings?.isPrimary ? 
-                    navbarStyles.primaryButton : 
-                    (child.content?.settings?.isSecondary ? navbarStyles.secondaryButton : navbarStyles.button);
-                  
-                  return {
-                    type: child.type,
-                    content: child.content || '',
-                    styles: {
-                      ...navbarStyles.buttonContainer,
-                      ...buttonStyle,
-                      ...child.styles,
-                      position: 'relative',
-                      boxSizing: 'border-box'
-                    },
-                    settings: {
-                      ...child.settings,
-                      isPrimary: child.content?.settings?.isPrimary,
-                      isSecondary: child.content?.settings?.isSecondary
-                    },
-                    children: child.children || []
-                  };
-                }
-                
-                return {
-                  type: child.type,
-                  content: child.content || '',
-                  styles: {
-                    ...navbarStyles[child.type] || {},
-                    position: 'relative',
-                    boxSizing: 'border-box'
-                  },
-                  settings: child.settings || {},
-                  children: child.children || []
-                };
-              }
-              
-              // Special handling for hero elements
-              if (type === HERO) {
-                const heroStyles = item.configuration === 'heroTwo' ? heroTwoStyles : 
-                                 (item.configuration === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
-                
-                return {
-                  type: child.type,
-                  content: child.content || '',
-                  styles: {
-                    ...heroStyles[child.type] || {},
-                    position: 'relative',
-                    boxSizing: 'border-box'
-                  },
-                  settings: child.settings || {},
-                  children: child.children || []
-                };
-              }
-              
-              return {
-              type: child.type,
-              content: child.content || '',
-              styles: {
-                ...child.styles,
-                position: 'relative',
-                boxSizing: 'border-box'
-              },
-              settings: child.settings || {},
-              children: child.children || []
-              };
-            }),
-            settings: sectionConfig.settings || {},
-            label: sectionConfig.label || item.configuration
-          }, parentId);
+          if (!sectionData) return;
+
+          onDrop(sectionData, parentId);
         } else {
           onDrop(item, parentId);
         }
