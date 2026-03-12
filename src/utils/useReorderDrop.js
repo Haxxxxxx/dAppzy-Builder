@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { isDescendantOf } from "./dndUtils";
 
 /**
  * Enhanced reorder-drop hook with precise insertion-point detection.
@@ -147,17 +148,8 @@ const useReorderDrop = (findElementById, elements, setElements) => {
 
       if (!isSameContainer) {
         // Circular reference check: prevent dragging a container into its own descendant
-        const isDescendantOf = (elementId, potentialParentId, els) => {
-          let currentId = potentialParentId;
-          while (currentId) {
-            if (currentId === elementId) return true;
-            const current = els.find(el => el.id === currentId);
-            currentId = current?.parentId || null;
-          }
-          return false;
-        };
-
         if (isDescendantOf(id, targetContainer.id, elements)) {
+          console.warn('[DnD] Blocked: cannot drop element into its own descendant');
           resetDrag();
           return;
         }

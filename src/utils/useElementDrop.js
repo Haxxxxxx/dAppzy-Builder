@@ -1,32 +1,22 @@
 import { useDrop } from 'react-dnd';
 import React from 'react';
+import { ALL_DROPPABLE_TYPES } from '../core/elementRegistry';
+import { isDescendantOf } from './dndUtils';
 
-const useElementDrop = ({ id, elementRef, onDropItem }) => {
-  // Define all possible element types that can be dropped
-  const acceptedTypes = [
-    // Layout elements
-    'navbar', 'hero', 'cta', 'section', 'footer', 'defiSection', 'mintingSection',
-    // Basic elements
-    'div', 'span', 'p', 'heading', 'button', 'image', 'link',
-    // Form elements
-    'form', 'input', 'textarea', 'select', 'label',
-    // List elements
-    'ul', 'ol', 'li',
-    // Media elements
-    'video', 'youtubevideo', 'bgvideo',
-    // Web3 elements
-    'defiModule', 'mintingSection', 'candymachine',
-    // Typography elements
-    'blockquote', 'code', 'pre', 'caption',
-    // Other elements
-    'container', 'gridlayout', 'hflexlayout', 'vflexlayout'
-  ];
-
+const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
   const [{ isOverCurrent, canDrop }, drop] = useDrop(() => ({
-    accept: acceptedTypes,
+    accept: ALL_DROPPABLE_TYPES,
     drop: (item, monitor) => {
       // If a nested drop target already handled the drop, do nothing
       if (monitor.didDrop()) return;
+
+      // Circular reference guard: block dropping a container into its own descendant
+      if (item.id && id && elements) {
+        if (isDescendantOf(item.id, id, elements)) {
+          console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          return;
+        }
+      }
 
       // Get the drop target's position
       const dropTargetRect = elementRef.current?.getBoundingClientRect();
@@ -46,8 +36,20 @@ const useElementDrop = ({ id, elementRef, onDropItem }) => {
         relativeY >= 0 && 
         relativeY <= dropTargetRect.height;
 
-      // Calculate the drop index based on position
-      const dropIndex = Math.floor(relativeY / (dropTargetRect.height / (dropTargetRect.children?.length || 1)));
+      // Calculate precise drop index by walking actual DOM children
+      let dropIndex = 0;
+      const containerEl = elementRef.current;
+      if (containerEl) {
+        const children = Array.from(containerEl.children).filter(child =>
+          !child.dataset?.dropIndicator && !child.classList?.contains('drop-insertion-line')
+        );
+        for (let i = 0; i < children.length; i++) {
+          const childRect = children[i].getBoundingClientRect();
+          const midY = childRect.top + childRect.height / 2;
+          if (clientOffset.y < midY) { dropIndex = i; break; }
+          dropIndex = i + 1;
+        }
+      }
 
       if (isWithinBounds) {
         // Call onDropItem with the item, index, and position information
@@ -82,27 +84,13 @@ const useElementDrop = ({ id, elementRef, onDropItem }) => {
         relativeY >= 0 && 
         relativeY <= dropTargetRect.height;
 
-      // Update cursor style based on whether we can drop
-      if (isWithinBounds) {
-        document.body.style.cursor = 'copy';
-      } else {
-        document.body.style.cursor = 'not-allowed';
-      }
-
       return isWithinBounds;
     },
     collect: (monitor) => ({
       isOverCurrent: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
     }),
-  }), [id, onDropItem, elementRef]);
-
-  // Clean up cursor style when component unmounts
-  React.useEffect(() => {
-    return () => {
-      document.body.style.cursor = 'default';
-    };
-  }, []);
+  }), [id, onDropItem, elementRef, elements]);
 
   return { isOverCurrent, canDrop, drop };
 };
