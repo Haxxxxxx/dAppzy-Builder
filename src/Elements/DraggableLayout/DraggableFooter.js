@@ -13,6 +13,8 @@ import {
   DeFiFooterStyles 
 } from '../Sections/Footers/defaultFooterStyles';
 import { FOOTER, HEADING, PARAGRAPH, BUTTON, DIV } from '../../constants/elementTypes';
+import { hasDuplicateElement, DROP_REJECTION_REASONS } from '../../utils/dndUtils';
+import { useToast } from '../../context/ToastContext';
 
 /**
  * DraggableFooter component for rendering and managing footer sections.
@@ -37,6 +39,7 @@ const DraggableFooter = ({
   handleOpenMediaPanel,
 }) => {
   const { addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const { showToast } = useToast();
 
   // Memoize footer styles to avoid recalculation
   const footerStyles = useMemo(() => ({
@@ -164,19 +167,19 @@ const DraggableFooter = ({
     }
 
     if (item.type === FOOTER) {
+      showToast(DROP_REJECTION_REASONS.SELF_DROP, 'info');
       return;
     }
 
-    // Check for duplicates in a single pass
-    const hasDuplicate = currentSection.children?.some(childId => {
-      const child = findElementById(childId, elements);
-      return child?.type === item.type && 
-             (item.type === HEADING || item.type === PARAGRAPH || item.type === BUTTON) &&
-             child?.content === item.content;
-    });
-
-    if (hasDuplicate) {
-      return;
+    // Check for duplicates in a single pass (heading / paragraph / button only)
+    if (item.type === HEADING || item.type === PARAGRAPH || item.type === BUTTON) {
+      const existingChildren = currentSection.children
+        ?.map(childId => findElementById(childId, elements))
+        .filter(Boolean);
+      if (hasDuplicateElement(existingChildren, item)) {
+        showToast(DROP_REJECTION_REASONS.DUPLICATE, 'info');
+        return;
+      }
     }
 
     // Add new element with minimal properties

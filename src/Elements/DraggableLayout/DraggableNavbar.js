@@ -7,7 +7,8 @@ import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 import DeFiNavbar from '../Sections/Navbars/DeFiNavbar';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
 import { NAVBAR, BUTTON, CONNECT_WALLET_BUTTON } from '../../constants/elementTypes';
-import { hasDuplicateElement } from '../../utils/dndUtils';
+import { hasDuplicateElement, DROP_REJECTION_REASONS } from '../../utils/dndUtils';
+import { useToast } from '../../context/ToastContext';
 
 const DraggableNavbar = ({
   id,
@@ -18,6 +19,7 @@ const DraggableNavbar = ({
   handleOpenMediaPanel,
 }) => {
   const { generateUniqueId, addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const { showToast } = useToast();
   const dropHandledRef = useRef(false);
 
   // DraggableNavbar.js
@@ -82,6 +84,7 @@ const DraggableNavbar = ({
 
     // Check if we're trying to add a navbar inside another navbar
     if (item.type === NAVBAR) {
+      showToast(DROP_REJECTION_REASONS.SELF_DROP, 'info');
       return;
     }
 
@@ -99,6 +102,7 @@ const DraggableNavbar = ({
     // For buttons and connect wallet buttons, check for duplicates
     if (item.type === BUTTON || item.type === CONNECT_WALLET_BUTTON) {
       if (hasDuplicateElement(existingElements, item)) {
+        showToast(DROP_REJECTION_REASONS.DUPLICATE, 'info');
         return;
       }
     }

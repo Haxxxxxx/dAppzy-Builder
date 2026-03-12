@@ -8,7 +8,8 @@ import { defaultNavbarStyles, CustomTemplateNavbarStyles } from '../Elements/Sec
 import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../Elements/Sections/Heros/defaultHeroStyles';
 import { sectionPopupConfigs, SECTION_POPUP_CATEGORIES, ALL_DROPPABLE_TYPES, SECTION_TYPES, resolveConfigType } from '../core/elementRegistry';
 import { NAVBAR, HERO, BUTTON, VFLEX_LAYOUT, DIV } from '../constants/elementTypes';
-import { isDescendantOf, buildSectionData } from './dndUtils';
+import { isDescendantOf, buildSectionData, DROP_REJECTION_REASONS } from './dndUtils';
+import { useToast } from '../context/ToastContext';
 
 // Section Selection Popup Component
 const SectionSelectionPopup = ({ onClose, onSelect }) => {
@@ -273,6 +274,7 @@ const UnifiedDropZone = React.memo(({
   const [isHovered, setIsHovered] = useState(false);
   const [showSectionPopup, setShowSectionPopup] = useState(false);
   const [showDivOptions, setShowDivOptions] = useState(false);
+  const { showToast } = useToast();
 
   const handleInteraction = useCallback((e) => {
     e.preventDefault();
@@ -332,6 +334,7 @@ const UnifiedDropZone = React.memo(({
       if (item.id && parentId && elements) {
         if (isDescendantOf(item.id, parentId, elements)) {
           console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          showToast(DROP_REJECTION_REASONS.CIRCULAR, 'info');
           return;
         }
       }

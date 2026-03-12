@@ -8,7 +8,8 @@ import { structureConfigurations } from '../../configs/structureConfigurations.j
 import { HeroConfiguration } from '../../configs/heros/HeroConfigurations.js';
 import { heroTwoStyles } from '../Sections/Heros/defaultHeroStyles';
 import { HERO, IMAGE, SPAN, HEADING, BUTTON, DIV } from '../../constants/elementTypes';
-import { hasDuplicateElement } from '../../utils/dndUtils';
+import { hasDuplicateElement, DROP_REJECTION_REASONS } from '../../utils/dndUtils';
+import { useToast } from '../../context/ToastContext';
 /**
  * DraggableHero component for rendering and managing Hero sections.
  * Supports drag and drop functionality, modal interactions, and different hero configurations.
@@ -33,6 +34,7 @@ const DraggableHero = ({
   handleOpenMediaPanel,
 }) => {
   const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId } = useContext(EditableContext);
+  const { showToast } = useToast();
 
   // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -226,6 +228,7 @@ const DraggableHero = ({
     }
 
     if (item.type === HERO) {
+      showToast(DROP_REJECTION_REASONS.SELF_DROP, 'info');
       return;
     }
 
@@ -235,6 +238,7 @@ const DraggableHero = ({
         ?.map(childId => findElementById(childId, elements))
         .filter(Boolean);
       if (hasDuplicateElement(existingChildren, item)) {
+        showToast(DROP_REJECTION_REASONS.DUPLICATE, 'info');
         return;
       }
     }

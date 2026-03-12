@@ -1,9 +1,11 @@
 import { useDrop } from 'react-dnd';
 import React from 'react';
 import { ALL_DROPPABLE_TYPES } from '../core/elementRegistry';
-import { isDescendantOf, getDropPosition } from './dndUtils';
+import { isDescendantOf, getDropPosition, DROP_REJECTION_REASONS } from './dndUtils';
+import { useToast } from '../context/ToastContext';
 
 const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
+  const { showToast } = useToast();
   const [{ isOverCurrent, canDrop }, drop] = useDrop(() => ({
     accept: ALL_DROPPABLE_TYPES,
     drop: (item, monitor) => {
@@ -14,6 +16,7 @@ const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
       if (item.id && id && elements) {
         if (isDescendantOf(item.id, id, elements)) {
           console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          showToast(DROP_REJECTION_REASONS.CIRCULAR, 'info');
           return;
         }
       }
@@ -64,7 +67,7 @@ const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
       isOverCurrent: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
     }),
-  }), [id, onDropItem, elementRef, elements]);
+  }), [id, onDropItem, elementRef, elements, showToast]);
 
   return { isOverCurrent, canDrop, drop };
 };

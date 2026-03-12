@@ -11,7 +11,8 @@ import { defaultSectionStyles } from '../Sections/ContentSections/defaultSection
 import { PLACEHOLDER_IMAGES } from '../../configs/assetUrls';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import { CONTENT_SECTION, DIV, HEADING, PARAGRAPH, BUTTON, IMAGE, SECTION } from '../../constants/elementTypes';
-import { hasDuplicateElement } from '../../utils/dndUtils';
+import { hasDuplicateElement, DROP_REJECTION_REASONS } from '../../utils/dndUtils';
+import { useToast } from '../../context/ToastContext';
 
 /**
  * DraggableContentSections component for rendering and managing content sections.
@@ -105,6 +106,7 @@ const DraggableContentSections = ({
     updateStyles,
     generateUniqueId
   } = useContext(EditableContext);
+  const { showToast } = useToast();
 
   const defaultInjectedRef = useRef(false);
 
@@ -434,6 +436,7 @@ const DraggableContentSections = ({
 
     // Check if we're trying to add a content section inside another content section
     if (item.type === CONTENT_SECTION) {
+      showToast(DROP_REJECTION_REASONS.SELF_DROP, 'info');
       return;
     }
 
@@ -447,6 +450,7 @@ const DraggableContentSections = ({
 
     const containerType = containerMap[item.type];
     if (!containerType) {
+      showToast(DROP_REJECTION_REASONS.INVALID_TYPE, 'info');
       return;
     }
 
@@ -465,6 +469,7 @@ const DraggableContentSections = ({
       .filter(Boolean);
 
     if (hasDuplicateElement(existingElements, item)) {
+      showToast(DROP_REJECTION_REASONS.DUPLICATE, 'info');
       return;
     }
 

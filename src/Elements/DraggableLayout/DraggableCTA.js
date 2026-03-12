@@ -5,7 +5,8 @@ import CTAOne from '../Sections/CTAs/CTAOne';
 import CTATwo from '../Sections/CTAs/CTATwo';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
 import { CTA, BUTTON, HEADING, PARAGRAPH } from '../../constants/elementTypes';
-import { hasDuplicateElement } from '../../utils/dndUtils';
+import { hasDuplicateElement, DROP_REJECTION_REASONS } from '../../utils/dndUtils';
+import { useToast } from '../../context/ToastContext';
 
 /**
  * DraggableCTA component for rendering and managing CTA (Call to Action) elements.
@@ -31,6 +32,7 @@ const DraggableCTA = ({
   handleOpenMediaPanel,
 }) => {
   const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId } = useContext(EditableContext);
+  const { showToast } = useToast();
 
   // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -85,6 +87,7 @@ const DraggableCTA = ({
 
     // Check if we're trying to add a CTA section inside another CTA section
     if (item.type === CTA) {
+      showToast(DROP_REJECTION_REASONS.SELF_DROP, 'info');
       return;
     }
 
@@ -96,6 +99,7 @@ const DraggableCTA = ({
     // For specific elements, check for duplicates
     if (item.type === BUTTON || item.type === HEADING || item.type === PARAGRAPH) {
       if (hasDuplicateElement(existingElements, item)) {
+        showToast(DROP_REJECTION_REASONS.DUPLICATE, 'info');
         return;
       }
     }
