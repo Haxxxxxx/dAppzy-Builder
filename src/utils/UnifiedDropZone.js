@@ -271,7 +271,6 @@ const UnifiedDropZone = React.memo(({
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [showSectionPopup, setShowSectionPopup] = useState(false);
   const [showDivOptions, setShowDivOptions] = useState(false);
   const { showToast } = useToast();
@@ -366,16 +365,10 @@ const UnifiedDropZone = React.memo(({
     hover: (item, monitor) => {
       if (!dropRef.current) return;
 
-      const hoverBoundingRect = dropRef.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
-
       if (!clientOffset) return;
 
-      // Calculate the mouse position relative to the drop zone
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-      // Only update position if we're not already showing the drop zone
+      // Track cursor position for floating dropzone types (non-first, non-default)
       if (!isVisible) {
         setPosition({
           x: clientOffset.x,
@@ -407,8 +400,6 @@ const UnifiedDropZone = React.memo(({
         ref={setDropRef}
         className={`unified-dropzone ${className} ${isOver ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
         onClick={handleInteraction}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         style={{
           position: isFirstDropzone ? 'absolute' : (isDefaultDropzone ? 'static' : 'absolute'),
           left: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.x),
