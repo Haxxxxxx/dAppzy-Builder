@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import HeroOne from '../Sections/Heros/HeroOne';
@@ -7,6 +7,8 @@ import HeroThree from '../Sections/Heros/HeroThree';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
 import { HeroConfiguration } from '../../configs/heros/HeroConfigurations.js';
 import { heroTwoStyles } from '../Sections/Heros/defaultHeroStyles';
+import { HERO, IMAGE, SPAN, HEADING, BUTTON, DIV } from '../../constants/elementTypes';
+import { hasDuplicateElement } from '../../utils/dndUtils';
 /**
  * DraggableHero component for rendering and managing Hero sections.
  * Supports drag and drop functionality, modal interactions, and different hero configurations.
@@ -26,23 +28,18 @@ const DraggableHero = ({
   id,
   configuration,
   isEditing,
-  showDescription = false,
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
-  imgSrc,
-  label,
 }) => {
   const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId } = useContext(EditableContext);
-  const [isModalOpen, setModalOpen] = useState(false);
-  const modalRef = useRef(null);
 
   // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { 
       id, 
-      type: 'hero', 
+      type: HERO,
       configuration,
       structure: configuration,
       children: HeroConfiguration[configuration]?.children || []
@@ -62,7 +59,7 @@ const DraggableHero = ({
             const sectionElement = findElementById(targetSectionId, elements);
             const hasExistingHero = sectionElement?.children?.some(childId => {
               const child = findElementById(childId, elements);
-              return child?.type === 'hero' && child?.configuration === item.configuration;
+              return child?.type === HERO && child?.configuration === item.configuration;
             });
 
             if (!hasExistingHero) {
@@ -81,11 +78,11 @@ const DraggableHero = ({
               const configuredChildren = HeroConfiguration[item.configuration]?.children || [];
               
               // Separate children into left and right containers
-              const leftChildren = configuredChildren.filter(child => 
-                child.type !== 'image' && child.type !== 'span'
+              const leftChildren = configuredChildren.filter(child =>
+                child.type !== IMAGE && child.type !== SPAN
               );
-              const rightChildren = configuredChildren.filter(child => 
-                child.type === 'image'
+              const rightChildren = configuredChildren.filter(child =>
+                child.type === IMAGE
               );
 
               // Create all elements in a single batch
@@ -140,7 +137,7 @@ const DraggableHero = ({
                 // Main hero element
                 {
                   id: newHeroId,
-                  type: 'hero',
+                  type: HERO,
                   configuration: item.configuration,
                   structure: item.configuration,
                   styles: { ...baseStyles },
@@ -152,7 +149,7 @@ const DraggableHero = ({
                 // Left container
                 {
                   id: leftContainerId,
-                  type: 'div',
+                  type: DIV,
                   styles: {
                     ...(heroConfig.styles?.leftContainer || {}),
                     position: 'relative',
@@ -167,7 +164,7 @@ const DraggableHero = ({
                 // Right container
                 {
                   id: rightContainerId,
-                  type: 'div',
+                  type: DIV,
                   styles: {
                     ...(heroConfig.styles?.rightContainer || {}),
                     position: 'relative',
@@ -206,10 +203,10 @@ const DraggableHero = ({
 
               // Batch state updates
               requestAnimationFrame(() => {
-                setSelectedElement({ 
-                  id: newHeroId, 
-                  type: 'hero', 
-                  configuration: item.configuration 
+                setSelectedElement({
+                  id: newHeroId,
+                  type: HERO,
+                  configuration: item.configuration
                 });
               });
             }
@@ -228,20 +225,18 @@ const DraggableHero = ({
       return;
     }
 
-    if (item.type === 'heroSection') {
+    if (item.type === HERO) {
       return;
     }
 
-    // Check for duplicates in a single pass
-    const hasDuplicate = currentSection.children?.some(childId => {
-      const child = findElementById(childId, elements);
-      return child?.type === item.type && 
-             (item.type === 'heading' || item.type === 'subheading' || item.type === 'button') &&
-             child?.content === item.content;
-    });
-
-    if (hasDuplicate) {
-      return;
+    // Check for duplicates (heading / button only)
+    if (item.type === HEADING || item.type === BUTTON) {
+      const existingChildren = currentSection.children
+        ?.map(childId => findElementById(childId, elements))
+        .filter(Boolean);
+      if (hasDuplicateElement(existingChildren, item)) {
+        return;
+      }
     }
 
     // Add new element with minimal properties
@@ -289,126 +284,32 @@ const DraggableHero = ({
     [resolvedChildren, configChildren]
   );
 
-  // Toggle the modal state
-  const toggleModal = () => setModalOpen((prev) => !prev);
-
-  // Close modal if clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setModalOpen(false);
-      }
-    };
-
-    if (isModalOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isModalOpen]);
-
   // Handle element selection
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
-    setSelectedElement({ id, type: 'hero', styles: heroElement?.styles });
+    setSelectedElement({ id, type: HERO, styles: heroElement?.styles });
   };
 
-  // Handle preview display with description
-  if (showDescription) {
-    return (
-      <div 
-        className="bento-extract-display" 
-        ref={drag} 
-        style={{ 
-          opacity: isDragging ? 0.5 : 1,
-          cursor: 'pointer'
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
-        aria-label={`${label} preview`}
-      >
-        <img
-          src={imgSrc}
-          alt={label}
-          style={{
-            width: '100%',
-            height: 'auto',
-            marginBottom: '8px',
-            borderRadius: '4px',
-          }}
-          loading="lazy"
-        />
-        <strong className='element-name'>{label}</strong>
-      </div>
-    );
-  }
+  // Component map for configuration → React component
+  const HERO_COMPONENTS = {
+    heroOne: HeroOne,
+    heroTwo: HeroTwo,
+    heroThree: HeroThree,
+  };
 
-  // Assign the correct hero component based on configuration
-  let HeroComponent;
-  if (configuration === 'heroOne') {
-    HeroComponent = (
-      <HeroOne
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'heroTwo') {
-    HeroComponent = (
-      <HeroTwo
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'heroThree') {
-    HeroComponent = (
-      <HeroThree
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  }
+  const HeroComponent = HERO_COMPONENTS[configuration];
+  if (!HeroComponent) return null;
 
-  // Render the draggable hero component
   return (
-    <div
-      ref={drag}
-      style={{
-        cursor: 'pointer',
-        border: isDragging ? '1px dashed #000' : 'none',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onClick={toggleModal}
-      role="button"
-      tabIndex={0}
-      onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
-      aria-label={`${label} component`}
-    >
-      <strong>{label}</strong>
-      {HeroComponent}
-    </div>
+    <HeroComponent
+      uniqueId={id}
+      contentListWidth={contentListWidth}
+      children={childrenToRender}
+      onDropItem={onDropItem}
+      handlePanelToggle={handlePanelToggle}
+      handleOpenMediaPanel={handleOpenMediaPanel}
+      handleSelect={handleSelect}
+    />
   );
 };
 

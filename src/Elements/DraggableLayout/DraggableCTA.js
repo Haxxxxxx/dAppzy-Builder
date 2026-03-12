@@ -1,9 +1,11 @@
-import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import CTAOne from '../Sections/CTAs/CTAOne';
 import CTATwo from '../Sections/CTAs/CTATwo';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
+import { CTA, BUTTON, HEADING, PARAGRAPH } from '../../constants/elementTypes';
+import { hasDuplicateElement } from '../../utils/dndUtils';
 
 /**
  * DraggableCTA component for rendering and managing CTA (Call to Action) elements.
@@ -24,23 +26,18 @@ const DraggableCTA = ({
   id,
   configuration,
   isEditing,
-  showDescription = false,
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
-  imgSrc,
-  label,
 }) => {
   const { addNewElement, setElements, elements, findElementById, setSelectedElement, generateUniqueId } = useContext(EditableContext);
-  const [isModalOpen, setModalOpen] = useState(false);
-  const modalRef = useRef(null);
 
   // Set up drag-and-drop functionality with improved configuration handling
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
     item: { 
       id, 
-      type: 'cta', 
+      type: CTA,
       configuration,
       structure: configuration
     },
@@ -59,11 +56,11 @@ const DraggableCTA = ({
             const sectionElement = findElementById(targetSectionId, elements);
             const existingCTA = sectionElement?.children
               ?.map(childId => findElementById(childId, elements))
-              ?.find(el => el?.type === 'cta' && el?.configuration === item.configuration);
+              ?.find(el => el?.type === CTA && el?.configuration === item.configuration);
 
             if (!existingCTA) {
               // Only create a new CTA if one doesn't exist in the section
-              addNewElement('cta', 1, null, targetSectionId, {
+              addNewElement(CTA, 1, null, targetSectionId, {
                 ...ctaConfig,
                 configuration: item.configuration,
                 structure: item.configuration
@@ -71,7 +68,7 @@ const DraggableCTA = ({
             }
           }
         }
-        setSelectedElement({ id: item.id, type: 'cta', configuration: item.configuration });
+        setSelectedElement({ id: item.id, type: CTA, configuration: item.configuration });
       }
     },
   }), [configuration, isEditing, elements]);
@@ -97,11 +94,8 @@ const DraggableCTA = ({
       .filter(Boolean);
 
     // For specific elements, check for duplicates
-    if (item.type === 'button' || item.type === 'heading' || item.type === 'paragraph') {
-      const hasDuplicate = existingElements?.some(el => 
-        el.type === item.type && el.content === item.content
-      );
-      if (hasDuplicate) {
+    if (item.type === BUTTON || item.type === HEADING || item.type === PARAGRAPH) {
+      if (hasDuplicateElement(existingElements, item)) {
         return;
       }
     }
@@ -196,115 +190,32 @@ const DraggableCTA = ({
     .filter(Boolean);
   const childrenToRender = resolvedChildren.length > 0 ? resolvedChildren : configChildren;
 
-  // Toggle the modal state
-  const toggleModal = () => setModalOpen((prev) => !prev);
-
-  // Close modal if clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setModalOpen(false);
-      }
-    };
-
-    if (isModalOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isModalOpen]);
-
   // Handle element selection
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
-    setSelectedElement({ id, type: 'cta', styles: ctaElement?.styles });
+    setSelectedElement({ id, type: CTA, styles: ctaElement?.styles });
   };
 
-  // Handle preview display with description
-  if (showDescription) {
-    return (
-      <div 
-        className="bento-extract-display" 
-        ref={drag} 
-        style={{ 
-          opacity: isDragging ? 0.5 : 1,
-          cursor: 'pointer'
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
-        aria-label={`${label} preview`}
-      >
-        <img
-          src={imgSrc}
-          alt={label}
-          style={{
-            width: '100%',
-            height: 'auto',
-            marginBottom: '8px',
-            borderRadius: '4px',
-          }}
-          loading="lazy"
-        />
-        <strong className='element-name'>{label}</strong>
-      </div>
-    );
-  }
+  // Component map for configuration → React component
+  const CTA_COMPONENTS = {
+    ctaOne: CTAOne,
+    ctaTwo: CTATwo,
+    ctaThree: CTAOne, // same layout as ctaOne
+  };
 
-  // Assign the correct CTA component based on configuration
-  let CTAComponent;
-  if (configuration === 'ctaOne') {
-    CTAComponent = (
-      <CTAOne
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'ctaTwo') {
-    CTAComponent = (
-      <CTATwo
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={childrenToRender}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  }
+  const CTAComponent = CTA_COMPONENTS[configuration];
+  if (!CTAComponent) return null;
 
-  // Render the draggable CTA component
   return (
-    <div
-      ref={drag}
-      style={{
-        position: 'relative',
-        cursor: 'pointer',
-        border: isDragging ? '1px dashed #000' : 'none',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onClick={toggleModal}
-      role="button"
-      tabIndex={0}
-      onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
-      aria-label={`${label} component`}
-    >
-      <strong>{label}</strong>
-      {CTAComponent}
-    </div>
+    <CTAComponent
+      uniqueId={id}
+      contentListWidth={contentListWidth}
+      children={childrenToRender}
+      onDropItem={onDropItem}
+      handlePanelToggle={handlePanelToggle}
+      handleOpenMediaPanel={handleOpenMediaPanel}
+      handleSelect={handleSelect}
+    />
   );
 };
 

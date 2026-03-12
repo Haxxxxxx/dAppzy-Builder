@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useEffect, useRef } from 'react';
+import React, { useContext, useMemo, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
@@ -6,21 +6,18 @@ import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 import DeFiNavbar from '../Sections/Navbars/DeFiNavbar';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
+import { NAVBAR, BUTTON, CONNECT_WALLET_BUTTON } from '../../constants/elementTypes';
+import { hasDuplicateElement } from '../../utils/dndUtils';
 
 const DraggableNavbar = ({
   id,
   configuration,
   isEditing,
-  showDescription = false,
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
-  imgSrc, // Image source for the navbar preview
-  label, // Label for the navbar
 }) => {
-  const {generateUniqueId, addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
-  const [isModalOpen, setModalOpen] = useState(false); // Modal state
-  const modalRef = useRef(null);
+  const { generateUniqueId, addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const dropHandledRef = useRef(false);
 
   // DraggableNavbar.js
@@ -28,7 +25,7 @@ const DraggableNavbar = ({
     type: 'ELEMENT',
     item: { 
       id, 
-      type: 'navbar', 
+      type: NAVBAR,
       configuration,
       structure: configuration
     },
@@ -47,11 +44,11 @@ const DraggableNavbar = ({
             const sectionElement = findElementById(targetSectionId, elements);
             const existingNavbar = sectionElement?.children
               ?.map(childId => findElementById(childId, elements))
-              ?.find(el => el?.type === 'navbar' && el?.configuration === item.configuration);
+              ?.find(el => el?.type === NAVBAR && el?.configuration === item.configuration);
 
             if (!existingNavbar) {
               // Only create a new navbar if one doesn't exist in the section
-              addNewElement('navbar', 1, null, targetSectionId, {
+              addNewElement(NAVBAR, 1, null, targetSectionId, {
                 ...navbarConfig,
                 configuration: item.configuration,
                 structure: item.configuration
@@ -59,7 +56,7 @@ const DraggableNavbar = ({
             }
           }
         }
-        setSelectedElement({ id: item.id, type: 'navbar', configuration: item.configuration });
+        setSelectedElement({ id: item.id, type: NAVBAR, configuration: item.configuration });
       }
     },
   }), [configuration, isEditing, elements]);
@@ -84,7 +81,7 @@ const DraggableNavbar = ({
     if (!item || dropHandledRef.current) return;
 
     // Check if we're trying to add a navbar inside another navbar
-    if (item.type === 'navbar') {
+    if (item.type === NAVBAR) {
       return;
     }
 
@@ -100,11 +97,8 @@ const DraggableNavbar = ({
       .filter(Boolean);
 
     // For buttons and connect wallet buttons, check for duplicates
-    if (item.type === 'button' || item.type === 'connectWalletButton') {
-      const hasDuplicate = existingElements?.some(el => 
-        el.type === item.type && el.content === item.content
-      );
-      if (hasDuplicate) {
+    if (item.type === BUTTON || item.type === CONNECT_WALLET_BUTTON) {
+      if (hasDuplicateElement(existingElements, item)) {
         return;
       }
     }
@@ -212,125 +206,32 @@ const DraggableNavbar = ({
     }, 100);
   };
 
-  // Toggle the modal state
-  const toggleModal = () => setModalOpen((prev) => !prev);
-
-  // Close modal if clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setModalOpen(false);
-      }
-    };
-
-    if (isModalOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isModalOpen]);
-
-
-  // Inside DraggableNavbar.js
   const handleSelect = (e) => {
     e.stopPropagation(); // Prevent parent selections
-    setSelectedElement({ id, type: 'navbar', styles: navbar?.styles });
+    setSelectedElement({ id, type: NAVBAR, styles: navbar?.styles });
   };
 
-  // Handle preview display with description
-  if (showDescription) {
-    return (
-      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
-        <img
-          src={imgSrc}
-          alt={label}
-          style={{
-            width: '100%',
-            height: 'auto',
-            marginBottom: '8px',
-            borderRadius: '4px',
-          }}
-        />
-        <strong className='element-name'>{label}</strong>
-        {/* <p>{descriptions[configuration]}</p> */}
-      </div>
-    );
-  }
+  // Component map for configuration → React component
+  const NAVBAR_COMPONENTS = {
+    customTemplateNavbar: CustomTemplateNavbar,
+    twoColumn: TwoColumnNavbar,
+    threeColumn: ThreeColumnNavbar,
+    defiNavbar: DeFiNavbar,
+  };
 
-  // Assign the correct navbar component
-  let NavbarComponent;
-  if (configuration === 'customTemplateNavbar') {
-    NavbarComponent = (
-      <CustomTemplateNavbar
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={resolvedChildren}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'twoColumn') {
-    NavbarComponent = (
-      <TwoColumnNavbar
-        uniqueId={id}
-        children={resolvedChildren}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'threeColumn') {
-    NavbarComponent = (
-      <ThreeColumnNavbar
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={resolvedChildren}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  } else if (configuration === 'defiNavbar') {
-    NavbarComponent = (
-      <DeFiNavbar
-        uniqueId={id}
-        contentListWidth={contentListWidth}
-        children={resolvedChildren}
-        onDropItem={onDropItem}
-        handlePanelToggle={handlePanelToggle}
-        handleOpenMediaPanel={handleOpenMediaPanel}
-        handleSelect={handleSelect}
-      />
-    );
-  }
+  const NavbarComponent = NAVBAR_COMPONENTS[configuration];
+  if (!NavbarComponent) return null;
 
-  // Render draggable navbar with preview
   return (
-    <div
-      ref={drag}
-      style={{
-        cursor: 'pointer',
-        border: isDragging ? '1px dashed #000' : '',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '8px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onClick={(e) => {
-        toggleModal();    // show/hide your modal
-      }}
-    >
-      <strong>{label}</strong>
-      {NavbarComponent}
-    </div>
+    <NavbarComponent
+      uniqueId={id}
+      contentListWidth={contentListWidth}
+      children={resolvedChildren}
+      onDropItem={onDropItem}
+      handlePanelToggle={handlePanelToggle}
+      handleOpenMediaPanel={handleOpenMediaPanel}
+      handleSelect={handleSelect}
+    />
   );
 };
 

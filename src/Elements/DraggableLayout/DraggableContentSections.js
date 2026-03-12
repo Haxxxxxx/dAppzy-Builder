@@ -1,45 +1,100 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import SectionOne from '../Sections/ContentSections/SectionOne';
 import SectionTwo from '../Sections/ContentSections/SectionTwo';
 import SectionThree from '../Sections/ContentSections/SectionThree';
 import SectionFour from '../Sections/ContentSections/SectionFour';
-import StructurePanel from '../../components/LeftbarPanels/StructurePanel';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
 import { mergeStyles } from '../../utils/htmlRenderUtils/containerHelpers';
 import { defaultSectionStyles } from '../Sections/ContentSections/defaultSectionStyles';
-import deepMerge from '../../utils/deepMerge';
 import { PLACEHOLDER_IMAGES } from '../../configs/assetUrls';
+import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
+import { CONTENT_SECTION, DIV, HEADING, PARAGRAPH, BUTTON, IMAGE, SECTION } from '../../constants/elementTypes';
+import { hasDuplicateElement } from '../../utils/dndUtils';
 
 /**
  * DraggableContentSections component for rendering and managing content sections.
- * Supports drag and drop functionality, modal interactions, and different section configurations.
- * 
- * @param {Object} props - Component props
- * @param {string} props.id - Unique identifier for the section
- * @param {string} props.configuration - Section configuration type
- * @param {boolean} props.isEditing - Whether the section is in edit mode
- * @param {boolean} props.showDescription - Whether to show the description
- * @param {number} props.contentListWidth - Width of the content list
- * @param {Function} props.handlePanelToggle - Function to handle panel toggle
- * @param {Function} props.handleOpenMediaPanel - Function to handle media panel opening
- * @param {string} props.imgSrc - Image source for the section preview
- * @param {string} props.label - Label for the section
- * @param {string} props.description - Description for the section
+ * Supports drag and drop functionality and different section configurations.
  */
+
+// Generic renderer for section configs that don't have a dedicated component
+// (sectionFive, sectionSix, sectionSeven, sectionEight, etc.)
+const GenericSectionRenderer = ({
+  uniqueId,
+  handleSelect,
+  handleOpenMediaPanel,
+  sectionElement,
+  elements,
+  findElementById,
+  setSelectedElement,
+  setElements,
+}) => {
+  if (!sectionElement || !sectionElement.children) return null;
+
+  const renderChildTree = (childId) => {
+    const child = findElementById(childId, elements);
+    if (!child) return null;
+
+    // If this child has its own children (container), render them recursively
+    if (child.children && child.children.length > 0) {
+      return (
+        <div
+          key={childId}
+          id={childId}
+          style={child.styles || {}}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedElement({ id: child.id, type: child.type || DIV, styles: child.styles || {}, ...child });
+          }}
+        >
+          {child.children.map(nestedId => renderChildTree(nestedId))}
+        </div>
+      );
+    }
+
+    // Leaf element — use renderElement
+    return renderElement(
+      child,
+      elements,
+      null,
+      setSelectedElement,
+      setElements,
+      null,
+      undefined,
+      null,
+      false,
+      handleOpenMediaPanel
+    );
+  };
+
+  const sectionStyles = sectionElement.styles || {};
+
+  return (
+    <div
+      id={uniqueId}
+      style={{
+        ...sectionStyles,
+        width: '100%',
+        boxSizing: 'border-box',
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelect(e);
+      }}
+    >
+      {sectionElement.children.map(childId => renderChildTree(childId))}
+    </div>
+  );
+};
+
 const DraggableContentSections = ({
   id,
   configuration,
-  type,
-  label,
-  description,
   isEditing,
-  showDescription,
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
-  imgSrc,
 }) => {
   const {
     addNewElement,
@@ -51,13 +106,17 @@ const DraggableContentSections = ({
     generateUniqueId
   } = useContext(EditableContext);
 
-  const [isModalOpen, setModalOpen] = useState(false);
-  const modalRef = useRef(null);
   const defaultInjectedRef = useRef(false);
 
   // Initialize the Content Section structure with containers
+  // Only inject default structure for sectionOne — other sections handle their own structure
+  // via ContentList.js handleDrop or their dedicated section components
   useEffect(() => {
     if (!id || defaultInjectedRef.current) return;
+    if (configuration !== 'sectionOne') {
+      defaultInjectedRef.current = true;
+      return;
+    }
 
     const sectionElement = findElementById(id, elements);
     if (!sectionElement) return;
@@ -74,14 +133,14 @@ const DraggableContentSections = ({
     const containers = [
       {
         id: `${id}-content`,
-        type: 'div',
+        type: DIV,
         part: 'content',
         layout: 'content',
         styles: mergeStyles(defaultSectionStyles.contentWrapper, configStyles.content || {}),
         children: [
           {
             id: `${id}-heading-${generateUniqueId('heading')}`,
-            type: 'heading',
+            type: HEADING,
             content: 'Bibendum amet at molestie mattis.',
             styles: mergeStyles(defaultSectionStyles.heading, configStyles.heading || {}),
             parentId: `${id}-content`,
@@ -89,7 +148,7 @@ const DraggableContentSections = ({
           },
           {
             id: `${id}-paragraph-${generateUniqueId('paragraph')}`,
-            type: 'paragraph',
+            type: PARAGRAPH,
             content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit. Condimentum sit nunc in eros scelerisque sed. Commodo in viverra nunc, ullamcorper ut. Non, amet, aliquet scelerisque nullam sagittis, pulvinar. Fermentum scelerisque sit consectetur hac mi. Mollis leo eleifend ultricies purus iaculis.',
             styles: mergeStyles(defaultSectionStyles.paragraph, configStyles.paragraph || {}),
             parentId: `${id}-content`,
@@ -101,14 +160,14 @@ const DraggableContentSections = ({
       },
       {
         id: `${id}-buttons`,
-        type: 'div',
+        type: DIV,
         part: 'buttons',
         layout: 'buttons',
         styles: mergeStyles(defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
         children: [
           {
             id: `${id}-button-${generateUniqueId('button')}`,
-            type: 'button',
+            type: BUTTON,
             content: 'Primary Action',
             styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
             parentId: `${id}-buttons`,
@@ -116,7 +175,7 @@ const DraggableContentSections = ({
           },
           {
             id: `${id}-button-${generateUniqueId('button')}`,
-            type: 'button',
+            type: BUTTON,
             content: 'Secondary Action',
             styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
             parentId: `${id}-buttons`,
@@ -128,14 +187,14 @@ const DraggableContentSections = ({
       },
       {
         id: `${id}-image`,
-        type: 'div',
+        type: DIV,
         part: 'image',
         layout: 'image',
         styles: mergeStyles(defaultSectionStyles.imageContainer, configStyles.image || {}),
         children: [
           {
             id: `${id}-image-${generateUniqueId('image')}`,
-            type: 'image',
+            type: IMAGE,
             content: PLACEHOLDER_IMAGES.builder,
             styles: mergeStyles(defaultSectionStyles.image, configStyles.image || {}),
             parentId: `${id}-image`,
@@ -198,83 +257,17 @@ const DraggableContentSections = ({
     defaultInjectedRef.current = true;
   }, [id, elements, findElementById, setElements, updateStyles, configuration, generateUniqueId]);
 
-  // Standardized container creation helper
-  const createContainerStructure = (parentId, type, config) => {
-    const containers = [
-      {
-        id: `${parentId}-content`,
-        type: 'div',
-        part: 'content',
-        layout: 'content',
-        styles: defaultSectionStyles.contentWrapper,
-        children: [],
-        parentId: parentId,
-        configuration: config
-      },
-      {
-        id: `${parentId}-buttons`,
-        type: 'div',
-        part: 'buttons',
-        layout: 'buttons',
-        styles: defaultSectionStyles.buttonContainer,
-        children: [],
-        parentId: parentId,
-        configuration: config
-      },
-      {
-        id: `${parentId}-image`,
-        type: 'div',
-        part: 'image',
-        layout: 'image',
-        styles: defaultSectionStyles.imageContainer,
-        children: [],
-        parentId: parentId,
-        configuration: config
-      }
-    ];
-    return containers;
-  };
-
-  // Standardized style management
-  const applyStyles = (element, type) => {
-    return {
-      ...defaultSectionStyles[type],
-      ...element.styles,
-      position: 'relative',
-      boxSizing: 'border-box'
-    };
-  };
-
-  // Standardized configuration handling
-  const createElementConfig = (type, config) => {
-    return {
-      type,
-      configuration: config.type,
-      styles: applyStyles({}, type),
-      content: '',
-      label: config.label || '',
-      description: config.description || '',
-      settings: config.settings || {},
-      children: [],
-      layout: ['left', 'right']
-    };
-  };
-
-  // Standardized ID generation
-  const generateElementIds = (type, count) => {
-    return Array(count).fill(null).map(() => generateUniqueId(type));
-  };
-
-  // Setup drag behavior with improved configuration handling
+  // Setup drag behavior
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'ELEMENT',
-    item: { 
-      id, 
-      type: 'section', 
+    item: {
+      id,
+      type: CONTENT_SECTION,
       configuration,
       structure: configuration,
       styles: structureConfigurations[configuration]?.styles || {},
-      children: structureConfigurations[configuration]?.children || []
+      children: structureConfigurations[configuration]?.children || [],
+      label: structureConfigurations[configuration]?.label || '',
     },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
@@ -283,12 +276,12 @@ const DraggableContentSections = ({
       if (monitor.didDrop() && !isEditing) {
         const dropResult = monitor.getDropResult();
         const targetSectionId = dropResult?.sectionId;
-        
+
         if (targetSectionId) {
           const sectionElement = findElementById(targetSectionId, elements);
           const existingSection = sectionElement?.children
             ?.map(childId => findElementById(childId, elements))
-            ?.find(el => el?.type === 'section' && el?.configuration === item.configuration);
+            ?.find(el => el?.type === SECTION && el?.configuration === item.configuration);
 
           if (!existingSection) {
             // Generate unique ID for the section
@@ -301,13 +294,12 @@ const DraggableContentSections = ({
             // Create the new section with standardized configuration
             const newSection = {
               id: newSectionId,
-              type: 'section',
+              type: SECTION,
               configuration: item.configuration,
               structure: item.configuration,
               styles: mergeStyles(defaultSectionStyles.section, configStyles.section || {}),
               children: [],
-              label: label || '',
-              description: description || '',
+              label: config.label || '',
               settings: {}
             };
 
@@ -315,14 +307,14 @@ const DraggableContentSections = ({
             const containers = [
               {
                 id: `${newSectionId}-content`,
-                type: 'div',
+                type: DIV,
                 part: 'content',
                 layout: 'content',
                 styles: mergeStyles(defaultSectionStyles.contentWrapper, configStyles.content || {}),
                 children: [
                   {
                     id: `${newSectionId}-heading-${generateUniqueId('heading')}`,
-                    type: 'heading',
+                    type: HEADING,
                     content: 'Bibendum amet at molestie mattis.',
                     styles: mergeStyles(defaultSectionStyles.heading, configStyles.heading || {}),
                     parentId: `${newSectionId}-content`,
@@ -330,7 +322,7 @@ const DraggableContentSections = ({
                   },
                   {
                     id: `${newSectionId}-paragraph-${generateUniqueId('paragraph')}`,
-                    type: 'paragraph',
+                    type: PARAGRAPH,
                     content: 'Rhoncus morbi et augue nec, in id ullamcorper at sit. Condimentum sit nunc in eros scelerisque sed. Commodo in viverra nunc, ullamcorper ut. Non, amet, aliquet scelerisque nullam sagittis, pulvinar. Fermentum scelerisque sit consectetur hac mi. Mollis leo eleifend ultricies purus iaculis.',
                     styles: mergeStyles(defaultSectionStyles.paragraph, configStyles.paragraph || {}),
                     parentId: `${newSectionId}-content`,
@@ -342,14 +334,14 @@ const DraggableContentSections = ({
               },
               {
                 id: `${newSectionId}-buttons`,
-                type: 'div',
+                type: DIV,
                 part: 'buttons',
                 layout: 'buttons',
                 styles: mergeStyles(defaultSectionStyles.buttonContainer, configStyles.buttons || {}),
                 children: [
                   {
                     id: `${newSectionId}-button-${generateUniqueId('button')}`,
-                    type: 'button',
+                    type: BUTTON,
                     content: 'Primary Action',
                     styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
                     parentId: `${newSectionId}-buttons`,
@@ -357,7 +349,7 @@ const DraggableContentSections = ({
                   },
                   {
                     id: `${newSectionId}-button-${generateUniqueId('button')}`,
-                    type: 'button',
+                    type: BUTTON,
                     content: 'Secondary Action',
                     styles: mergeStyles(defaultSectionStyles.button, configStyles.button || {}),
                     parentId: `${newSectionId}-buttons`,
@@ -369,14 +361,14 @@ const DraggableContentSections = ({
               },
               {
                 id: `${newSectionId}-image`,
-                type: 'div',
+                type: DIV,
                 part: 'image',
                 layout: 'image',
                 styles: mergeStyles(defaultSectionStyles.imageContainer, configStyles.image || {}),
                 children: [
                   {
                     id: `${newSectionId}-image-${generateUniqueId('image')}`,
-                    type: 'image',
+                    type: IMAGE,
                     content: PLACEHOLDER_IMAGES.builder,
                     styles: mergeStyles(defaultSectionStyles.image, configStyles.image || {}),
                     parentId: `${newSectionId}-image`,
@@ -423,12 +415,12 @@ const DraggableContentSections = ({
               return [...updatedElements, ...newElements];
             });
 
-            setSelectedElement({ id: newSectionId, type: 'section', configuration: item.configuration });
+            setSelectedElement({ id: newSectionId, type: SECTION, configuration: item.configuration });
           }
         }
       }
     },
-  }), [configuration, isEditing, elements, label, description]);
+  }), [configuration, isEditing, elements]);
 
   // Handle drop events within the content section with improved error handling
   const onDropItem = (item, index, dropInfo) => {
@@ -441,7 +433,7 @@ const DraggableContentSections = ({
     }
 
     // Check if we're trying to add a content section inside another content section
-    if (item.type === 'contentSection') {
+    if (item.type === CONTENT_SECTION) {
       return;
     }
 
@@ -472,11 +464,7 @@ const DraggableContentSections = ({
       ?.map(childId => findElementById(childId, elements))
       .filter(Boolean);
 
-    const hasDuplicate = existingElements?.some(el => 
-      el.type === item.type && el.content === item.content
-    );
-
-    if (hasDuplicate) {
+    if (hasDuplicateElement(existingElements, item)) {
       return;
     }
 
@@ -559,158 +547,43 @@ const DraggableContentSections = ({
     ?.map(childId => findElementById(childId, elements))
     .filter(Boolean) || [];
 
-  // Get the appropriate section component
-  const getSectionComponent = () => {
-    const props = {
-      handleSelect: (e) => {
-        e.stopPropagation();
-        const element = findElementById(id, elements);
-        setSelectedElement(element || { id, type: 'section', styles: {} });
-      },
-      uniqueId: id,
-      onDropItem,
-      handleOpenMediaPanel,
-    };
-
-    switch (configuration) {
-      case 'sectionOne':
-        return <SectionOne {...props} />;
-      case 'sectionTwo':
-        return <SectionTwo {...props} />;
-      case 'sectionThree':
-        return <SectionThree {...props} />;
-      case 'sectionFour':
-        return <SectionFour {...props} />;
-      default:
-        return null;
-    }
+  // Component map for configuration → React component
+  const SECTION_COMPONENTS = {
+    sectionOne: SectionOne,
+    sectionTwo: SectionTwo,
+    sectionThree: SectionThree,
+    sectionFour: SectionFour,
   };
 
-  // Toggle modal state
-  const toggleModal = () => setModalOpen(prev => !prev);
+  const handleSelect = (e) => {
+    e.stopPropagation();
+    const element = findElementById(id, elements);
+    setSelectedElement(element || { id, type: SECTION, styles: {} });
+  };
 
-  // Close modal if clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setModalOpen(false);
-      }
-    };
+  const sharedProps = {
+    handleSelect,
+    uniqueId: id,
+    onDropItem,
+    handleOpenMediaPanel,
+  };
 
-    if (isModalOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
+  const SectionComponent = SECTION_COMPONENTS[configuration];
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isModalOpen]);
-
-  // Render preview with description
-  if (showDescription) {
-    return (
-      <div className="bento-extract-display" ref={drag} style={{ opacity: isDragging ? 0.5 : 1 }}>
-        <img
-          src={imgSrc}
-          alt={label}
-          loading="lazy"
-          style={{
-            width: '100%',
-            height: 'auto',
-            marginBottom: '8px',
-            borderRadius: '4px',
-          }}
-        />
-        <strong className='element-name'>{label}</strong>
-        {description && <p className='element-description'>{description}</p>}
-      </div>
-    );
+  if (SectionComponent) {
+    return <SectionComponent {...sharedProps} />;
   }
 
+  // Generic section rendering for sectionFive–sectionEight
   return (
-    <>
-      <div
-        ref={drag}
-        style={{
-          cursor: 'pointer',
-          border: isDragging ? '1px dashed #000' : 'none',
-          backgroundColor: '#f9f9f9',
-          borderRadius: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleModal();
-        }}
-        role="button"
-        tabIndex={0}
-        onKeyPress={(e) => e.key === 'Enter' && toggleModal()}
-        aria-label={`${label} component`}
-      >
-        <strong>{label}</strong>
-        {getSectionComponent()}
-      </div>
-
-      {isModalOpen && (
-        <div
-          ref={modalRef}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-          }}
-          onClick={(e) => {
-            if (e.target === modalRef.current) {
-              toggleModal();
-            }
-          }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Edit Structure"
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              width: '80%',
-              maxWidth: '800px',
-              maxHeight: '80vh',
-              overflow: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2>Edit Structure</h2>
-            <StructurePanel />
-            <button
-              onClick={toggleModal}
-              style={{
-                marginTop: '20px',
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-              aria-label="Close modal"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    <GenericSectionRenderer
+      {...sharedProps}
+      sectionElement={sectionElement}
+      elements={elements}
+      findElementById={findElementById}
+      setSelectedElement={setSelectedElement}
+      setElements={setElements}
+    />
   );
 };
 
