@@ -84,7 +84,7 @@ const DraggableCTA = ({
     }
 
     // Check if we're trying to add a CTA section inside another CTA section
-    if (item.type === 'ctaSection') {
+    if (item.type === CTA) {
       return;
     }
 
