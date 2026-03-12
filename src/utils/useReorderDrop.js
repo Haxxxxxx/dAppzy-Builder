@@ -1,189 +1,250 @@
-import { useState, useEffect, useCallback } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { useState, useCallback, useRef, useEffect } from "react";
 
+/**
+ * Enhanced reorder-drop hook with precise insertion-point detection.
+ *
+ * Instead of dividing the container height equally (broken for varying-height
+ * children), we now walk the actual DOM children, measure their midpoints,
+ * and find the closest gap the cursor is near.  The hook exposes a
+ * `dropIndicatorIndex` that consuming components use to render a visual
+ * insertion line.
+ */
 const useReorderDrop = (findElementById, elements, setElements) => {
-    const [activeDrop, setActiveDrop] = useState({ containerId: null, index: null });
-    const [draggedId, setDraggedId] = useState(null);
-    const [isInternalDrag, setIsInternalDrag] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragSource, setDragSource] = useState(null);
-    const [isLayoutReplacement, setIsLayoutReplacement] = useState(false);
-    const [targetLayoutId, setTargetLayoutId] = useState(null);
+  const [activeDrop, setActiveDrop] = useState({ containerId: null, index: null });
+  const [draggedId, setDraggedId] = useState(null);
+  const [isInternalDrag, setIsInternalDrag] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragSource, setDragSource] = useState(null);
+  const [isLayoutReplacement, setIsLayoutReplacement] = useState(false);
+  const [targetLayoutId, setTargetLayoutId] = useState(null);
+  // Precise visual indicator: which gap (0 = before first child, n = after nth child)
+  const [dropIndicatorIndex, setDropIndicatorIndex] = useState(null);
+  const [dropIndicatorContainerId, setDropIndicatorContainerId] = useState(null);
 
-    // Cleanup function to reset drag state
-    const resetDrag = useCallback(() => {
-        setActiveDrop({ containerId: null, index: null });
-        setDraggedId(null);
-        setIsInternalDrag(false);
-        setIsDragging(false);
-        setDragSource(null);
-        setIsLayoutReplacement(false);
-        setTargetLayoutId(null);
-    }, []);
+  const resetDrag = useCallback(() => {
+    setActiveDrop({ containerId: null, index: null });
+    setDraggedId(null);
+    setIsInternalDrag(false);
+    setIsDragging(false);
+    setDragSource(null);
+    setIsLayoutReplacement(false);
+    setTargetLayoutId(null);
+    setDropIndicatorIndex(null);
+    setDropIndicatorContainerId(null);
+  }, []);
 
-    // Add cleanup on unmount
-    useEffect(() => {
-        return () => {
-            resetDrag();
-        };
-    }, [resetDrag]);
+  // ── Drag start ──────────────────────────────────────────────────────
+  const onDragStart = useCallback((e, id, sourceContainerId, isReplacement = false, layoutId = null) => {
+    e.stopPropagation();
+    setDraggedId(id);
+    setIsInternalDrag(true);
+    setIsDragging(true);
+    setDragSource(sourceContainerId);
+    setIsLayoutReplacement(isReplacement);
+    setTargetLayoutId(layoutId);
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
 
-    const onDragStart = useCallback((e, id, sourceContainerId, isReplacement = false, layoutId = null) => {
-        e.stopPropagation();
-        setDraggedId(id);
-        setIsInternalDrag(true);
-        setIsDragging(true);
-        setDragSource(sourceContainerId);
-        setIsLayoutReplacement(isReplacement);
-        setTargetLayoutId(layoutId);
-        e.dataTransfer.setData("text/plain", id);
-        
-        // Add layout replacement data if applicable
-        if (isReplacement && layoutId) {
-            e.dataTransfer.setData("application/layout-replacement", JSON.stringify({
-                targetLayoutId: layoutId
-            }));
-        }
-    }, []);
+    // Create a subtle drag image
+    if (e.target) {
+      const rect = e.target.getBoundingClientRect();
+      e.dataTransfer.setDragImage(e.target, rect.width / 2, 20);
+    }
 
-    const onDragOver = useCallback((e, containerId, index, isLayoutTarget = false) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!isDragging) return;
+    if (isReplacement && layoutId) {
+      e.dataTransfer.setData("application/layout-replacement", JSON.stringify({
+        targetLayoutId: layoutId
+      }));
+    }
+  }, []);
 
-        // Check if this is a layout replacement drag over
-        if (isLayoutTarget && isLayoutReplacement) {
-            e.dataTransfer.dropEffect = "copy";
-        } else {
-            e.dataTransfer.dropEffect = "move";
-        }
+  // ── Precise index from cursor Y ────────────────────────────────────
+  // Walk the container's direct DOM children and find which gap the
+  // cursor is closest to.
+  const getInsertionIndex = useCallback((containerEl, clientY, draggedElementId) => {
+    if (!containerEl) return 0;
 
-        setActiveDrop({ containerId, index });
-    }, [isDragging, isLayoutReplacement]);
+    const children = Array.from(containerEl.children).filter(child => {
+      // Skip non-element nodes and the insertion indicator itself
+      if (child.dataset?.dropIndicator) return false;
+      if (child.classList?.contains('drop-insertion-line')) return false;
+      // Skip the element being dragged (it will be removed from source)
+      if (child.id === draggedElementId) return false;
+      return true;
+    });
 
-    const onDrop = useCallback((e, containerId) => {
-        e.preventDefault();
-        e.stopPropagation();
+    if (children.length === 0) return 0;
 
-        // Check for layout replacement
-        const layoutReplacementData = e.dataTransfer.getData("application/layout-replacement");
-        if (layoutReplacementData) {
-            try {
-                const { targetLayoutId } = JSON.parse(layoutReplacementData);
-                // Handle layout replacement through the drop handler in ContentList
-                return;
-            } catch (err) {
-                // Ignore malformed layout replacement data
-            }
-        }
+    // Walk children top-to-bottom; find the first child whose vertical
+    // midpoint is below the cursor → insert before that child.
+    for (let i = 0; i < children.length; i++) {
+      const rect = children[i].getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (clientY < midY) return i;
+    }
 
-        const id = draggedId || e.dataTransfer.getData("text/plain");
-        if (!id) {
-            resetDrag();
-            return;
-        }
+    // Cursor is below all children → insert at end
+    return children.length;
+  }, []);
 
-        const dropIndex = activeDrop.index;
-        if (dropIndex === null) {
-            resetDrag();
-            return;
-        }
+  // ── Drag over ──────────────────────────────────────────────────────
+  const onDragOver = useCallback((e, containerId, _index, isLayoutTarget = false, containerRef = null) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    e.stopPropagation();
 
-        // Find the source container (where the element is currently)
-        const sourceContainer = elements.find(el => el.children?.includes(id));
-        if (!sourceContainer) {
-            resetDrag();
-            return;
-        }
+    if (isLayoutTarget && isLayoutReplacement) {
+      e.dataTransfer.dropEffect = "copy";
+    } else {
+      e.dataTransfer.dropEffect = "move";
+    }
 
-        // Find the target container (where we're dropping)
-        const targetContainer = elements.find(el => el.id === containerId);
-        if (!targetContainer) {
-            resetDrag();
-            return;
-        }
+    // Calculate precise insertion index from DOM
+    const containerEl = containerRef?.current || document.getElementById(containerId);
+    const index = containerEl
+      ? getInsertionIndex(containerEl, e.clientY, draggedId)
+      : (_index ?? 0);
 
-        // Only proceed with the drop if we're actually over a valid target
-        if (activeDrop.containerId === containerId) {
-            const oldIndex = sourceContainer.children.indexOf(id);
-            
-            // Remove from source container
-            sourceContainer.children.splice(oldIndex, 1);
+    setActiveDrop({ containerId, index });
+    setDropIndicatorIndex(index);
+    setDropIndicatorContainerId(containerId);
+  }, [isDragging, isLayoutReplacement, getInsertionIndex, draggedId]);
 
-            // Add to target container at the specified index
-            if (dropIndex >= targetContainer.children.length) {
-                targetContainer.children.push(id);
-            } else {
-                targetContainer.children.splice(dropIndex, 0, id);
-            }
+  // ── Drop ───────────────────────────────────────────────────────────
+  const onDrop = useCallback((e, containerId) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-            // Update the elements state
-            setElements([...elements]);
-
-            // If the element was moved within the same container, update its position
-            if (sourceContainer.id === targetContainer.id) {
-                const updatedElements = elements.map(el => {
-                    if (el.id === containerId) {
-                        return {
-                            ...el,
-                            children: [...el.children]
-                        };
-                    }
-                    return el;
-                });
-                setElements(updatedElements);
-            }
-        }
-
-        // Reset drag state immediately after drop
+    // Check for layout replacement
+    const layoutReplacementData = e.dataTransfer.getData("application/layout-replacement");
+    if (layoutReplacementData) {
+      try {
+        JSON.parse(layoutReplacementData);
         resetDrag();
-    }, [draggedId, activeDrop, elements, setElements, resetDrag]);
+        return; // Handled by LayoutReplacementBoundary
+      } catch {
+        // Ignore malformed data
+      }
+    }
 
-    const onDragEnd = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        resetDrag();
-    }, [resetDrag]);
+    const id = draggedId || e.dataTransfer.getData("text/plain");
+    if (!id) { resetDrag(); return; }
 
-    // Reset drag state when mouse leaves the window
-    useEffect(() => {
-        const handleMouseLeave = () => {
-            resetDrag();
+    const dropIndex = activeDrop.index;
+    if (dropIndex === null) { resetDrag(); return; }
+
+    const sourceContainer = elements.find(el => Array.isArray(el.children) && el.children.includes(id));
+    if (!sourceContainer) { resetDrag(); return; }
+
+    const targetContainer = elements.find(el => el.id === containerId);
+    if (!targetContainer) { resetDrag(); return; }
+
+    if (activeDrop.containerId === containerId) {
+      const oldIndex = sourceContainer.children.indexOf(id);
+
+      // Build new children arrays immutably
+      const isSameContainer = sourceContainer.id === targetContainer.id;
+
+      if (!isSameContainer) {
+        // Circular reference check: prevent dragging a container into its own descendant
+        const isDescendantOf = (elementId, potentialParentId, els) => {
+          let currentId = potentialParentId;
+          while (currentId) {
+            if (currentId === elementId) return true;
+            const current = els.find(el => el.id === currentId);
+            currentId = current?.parentId || null;
+          }
+          return false;
         };
 
-        window.addEventListener('mouseleave', handleMouseLeave);
-        return () => {
-            window.removeEventListener('mouseleave', handleMouseLeave);
-        };
-    }, [resetDrag]);
+        if (isDescendantOf(id, targetContainer.id, elements)) {
+          resetDrag();
+          return;
+        }
+      }
 
-    // Reset drag state when mouse up occurs outside of a drop target
-    useEffect(() => {
-        const handleMouseUp = (e) => {
-            if (isDragging) {
-                resetDrag();
-            }
-        };
+      // Build the new state for both same-container and cross-container cases,
+      // then apply a single setElements call at the end.
+      let newSourceChildren = null; // only set for cross-container
+      let newTargetChildren;
+      let updatedParentId = null;   // only set for cross-container
 
-        window.addEventListener('mouseup', handleMouseUp);
-        return () => {
-            window.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isDragging, resetDrag]);
+      if (isSameContainer) {
+        // Same container: remove from old position then insert at new position
+        const without = [...targetContainer.children];
+        without.splice(oldIndex, 1);
+        const adjustedIndex = dropIndex > oldIndex ? dropIndex - 1 : dropIndex;
+        without.splice(adjustedIndex, 0, id);
+        newTargetChildren = without;
+      } else {
+        // Different container: remove from source, insert into target, update parentId
+        newSourceChildren = sourceContainer.children.filter(c => c !== id);
+        newTargetChildren = [...(targetContainer.children || [])];
+        const insertAt = Math.min(dropIndex, newTargetChildren.length);
+        newTargetChildren.splice(insertAt, 0, id);
+        updatedParentId = targetContainer.id;
+      }
 
-    return {
-        activeDrop,
-        isDragging,
-        dragSource,
-        isLayoutReplacement,
-        targetLayoutId,
-        onDragStart,
-        onDragOver,
-        onDrop,
-        onDragEnd,
-        resetDrag
+      // Single setElements call handles both same-container and cross-container cases
+      setElements(prev => prev.map(el => {
+        if (el.id === targetContainer.id) {
+          return { ...el, children: newTargetChildren };
+        }
+        if (!isSameContainer) {
+          if (el.id === sourceContainer.id) {
+            return { ...el, children: newSourceChildren };
+          }
+          if (el.id === id) {
+            return { ...el, parentId: updatedParentId };
+          }
+        }
+        return el;
+      }));
+    }
+
+    resetDrag();
+  }, [draggedId, activeDrop, elements, setElements, resetDrag]);
+
+  // ── Drag end / leave ───────────────────────────────────────────────
+  const onDragEnd = useCallback((e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    resetDrag();
+  }, [resetDrag]);
+
+  const onDragLeave = useCallback((e) => {
+    // Only reset if we actually left the container (not entering a child)
+    const relatedTarget = e.relatedTarget;
+    if (relatedTarget && e.currentTarget.contains(relatedTarget)) return;
+    setDropIndicatorIndex(null);
+    setDropIndicatorContainerId(null);
+  }, []);
+
+  // Safety: reset drag state if native dragend fires anywhere (prevents stuck opacity)
+  useEffect(() => {
+    const handleGlobalDragEnd = () => {
+      if (isDragging) resetDrag();
     };
+    document.addEventListener('dragend', handleGlobalDragEnd);
+    return () => document.removeEventListener('dragend', handleGlobalDragEnd);
+  }, [isDragging, resetDrag]);
+
+  return {
+    activeDrop,
+    isDragging,
+    dragSource,
+    draggedId,
+    isLayoutReplacement,
+    targetLayoutId,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+    onDragLeave,
+    resetDrag,
+  };
 };
 
 export default useReorderDrop;
-  
