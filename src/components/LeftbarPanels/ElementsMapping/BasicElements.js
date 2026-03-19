@@ -194,6 +194,13 @@ export const UtilityElements = [
     tags: ['divider', 'hr', 'rule', 'border'],
   },
   {
+    type: 'hr',
+    label: 'Horizontal Rule',
+    description: 'A native HTML horizontal rule.',
+    icon: elementIconPaths.line,
+    tags: ['hr', 'divider', 'rule', 'horizontal'],
+  },
+  {
     type: 'codeInject',
     label: 'Custom Code',
     description: 'Inject custom HTML, CSS, and JS.',

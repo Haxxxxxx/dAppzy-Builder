@@ -48,6 +48,7 @@ export function buildFlatElements(sectionConfigs) {
 
 export const TEMPLATES = [
   {
+    id: 'blank',
     name: 'Blank',
     description: 'Start from scratch',
     icon: 'draft',
@@ -60,6 +61,7 @@ export const TEMPLATES = [
     },
   },
   {
+    id: 'landing',
     name: 'Landing Page',
     description: 'Hero + Navbar + CTA + Footer',
     icon: 'web',
@@ -160,6 +162,7 @@ export const TEMPLATES = [
     },
   },
   {
+    id: 'nft-mint',
     name: 'NFT Mint Page',
     description: 'Navbar + Minting Section + Footer',
     icon: 'token',
@@ -227,6 +230,7 @@ export const TEMPLATES = [
     },
   },
   {
+    id: 'defi',
     name: 'DeFi Dashboard',
     description: 'DeFi Navbar + DeFi Section + Footer',
     icon: 'account_balance',
@@ -297,6 +301,7 @@ export const TEMPLATES = [
     },
   },
   {
+    id: 'portfolio',
     name: 'Portfolio',
     description: 'Creative portfolio with project grid',
     icon: 'palette',
@@ -462,6 +467,7 @@ export const TEMPLATES = [
     },
   },
   {
+    id: 'dao',
     name: 'DAO / Community',
     description: 'Web3 DAO governance page',
     icon: 'groups',
@@ -620,6 +626,7 @@ export const TEMPLATES = [
     },
   },
   {
+    id: 'token-launch',
     name: 'Token Launch',
     description: 'Token/NFT launch page with minting',
     icon: 'rocket_launch',

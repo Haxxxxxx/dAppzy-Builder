@@ -338,7 +338,14 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
 
         const params = new URLSearchParams(window.location.search);
         const qProjectId = params.get("projectId");
-        
+
+        // In production, redirect to dashboard if no projectId is provided
+        if (!qProjectId && !import.meta.env.DEV) {
+          const dashboardUrl = import.meta.env.VITE_DASHBOARD_URL || 'https://dashboard.dappzy.io';
+          window.location.href = dashboardUrl;
+          return;
+        }
+
         if (qProjectId) {
           if (qProjectId === "new") {
             const count = await checkProjectLimit(userId);
@@ -349,12 +356,26 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
                 : `Free plan allows ${maxP} projects. Upgrade to Pioneer for more.`);
               setViewState('error');
             } else {
-              const newProjectId = await createUserProject({
-                elements: [],
-                websiteSettings: pageSettings,
-                thumbnailUrl: "",
-                siteTitle: "Untitled Project",
-              });
+              // Check for a template parameter from the dashboard
+              const templateParam = params.get("template");
+              const template = templateParam
+                ? TEMPLATES.find(t => t.id === templateParam || t.name.toLowerCase().replace(/\s+/g, '-') === templateParam)
+                : null;
+
+              const projectPayload = template
+                ? {
+                    elements: template.elements,
+                    websiteSettings: { ...template.websiteSettings, siteTitle: 'New Project' },
+                    thumbnailUrl: "",
+                  }
+                : {
+                    elements: [],
+                    websiteSettings: pageSettings,
+                    thumbnailUrl: "",
+                    siteTitle: "Untitled Project",
+                  };
+
+              const newProjectId = await createUserProject(projectPayload);
               if (newProjectId) {
                 const newUrl = `${window.location.origin}${window.location.pathname}?userId=${userId}&projectId=${newProjectId}`;
                 window.history.replaceState(null, "", newUrl);
@@ -365,6 +386,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
             await loadProjectById(qProjectId);
           }
         } else {
+          // Dev mode without projectId — show project selection screen
           await loadUserProjects(userId);
         }
       } finally {

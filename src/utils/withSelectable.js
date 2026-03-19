@@ -10,6 +10,73 @@ import { authStorage } from './storageManager';
 const toKebabCase = (str) => str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 
 /**
+ * Fixed-position toolbar that escapes all overflow:hidden parents.
+ * Uses getBoundingClientRect to position relative to the viewport.
+ * Flips below the element if there's no room above.
+ */
+const FixedToolbar = ({ containerRef, id, toolbarBtnStyle, onEdit, onDuplicate, onCopyStyles, onPasteStyles, hasCopiedStyles, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onDelete }) => {
+  const toolbarRef = React.useRef(null);
+  const [pos, setPos] = React.useState({ top: 0, left: 0 });
+
+  React.useEffect(() => {
+    const updatePos = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const toolbarH = 32;
+      const gap = 4;
+      // Default: above the element
+      let top = rect.top - toolbarH - gap;
+      let left = rect.left;
+      // Flip below if no room above
+      if (top < 4) top = rect.bottom + gap;
+      // Clamp to right edge
+      const toolbarW = toolbarRef.current?.offsetWidth || 300;
+      if (left + toolbarW > window.innerWidth - 8) left = window.innerWidth - toolbarW - 8;
+      if (left < 4) left = 4;
+      setPos({ top, left });
+    };
+    updatePos();
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.addEventListener('scroll', updatePos, { passive: true });
+    window.addEventListener('resize', updatePos);
+    return () => {
+      if (mainContent) mainContent.removeEventListener('scroll', updatePos);
+      window.removeEventListener('resize', updatePos);
+    };
+  }, [containerRef]);
+
+  return (
+    <div
+      ref={toolbarRef}
+      style={{
+        position: 'fixed',
+        top: pos.top,
+        left: pos.left,
+        zIndex: 9998,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2px',
+        background: '#1a1a2e',
+        borderRadius: '6px',
+        padding: '3px 6px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        whiteSpace: 'nowrap',
+        pointerEvents: 'auto',
+      }}
+    >
+      <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.65rem', padding: '0 4px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '24px' }} title={id}>{id}</span>
+      <span className="material-symbols-outlined" onClick={onEdit} style={toolbarBtnStyle} title="Edit">edit</span>
+      <span className="material-symbols-outlined" onClick={onDuplicate} style={toolbarBtnStyle} title="Duplicate">content_copy</span>
+      <span className="material-symbols-outlined" onClick={onCopyStyles} style={toolbarBtnStyle} title="Copy styles">palette</span>
+      <span className="material-symbols-outlined" onClick={onPasteStyles} style={{ ...toolbarBtnStyle, opacity: hasCopiedStyles ? 1 : 0.35, cursor: hasCopiedStyles ? 'pointer' : 'default' }} title="Paste styles">format_paint</span>
+      <span className="material-symbols-outlined" onClick={onMoveUp} style={{ ...toolbarBtnStyle, opacity: canMoveUp ? 1 : 0.35, cursor: canMoveUp ? 'pointer' : 'default' }} title="Move up">arrow_upward</span>
+      <span className="material-symbols-outlined" onClick={onMoveDown} style={{ ...toolbarBtnStyle, opacity: canMoveDown ? 1 : 0.35, cursor: canMoveDown ? 'pointer' : 'default' }} title="Move down">arrow_downward</span>
+      <span className="material-symbols-outlined" onClick={onDelete} style={{ ...toolbarBtnStyle, color: 'var(--error-red, #ff6b6b)' }} title="Delete">delete</span>
+    </div>
+  );
+};
+
+/**
  * Generates a CSS rule string from a camelCase style object.
  * e.g. { backgroundColor: '#000', color: '#fff' } => "background-color: #000; color: #fff;"
  */
@@ -379,113 +446,24 @@ const withSelectable = (WrappedComponent) => {
         {stateStyleCSS && <style dangerouslySetInnerHTML={{ __html: stateStyleCSS }} />}
         {isSelected && !previewMode && (
           <>
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: 0,
-                zIndex: 1000,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2px',
-                background: '#1a1a2e',
-                borderRadius: '6px',
-                padding: '3px 6px',
-                marginBottom: '4px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-                whiteSpace: 'nowrap',
+            <FixedToolbar containerRef={containerRef} id={id} toolbarBtnStyle={toolbarBtnStyle}
+              onEdit={(e) => { e.stopPropagation(); setSelectedElement(elementData || { id, type }); }}
+              onDuplicate={(e) => {
+                e.stopPropagation();
+                const el = elements.find(el => el.id === id);
+                const siblings = el ? elements.filter(e => e.parentId === el.parentId) : [];
+                const idx = siblings.findIndex(e => e.id === id);
+                duplicateElement(id, el?.parentId || null, idx >= 0 ? idx + 1 : 0);
               }}
-            >
-              <span
-                style={{
-                  color: 'rgba(255,255,255,0.6)',
-                  fontSize: '0.65rem',
-                  padding: '0 4px',
-                  maxWidth: '100px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: '24px',
-                }}
-                title={id}
-              >
-                {id}
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={(e) => { e.stopPropagation(); setSelectedElement(elementData || { id, type }); }}
-                style={toolbarBtnStyle}
-                title="Edit element"
-              >
-                edit
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const el = elements.find(el => el.id === id);
-                  const siblings = el ? elements.filter(e => e.parentId === el.parentId) : [];
-                  const idx = siblings.findIndex(e => e.id === id);
-                  duplicateElement(id, el?.parentId || null, idx >= 0 ? idx + 1 : 0);
-                }}
-                style={toolbarBtnStyle}
-                title="Duplicate element"
-              >
-                content_copy
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={(e) => { e.stopPropagation(); copyStyles(id); }}
-                style={toolbarBtnStyle}
-                title="Copy styles"
-              >
-                palette
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={(e) => { e.stopPropagation(); if (copiedStyles) pasteStyles(id); }}
-                style={{
-                  ...toolbarBtnStyle,
-                  opacity: copiedStyles ? 1 : 0.35,
-                  cursor: copiedStyles ? 'pointer' : 'default',
-                }}
-                title="Paste styles"
-              >
-                format_paint
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={(e) => { e.stopPropagation(); reorderElement(-1); }}
-                style={{
-                  ...toolbarBtnStyle,
-                  opacity: canMoveUp ? 1 : 0.35,
-                  cursor: canMoveUp ? 'pointer' : 'default',
-                }}
-                title="Move up"
-              >
-                arrow_upward
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={(e) => { e.stopPropagation(); reorderElement(1); }}
-                style={{
-                  ...toolbarBtnStyle,
-                  opacity: canMoveDown ? 1 : 0.35,
-                  cursor: canMoveDown ? 'pointer' : 'default',
-                }}
-                title="Move down"
-              >
-                arrow_downward
-              </span>
-              <span
-                className="material-symbols-outlined"
-                onClick={handleRemove}
-                style={{ ...toolbarBtnStyle, color: '#ff6b6b' }}
-                title="Delete element"
-              >
-                delete
-              </span>
-            </div>
-            <ResizeHandles onMouseDown={handleResizeMouseDown} />
+              onCopyStyles={(e) => { e.stopPropagation(); copyStyles(id); }}
+              onPasteStyles={(e) => { e.stopPropagation(); if (copiedStyles) pasteStyles(id); }}
+              hasCopiedStyles={!!copiedStyles}
+              onMoveUp={(e) => { e.stopPropagation(); reorderElement(-1); }}
+              onMoveDown={(e) => { e.stopPropagation(); reorderElement(1); }}
+              canMoveUp={canMoveUp}
+              canMoveDown={canMoveDown}
+              onDelete={handleRemove}
+            />
             {resizeTooltip && (
               <div
                 style={{
@@ -494,7 +472,7 @@ const withSelectable = (WrappedComponent) => {
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: 'var(--purple, #5C4EFA)',
-                  color: '#fff',
+                  color: 'var(--white, #fff)',
                   padding: '2px 6px',
                   borderRadius: 3,
                   fontSize: '0.7rem',
