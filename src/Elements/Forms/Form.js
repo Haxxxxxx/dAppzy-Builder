@@ -41,7 +41,7 @@ const Form = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'form', styles });
+    setSelectedElement(formElement || { id, type: 'form', styles });
   };
 
   return (
@@ -95,11 +95,11 @@ const Form = ({ id }) => {
                   >
                     {labelText}
                   </label>
-                  {renderElement(childElement, elements)}
+                  {renderElement(childElement, elements, null, setSelectedElement, setElements, null, selectedElement, null, false)}
                 </div>
               );
             }
-            return renderElement(childElement, elements);
+            return renderElement(childElement, elements, null, setSelectedElement, setElements, null, selectedElement, null, false);
           })
         )}
         <UnifiedDropZone onDrop={(item) => handleDrop(item, id)} parentId={id} className="default-dropzone" />

@@ -41,23 +41,19 @@ const SizeEditor = () => {
 
   useEffect(() => {
     if (!selectedElement) return;
-    const element = document.getElementById(selectedElement.id);
-    if (!element) return;
+    const s = selectedElement.styles || {};
 
-    const cs = getComputedStyle(element);
+    // Read from the element's explicit styles, not DOM computed styles
+    setWidth(parseDimension(s.width));
+    setHeight(parseDimension(s.height));
 
-    // Parse existing widths/heights
-    setWidth(parseDimension(cs.width));
-    setHeight(parseDimension(cs.height));
+    setMinWidth(parseDimension(s.minWidth));
+    setMinHeight(parseDimension(s.minHeight));
 
-    setMinWidth(parseDimension(cs.minWidth));
-    setMinHeight(parseDimension(cs.minHeight));
+    setMaxWidth(parseDimension(s.maxWidth));
+    setMaxHeight(parseDimension(s.maxHeight));
 
-    setMaxWidth(parseDimension(cs.maxWidth));
-    setMaxHeight(parseDimension(cs.maxHeight));
-
-    // Overflow
-    setOverflow(cs.overflow || "visible");
+    setOverflow(s.overflow || "visible");
   }, [selectedElement]);
 
   if (!selectedElement) return null;

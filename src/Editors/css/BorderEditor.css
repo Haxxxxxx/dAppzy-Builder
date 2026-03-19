@@ -2,9 +2,8 @@
 
 /* Main container */
 .border-editor {
-    color: var(--white);
-    font-family: Arial, sans-serif;
-    margin-top: 3vh;
+
+
 }
 
 /* Spacing for each section */
@@ -34,7 +33,7 @@
     display: inline-block;
 }
 
-.input-with-suffix input[type="number"] {
+.input-with-suffix input[type=”number”] {
     width: 60px;
     padding: 6px;
     padding-right: 30px;
@@ -42,7 +41,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
-    color: var(--white);
+    color: var(--editor-text);
     box-sizing: border-box;
 }
 
@@ -109,7 +108,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
-    color: var(--white);
+    color: var(--editor-text);
     font-size: 13px;
     box-sizing: border-box;
 }
@@ -192,7 +191,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
-    color: var(--white);
+    color: var(--editor-text);
     box-sizing: border-box;
 }
 
@@ -234,7 +233,7 @@
     flex: 1;
     border: none;
     background-color: transparent;
-    color: var(--white);
+    color: var(--editor-text);
     font-size: 14px;
     cursor: default;
     outline: none;
@@ -249,8 +248,8 @@
     justify-content: center;
     align-items: center;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--not-selected, #64748B);
-    background: var(--not-selected, #64748B);
+    border: 1px solid var(--not-selected, #838389);
+    background: var(--not-selected, #838389);
     width: 50%;
     color: var(--editor-text, #CBD5E1);
     text-align: center;

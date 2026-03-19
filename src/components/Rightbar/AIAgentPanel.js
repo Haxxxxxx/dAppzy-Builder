@@ -1,59 +1,133 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './AIAgentPanel.css';
-import { EditableContext } from '../../context/EditableContext';
+
+// Human-readable labels for AI command actions
+const ACTION_LABELS = {
+  add: { icon: 'add_circle', label: 'Adding' },
+  addChild: { icon: 'subdirectory_arrow_right', label: 'Adding child' },
+  edit: { icon: 'edit', label: 'Editing' },
+  updateContent: { icon: 'text_fields', label: 'Updating content' },
+  updateStyles: { icon: 'palette', label: 'Styling' },
+  updateStateStyles: { icon: 'readiness_score', label: 'Setting states' },
+  updateSettings: { icon: 'settings', label: 'Configuring' },
+  updateWebsiteSettings: { icon: 'language', label: 'Updating site settings' },
+  loadTemplate: { icon: 'dashboard', label: 'Loading template' },
+  delete: { icon: 'delete', label: 'Removing' },
+  move: { icon: 'swap_vert', label: 'Moving' },
+  select: { icon: 'center_focus_strong', label: 'Selecting' },
+  undo: { icon: 'undo', label: 'Undoing' },
+  redo: { icon: 'redo', label: 'Redoing' },
+  duplicate: { icon: 'content_copy', label: 'Duplicating' },
+  batchUpdateStyles: { icon: 'format_paint', label: 'Batch styling' },
+  find: { icon: 'search', label: 'Finding elements' },
+};
+
+function describeCommand(cmd) {
+  if (!cmd) return '';
+  const action = ACTION_LABELS[cmd.action] || { icon: 'build', label: cmd.action, verb: cmd.action };
+  const type = cmd.elementType || cmd.properties?.configuration || '';
+  const target = cmd.targetId ? ` #${cmd.targetId.slice(0, 12)}` : '';
+  const template = cmd.template || '';
+  const breakpoint = cmd.breakpoint ? ` (${cmd.breakpoint})` : '';
+  const state = cmd.state ? ` ${cmd.state}` : '';
+
+  if (cmd.action === 'loadTemplate') return `${action.icon}|${action.label} "${template}"`;
+  if (cmd.action === 'updateWebsiteSettings') {
+    const keys = cmd.settings ? Object.keys(cmd.settings).join(', ') : '';
+    return `${action.icon}|${action.label}: ${keys}`;
+  }
+  if (cmd.action === 'updateStateStyles') return `${action.icon}|${action.label}${state} on${target}`;
+  if (cmd.action === 'updateStyles') return `${action.icon}|${action.label}${target}${breakpoint}`;
+  if (cmd.action === 'add') return `${action.icon}|${action.label} ${type}`;
+  if (cmd.action === 'addChild') return `${action.icon}|${action.label} ${type} to${target}`;
+  if (cmd.action === 'delete') return `${action.icon}|${action.label}${target}`;
+  if (cmd.action === 'move') return `${action.icon}|${action.label}${target}`;
+  if (cmd.action === 'select') return `${action.icon}|${action.label}${target}`;
+  if (cmd.action === 'undo') return `${action.icon}|${action.label} last change`;
+  if (cmd.action === 'redo') return `${action.icon}|${action.label} last change`;
+  if (cmd.action === 'duplicate') {
+    const count = cmd.count || 1;
+    return `${action.icon}|${action.label}${target} x${count}`;
+  }
+  if (cmd.action === 'batchUpdateStyles') {
+    const count = cmd.targetIds?.length || 0;
+    return `${action.icon}|${action.label} ${count} elements${breakpoint}`;
+  }
+  if (cmd.action === 'find') {
+    const what = cmd.elementType || cmd.contentContains || 'elements';
+    return `${action.icon}|${action.label}: ${what}`;
+  }
+  return `${action.icon}|${action.label} ${type}${target}`;
+}
+
+function CommandPreview({ command, status }) {
+  const desc = describeCommand(command);
+  const [icon, label] = desc.split('|');
+  const isDone = status === 'done';
+  const isFailed = status === 'failed';
+
+  return (
+    <div className={`ai-cmd-preview ${isDone ? 'done' : ''} ${isFailed ? 'failed' : ''}`}>
+      <span className="material-symbols-outlined ai-cmd-icon">
+        {isFailed ? 'error' : isDone ? 'check_circle' : icon}
+      </span>
+      <span className="ai-cmd-label">{label}</span>
+      {!isDone && !isFailed && <div className="ai-cmd-spinner" />}
+    </div>
+  );
+}
+
+function describeFindResult(cmd) {
+  if (cmd.action !== 'find' || !cmd.result) return null;
+  const results = cmd.result;
+  if (!Array.isArray(results) || results.length === 0) return 'No elements found';
+  const ids = results.map(r => r.id.slice(0, 12));
+  const preview = ids.length <= 5 ? ids.join(', ') : `${ids.slice(0, 5).join(', ')} +${ids.length - 5} more`;
+  return `Found ${results.length} element${results.length !== 1 ? 's' : ''}: ${preview}`;
+}
+
+function CommandsSummary({ commands }) {
+  if (!commands || commands.length === 0) return null;
+
+  return (
+    <div className="ai-commands-summary">
+      {commands.map((cmd, i) => {
+        const desc = describeCommand(cmd);
+        const [icon, label] = desc.split('|');
+        const findResult = describeFindResult(cmd);
+        return (
+          <div key={i} className={`ai-cmd-summary-item ${cmd.status === 'failed' ? 'failed' : ''}`}>
+            <span className="material-symbols-outlined ai-cmd-summary-icon">
+              {cmd.status === 'failed' ? 'error' : 'check_circle'}
+            </span>
+            <span className="ai-cmd-summary-label">{label}</span>
+            {findResult && (
+              <span className="ai-cmd-find-result">{findResult}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const AIAgentPanel = ({
   onClosePanel,
   onNewChat,
-  onShowHistory,
-  selectedElement,
-  onSelectElement,
+  onPrompt,
   messages: propMessages = [],
   setMessages: setMessagesProp,
-  onFirstPrompt,
-  onSecondPrompt,
-  onSelectedElementEdit,
   conversations = [],
   activeConversationId,
   onSelectConversation,
-  onThirdPrompt
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [compilationStatus, setCompilationStatus] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isPanelReady, setIsPanelReady] = useState(false);
-  const [pendingPrompt, setPendingPrompt] = useState(null);
+  const [liveStatus, setLiveStatus] = useState(null); // { phase, current, total, command }
   const messagesEndRef = useRef(null);
-  const { selectedElement: contextSelectedElement, setSelectedElement } = useContext(EditableContext);
 
-  // Always use the latest selected element
-  const currentElement = selectedElement || contextSelectedElement;
-
-  // Ensure messages is always an array and update when propMessages changes
   const [localMessages, setLocalMessages] = useState([]);
-
-  // Initialize panel and show first compilation status
-  useEffect(() => {
-    const initializePanel = async () => {
-      setIsPanelReady(false);
-      await simulateCompilation('Initializing AI Panel...', [
-        'Loading AI components...',
-        'Preparing interface...',
-        'Ready to assist...'
-      ]);
-      setIsPanelReady(true);
-
-      // If there's a pending prompt, process it now
-      if (pendingPrompt) {
-        await processPrompt(pendingPrompt);
-        setPendingPrompt(null);
-      }
-    };
-
-    initializePanel();
-  }, []);
 
   // Guard ref to prevent circular updates between local/prop message sync
   const isExternalUpdateRef = useRef(false);
@@ -62,7 +136,7 @@ const AIAgentPanel = ({
   useEffect(() => {
     isExternalUpdateRef.current = true;
     const currentConv = conversations.find(c => c.id === activeConversationId);
-    if (currentConv && currentConv.messages && currentConv.messages.length > 0) {
+    if (currentConv?.messages?.length > 0) {
       setLocalMessages([...currentConv.messages]);
     } else if (Array.isArray(propMessages) && propMessages.length > 0) {
       setLocalMessages([...propMessages]);
@@ -71,7 +145,7 @@ const AIAgentPanel = ({
     }
   }, [activeConversationId, conversations, propMessages]);
 
-  // Sync local messages to parent (skip if triggered by propMessages to avoid loops)
+  // Sync local messages to parent
   useEffect(() => {
     if (isExternalUpdateRef.current) {
       isExternalUpdateRef.current = false;
@@ -82,149 +156,75 @@ const AIAgentPanel = ({
     }
   }, [localMessages, setMessagesProp]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages or status change (only if there are messages)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [localMessages, compilationStatus]);
+    if (localMessages.length > 0 || liveStatus) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [localMessages, liveStatus]);
 
   // Reset input when switching conversations
   useEffect(() => {
     setInputValue('');
     setIsProcessing(false);
-    setCompilationStatus('');
+    setLiveStatus(null);
   }, [activeConversationId]);
 
-  const simulateCompilation = async (initialMessage, steps) => {
-    setCompilationStatus(initialMessage);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Reduced from 1000ms to 500ms
+  const handleCommandStatus = useCallback((status) => {
+    setLiveStatus(status.phase === 'done' ? null : status);
+  }, []);
 
-    for (const step of steps) {
-      setCompilationStatus(step);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Reduced from 800ms to 400ms
-    }
-    setCompilationStatus('');
-  };
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isProcessing || !onPrompt) return;
 
-  const typeMessage = async (message, setMessages) => {
-    setIsTyping(true);
-    const words = message.content.split(' ');
-    let currentMessage = '';
-    
-    for (const word of words) {
-      currentMessage += word + ' ';
-      setMessages(prev => [
-        ...prev.slice(0, -1),
-        { ...message, content: currentMessage.trim() }
-      ]);
-      // No delay - instant typing
-    }
-    
-    setIsTyping(false);
-  };
-
-  // Process prompt after panel is ready
-  const processPrompt = async (userMessage) => {
-    if (!isPanelReady) {
-      setPendingPrompt(userMessage);
-      return;
-    }
-
+    const userMessage = { role: 'user', content: inputValue };
+    setInputValue('');
     setIsProcessing(true);
 
-    // Add user message to the conversation
-    const updatedMessages = [...localMessages, userMessage];
-    setLocalMessages(updatedMessages);
-    if (setMessagesProp) {
-      setMessagesProp(updatedMessages);
-    }
+    // Add user message immediately
+    const withUser = [...localMessages, userMessage];
+    setLocalMessages(withUser);
+    if (setMessagesProp) setMessagesProp(withUser);
 
-    // Show compilation status
-    await simulateCompilation('Processing request...', [
-      'Analyzing request...',
-      'Generating structure...',
-      'Creating elements...',
-      'Applying styles...',
-      'Finalizing...'
-    ]);
-
-    // Add a small delay after compilation
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Get AI response
+    // Call AI with live status callback
     let aiAnswer;
     try {
-      // Determine which prompt handler to use
-      let promptHandler;
-      if (onSelectedElementEdit && currentElement) {
-        promptHandler = onSelectedElementEdit;
-      } else if (onFirstPrompt && localMessages.length === 0) {
-        promptHandler = onFirstPrompt;
-      } else if (onSecondPrompt && localMessages.length === 2) {
-        promptHandler = onSecondPrompt;
-      } else if (onThirdPrompt && localMessages.length >= 3) {
-        promptHandler = onThirdPrompt;
-      }
-
-      // Execute the appropriate prompt handler
-      if (promptHandler) {
-        aiAnswer = await promptHandler(userMessage);
-      } else {
-        aiAnswer = { role: 'assistant', content: 'I understand your request. Let me help you with that.' };
-      }
+      aiAnswer = await onPrompt(userMessage, handleCommandStatus);
     } catch (err) {
       aiAnswer = { role: 'assistant', content: 'There was an error processing your request.' };
     }
 
-    // Add AI response with typing effect
-    const finalMessages = [...updatedMessages, aiAnswer];
-    setLocalMessages(finalMessages);
-    if (setMessagesProp) {
-      setMessagesProp(finalMessages);
-    }
-    await typeMessage(aiAnswer, setLocalMessages);
-    
-    setIsProcessing(false);
-    setInputValue('');
-  };
+    setLiveStatus(null);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isProcessing) return;
-    
-    const userMessage = { role: 'user', content: inputValue };
-    setInputValue('');
-    await processPrompt(userMessage);
+    // Add AI response
+    const finalMessages = [...withUser, aiAnswer];
+    setLocalMessages(finalMessages);
+    if (setMessagesProp) setMessagesProp(finalMessages);
+
+    setIsProcessing(false);
   };
 
   const handleNewChat = () => {
     setLocalMessages([]);
-    if (setMessagesProp) {
-      setMessagesProp([]);
-    }
+    if (setMessagesProp) setMessagesProp([]);
     setInputValue('');
-    setCompilationStatus('');
-    onNewChat && onNewChat();
-    setShowHistory(false);
-  };
-
-  const handleShowHistory = () => setShowHistory((v) => !v);
-
-  const handleSelectConv = (id) => {
-    onSelectConversation && onSelectConversation(id);
+    setLiveStatus(null);
+    onNewChat?.();
     setShowHistory(false);
   };
 
   return (
     <div className="ai-panel">
       <div className="ai-panel-header">
-        <div className='ai-panel-title-box'>
-          <p className="ai-panel-title">Structure creation</p>
+        <div className="ai-panel-title-box">
+          <p className="ai-panel-title">AI Assistant</p>
         </div>
         <div className="ai-panel-controls">
-          <button onClick={handleNewChat} title="New chat" disabled={!isPanelReady}>
+          <button onClick={handleNewChat} title="New chat">
             <span className="material-symbols-outlined">add</span>
           </button>
-          <button onClick={handleShowHistory} title="History" disabled={!isPanelReady}>
+          <button onClick={() => setShowHistory(v => !v)} title="History">
             <span className="material-symbols-outlined">history</span>
           </button>
           <button onClick={onClosePanel} title="Close">
@@ -232,22 +232,24 @@ const AIAgentPanel = ({
           </button>
         </div>
       </div>
+
       {showHistory && (
         <div className="ai-panel-history">
           {conversations.map(conv => (
             <div
               key={conv.id}
               className={`ai-panel-history-item${conv.id === activeConversationId ? ' active' : ''}`}
-              onClick={() => handleSelectConv(conv.id)}
+              onClick={() => { onSelectConversation?.(conv.id); setShowHistory(false); }}
             >
               {conv.name || `Conversation ${conv.id}`}
             </div>
           ))}
         </div>
       )}
+
       <div className="ai-panel-messages" style={{ flex: 1, overflowY: 'auto' }}>
         {localMessages.map((message, idx) => (
-          message && message.role && message.content ? (
+          message?.role && message?.content ? (
             <div key={idx} className={`ai-message ai-message-${message.role}`}>
               {message.content.split('\n').map((line, i) => (
                 <React.Fragment key={i}>
@@ -255,44 +257,49 @@ const AIAgentPanel = ({
                   {i < message.content.split('\n').length - 1 && <br />}
                 </React.Fragment>
               ))}
+              {message.role === 'assistant' && message.commands?.length > 0 && (
+                <CommandsSummary commands={message.commands} />
+              )}
             </div>
           ) : null
         ))}
-        {compilationStatus && ( 
-          <div className="ai-compilation-status">
-            <div className="compilation-spinner"></div>
-            <p className="ai-compilation-text">{compilationStatus}</p>
+
+        {/* Live command execution preview */}
+        {liveStatus && (
+          <div className="ai-live-status">
+            {liveStatus.phase === 'thinking' && (
+              <div className="ai-thinking">
+                <div className="ai-thinking-dots">
+                  <span /><span /><span />
+                </div>
+                <p className="ai-thinking-text">Thinking...</p>
+              </div>
+            )}
+            {liveStatus.phase === 'executing' && liveStatus.command && (
+              <CommandPreview
+                command={liveStatus.command}
+                status="active"
+              />
+            )}
           </div>
-        )} 
+        )}
+
         <div ref={messagesEndRef} />
       </div>
+
       <div className="ai-panel-right-input" style={{ marginTop: 'auto' }}>
-        <form onSubmit={handleSendMessage} className='ai-panel-right-input-form'>
-          <div className="ai-panel-right-input-row">
-            <button type="button" className="ai-panel-right-input-btn" disabled={!isPanelReady}>
-              <span className="material-symbols-outlined">attach_file</span>
-              Add file
-            </button>
-            <button type="button" className="ai-panel-right-input-btn" onClick={onSelectElement} disabled={!isPanelReady}>
-              <span className="material-symbols-outlined">ads_click</span>
-              {currentElement
-                ? `${currentElement.name || 'Element'}${currentElement.id ? ' (' + currentElement.id + ')' : ''}`
-                : 'Select Element'}
-            </button>
-          </div>
+        <form onSubmit={handleSendMessage} className="ai-panel-right-input-form">
           <div className="ai-panel-right-input-prompt-box">
             <input
               type="text"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
-              placeholder={isPanelReady ? "Ask anything" : "Initializing..."}
+              placeholder={isProcessing ? "Working on it..." : "Describe what you want to build or change..."}
               className="ai-panel-right-text-input"
-              disabled={isProcessing || isTyping || !isPanelReady}
+              disabled={isProcessing}
             />
-            <button type="submit" className="ai-panel-right-send-btn" disabled={isProcessing || isTyping || !isPanelReady}>
-              <span className="material-symbols-outlined">
-                arrow_forward
-              </span>
+            <button type="submit" className="ai-panel-right-send-btn" disabled={isProcessing}>
+              <span className="material-symbols-outlined">arrow_forward</span>
             </button>
           </div>
         </form>
@@ -301,4 +308,4 @@ const AIAgentPanel = ({
   );
 };
 
-export default AIAgentPanel; 
+export default AIAgentPanel;

@@ -34,7 +34,7 @@
   justify-content: center;
   align-items: center;
   padding: 5px;
-  color: rgba(131, 131, 137, 1);
+  color: var(--not-selected);
 }
 
 
@@ -46,16 +46,15 @@
 }
 
 .icon-button.active {
-  color: rgba(255, 255, 255, 1);
-  /* Active color */
+  color: #fff;
   font-weight: bold;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.50);
+  background: var(--purple);
 }
 
 
 .help-center-button:hover {
-  color: red;
+  color: var(--purple);
 }
 
 
@@ -65,9 +64,9 @@
   flex-direction: column;
   gap: 20px;
   margin-top: auto;
-  color: rgba(131, 131, 137, 1);
+  color: var(--not-selected);
   /* Center the buttons-group */
-  padding: none;
+  padding: 0;
   
 }
 
@@ -104,47 +103,10 @@
 }
 
 .help-center-button {
-  color: rgba(131, 131, 137, 1);
+  color: var(--not-selected);
   border: none;
   border-radius: 4px;
   cursor: pointer;
   background-color: transparent;
 }
 
-.collapsible-panel {
-  margin-bottom: 16px;
-}
-
-.panel-header h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.panel-content {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
-.draggable-navbar {
-  padding: 8px;
-  margin: 4px 0;
-  background-color: #FBFBFB;
-  border: 1px solid #ccc;
-  color: #686868;
-  border-radius: 5px;
-  cursor: grab;
-  transition: background-color 0.3s, opacity 0.3s;
-}

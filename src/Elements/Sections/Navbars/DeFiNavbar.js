@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect, useContext, useMemo } from 'react';
+import { useDndIsDragging } from '../../../utils/useDndIsDragging';
 import { EditableContext } from '../../../context/EditableContext';
-import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
+import { Image, Span, Button, ConnectWalletButton, Anchor, LinkBlock } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
 import useReorderDrop from '../../../utils/useReorderDrop';
+import DropInsertionLine from '../../../components/DropInsertionLine';
 
 const DeFiNavbar = ({
   handleSelect,
@@ -18,7 +20,7 @@ const DeFiNavbar = ({
   const dropHandledRef = useRef(false);
 
   const {generateUniqueId, elements, updateStyles, setElements, findElementById, setSelectedElement, addNewElement } = useContext(EditableContext);
-  
+
   // Memoize navbar element
   const navbarElement = useMemo(() => findElementById(uniqueId, elements), [uniqueId, elements, findElementById]);
 
@@ -64,6 +66,29 @@ const DeFiNavbar = ({
       fontWeight: 'bold',
       fontSize: '1.25rem',
       cursor: 'pointer',
+    },
+    anchor: {
+      color: '#5C4EFA',
+      textDecoration: 'none',
+      fontSize: '14px',
+      cursor: 'pointer',
+      padding: '8px 16px',
+    },
+    linkblock: {
+      color: '#5C4EFA',
+      textDecoration: 'none',
+      fontSize: '14px',
+      cursor: 'pointer',
+      padding: '8px 16px',
+      display: 'inline-block',
+    },
+    linkBlock: {
+      color: '#5C4EFA',
+      textDecoration: 'none',
+      fontSize: '14px',
+      cursor: 'pointer',
+      padding: '8px 16px',
+      display: 'inline-block',
     }
   }), []);
 
@@ -100,11 +125,21 @@ const DeFiNavbar = ({
     }
   });
 
-  const { activeDrop, onDragStart, onDragOver, onDragEnd } = useReorderDrop(
-    findElementById,
-    elements,
-    setElements
-  );
+  const {
+    isDragging: isReorderDragging,
+    draggedId: reorderDraggedId,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+    onDragStart: reorderDragStart,
+    onDragOver: reorderDragOver,
+    onDrop: reorderDrop_,
+    onDragEnd: reorderDragEnd,
+    onDragLeave: reorderDragLeave,
+  } = useReorderDrop(findElementById, elements, setElements);
+
+  const isDndDragging = useDndIsDragging();
+
+  const showIndicator = isReorderDragging && dropIndicatorContainerId === uniqueId;
 
   // Handle dropping new elements
   const handleNavbarDrop = (item, index) => {
@@ -120,7 +155,7 @@ const DeFiNavbar = ({
       .filter(Boolean);
 
     if (item.type === 'button' || item.type === 'connectWalletButton') {
-      const hasDuplicate = existingElements.some(el => 
+      const hasDuplicate = existingElements.some(el =>
         el.type === item.type && el.content === item.content
       );
       if (hasDuplicate) {
@@ -169,8 +204,8 @@ const DeFiNavbar = ({
     });
 
     // Select the new element
-    setSelectedElement({ 
-      id: elementId, 
+    setSelectedElement({
+      id: elementId,
       type: item.type,
       parentId: uniqueId,
       index: index
@@ -209,7 +244,13 @@ const DeFiNavbar = ({
     if (!navbarElement?.children) return [];
     return navbarElement.children
       .map(childId => findElementById(childId, elements))
-      .filter(child => child && (child.type === 'button' || child.type === 'connectWalletButton'));
+      .filter(child => child && (
+        child.type === 'button' ||
+        child.type === 'connectWalletButton' ||
+        child.type === 'anchor' ||
+        child.type === 'linkblock' ||
+        child.type === 'linkBlock'
+      ));
   }, [navbarElement?.children, elements, findElementById]);
 
   if (!navbarElement) {
@@ -223,96 +264,181 @@ const DeFiNavbar = ({
         drop(node);
       }}
       style={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        boxSizing: 'border-box',
         ...(navbarElement?.styles || {}),
-        borderBottom: isOverCurrent ? '2px solid #5C4EFA' : '1px solid transparent',
+        borderBottom: isOverCurrent ? '2px solid var(--purple, #5C4EFA)' : '1px solid transparent',
         position: 'relative',
       }}
       onClick={(e) => {
         e.stopPropagation();
         handleSelect(e, uniqueId);
       }}
+      onDragOver={(e) => reorderDragOver(e, uniqueId, null, false, navRef)}
+      onDrop={(e) => { reorderDrop_(e, uniqueId); e.stopPropagation(); }}
+      onDragLeave={reorderDragLeave}
       className="defi-navbar"
     >
       {/* Logo and Title */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
           gap: '1rem',
           flex: '0 1 auto',
           minWidth: 'fit-content'
-        }} 
+        }}
         className="navbar-logo-container"
       >
-        {children?.[0]?.type === 'image' && (
-          <Image
-            id={children[0].id}
-            src={children[0].content || 'Default Logo'}
-            styles={{
-              ...baseStyles.image,
-              ...children[0].styles
-            }}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-            handleDrop={handleImageDrop}
-            onClick={(e) => handleElementClick(e, children[0].id)}
-            className="navbar-logo"
-          />
-        )}
-        {children?.[1]?.type === 'span' && (
-          <Span
-            id={children[1].id}
-            content={children[1].content}
-            styles={{
-              ...baseStyles.span,
-              ...children[1].styles
-            }}
-            onClick={(e) => handleElementClick(e, children[1].id)}
-            className="navbar-title"
-          />
-        )}
+        {children?.[0]?.type === 'image' && (() => {
+          const logoChild = children[0];
+          return (
+            <div
+              draggable={!isDndDragging}
+              onDragStart={(e) => reorderDragStart(e, logoChild.id, uniqueId)}
+              onDragEnd={reorderDragEnd}
+              style={{
+                cursor: !isDndDragging ? 'grab' : 'default',
+                opacity: reorderDraggedId === logoChild.id ? 0.4 : 1,
+                transition: 'opacity 0.15s ease',
+              }}
+            >
+              <Image
+                id={logoChild.id}
+                src={logoChild.content || 'Default Logo'}
+                styles={{
+                  ...baseStyles.image,
+                  ...logoChild.styles
+                }}
+                handleOpenMediaPanel={handleOpenMediaPanel}
+                handleDrop={handleImageDrop}
+                onClick={(e) => handleElementClick(e, logoChild.id)}
+                className="navbar-logo"
+              />
+            </div>
+          );
+        })()}
+        {children?.[1]?.type === 'span' && (() => {
+          const titleChild = children[1];
+          return (
+            <div
+              draggable={!isDndDragging}
+              onDragStart={(e) => reorderDragStart(e, titleChild.id, uniqueId)}
+              onDragEnd={reorderDragEnd}
+              style={{
+                cursor: !isDndDragging ? 'grab' : 'default',
+                opacity: reorderDraggedId === titleChild.id ? 0.4 : 1,
+                transition: 'opacity 0.15s ease',
+              }}
+            >
+              <Span
+                id={titleChild.id}
+                content={titleChild.content}
+                styles={{
+                  ...baseStyles.span,
+                  ...titleChild.styles
+                }}
+                handleOpenMediaPanel={handleOpenMediaPanel}
+                onClick={(e) => handleElementClick(e, titleChild.id)}
+                className="navbar-title"
+              />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Standard Menu */}
       {!isCompact && (
-        <div 
-          style={{ 
-            display: 'flex', 
+        <div
+          style={{
+            display: 'flex',
             gap: '1rem',
             flex: '0 1 auto',
             justifyContent: 'flex-end',
             flexWrap: 'wrap',
-          }} 
+          }}
           className="navbar-buttons"
         >
           {filteredChildren.map((child, index) => (
             <React.Fragment key={`${child.type}-${child.id}-${index}`}>
-              {child.type === 'connectWalletButton' ? (
-                <ConnectWalletButton
-                  id={child.id}
-                  content={child.content}
-                  styles={{
-                    ...baseStyles.connectWalletButton,
-                    ...child.styles,
-                    flex: '0 0 auto',
-                  }}
-                  onClick={(e) => handleElementClick(e, child.id)}
-                  className="navbar-connect-wallet"
-                />
-              ) : (
-                <Button
-                  id={child.id}
-                  content={child.content}
-                  styles={{
-                    ...baseStyles.button,
-                    ...child.styles,
-                    flex: '0 0 auto',
-                  }}
-                  onClick={(e) => handleElementClick(e, child.id)}
-                  className="navbar-button"
-                />
+              {showIndicator && dropIndicatorIndex === index && (
+                <DropInsertionLine />
               )}
+              <div
+                draggable={!isDndDragging}
+                onDragStart={(e) => reorderDragStart(e, child.id, uniqueId)}
+                onDragEnd={reorderDragEnd}
+                style={{
+                  cursor: !isDndDragging ? 'grab' : 'default',
+                  opacity: reorderDraggedId === child.id ? 0.4 : 1,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {child.type === 'connectWalletButton' && (
+                  <ConnectWalletButton
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...baseStyles.connectWalletButton,
+                      ...child.styles,
+                      flex: '0 0 auto',
+                    }}
+                    handleOpenMediaPanel={handleOpenMediaPanel}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                    className="navbar-connect-wallet"
+                  />
+                )}
+                {child.type === 'button' && (
+                  <Button
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...baseStyles.button,
+                      ...child.styles,
+                      flex: '0 0 auto',
+                    }}
+                    handleOpenMediaPanel={handleOpenMediaPanel}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                    className="navbar-button"
+                  />
+                )}
+                {child.type === 'anchor' && (
+                  <Anchor
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      cursor: 'pointer',
+                      flex: '0 0 auto',
+                    }}
+                    handleOpenMediaPanel={handleOpenMediaPanel}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                    className="navbar-anchor"
+                  />
+                )}
+                {(child.type === 'linkblock' || child.type === 'linkBlock') && (
+                  <LinkBlock
+                    id={child.id}
+                    content={child.content}
+                    styles={{
+                      ...child.styles,
+                      cursor: 'pointer',
+                      flex: '0 0 auto',
+                    }}
+                    handleOpenMediaPanel={handleOpenMediaPanel}
+                    onClick={(e) => handleElementClick(e, child.id)}
+                    className="navbar-linkblock"
+                  />
+                )}
+              </div>
             </React.Fragment>
           ))}
+          {showIndicator && dropIndicatorIndex === filteredChildren.length && (
+            <DropInsertionLine />
+          )}
         </div>
       )}
 
@@ -350,37 +476,87 @@ const DeFiNavbar = ({
             >
               {filteredChildren.map((child, index) => (
                 <React.Fragment key={`${child.type}-${child.id}-${index}`}>
-                  {child.type === 'connectWalletButton' ? (
-                    <ConnectWalletButton
-                      id={child.id}
-                      content={child.content}
-                      styles={{
-                        ...baseStyles.connectWalletButton,
-                        ...child.styles,
-                        cursor: 'pointer',
-                        padding: '0.5rem',
-                        flex: '0 0 auto',
-                      }}
-                      onClick={(e) => handleElementClick(e, child.id)}
-                      className="navbar-connect-wallet"
-                    />
-                  ) : (
-                    <Button
-                      id={child.id}
-                      content={child.content}
-                      styles={{
-                        ...baseStyles.button,
-                        ...child.styles,
-                        cursor: 'pointer',
-                        padding: '0.5rem',
-                        flex: '0 0 auto',
-                      }}
-                      onClick={(e) => handleElementClick(e, child.id)}
-                      className="navbar-button"
-                    />
+                  {showIndicator && dropIndicatorIndex === index && (
+                    <DropInsertionLine />
                   )}
+                  <div
+                    draggable={!isDndDragging}
+                    onDragStart={(e) => reorderDragStart(e, child.id, uniqueId)}
+                    onDragEnd={reorderDragEnd}
+                    style={{
+                      cursor: !isDndDragging ? 'grab' : 'default',
+                      opacity: reorderDraggedId === child.id ? 0.4 : 1,
+                      transition: 'opacity 0.15s ease',
+                    }}
+                  >
+                    {child.type === 'connectWalletButton' && (
+                      <ConnectWalletButton
+                        id={child.id}
+                        content={child.content}
+                        styles={{
+                          ...baseStyles.connectWalletButton,
+                          ...child.styles,
+                          cursor: 'pointer',
+                          padding: '0.5rem',
+                          flex: '0 0 auto',
+                        }}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                        className="navbar-connect-wallet"
+                      />
+                    )}
+                    {child.type === 'button' && (
+                      <Button
+                        id={child.id}
+                        content={child.content}
+                        styles={{
+                          ...baseStyles.button,
+                          ...child.styles,
+                          cursor: 'pointer',
+                          padding: '0.5rem',
+                          flex: '0 0 auto',
+                        }}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                        className="navbar-button"
+                      />
+                    )}
+                    {child.type === 'anchor' && (
+                      <Anchor
+                        id={child.id}
+                        content={child.content}
+                        styles={{
+                          ...child.styles,
+                          cursor: 'pointer',
+                          padding: '0.5rem',
+                          flex: '0 0 auto',
+                        }}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                        className="navbar-anchor"
+                      />
+                    )}
+                    {(child.type === 'linkblock' || child.type === 'linkBlock') && (
+                      <LinkBlock
+                        id={child.id}
+                        content={child.content}
+                        styles={{
+                          ...child.styles,
+                          cursor: 'pointer',
+                          padding: '0.5rem',
+                          flex: '0 0 auto',
+                        }}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                        className="navbar-linkblock"
+                      />
+                    )}
+                  </div>
                 </React.Fragment>
               ))}
+              {showIndicator && dropIndicatorIndex === filteredChildren.length && (
+                <DropInsertionLine />
+              )}
             </div>
           )}
         </>
@@ -389,4 +565,4 @@ const DeFiNavbar = ({
   );
 };
 
-export default DeFiNavbar; 
+export default DeFiNavbar;

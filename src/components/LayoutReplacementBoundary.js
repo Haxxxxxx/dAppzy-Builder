@@ -29,9 +29,16 @@ const LayoutReplacementBoundary = ({
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.stopPropagation();
 
     if (isPreviewMode) return;
+
+    // Only react to section-level drags (application/json from handleDragStart),
+    // not internal element reordering (text/plain from useReorderDrop).
+    if (!e.dataTransfer.types.includes('application/json')) {
+      return;
+    }
+
+    e.stopPropagation();
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -78,6 +85,12 @@ const LayoutReplacementBoundary = ({
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
+
+    // Only handle section-level drops (application/json), let element reorders bubble
+    if (!e.dataTransfer.types.includes('application/json')) {
+      return;
+    }
+
     e.stopPropagation();
 
     if (isPreviewMode || !dropIndicator) return;
@@ -114,17 +127,25 @@ const LayoutReplacementBoundary = ({
   }, [layoutId, elementIndex, dropIndicator, hoverPosition, onReplace, isPreviewMode]);
 
   return (
-    <div 
+    <div
       className={`layout-replacement-boundary ${isHovering ? 'hovering' : ''} ${layoutType}`}
-      onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      draggable={!isPreviewMode}
       data-layout-id={layoutId}
       data-layout-type={layoutType}
       data-element-index={elementIndex}
     >
+      {!isPreviewMode && (
+        <div
+          className="layout-drag-handle"
+          draggable
+          onDragStart={handleDragStart}
+          title="Drag to reorder section"
+        >
+          ⠿
+        </div>
+      )}
       {dropIndicator && (
         <div className={`drop-indicator ${dropIndicator}`} />
       )}

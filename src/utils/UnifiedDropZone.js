@@ -301,12 +301,15 @@ const UnifiedDropZone = React.memo(({
       const navbarStyles = section.id === 'customTemplateNavbar'
         ? CustomTemplateNavbarStyles
         : defaultNavbarStyles;
+      const heroStyles = section.id === 'heroTwo'
+        ? heroTwoStyles
+        : (section.id === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
 
       const sectionData = buildSectionData(
         section.id,
         structureConfigurations,
         resolveConfigType,
-        { navbarStyles, NAVBAR, HERO, BUTTON }
+        { navbarStyles, heroStyles, NAVBAR, HERO, BUTTON }
       );
 
       if (!sectionData) return;
@@ -332,7 +335,7 @@ const UnifiedDropZone = React.memo(({
       // Circular reference guard: block dropping a container into its own descendant
       if (item.id && parentId && elements) {
         if (isDescendantOf(item.id, parentId, elements)) {
-          console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          if (import.meta.env.DEV) console.warn('[DnD] Blocked: cannot drop element into its own descendant');
           showToast(DROP_REJECTION_REASONS.CIRCULAR, 'info');
           return;
         }
@@ -421,55 +424,53 @@ const UnifiedDropZone = React.memo(({
         <div className="dropzone-content">
           {(isDefaultDropzone || isFirstDropzone) ? (
             showDivOptions ? (
-              <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%' }}>
-                {divConfigurations.map((config) => (
-                  <div
-                    key={config.id}
-                    className="inline-div-option"
-                    onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
-                    style={{
-                      cursor: 'pointer',
-                      background: '#e5e8ea',
-                      borderRadius: '6px',
-                      padding: '8px',
-                      minWidth: '60px',
-                      minHeight: '40px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                      border: '2px solid #e5e8ea',
-                      transition: 'border 0.2s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
-                    onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
-                  >
-                    {config.preview}
-                    <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
-                  </div>
-                ))}
+              <div className="inline-div-options-grid">
+                <button
+                  className="div-options-back"
+                  onClick={(e) => { e.stopPropagation(); setShowDivOptions(false); }}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Back
+                </button>
+                <p className="div-options-heading">Choose a layout</p>
+                <div className="div-options-cards">
+                  {divConfigurations.map((config) => (
+                    <div
+                      key={config.id}
+                      className="div-option-card"
+                      onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
+                    >
+                      {config.preview}
+                      <span className="div-option-label">{config.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="dropzone-buttons">
-                <button
-                  className="dropzone-button configure-button"
-                  onClick={handleConfigureClick}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined">
-                    add
-                  </span>
-                </button>
-                <button
-                  className="dropzone-button library-button"
-                  onClick={handleLibraryClick}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined">
-                    folder_open
-                  </span>
-                </button>
+              <div className="empty-canvas-state">
+                <span className="material-symbols-outlined empty-canvas-icon">dashboard_customize</span>
+                <h3 className="empty-canvas-title">Start building your page</h3>
+                <p className="empty-canvas-subtitle">Add a layout structure or pick a pre-built section</p>
+                <div className="empty-canvas-actions">
+                  <button
+                    className="empty-canvas-btn empty-canvas-btn-primary"
+                    onClick={handleConfigureClick}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    Add Layout
+                  </button>
+                  <button
+                    className="empty-canvas-btn empty-canvas-btn-secondary"
+                    onClick={handleLibraryClick}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined">folder_open</span>
+                    Sections Library
+                  </button>
+                </div>
+                <p className="empty-canvas-hint">or drag an element from the sidebar</p>
               </div>
             )
           ) : (

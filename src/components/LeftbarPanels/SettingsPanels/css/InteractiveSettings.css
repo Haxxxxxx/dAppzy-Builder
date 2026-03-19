@@ -1,0 +1,70 @@
+/* InteractiveSettings.css */
+
+.interactive-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px;
+  margin-bottom: 6px;
+  background: var(--input-bg, #2a2a3c);
+  border: 1px solid var(--border-color, #3a3a4a);
+  border-radius: var(--radius-sm, 4px);
+}
+
+.interactive-item-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.interactive-item-fields input,
+.interactive-item-fields textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.interactive-item-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--not-selected, #838389);
+  padding: 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.interactive-item-remove:hover {
+  color: #d9534f;
+}
+
+.interactive-item-remove .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.interactive-item-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 6px;
+  background: transparent;
+  border: 1px dashed var(--border-color, #3a3a4a);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--not-selected, #838389);
+  font-size: 12px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.interactive-item-add:hover {
+  border-color: var(--accent-blue, #217bf4);
+  color: var(--accent-blue, #217bf4);
+}
+
+.interactive-item-add .material-symbols-outlined {
+  font-size: 16px;
+}

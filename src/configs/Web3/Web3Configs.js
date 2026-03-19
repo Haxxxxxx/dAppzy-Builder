@@ -13,8 +13,6 @@ export const Web3Configs = {
             padding: '10px',
             margin: '0',
             backgroundColor: 'rgba(42, 42, 60, 0.5)',
-            outline: '2px solid var(--purple, #5C4EFA)',
-            borderInline: '0.5px solid var(--purple, #5C4EFA)',
             borderRadius: '12px',
             backdropFilter: 'blur(10px)'
         },
@@ -26,8 +24,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -56,8 +54,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -85,8 +83,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -120,21 +118,19 @@ export const Web3Configs = {
             padding: '10px',
             margin: '0',
             backgroundColor: 'rgba(42, 42, 60, 0.5)',
-            outline: '2px solid var(--purple, #5C4EFA)',
-            borderInline: '0.5px solid var(--purple, #5C4EFA)',
             borderRadius: '12px',
             backdropFilter: 'blur(10px)'
         },
         children: [
-          { 
+          {
             type: 'defiModule',
             moduleType: 'aggregator',
             styles: {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -163,8 +159,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -192,8 +188,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -257,8 +253,10 @@ export const Web3Configs = {
             snsConfig: {
                 commitment: 'confirmed',
                 confirmTransactionInitialTimeout: 60000,
-                wsEndpoint: function() {
-                    return this.apiKey ? `wss://mainnet.helius-rpc.com/?api-key=${this.apiKey}` : null;
+                // wsEndpoint needs helius apiKey — use arrow to capture via closure
+                wsEndpoint() {
+                    const apiKey = import.meta.env.VITE_HELIUS_API_KEY || '';
+                    return apiKey ? `wss://mainnet.helius-rpc.com/?api-key=${apiKey}` : null;
                 }
             }
         },

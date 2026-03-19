@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { EditableContext } from "../../context/EditableContext";
 import { useDrop } from "react-dnd";
 import { PLACEHOLDER_IMAGES } from "../../configs/assetUrls";
@@ -42,7 +42,7 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
       if (isValidImage(item)) {
         updateElementProperties(id, { src: item.src });
         setCurrentSrc(item.src);
-        setSelectedElement({ id, type: "image", src: item.src, styles });
+        setSelectedElement({ ...imageElement, id, type: "image", src: item.src });
         setErrorMessage(""); // Clear previous errors
       } else {
         setErrorMessage(getFileErrorMessage(item.mediaType));
@@ -56,8 +56,21 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: "image", src: currentSrc, ...styles });
+    setSelectedElement({ ...imageElement, id, type: "image", src: currentSrc });
   };
+
+  const imageStyle = useMemo(() => ({
+    width: styles.width || customStyles.width || "auto",
+    height: styles.height || customStyles.height || "auto",
+    objectFit: styles.objectFit || "cover",
+    borderRadius: styles.borderRadius || customStyles.borderRadius || "0",
+    maxWidth: styles.maxWidth || customStyles.maxWidth || "100%",
+    maxHeight: styles.maxHeight || customStyles.maxHeight || "100%",
+    border: isOver ? "2px dashed var(--purple, #5C4EFA)" : "none",
+    position: styles.position || customStyles.position || "relative",
+    cursor: styles.cursor || customStyles.cursor || "pointer",
+    display: styles.display || customStyles.display || "block",
+  }), [styles, customStyles, isOver]);
 
   return (
     <>
@@ -68,18 +81,7 @@ const Image = ({ id, styles: customStyles = {}, handleOpenMediaPanel = () => {} 
         src={currentSrc}
         alt={styles.alt || "Editable element"}
         loading="lazy"
-        style={{
-          width: styles.width || customStyles.width || "auto",
-          height: styles.height || customStyles.height || "auto",
-          objectFit: styles.objectFit || "cover",
-          borderRadius: styles.borderRadius || customStyles.borderRadius || "0",
-          maxWidth: styles.maxWidth || customStyles.maxWidth || "100%",
-          maxHeight: styles.maxHeight || customStyles.maxHeight || "100%",
-          border: isOver ? "2px dashed green" : "none",
-          position: styles.position || customStyles.position || "relative",
-          cursor: styles.cursor || customStyles.cursor || "pointer",
-          display: styles.display || customStyles.display || "block"
-        }}
+        style={imageStyle}
       />
 
       {errorMessage && (

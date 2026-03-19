@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDrag } from 'react-dnd';
 import '../../components/css/LeftBar.css';
 
@@ -13,38 +13,18 @@ const DraggableElement = ({
   children
 }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: type,
-    item: () => {
-      document.body.style.cursor = 'grabbing';
-      return {
-        type,
-        label,
-        configuration,
-        styles,
-        content,
-        children
-      };
-    },
-    end: () => {
-      document.body.style.cursor = 'default';
-    },
+    type,
+    item: { type, label, configuration, styles, content, children },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
-    })
+    }),
   }), [type, label, configuration, styles, content, children]);
 
-  // Clean up cursor style when component unmounts
-  useEffect(() => {
-    return () => {
-      document.body.style.cursor = 'default';
-    };
-  }, []);
+  const [iconError, setIconError] = useState(false);
+  const iconPath = icon || `/img/icon-${type}.svg`;
 
-  // Build the icon path based on the element type
-  // e.g., type = 'paragraph' => "/icons/icon-paragraph.svg"
-  const iconPath = `./img/icon-${type}.svg`;
   return (
-    <div className='bento-extract-display'>
+    <div className="bento-extract-display">
       <div
         ref={drag}
         style={{
@@ -55,24 +35,35 @@ const DraggableElement = ({
           borderRadius: '4px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
         }}
       >
-        {/* Icon display */}
-        <div style={{ marginBottom: '4px'}}>
-          <img
-            src={iconPath}
-            alt={type}
-            onError={(e) => {
-              // Optional: fallback if the icon is missing
-              e.target.src = '/icons/icon-default.svg';
-            }}
-          />
+        <div style={{ marginBottom: '4px' }}>
+          {!iconError ? (
+            <img
+              src={iconPath}
+              alt={type}
+              onError={() => setIconError(true)}
+            />
+          ) : (
+            <div style={{
+              width: '67px',
+              height: '67px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #838389',
+              borderRadius: '4px',
+              fontSize: '10px',
+              color: '#838389',
+              textTransform: 'uppercase',
+            }}>
+              {type.slice(0, 3)}
+            </div>
+          )}
         </div>
-       
       </div>
-      {/* Label under the draggable container */}
-      <strong className='element-name'>{label}</strong>
+      <strong className="element-name">{label}</strong>
     </div>
   );
 };

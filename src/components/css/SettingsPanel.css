@@ -16,10 +16,6 @@
 
 }
 
-.settings-header {
-  margin: 15px 0 15px 0;
-}
-
 /* General settings group styling */
 .settings-group {
   display: flex;
@@ -44,16 +40,15 @@
 }
 
 .settings-panel input,
-.settings-panel textarea,
-.settings-panel select {
-  background: transparent;
-  color: var(--white);
-  font-size: 12px;
-  font-family: var(--font-secondary);
-
-  padding: 12px;
-  border-radius: 5px;
-  border: 1px solid var(--border-color);
+.settings-panel select,
+.settings-panel textarea {
+  background: var(--editor-bg, #2a2a2a);
+  color: var(--editor-text, #e0e0e0);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-color, #444);
+  font-family: var(--font-secondary, 'Inter');
+  font-size: 13px;
 }
 
 .settings-panel option{
@@ -121,14 +116,6 @@
   overflow: auto;
 }
 
-.code-editor-wrapper {
-  display: flex;
-  gap: 10px;
-  flex-direction: column;
-  align-items: flex-end;
-  width: 100%;
-}
-
 .textual-settings-panel.expanded .code-editor-wrapper {
   height: 90%;
 }
@@ -137,69 +124,37 @@
   height: 100%;
 }
 
-/* Code Editor */
-.code-editor {
-  display: flex;
-  font-family: monospace;
-  font-size: 14px;
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 0;
-  overflow: hidden;
-  width: 100%;
-}
-
-/* Line Numbers */
-.line-numbers {
-  border-radius: 7px 0 0 7px;
-  background: var(--dark-gray, #57575B);
-  color: var(--not-selected);
-  padding-top: 10px;
-  text-align: right;
-  user-select: none;
-}
-
-.line-number {
-  padding: 0 8px;
-}
-
-/* Scrollable and Custom Scrollbar for Textarea */
-.code-input {
-  flex: 1;
-  font-family: monospace;
-  font-size: 14px;
-  padding: 8px;
-  border: none;
-  resize: none;
-  outline: none;
-  background: transparent;
-  color: var(--editor-text, #D9D9D9);
-  line-height: 1.4;
-  overflow-y: auto;
-  max-height: 300px;
-}
-
-/* Custom Scrollbar */
-.code-input::-webkit-scrollbar {
-  width: 8px;
-}
-
-.code-input::-webkit-scrollbar-thumb {
-  background-color: rgba(33, 123, 244, 0.7);
-  border-radius: 4px;
-}
-
-.code-input::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(33, 123, 244, 0.9);
-}
-
-.code-input::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
 .settings-panel hr{
   width: 100%;
+}
+
+/* Grid preset buttons (DisplayEditor) */
+.grid-preset-row {
+  display: flex;
+  gap: 6px;
+}
+
+.grid-preset-btn {
+  flex: 1;
+  padding: 6px;
+  cursor: pointer;
+  background: var(--input-bg, #2a2a3c);
+  color: var(--editor-text, #D9D9D9);
+  border: 1px solid var(--border-color, #3a3a4a);
+  border-radius: var(--radius-sm, 4px);
+  font-size: 13px;
+  font-family: var(--font-primary);
+  transition: background 0.15s;
+}
+
+.grid-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.grid-preset-btn.active {
+  background: var(--accent-blue, #217bf4);
+  border-color: var(--accent-blue, #217bf4);
+  color: var(--white);
 }
 
 .save-changes-btn,
@@ -281,4 +236,18 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.settings-textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  background: var(--editor-bg, #2a2a2a);
+  color: var(--editor-text, #e0e0e0);
+  border: 1px solid var(--border-color, #444);
+  border-radius: var(--radius-sm, 4px);
+  padding: 8px 10px;
+  font-family: var(--font-secondary, 'Inter');
+  font-size: 13px;
+  line-height: 1.5;
 }

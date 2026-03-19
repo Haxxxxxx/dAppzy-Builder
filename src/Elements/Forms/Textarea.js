@@ -11,7 +11,7 @@ const Textarea = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'textarea' });
+    setSelectedElement(element || { id, type: 'textarea' });
   };
 
   const handleChange = (e) => {

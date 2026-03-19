@@ -15,6 +15,7 @@ import {
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 import { useDrag } from "react-dnd";
+import { useWalletContext } from "../../../context/WalletContext";
 
 /**
  * Helper to guess if a file is an image from its extension.
@@ -115,16 +116,22 @@ const ImageSettings = () => {
     updateElementProperties,
     updateStyles,
     setSelectedElement,
-    userId,
   } = useContext(EditableContext);
+  const { walletAddress: userId } = useWalletContext();
 
   // Element properties
   const [elementId, setElementId] = useState("");
   const [imageSrc, setImageSrc] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [imageWidth, setImageWidth] = useState("");
   const [imageHeight, setImageHeight] = useState("");
   const [altText, setAltText] = useState("My image");
   const [imageSize, setImageSize] = useState("0 MB");
+
+  // Link settings
+  const [linkAction, setLinkAction] = useState("none");
+  const [linkTarget, setLinkTarget] = useState("");
+  const [linkNewTab, setLinkNewTab] = useState(false);
 
   // Upload states
   const [isUploading, setIsUploading] = useState(false);
@@ -148,12 +155,20 @@ const ImageSettings = () => {
     if (selectedElement?.type === "image") {
       const { id, src, width, height, alt } = selectedElement;
       setElementId(id || "");
-      setImageSrc(src || "https://picsum.photos/150");
+      const currentSrc = src || "https://picsum.photos/150";
+      setImageSrc(currentSrc);
+      setImageUrl(currentSrc);
       setImageWidth(width || "auto");
       setImageHeight(height || "auto");
       setAltText(alt || "My image");
-      fetchImageDimensions(src || "https://picsum.photos/150");
+      fetchImageDimensions(currentSrc);
       fetchExistingImages(); // Load existing images from Firebase
+
+      // Load link settings
+      const settings = selectedElement.settings || {};
+      setLinkAction(settings.linkAction || "none");
+      setLinkTarget(settings.linkTarget || "");
+      setLinkNewTab(settings.linkNewTab || false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedElement]);
@@ -250,7 +265,6 @@ const ImageSettings = () => {
               src: downloadURL,
               content: downloadURL,
             });
-            localStorage.setItem(`image-${selectedElement.id}`, downloadURL);
             setSelectedElement({ ...selectedElement, src: downloadURL });
           }
 
@@ -311,6 +325,36 @@ const ImageSettings = () => {
   };
 
   /**
+   * Apply an external image URL (Unsplash, Cloudinary, any CDN)
+   */
+  const applyImageUrl = (url) => {
+    if (!url || (!url.startsWith("http://") && !url.startsWith("https://"))) return;
+    setImageSrc(url);
+    if (selectedElement) {
+      updateElementProperties(selectedElement.id, {
+        src: url,
+        content: url,
+      });
+      setSelectedElement({ ...selectedElement, src: url });
+    }
+    fetchImageDimensions(url);
+  };
+
+  const handleImageUrlChange = (e) => {
+    setImageUrl(e.target.value);
+  };
+
+  const handleImageUrlBlur = () => {
+    applyImageUrl(imageUrl);
+  };
+
+  const handleImageUrlKeyDown = (e) => {
+    if (e.key === "Enter") {
+      applyImageUrl(imageUrl);
+    }
+  };
+
+  /**
    * 5) Remove from Firebase (for existing images)
    */
   const handleRemoveClick = async (itemId) => {
@@ -362,6 +406,50 @@ const ImageSettings = () => {
     }
   };
 
+  /**
+   * 8) Link settings — make image clickable
+   */
+  const updateLinkSettings = (updates) => {
+    if (!selectedElement) return;
+    const currentSettings = selectedElement.settings || {};
+    const newSettings = { ...currentSettings, ...updates };
+    updateElementProperties(selectedElement.id, { settings: newSettings });
+    setSelectedElement({ ...selectedElement, settings: newSettings });
+  };
+
+  const handleLinkActionChange = (e) => {
+    const value = e.target.value;
+    setLinkAction(value);
+    const updates = { linkAction: value };
+    if (value === "none") {
+      updates.linkTarget = "";
+      updates.linkNewTab = false;
+      setLinkTarget("");
+      setLinkNewTab(false);
+    }
+    updateLinkSettings(updates);
+  };
+
+  const handleLinkTargetChange = (e) => {
+    setLinkTarget(e.target.value);
+  };
+
+  const handleLinkTargetBlur = () => {
+    updateLinkSettings({ linkTarget });
+  };
+
+  const handleLinkTargetKeyDown = (e) => {
+    if (e.key === "Enter") {
+      updateLinkSettings({ linkTarget });
+    }
+  };
+
+  const handleLinkNewTabChange = (e) => {
+    const checked = e.target.checked;
+    setLinkNewTab(checked);
+    updateLinkSettings({ linkNewTab: checked });
+  };
+
   return (
       <div className="image-settings-panel">
         <hr />
@@ -379,6 +467,21 @@ const ImageSettings = () => {
 
         <CollapsibleSection title={"Image Settings"}>
           <div className="image-settings-group">
+            {/* ==== Image URL Input ==== */}
+            <div className="settings-group">
+              <label htmlFor="imageUrl">Image URL</label>
+              <input
+                type="text"
+                id="imageUrl"
+                value={imageUrl}
+                onChange={handleImageUrlChange}
+                onBlur={handleImageUrlBlur}
+                onKeyDown={handleImageUrlKeyDown}
+                placeholder="https://example.com/image.png"
+                className="settings-input"
+              />
+            </div>
+
             {/* ==== Image Preview & Upload Progress ==== */}
             <div className="image-preview-section">
               <div className="image-preview-wrapper">
@@ -480,6 +583,67 @@ const ImageSettings = () => {
             </div>
           </div>
         )}
+
+        {/* ==== Link Settings ==== */}
+        <CollapsibleSection title="Link" defaultExpanded={false}>
+          <div className="image-settings-group">
+            <div className="settings-group">
+              <label htmlFor="imageLinkAction">Link Type</label>
+              <select
+                id="imageLinkAction"
+                value={linkAction}
+                onChange={handleLinkActionChange}
+                className="settings-input"
+                style={{ width: "100%" }}
+              >
+                <option value="none">None</option>
+                <option value="url">URL</option>
+                <option value="pageSection">Page Section</option>
+                <option value="pageLink">Page Link</option>
+              </select>
+            </div>
+
+            {linkAction !== "none" && (
+              <>
+                <div className="settings-group">
+                  <label htmlFor="imageLinkTarget">
+                    {linkAction === "url" ? "URL" : linkAction === "pageSection" ? "Section ID" : "Page Path"}
+                  </label>
+                  <input
+                    type="text"
+                    id="imageLinkTarget"
+                    value={linkTarget}
+                    onChange={handleLinkTargetChange}
+                    onBlur={handleLinkTargetBlur}
+                    onKeyDown={handleLinkTargetKeyDown}
+                    placeholder={
+                      linkAction === "url"
+                        ? "https://example.com"
+                        : linkAction === "pageSection"
+                        ? "#section-id"
+                        : "/page"
+                    }
+                    className="settings-input"
+                    style={{ width: "100%" }}
+                  />
+                </div>
+
+                <div className="settings-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                  <input
+                    type="checkbox"
+                    id="imageLinkNewTab"
+                    checked={linkNewTab}
+                    onChange={handleLinkNewTabChange}
+                    style={{ width: "auto" }}
+                  />
+                  <label htmlFor="imageLinkNewTab" style={{ marginBottom: 0 }}>
+                    Open in new tab
+                  </label>
+                </div>
+              </>
+            )}
+          </div>
+        </CollapsibleSection>
       </div>
   );
 };

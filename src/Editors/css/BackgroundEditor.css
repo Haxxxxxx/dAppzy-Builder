@@ -5,8 +5,7 @@
     /* If you want a dark panel background, uncomment:
        background-color: #1e1e1e; 
     */
-    font-family: Arial, sans-serif;
-    color: var(--white);
+
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -72,7 +71,7 @@
     flex: 1;
     border: none;
     background-color: transparent;
-    color: var(--white);
+    color: var(--editor-text);
     font-size: 14px;
     cursor: default;
     outline: none;
@@ -92,7 +91,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background-color: var(--editor-bg);
-    color: var(--white);
+    color: var(--editor-text);
     box-sizing: border-box;
 }
 
@@ -103,8 +102,8 @@
     justify-content: space-between;
     align-items: center;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--not-selected, #64748B);
-    background: var(--not-selected, #64748B);
+    border: 1px solid var(--not-selected, #838389);
+    background: var(--not-selected, #838389);
 
     width: 50%;
 
@@ -129,4 +128,157 @@ gap: 1rem;
 
 .background-editor-image-preview-wrapper img{
     max-height: 90px;
+}
+
+/* --- Image URL Input --- */
+.background-editor .image-url-group {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.background-editor .image-url-input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    color: var(--editor-text, #CBD5E1);
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.background-editor .image-url-input:focus {
+    border-color: var(--purple, #5C4EFA);
+}
+
+.background-editor .image-url-input::placeholder {
+    color: var(--not-selected, #838389);
+    font-size: 12px;
+}
+
+/* --- Gradient Section --- */
+.background-editor .gradient-section {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.background-editor .gradient-section > label {
+    margin-bottom: 8px;
+}
+
+.gradient-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.gradient-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.gradient-row select {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    color: var(--editor-text);
+    box-sizing: border-box;
+}
+
+.gradient-angle-input {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    padding: 0 8px;
+    height: 34px;
+    box-sizing: border-box;
+}
+
+.gradient-angle-input input[type="number"] {
+    width: 50px;
+    border: none;
+    background: transparent;
+    color: var(--editor-text);
+    font-size: 14px;
+    padding: 4px 0;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.gradient-angle-input input[type="number"]::-webkit-inner-spin-button,
+.gradient-angle-input input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.angle-unit {
+    font-size: 12px;
+    color: var(--not-selected);
+    margin-left: 2px;
+}
+
+.gradient-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gradient-color-stop {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gradient-color-stop label {
+    font-size: 12px;
+    color: var(--not-selected);
+}
+
+.gradient-preview-strip {
+    width: 100%;
+    height: 24px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+/* --- Background Image Controls (size / position / repeat) --- */
+.bg-image-controls {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.bg-image-controls .editor-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+.bg-image-controls select {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    color: var(--editor-text);
+    box-sizing: border-box;
 }

@@ -1,26 +1,19 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext } from "react";
 import { EditableContext } from "../context/EditableContext";
-import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/OpacityEditor.css";
 
 const OpacityEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
-  const debouncedUpdate = useDebouncedStyle(updateStyles);
-  const [opacity, setOpacity] = useState(1);
-
-  useEffect(() => {
-    if (selectedElement) {
-      const val = selectedElement.styles?.opacity;
-      setOpacity(val !== undefined ? Number(val) : 1);
-    }
-  }, [selectedElement]);
 
   if (!selectedElement) return null;
 
+  // Read directly from live selectedElement — no local state needed
+  const s = selectedElement.styles || {};
+  const opacity = s.opacity !== undefined ? Number(s.opacity) : 1;
+
   const handleChange = (value) => {
     const clamped = Math.min(1, Math.max(0, Number(value)));
-    setOpacity(clamped);
-    debouncedUpdate(selectedElement.id, { opacity: clamped });
+    updateStyles(selectedElement.id, { opacity: clamped });
   };
 
   return (

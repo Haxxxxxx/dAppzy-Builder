@@ -1,4 +1,6 @@
-import { isAddress } from 'ethers';
+// Lightweight Ethereum address validator — avoids importing ethers (~250KB)
+const isEthAddress = (address) =>
+  typeof address === 'string' && /^0x[0-9a-fA-F]{40}$/.test(address);
 
 /**
  * Centralized security management system
@@ -25,7 +27,7 @@ export const SecurityManager = {
    */
   validateEthAddress: (address) => {
     try {
-      return isAddress(address);
+      return isEthAddress(address);
     } catch (_) {
       /* security: fail silently by design */
       return false;

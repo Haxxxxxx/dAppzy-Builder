@@ -22,7 +22,7 @@ const ListSettings = () => {
 
   // Synchronized updates from parent -> local state
   useEffect(() => {
-    if (selectedElement && selectedElement.type === 'list') {
+    if (selectedElement && (selectedElement.type === 'list' || selectedElement.type === 'ul' || selectedElement.type === 'ol' || selectedElement.type === 'li')) {
       const listElement = elements.find((el) => el.id === selectedElement.id);
       setLocalSettings({
         id: listElement?.id || '',

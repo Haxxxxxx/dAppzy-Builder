@@ -11,7 +11,7 @@ const Select = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'select' });
+    setSelectedElement(element || { id, type: 'select' });
   };
 
   const handleChange = (e) => {

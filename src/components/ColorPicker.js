@@ -3,6 +3,21 @@ import { uiStorage, STORAGE_KEYS } from '../utils/storageManager';
 
 const MAX_SWATCHES = 12;
 
+// Convert any CSS color string to #rrggbb for <input type="color">
+const toHex = (color) => {
+  if (!color) return '#000000';
+  if (/^#[0-9a-fA-F]{6}$/.test(color)) return color;
+  if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+    return '#' + color[1]+color[1] + color[2]+color[2] + color[3]+color[3];
+  }
+  const match = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (match) {
+    const [, r, g, b] = match;
+    return '#' + [r, g, b].map(c => Number(c).toString(16).padStart(2, '0')).join('');
+  }
+  return '#000000';
+};
+
 const loadSwatches = () => uiStorage.getColorSwatches();
 
 const saveSwatches = (swatches) => {
@@ -11,6 +26,25 @@ const saveSwatches = (swatches) => {
 
 const ColorPicker = ({ value, onChange }) => {
   const [swatches, setSwatches] = useState(loadSwatches);
+  const [hexInput, setHexInput] = useState(value || '');
+
+  // Keep local input in sync when value changes externally (e.g. color picker wheel)
+  useEffect(() => {
+    setHexInput(value || '');
+  }, [value]);
+
+  const handleHexInputChange = (e) => {
+    const raw = e.target.value;
+    setHexInput(raw);
+
+    // Normalise: prepend # if missing
+    const normalised = raw.startsWith('#') ? raw : `#${raw}`;
+
+    // Validate: 3, 4, 6, or 8 hex digits after #
+    if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(normalised)) {
+      onChange(normalised);
+    }
+  };
 
   // Reload swatches from localStorage when another picker saves
   useEffect(() => {
@@ -42,14 +76,15 @@ const ColorPicker = ({ value, onChange }) => {
       <div className="color-group">
         <input
           type="color"
-          value={value || '#000000'}
+          value={toHex(value)}
           onChange={(e) => onChange(e.target.value)}
         />
         <input
           type="text"
-          value={value || ''}
-          readOnly
+          value={hexInput}
+          onChange={handleHexInputChange}
           className="color-hex"
+          spellCheck={false}
         />
         <button
           onClick={handleAddSwatch}

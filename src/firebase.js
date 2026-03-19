@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, setDoc, doc, getDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getAI, GoogleAIBackend } from "firebase/ai";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,6 +18,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence).catch(() => {});
 const storage = getStorage(app);
+const ai = getAI(app, { backend: new GoogleAIBackend() });
 
-export { setDoc, doc, getDoc, db, auth, storage };
+export { setDoc, doc, getDoc, db, auth, storage, ai };

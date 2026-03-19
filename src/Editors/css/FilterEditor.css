@@ -1,8 +1,7 @@
 /* FilterEditor.css */
 
 .filter-editor {
-  font-family: Arial, sans-serif;
-  color: var(--white);
+
 }
 
 .filter-row {
@@ -63,8 +62,8 @@
   justify-content: center;
   align-items: center;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--not-selected, #64748B);
-  background: var(--not-selected, #64748B);
+  border: 1px solid var(--not-selected, #838389);
+  background: var(--not-selected, #838389);
   width: 50%;
   color: var(--editor-text, #CBD5E1);
   text-align: center;

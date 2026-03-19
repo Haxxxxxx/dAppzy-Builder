@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+import { signOut, signInWithCustomToken } from 'firebase/auth';
 import { db, auth } from '../firebase';
 import { subscriptionStorage, authStorage } from '../utils/storageManager';
+
+const FUNCTIONS_BASE = import.meta.env.VITE_CF_BASE_URL || 'https://us-central1-third--space.cloudfunctions.net';
 
 const WalletContext = createContext({
   walletAddress: '',
@@ -38,59 +40,138 @@ const WalletContextProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [balance, setBalance] = useState(0);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-  // Restore wallet session using onAuthStateChanged (async-safe) + Phantom auto-connect
+  // Timeout wrapper — prevents hanging on Phantom connect({ onlyIfTrusted })
+  const withEagerTimeout = (promise, ms = 3000) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Eager connect timeout')), ms)),
+    ]);
+
+  // Single unified auth initialization effect.
+  // Handles: token handoff from CMS → Firebase Auth hydration → session restore.
+  // Always guarantees isAuthReady = true when done.
   useEffect(() => {
-    const restoreWalletSession = async (hasFirebaseUser = false) => {
+    let cancelled = false;
+
+    // ── Step 1: Token handoff (CMS → Builder cross-origin auth) ──────
+    const handleTokenHandoff = async () => {
+      const hash = window.location.hash;
+      if (!hash.includes('token=')) return false;
+      const idToken = hash.split('token=')[1];
+      if (!idToken) return false;
+
+      const params = new URLSearchParams(window.location.search);
+      const handoffUserId = params.get('userId');
+
+      // Clear the hash so the token isn't visible in the URL
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
       try {
-        if (!window.solana || !window.solana.isPhantom) return;
+        const res = await fetch(`${FUNCTIONS_BASE}/exchangeToken`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+        if (!res.ok) return false;
+        const { customToken } = await res.json();
+        await signInWithCustomToken(auth, customToken);
 
-        // Try to eagerly connect — Phantom remembers trusted apps across origins
-        let publicKey = window.solana.publicKey;
-        if (!publicKey && window.solana.isConnected === false) {
-          try {
-            const resp = await window.solana.connect({ onlyIfTrusted: true });
-            publicKey = resp.publicKey;
-          } catch (err) {
-            // Phantom not previously trusted on this origin — user must login manually
-            if (import.meta.env.DEV) console.debug('[WalletContext] Eager connect skipped:', err.message);
-            return;
-          }
+        if (handoffUserId && !cancelled) {
+          setWalletAddress(handoffUserId);
+          setWalletId(handoffUserId);
+          setIsWalletConnected(true);
+          authStorage.setUserAccount(handoffUserId);
         }
-        if (!publicKey) return;
 
-        const address = publicKey.toString();
-        setWalletAddress(address);
-        setWalletId(address);
-        setIsWalletConnected(true);
-        authStorage.setUserAccount(address);
-
-        // Verify subscription status against Firestore to prevent localStorage tampering
-        if (hasFirebaseUser) {
-          const userRef = doc(db, 'users', address);
-          const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const serverStatus = userData.subscriptionStatus || '';
-            subscriptionStorage.setStatus(serverStatus);
-            subscriptionStorage.setEndDate(userData.subscriptionEndDate || null);
-          } else {
-            // No user doc — clear any locally-set subscription
-            subscriptionStorage.clear();
-          }
-        } else {
-          // No Firebase session — don't trust localStorage subscription
-          subscriptionStorage.clear();
-        }
+        if (import.meta.env.DEV) console.debug('[WalletContext] Token handoff successful, userId:', handoffUserId);
+        return true;
       } catch (err) {
-        // Silent — auto-reconnect failure is not actionable
+        if (import.meta.env.DEV) console.debug('[WalletContext] Token handoff failed:', err.message);
+        return false;
       }
     };
 
-    // Wait for Firebase Auth to hydrate, then try to restore
-    const unsub = auth.onAuthStateChanged((user) => {
-      restoreWalletSession(!!user);
-    });
+    // ── Step 2: Restore wallet session from Firebase Auth + Phantom ──
+    const restoreWalletSession = async (firebaseUser) => {
+      if (!firebaseUser) {
+        subscriptionStorage.clear();
+        return;
+      }
+
+      if (import.meta.env.DEV) console.debug('[WalletContext] restoreWalletSession — Firebase uid:', firebaseUser.uid);
+
+      let address = null;
+
+      // Try Phantom eager connect with a timeout to prevent hanging
+      if (window.solana && window.solana.isPhantom) {
+        let publicKey = window.solana.publicKey;
+        if (!publicKey && window.solana.isConnected === false) {
+          try {
+            const resp = await withEagerTimeout(window.solana.connect({ onlyIfTrusted: true }));
+            publicKey = resp.publicKey;
+          } catch {
+            // Phantom not trusted on this origin, or timed out — expected cross-origin
+          }
+        }
+        if (publicKey) address = publicKey.toString();
+      }
+
+      // Fallback: stored userId from previous handoff or Firebase UID
+      if (!address) {
+        address = authStorage.getUserAccount() || firebaseUser.uid;
+      }
+      if (!address || cancelled) return;
+
+      setWalletAddress(address);
+      setWalletId(address);
+      setIsWalletConnected(true);
+      authStorage.setUserAccount(address);
+
+      // Verify subscription status from Firestore
+      try {
+        const userRef = doc(db, 'users', address);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          subscriptionStorage.setStatus(userData.subscriptionStatus || '');
+          subscriptionStorage.setEndDate(userData.subscriptionEndDate || null);
+        } else {
+          subscriptionStorage.clear();
+        }
+      } catch {
+        // Firestore read failed — non-critical for auth gate
+      }
+    };
+
+    // ── Orchestrate: handoff first, then auth state listener ─────────
+    const init = async () => {
+      const handoffDone = await handleTokenHandoff();
+
+      // Subscribe to onAuthStateChanged — fires immediately with current state.
+      // If handoff just signed us in, it fires with the new user.
+      // If no session, it fires with null.
+      const unsub = auth.onAuthStateChanged(async (user) => {
+        if (!handoffDone) {
+          await restoreWalletSession(user);
+        }
+        if (!cancelled) setIsAuthReady(true);
+      });
+
+      // Safety net: if onAuthStateChanged hasn't fired in 5s, unblock the UI
+      const safetyTimer = setTimeout(() => {
+        if (!cancelled) setIsAuthReady(true);
+      }, 5000);
+
+      return () => {
+        unsub();
+        clearTimeout(safetyTimer);
+      };
+    };
+
+    let cleanup = () => {};
+    init().then(fn => { if (fn) cleanup = fn; });
 
     // Listen for Phantom account changes and disconnect
     let handleAccountChanged;
@@ -99,14 +180,10 @@ const WalletContextProvider = ({ children }) => {
       handleAccountChanged = async (newPublicKey) => {
         if (newPublicKey) {
           await signOut(auth);
-          setWalletAddress('');
-          setWalletId('');
-          setIsWalletConnected(false);
-        } else {
-          setWalletAddress('');
-          setWalletId('');
-          setIsWalletConnected(false);
         }
+        setWalletAddress('');
+        setWalletId('');
+        setIsWalletConnected(false);
       };
       handleDisconnect = () => {
         setWalletAddress('');
@@ -119,7 +196,8 @@ const WalletContextProvider = ({ children }) => {
     }
 
     return () => {
-      unsub();
+      cancelled = true;
+      cleanup();
       if (window.solana && handleAccountChanged) {
         window.solana.removeListener('accountChanged', handleAccountChanged);
         window.solana.removeListener('disconnect', handleDisconnect);
@@ -237,7 +315,8 @@ const WalletContextProvider = ({ children }) => {
     balance,
     connectWallet,
     disconnectWallet,
-    isDevnet
+    isDevnet,
+    isAuthReady
   };
 
   return (

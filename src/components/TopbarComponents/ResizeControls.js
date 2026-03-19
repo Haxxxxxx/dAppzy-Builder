@@ -5,7 +5,7 @@ import '../css/Topbar.css';
 
 const ResizeControls = ({ scale, onResize, onScaleChange }) => {
   const [customSize, setCustomSize] = useState('');
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(1440);
   const { setActiveBreakpoint } = useContext(EditableContext);
 
   const sizeToBreakpoint = (size) => {

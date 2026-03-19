@@ -1,66 +1,8 @@
-.editor-panel-container{
-    display: flex;
-    flex-direction: column;
-    gap: 1vh;
-    color: var(--editor-text, #D9D9D9);
-}
-
-.no-settings-message {
-  padding: 24px;
-  text-align: center;
-  color: #666;
-  background-color: #f8f8f8;
-  border-radius: 8px;
-  margin: 16px;
-}
-
-.no-settings-message p:first-child {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.no-settings-message p:last-child {
-  font-size: 14px;
-  color: #888;
-}
-
-.edit-content-button {
+.editor-panel-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  margin: 16px auto 0;
-  padding: 12px 24px;
-  background-color: var(--purple);
-  color: var(--white);
-  border: none;
-  border-radius: 8px;
-  font-family: var(--font-primary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.edit-content-button:hover {
-  background-color: #4A3ED9;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.edit-content-button .button-icon {
-  font-size: 18px;
-}
-
-.content-editor-section {
-  transition: all 0.3s ease;
-  max-height: 0;
-  overflow: hidden;
-}
-
-.content-editor-section.expanded {
-  max-height: 500px;
+  color: var(--white, #fff);
 }
 
 /* State toggle (Normal / Hover / Focus) */
@@ -68,7 +10,7 @@
   display: flex;
   gap: 4px;
   margin-bottom: 12px;
-  background: #2a2a2a;
+  background: var(--editor-bg);
   border-radius: 6px;
   padding: 3px;
 }
@@ -79,29 +21,29 @@
   border: none;
   border-radius: 4px;
   background: transparent;
-  color: #b3b3b3;
+  color: var(--not-selected);
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 
 .state-toggle-btn:hover {
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
 }
 
 .state-toggle-btn.active {
-  background: #217bf4;
-  color: #fff;
+  background: var(--purple);
+  color: var(--white);
 }
 
 .state-editing-notice {
   padding: 6px 10px;
   margin-bottom: 12px;
   background: rgba(33, 123, 244, 0.15);
-  border-left: 3px solid #217bf4;
+  border-left: 3px solid var(--accent-blue);
   border-radius: 4px;
   font-size: 12px;
-  color: #b3b3b3;
+  color: var(--not-selected);
 }
 
 /* Breadcrumb */
@@ -179,3 +121,112 @@
   font-size: 14px;
 }
 
+/* Editor panel text */
+.editor-panel {
+  color: var(--white, #fff);
+  font-family: var(--font-primary);
+}
+
+.editor-empty-hint {
+  color: var(--not-selected, #838389);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 8px;
+}
+
+/* Shortcut hints */
+.shortcut-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 12px;
+}
+
+.shortcut-key {
+  background: var(--input-bg, #2a2a3c);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--editor-text, #D9D9D9);
+  border: 1px solid var(--border-color, #3a3a4a);
+}
+
+.shortcut-desc {
+  color: var(--not-selected, #838389);
+  font-size: 12px;
+}
+
+/* Clear all button */
+.editor-clear-all-btn {
+  margin-top: 16px;
+  padding: 8px;
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  color: var(--not-selected, #838389);
+  border: 1px solid var(--border-color, #3a3a4a);
+  border-radius: var(--radius-sm, 4px);
+  font-size: 12px;
+  font-family: var(--font-primary);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.editor-clear-all-btn:hover {
+  background: rgba(217, 83, 79, 0.15);
+  color: var(--error-red);
+  border-color: var(--error-red);
+}
+
+/* Custom CSS Editor */
+.custom-css-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.custom-css-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 8px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--editor-text, #d9d9d9);
+  background: var(--input-bg, #2a2a2a);
+  border: 1px solid var(--border-color, #3a3a4a);
+  border-radius: var(--radius-sm, 4px);
+  resize: vertical;
+  box-sizing: border-box;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.custom-css-textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.custom-css-apply-btn {
+  align-self: flex-end;
+  padding: 5px 16px;
+  background: var(--accent-blue);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  font-size: 12px;
+  font-family: var(--font-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.custom-css-apply-btn:hover {
+  background: var(--accent-blue-hover);
+}

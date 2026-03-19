@@ -53,16 +53,16 @@ export const findElementById = (id, elements) => {
  * Leaves the child's objects in the array if they exist.
  */
 export const removeElementById = (id, elements) => {
-  const updatedElements = elements.filter((el) => el.id !== id);
-
-  // Remove references from parent's children arrays, if they exist
-  updatedElements.forEach((el) => {
-    if (el.children) {
-      el.children = el.children.filter((childId) => childId !== id);
-    }
-  });
-
-  return updatedElements;
+  // Filter out the element, then create new objects only for parents that
+  // referenced the removed element — avoids mutating shared history snapshots.
+  return elements
+    .filter((el) => el.id !== id)
+    .map((el) => {
+      if (el.children && el.children.includes(id)) {
+        return { ...el, children: el.children.filter((childId) => childId !== id) };
+      }
+      return el;
+    });
 };
 
 /**

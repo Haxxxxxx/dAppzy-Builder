@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { useWalletContext } from './WalletContext';
 import { subscriptionStorage } from '../utils/storageManager';
 
@@ -54,6 +54,7 @@ export const SubscriptionProvider = ({ children }) => {
 
       try {
         const userRef = doc(db, "users", walletAddress);
+        if (import.meta.env.DEV) console.debug('[SubscriptionContext] onSnapshot for users/%s — Firebase uid:', walletAddress, auth.currentUser?.uid);
 
         // Set up real-time listener for user document
         unsubscribeRef.current = onSnapshot(userRef, (userDoc) => {

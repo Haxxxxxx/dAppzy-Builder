@@ -1,6 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
+import { getModuleLabel, getModuleDefaults } from '../../../constants/defiModuleTypes';
+import { getTopTokens } from '../../../services/coinGeckoService';
 import './css/SettingsForm.css';
+
+const DEFAULT_TOKENS = ['bitcoin', 'ethereum', 'solana', 'usd-coin', 'tether'];
 
 const DeFiModuleSettings = () => {
   const { selectedElement, updateContent, updateStyles } = useContext(EditableContext);
@@ -9,18 +13,42 @@ const DeFiModuleSettings = () => {
   useEffect(() => {
     if (selectedElement) {
       try {
+        // Normalize: handle both string (legacy) and object content
         const data = typeof selectedElement.content === 'string'
           ? JSON.parse(selectedElement.content)
-          : selectedElement.content;
-        setModuleData(data);
+          : (selectedElement.content || {});
+        // Merge in defaults for missing fields
+        const moduleType = selectedElement.moduleType || data.moduleType || 'aggregator';
+        const defaults = getModuleDefaults(moduleType);
+        setModuleData({
+          ...data,
+          title: data.title || defaults.label,
+          description: data.description || defaults.description,
+          stats: data.stats || defaults.defaultStats,
+          settings: { ...defaults.defaultSettings, ...(data.settings || {}) },
+          enabled: data.enabled ?? true,
+          moduleType,
+        });
       } catch (e) {
         if (import.meta.env.DEV) console.error('[DeFiModuleSettings] Failed to parse module data:', e);
+        // Fall back to defaults
+        const moduleType = selectedElement.moduleType || 'aggregator';
+        const defaults = getModuleDefaults(moduleType);
+        setModuleData({
+          title: defaults.label,
+          description: defaults.description,
+          stats: defaults.defaultStats,
+          settings: { ...defaults.defaultSettings },
+          enabled: true,
+          moduleType,
+        });
       }
     }
   }, [selectedElement]);
 
   const updateModuleData = (updatedData) => {
-    updateContent(selectedElement.id, JSON.stringify(updatedData));
+    // Pass object directly — never JSON.stringify
+    updateContent(selectedElement.id, updatedData);
     if (updatedData.settings?.customColor) {
       updateStyles(selectedElement.id, { backgroundColor: updatedData.settings.customColor });
     }
@@ -28,10 +56,12 @@ const DeFiModuleSettings = () => {
   };
 
   const handleField = (field, value) => {
+    if (!moduleData) return;
     updateModuleData({ ...moduleData, [field]: value });
   };
 
   const handleSettingField = (field, value) => {
+    if (!moduleData) return;
     updateModuleData({
       ...moduleData,
       settings: { ...moduleData.settings, [field]: value },
@@ -60,6 +90,35 @@ const DeFiModuleSettings = () => {
   const handleMultiSelect = (settingField, e) => {
     const selected = [...e.target.selectedOptions].map(o => o.value);
     handleSettingField(settingField, selected);
+  };
+
+  const moduleType = selectedElement?.moduleType || moduleData?.moduleType || 'aggregator';
+
+  // Token selector for aggregator modules
+  const [availableTokens, setAvailableTokens] = useState([]);
+  const [tokensLoading, setTokensLoading] = useState(false);
+
+  useEffect(() => {
+    if (moduleType === 'aggregator') {
+      setTokensLoading(true);
+      getTopTokens(20)
+        .then(tokens => {
+          setAvailableTokens(tokens.length > 0 ? tokens : DEFAULT_TOKENS.map(id => ({ id, symbol: id.toUpperCase(), name: id })));
+        })
+        .catch(() => {
+          setAvailableTokens(DEFAULT_TOKENS.map(id => ({ id, symbol: id.toUpperCase(), name: id })));
+        })
+        .finally(() => setTokensLoading(false));
+    }
+  }, [moduleType]);
+
+  const handleTokenToggle = (tokenId) => {
+    if (!moduleData) return;
+    const current = moduleData.settings?.selectedTokens || [];
+    const updated = current.includes(tokenId)
+      ? current.filter(t => t !== tokenId)
+      : [...current, tokenId];
+    handleSettingField('selectedTokens', updated);
   };
 
   const renderStatsSettings = () => (
@@ -92,13 +151,13 @@ const DeFiModuleSettings = () => {
   const renderModuleSpecificSettings = () => {
     if (!moduleData) return null;
 
-    switch (moduleData.moduleType) {
+    switch (moduleType) {
       case 'aggregator':
         return (
           <>
             <hr className="settings-divider" />
             <div className="settings-field">
-              <label>Pool Aggregator Settings</label>
+              <label>{getModuleLabel('aggregator')} Settings</label>
             </div>
             <div className="settings-field">
               <label>Supported Chains</label>
@@ -114,23 +173,40 @@ const DeFiModuleSettings = () => {
                 <option value="BSC">BSC</option>
                 <option value="Avalanche">Avalanche</option>
                 <option value="Arbitrum">Arbitrum</option>
+                <option value="Solana">Solana</option>
               </select>
             </div>
             <div className="settings-field">
-              <label>Supported Tokens</label>
-              <select
-                className="settings-select"
-                multiple
-                value={moduleData.settings?.supportedTokens || []}
-                onChange={e => handleMultiSelect('supportedTokens', e)}
-                size={5}
-              >
-                <option value="USDC">USDC</option>
-                <option value="USDT">USDT</option>
-                <option value="DAI">DAI</option>
-                <option value="ETH">ETH</option>
-                <option value="WBTC">WBTC</option>
-              </select>
+              <label>Track Tokens (Live Prices)</label>
+              {tokensLoading ? (
+                <div style={{ color: '#888', fontSize: '0.85rem', padding: '8px 0' }}>Loading tokens...</div>
+              ) : (
+                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '4px' }}>
+                  {availableTokens.map(token => {
+                    const selected = (moduleData.settings?.selectedTokens || []).includes(token.id);
+                    return (
+                      <div
+                        key={token.id}
+                        onClick={() => handleTokenToggle(token.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px',
+                          cursor: 'pointer', borderRadius: '4px',
+                          backgroundColor: selected ? 'rgba(92, 78, 250, 0.2)' : 'transparent',
+                          border: selected ? '1px solid rgba(92, 78, 250, 0.5)' : '1px solid transparent',
+                        }}
+                      >
+                        {token.image && <img src={token.image} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />}
+                        <span style={{ fontWeight: 500, color: '#fff', fontSize: '0.85rem' }}>{token.symbol}</span>
+                        {token.price != null && (
+                          <span style={{ color: '#888', fontSize: '0.8rem', marginLeft: 'auto' }}>
+                            ${typeof token.price === 'number' ? token.price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : token.price}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </>
         );
@@ -139,7 +215,7 @@ const DeFiModuleSettings = () => {
           <>
             <hr className="settings-divider" />
             <div className="settings-field">
-              <label>Simulation Settings</label>
+              <label>{getModuleLabel('simulation')} Settings</label>
             </div>
             <div className="settings-field">
               <label>Simulation Balance</label>
@@ -176,13 +252,22 @@ const DeFiModuleSettings = () => {
   }
 
   return (
-    <form className="defi-settings-form">
+    <form className="defi-settings-form" onSubmit={e => e.preventDefault()}>
       <div className="settings-field">
         <label>Module Title</label>
         <input
           className="settings-input"
           value={moduleData.title || ''}
           onChange={e => handleField('title', e.target.value)}
+        />
+      </div>
+
+      <div className="settings-field">
+        <label>Description</label>
+        <input
+          className="settings-input"
+          value={moduleData.description || ''}
+          onChange={e => handleField('description', e.target.value)}
         />
       </div>
 

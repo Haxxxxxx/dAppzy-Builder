@@ -367,7 +367,7 @@ export const FooterConfigurations = {
         type: 'button',
         content: 'Connect Wallet',
         styles: {
-          backgroundColor: '#4D70FF',
+          backgroundColor: 'var(--purple, #5C4EFA)',
           color: '#ffffff',
           border: 'none',
           borderRadius: '4px',

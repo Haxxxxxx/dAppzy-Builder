@@ -72,8 +72,9 @@ const SnsDomainSelector = ({
     }
   };
 
-  return (
-    <div className="domain-selection-modal-bg">
+  // DeploymentScreen renders its own modal-bg, so only wrap SELECTING in one
+  if (deploymentStage !== 'SELECTING') {
+    return (
       <DeploymentScreen
         deploymentStage={deploymentStage}
         deploymentProgress={deploymentProgress}
@@ -82,50 +83,52 @@ const SnsDomainSelector = ({
         onClose={onCancel}
         onViewSite={handleViewSite}
       />
-      
-      {deploymentStage === 'SELECTING' && (
-        <div className="domain-selection-modal">
-          <DomainSelectorHeader
-            connectionStatus={connectionStatus}
-            connectionError={connectionError}
-            domainsError={domainsError}
-          />
+    );
+  }
 
-          <p className="domain-selection-modal-subtitle">
-            Select a domain to deploy your website:
-          </p>
+  return (
+    <div className="domain-selection-modal-bg">
+      <div className="domain-selection-modal">
+        <DomainSelectorHeader
+          connectionStatus={connectionStatus}
+          connectionError={connectionError}
+          domainsError={domainsError}
+        />
 
-          <DomainList
-            domains={domains}
-            isLoading={isLoading}
-            selectedDomain={selectedDomain}
-            primaryDomain={primaryDomain}
-            enabledDomains={enabledDomains}
-            onDomainToggle={handleDomainToggle}
-          />
+        <p className="domain-selection-modal-subtitle">
+          Select a domain to deploy your website:
+        </p>
 
-          <div className="buttons">
-            <button className="cancel-btn" onClick={onCancel}>
-              Cancel
-            </button>
-            <button
-              className="select-btn"
-              onClick={handleSelectDomain}
-              disabled={!selectedDomain || connectionStatus !== CONNECTION_STATUS.CONNECTED}
-            >
-              Update Domain
-            </button>
-          </div>
+        <DomainList
+          domains={domains}
+          isLoading={isLoading}
+          selectedDomain={selectedDomain}
+          primaryDomain={primaryDomain}
+          enabledDomains={enabledDomains}
+          onDomainToggle={handleDomainToggle}
+        />
 
-          <p className="no-domains-message">
-            If you don't own any SNS domains in your wallet, please visit{' '}
-            <a href="https://naming.bonfida.org/" target="_blank" rel="noopener noreferrer">
-              Bonfida
-            </a>{' '}
-            to purchase a domain.
-          </p>
+        <div className="buttons">
+          <button className="cancel-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="select-btn"
+            onClick={handleSelectDomain}
+            disabled={!selectedDomain || connectionStatus !== CONNECTION_STATUS.CONNECTED}
+          >
+            Update Domain
+          </button>
         </div>
-      )}
+
+        <p className="no-domains-message">
+          If you don't own any SNS domains in your wallet, please visit{' '}
+          <a href="https://naming.bonfida.org/" target="_blank" rel="noopener noreferrer">
+            Bonfida
+          </a>{' '}
+          to purchase a domain.
+        </p>
+      </div>
     </div>
   );
 };

@@ -10,6 +10,8 @@ const AIBuilder = React.lazy(() => import("./components/AIBuilder"));
 import "./components/css/ProjectSelection.css";
 import { subscriptionStorage, projectStorage, authStorage } from './utils/storageManager';
 import ConfirmModal from './components/common/ConfirmModal';
+import LoadingGate from './components/LoadingGate';
+import { BRAND_IMAGES } from './configs/assetUrls';
 
 function getMaxProjects() {
   const subscriptionStatus = subscriptionStorage.getStatus();
@@ -26,7 +28,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [projects, setProjects] = useState([]);
   const [activeProjectId, setActiveProjectId] = useState(null);
   const [internProjectId, setInternProjectId] = useState(null);
-  const { setElements, elements } = useContext(EditableContext);
+  const { setElements, elements, setPreviewMode, setPages, resetHistory } = useContext(EditableContext);
   const [scale, setScale] = useState(1);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [availableCanvasWidth, setAvailableCanvasWidth] = useState(0);
@@ -42,6 +44,15 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   const [renameValue, setRenameValue] = useState('');
   const [showAIBuilder, setShowAIBuilder] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
+  const [shareUrl, setShareUrl] = useState('');
+  // Dashboard-managed fields (customCode, analyticsSettings, envVars, seoSettings)
+  // These are set by the dashboard and must be preserved — the builder reads but does not write them.
+  const [dashboardData, setDashboardData] = useState({});
+
+  // Keep EditableContext's previewMode in sync with local isPreviewMode state
+  useEffect(() => {
+    setPreviewMode(isPreviewMode);
+  }, [isPreviewMode, setPreviewMode]);
 
   const loadingTimeoutRef = useRef(null);
   const loadingWatchdogRef = useRef(null);
@@ -133,16 +144,35 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
       const projectSnap = await getDoc(projectRef);
       if (projectSnap.exists()) {
         const projectData = projectSnap.data();
-        setElements([]);
-        if (projectData?.elements) {
-          setElements(projectData.elements);
+        // Clear any legacy localStorage data
+        projectStorage.clearLegacyCache();
+        const loadedElements = projectData?.elements || [];
+        setElements(loadedElements);
+        resetHistory(loadedElements);
+        // Restore multi-page state if present
+        if (projectData?.pages && Array.isArray(projectData.pages) && projectData.pages.length > 0) {
+          setPages(projectData.pages);
+        } else if (projectData?.elements) {
+          // Legacy single-page project — wrap elements into a default Home page
+          setPages([{ id: 'page-home', name: 'Home', slug: '/', elements: projectData.elements }]);
         }
         if (projectData?.websiteSettings) {
           setPageSettings(projectData.websiteSettings);
           projectStorage.setWebsiteSettings(projectData.websiteSettings);
-        } else {
-          projectStorage.setWebsiteSettings(pageSettings);
         }
+        // Restore share URL if previously generated
+        if (projectData?.shareUrl) {
+          setShareUrl(projectData.shareUrl);
+        } else {
+          setShareUrl('');
+        }
+        // Capture dashboard-managed fields so they're available during export/deploy
+        setDashboardData({
+          customCode: projectData.customCode || {},
+          analyticsSettings: projectData.analyticsSettings || {},
+          envVars: projectData.envVars || [],
+          seoSettings: projectData.seoSettings || {},
+        });
         setActiveProjectId(projId);
         setInternProjectId(projId);
         setViewState('builder');
@@ -156,13 +186,19 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     } finally {
       setLoadingState(false);
     }
-  }, [userId, setElements, pageSettings, setLoadingState]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, setElements, setLoadingState]);
 
   // Create a new project document.
   const createUserProject = useCallback(async (projectData) => {
+    if (!userId) {
+      if (import.meta.env.DEV) console.error('[createUserProject] userId is null — cannot create project');
+      setViewState('selection');
+      return;
+    }
     setLoadingState(true);
     try {
-      projectStorage.clearProject();
+      projectStorage.clearLegacyCache();
 
       const projectsRef = collection(db, "projects", userId, "ProjectRef");
       const newProjectData = {
@@ -177,14 +213,20 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
         thumbnailUrl: "",
         ...projectData
       };
+      if (import.meta.env.DEV) console.debug('[createUserProject] Writing to projects/%s/ProjectRef', userId);
       const docRef = await addDoc(projectsRef, newProjectData);
-      setElements([]);
+      if (import.meta.env.DEV) console.debug('[createUserProject] Created doc:', docRef.id);
+      // Set the canvas to the newly created project data (may include template elements)
+      setElements(newProjectData.elements || []);
+      setPageSettings(newProjectData.websiteSettings || {});
+      projectStorage.setWebsiteSettings(newProjectData.websiteSettings || {});
       await loadUserProjects(userId);
       setActiveProjectId(docRef.id);
       setInternProjectId(docRef.id);
       setViewState('builder');
       return docRef.id;
     } catch (error) {
+      if (import.meta.env.DEV) console.error('[createUserProject] Failed:', error);
       setViewState('selection');
     } finally {
       setLoadingState(false);
@@ -292,7 +334,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     const loadProject = async () => {
       setLoadingState(true);
       try {
-        projectStorage.clearProject();
+        projectStorage.clearLegacyCache();
 
         const params = new URLSearchParams(window.location.search);
         const qProjectId = params.get("projectId");
@@ -345,7 +387,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // If not logged in, render the WalletConnection.
   if (!isLoggedIn) {
     return (
-      <Suspense fallback={<div className="app-loading">Connecting...</div>}>
+      <Suspense fallback={<LoadingGate message="Connecting..." />}>
         <WalletConnection
           onUserLogin={(walletKey) => {
             setIsLoggedIn(true);
@@ -361,20 +403,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
   // Render appropriate view based on viewState
   switch (viewState) {
     case 'loading':
-      return (
-        <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f5f5f5' }}>
-          <div style={{ width: '90%', maxWidth: '1200px', display: 'flex', gap: '12px', height: '80vh' }}>
-            <div style={{ width: '240px', background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ height: '48px', background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
-              <div style={{ flex: 1, background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: '0.2s' }} />
-            </div>
-            <div style={{ width: '280px', background: '#e0e0e0', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: '0.4s' }} />
-          </div>
-          <p style={{ marginTop: '16px', color: '#666' }}>Loading your project...</p>
-          <style>{`@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }`}</style>
-        </div>
-      );
+      return <LoadingGate message="Loading your project..." />;
     
     case 'selection':
       return (
@@ -488,7 +517,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
             ))}
           </div>
           {showAIBuilder && (
-            <Suspense fallback={<div className="app-loading">Loading AI Builder...</div>}>
+            <Suspense fallback={<LoadingGate message="Loading AI Builder..." />}>
               <AIBuilder
                 onProjectGenerated={(projectData) => {
                   setShowAIBuilder(false);
@@ -515,7 +544,7 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
     
     case 'builder':
       return (
-        <Suspense fallback={<div className="app-loading">Loading Builder...</div>}>
+        <Suspense fallback={<LoadingGate message="Loading the builder..." />}>
           <BuilderPageCore
             userId={userId}
             projectId={internProjectId}
@@ -535,36 +564,49 @@ function BuilderPageLoader({ userId, setUserId, projectId: propProjectId }) {
             setIsPreviewMode={setIsPreviewMode}
             availableCanvasWidth={availableCanvasWidth}
             setAvailableCanvasWidth={setAvailableCanvasWidth}
+            shareUrl={shareUrl}
+            dashboardData={dashboardData}
+            onBackToProjects={() => {
+              // Clear URL project param and return to selection screen
+              const newUrl = `${window.location.origin}${window.location.pathname}?userId=${userId}`;
+              window.history.replaceState(null, '', newUrl);
+              loadUserProjects(userId);
+            }}
           />
         </Suspense>
       );
     
     case 'error':
       return (
-        <div className="loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '12px' }}>
-          <p style={{ color: '#e74c3c', marginBottom: '8px' }}>{errorMessage}</p>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              className="create-new-project"
-              onClick={() => {
-                setErrorMessage(null);
-                isInitialLoadRef.current = true;
-                setViewState('loading');
-                loadUserProjects(userId);
-              }}
-            >
-              Retry
-            </button>
-            <button
-              className="create-new-project"
-              style={{ background: 'transparent', border: '1px solid #ccc', color: '#333' }}
-              onClick={() => {
-                setErrorMessage(null);
-                loadUserProjects(userId);
-              }}
-            >
-              Back to Projects
-            </button>
+        <div className="builder-gate">
+          <div className="builder-gate-inner">
+            <div className="builder-gate-logo-wrap">
+              <img className="builder-gate-logo" src={BRAND_IMAGES.logo} alt="dappzy" style={{ animation: 'none', opacity: 1 }} />
+            </div>
+            <p className="builder-gate-text" style={{ color: '#e74c3c', animation: 'none', opacity: 1 }}>{errorMessage}</p>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <button
+                className="builder-gate-btn"
+                onClick={() => {
+                  setErrorMessage(null);
+                  isInitialLoadRef.current = true;
+                  setViewState('loading');
+                  loadUserProjects(userId);
+                }}
+              >
+                Retry
+              </button>
+              <button
+                className="builder-gate-btn"
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}
+                onClick={() => {
+                  setErrorMessage(null);
+                  loadUserProjects(userId);
+                }}
+              >
+                Back to Projects
+              </button>
+            </div>
           </div>
         </div>
       );

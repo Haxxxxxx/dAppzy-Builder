@@ -577,5 +577,693 @@ export const SectionConfiguration = {
         styles: { key: 'bottomButton' }
       }
     ]
-  }
+  },
+  sectionFive: {
+    type: 'section',
+    label: 'FAQ Section',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#FFFFFF',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '800px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '16px',
+        textAlign: 'center',
+      },
+      paragraph: {
+        ...defaultSectionStyles.paragraph,
+        fontSize: '1.125rem',
+        color: '#6B7280',
+        marginBottom: '48px',
+        textAlign: 'center',
+      },
+      faqList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        width: '100%',
+        maxWidth: '700px',
+      },
+      faqItem: {
+        padding: '24px',
+        backgroundColor: '#F9FAFB',
+        borderRadius: '12px',
+        border: '1px solid #E5E7EB',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+      },
+      faqQuestion: {
+        fontSize: '1.125rem',
+        fontWeight: '600',
+        color: '#1F2937',
+      },
+      faqAnswer: {
+        fontSize: '1rem',
+        color: '#6B7280',
+        lineHeight: '1.6',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'Frequently Asked Questions', styles: { key: 'heading' } },
+          { type: 'paragraph', content: 'Find answers to the most common questions about our platform.', styles: { key: 'paragraph' } },
+        ]
+      },
+      {
+        type: 'accordion',
+        content: JSON.stringify({
+          items: [
+            { title: 'How do I get started?', body: 'Sign up for a free account, choose a template, and start customizing. No coding required.' },
+            { title: 'Can I use my own domain?', body: 'Yes! You can connect any custom domain or use our free subdomain to publish your site.' },
+            { title: 'Is there a free plan?', body: 'We offer a generous free tier with all essential features. Upgrade anytime for advanced capabilities.' },
+          ],
+          allowMultiple: true,
+        }),
+        styles: { key: 'faqList' },
+      }
+    ]
+  },
+  sectionSix: {
+    type: 'section',
+    label: 'Team Section',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#F9FAFB',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '800px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '16px',
+        textAlign: 'center',
+      },
+      paragraph: {
+        ...defaultSectionStyles.paragraph,
+        fontSize: '1.125rem',
+        color: '#6B7280',
+        marginBottom: '48px',
+        textAlign: 'center',
+      },
+      teamGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '32px',
+        width: '100%',
+        maxWidth: '1000px',
+      },
+      memberCard: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '32px 24px',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '16px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+      },
+      memberImage: {
+        width: '96px',
+        height: '96px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+      },
+      memberName: {
+        fontSize: '1.25rem',
+        fontWeight: '600',
+        color: '#1F2937',
+        textAlign: 'center',
+      },
+      memberRole: {
+        fontSize: '0.95rem',
+        color: '#6B7280',
+        textAlign: 'center',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'Meet Our Team', styles: { key: 'heading' } },
+          { type: 'paragraph', content: 'The people behind the product who make it all possible.', styles: { key: 'paragraph' } },
+        ]
+      },
+      {
+        type: 'gridLayout',
+        styles: { key: 'teamGrid' },
+        children: [
+          {
+            type: 'div',
+            styles: { key: 'memberCard' },
+            children: [
+              { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'memberImage' } },
+              { type: 'heading', content: 'Alex Johnson', styles: { key: 'memberName' } },
+              { type: 'paragraph', content: 'CEO & Founder', styles: { key: 'memberRole' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'memberCard' },
+            children: [
+              { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'memberImage' } },
+              { type: 'heading', content: 'Sarah Chen', styles: { key: 'memberName' } },
+              { type: 'paragraph', content: 'Head of Design', styles: { key: 'memberRole' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'memberCard' },
+            children: [
+              { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'memberImage' } },
+              { type: 'heading', content: 'Marcus Rivera', styles: { key: 'memberName' } },
+              { type: 'paragraph', content: 'Lead Engineer', styles: { key: 'memberRole' } },
+            ]
+          },
+        ]
+      }
+    ]
+  },
+  sectionSeven: {
+    type: 'section',
+    label: 'Stats Section',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#1F2937',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '800px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '16px',
+        color: '#FFFFFF',
+        textAlign: 'center',
+      },
+      paragraph: {
+        ...defaultSectionStyles.paragraph,
+        fontSize: '1.125rem',
+        color: '#9CA3AF',
+        marginBottom: '48px',
+        textAlign: 'center',
+      },
+      statsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '32px',
+        width: '100%',
+        maxWidth: '1000px',
+      },
+      statItem: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '24px',
+      },
+      statNumber: {
+        fontSize: '3rem',
+        fontWeight: '700',
+        color: '#FFFFFF',
+        textAlign: 'center',
+        lineHeight: '1',
+      },
+      statLabel: {
+        fontSize: '1rem',
+        color: '#9CA3AF',
+        textAlign: 'center',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'Trusted by Thousands', styles: { key: 'heading' } },
+          { type: 'paragraph', content: 'Our numbers speak for themselves.', styles: { key: 'paragraph' } },
+        ]
+      },
+      {
+        type: 'gridLayout',
+        styles: { key: 'statsGrid' },
+        children: [
+          {
+            type: 'div',
+            styles: { key: 'statItem' },
+            children: [
+              { type: 'heading', content: '10K+', styles: { key: 'statNumber' } },
+              { type: 'paragraph', content: 'Active Users', styles: { key: 'statLabel' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'statItem' },
+            children: [
+              { type: 'heading', content: '50K+', styles: { key: 'statNumber' } },
+              { type: 'paragraph', content: 'Sites Built', styles: { key: 'statLabel' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'statItem' },
+            children: [
+              { type: 'heading', content: '99.9%', styles: { key: 'statNumber' } },
+              { type: 'paragraph', content: 'Uptime', styles: { key: 'statLabel' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'statItem' },
+            children: [
+              { type: 'heading', content: '4.9★', styles: { key: 'statNumber' } },
+              { type: 'paragraph', content: 'User Rating', styles: { key: 'statLabel' } },
+            ]
+          },
+        ]
+      }
+    ]
+  },
+  sectionEight: {
+    type: 'section',
+    label: 'Contact Section',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#FFFFFF',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '600px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '16px',
+        textAlign: 'center',
+      },
+      paragraph: {
+        ...defaultSectionStyles.paragraph,
+        fontSize: '1.125rem',
+        color: '#6B7280',
+        marginBottom: '40px',
+        textAlign: 'center',
+      },
+      formContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        width: '100%',
+        maxWidth: '500px',
+      },
+      inputStyle: {
+        padding: '14px 16px',
+        borderRadius: '8px',
+        border: '1px solid #D1D5DB',
+        fontSize: '1rem',
+        color: '#1F2937',
+        backgroundColor: '#F9FAFB',
+        outline: 'none',
+        width: '100%',
+        boxSizing: 'border-box',
+      },
+      textareaStyle: {
+        padding: '14px 16px',
+        borderRadius: '8px',
+        border: '1px solid #D1D5DB',
+        fontSize: '1rem',
+        color: '#1F2937',
+        backgroundColor: '#F9FAFB',
+        outline: 'none',
+        width: '100%',
+        boxSizing: 'border-box',
+        minHeight: '120px',
+        resize: 'vertical',
+      },
+      submitButton: {
+        ...defaultSectionStyles.primaryButton,
+        width: '100%',
+        padding: '14px 32px',
+        fontSize: '1.125rem',
+        backgroundColor: '#2563EB',
+        marginTop: '8px',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'Get in Touch', styles: { key: 'heading' } },
+          { type: 'paragraph', content: 'Have a question or want to work together? Drop us a message.', styles: { key: 'paragraph' } },
+        ]
+      },
+      {
+        type: 'form',
+        styles: { key: 'formContainer' },
+        children: [
+          { type: 'input', content: '', styles: { key: 'inputStyle' } },
+          { type: 'input', content: '', styles: { key: 'inputStyle' } },
+          { type: 'textarea', content: '', styles: { key: 'textareaStyle' } },
+          { type: 'button', content: 'Send Message', styles: { key: 'submitButton' } },
+        ]
+      }
+    ]
+  },
+
+  // ── Newsletter Signup ─────────────────────────────────────────────
+  sectionNine: {
+    type: 'section',
+    label: 'Newsletter Signup',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#F0F4FF',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '600px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '16px',
+        textAlign: 'center',
+      },
+      paragraph: {
+        ...defaultSectionStyles.paragraph,
+        fontSize: '1.125rem',
+        color: '#6B7280',
+        marginBottom: '32px',
+        textAlign: 'center',
+      },
+      formRow: {
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '12px',
+        width: '100%',
+        maxWidth: '480px',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+      emailInput: {
+        flex: '1',
+        padding: '14px 16px',
+        borderRadius: '8px',
+        border: '1px solid #D1D5DB',
+        fontSize: '1rem',
+        color: '#1F2937',
+        backgroundColor: '#FFFFFF',
+        outline: 'none',
+        boxSizing: 'border-box',
+      },
+      submitButton: {
+        ...defaultSectionStyles.primaryButton,
+        padding: '14px 28px',
+        fontSize: '1rem',
+        backgroundColor: '#2563EB',
+        whiteSpace: 'nowrap',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'Stay Updated', styles: { key: 'heading' } },
+          { type: 'paragraph', content: 'Subscribe to our newsletter and never miss an update. No spam, unsubscribe at any time.', styles: { key: 'paragraph' } },
+        ]
+      },
+      {
+        type: 'div',
+        styles: { key: 'formRow' },
+        children: [
+          { type: 'input', content: '', styles: { key: 'emailInput' } },
+          { type: 'button', content: 'Subscribe', styles: { key: 'submitButton' } },
+        ]
+      }
+    ]
+  },
+
+  // ── Logo Cloud ────────────────────────────────────────────────────
+  sectionTen: {
+    type: 'section',
+    label: 'Logo Cloud',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#FFFFFF',
+        padding: '60px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '800px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '1.25rem',
+        fontWeight: '500',
+        color: '#9CA3AF',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        marginBottom: '40px',
+        textAlign: 'center',
+      },
+      logoRow: {
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: '48px',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+      },
+      logoImage: {
+        width: '120px',
+        height: '40px',
+        objectFit: 'contain',
+        filter: 'grayscale(100%)',
+        opacity: '0.5',
+        transition: 'opacity 0.3s ease, filter 0.3s ease',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'Trusted By', styles: { key: 'heading' } },
+        ]
+      },
+      {
+        type: 'div',
+        styles: { key: 'logoRow' },
+        children: [
+          { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'logoImage' } },
+          { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'logoImage' } },
+          { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'logoImage' } },
+          { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'logoImage' } },
+          { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'logoImage' } },
+          { type: 'image', content: PLACEHOLDER_IMAGES.builder, styles: { key: 'logoImage' } },
+        ]
+      }
+    ]
+  },
+
+  // ── Steps / Process ───────────────────────────────────────────────
+  sectionEleven: {
+    type: 'section',
+    label: 'Steps / Process',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#FFFFFF',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '800px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '16px',
+        textAlign: 'center',
+      },
+      paragraph: {
+        ...defaultSectionStyles.paragraph,
+        fontSize: '1.125rem',
+        color: '#6B7280',
+        marginBottom: '48px',
+        textAlign: 'center',
+      },
+      stepsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '40px',
+        width: '100%',
+        maxWidth: '1000px',
+      },
+      stepItem: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '32px 24px',
+      },
+      stepNumber: {
+        width: '56px',
+        height: '56px',
+        borderRadius: '50%',
+        backgroundColor: '#2563EB',
+        color: '#FFFFFF',
+        fontSize: '1.5rem',
+        fontWeight: '700',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        lineHeight: '1',
+      },
+      stepTitle: {
+        fontSize: '1.25rem',
+        fontWeight: '600',
+        color: '#1F2937',
+        textAlign: 'center',
+      },
+      stepDescription: {
+        fontSize: '1rem',
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: '1.6',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'How It Works', styles: { key: 'heading' } },
+          { type: 'paragraph', content: 'Get started in three simple steps.', styles: { key: 'paragraph' } },
+        ]
+      },
+      {
+        type: 'gridLayout',
+        styles: { key: 'stepsGrid' },
+        children: [
+          {
+            type: 'div',
+            styles: { key: 'stepItem' },
+            children: [
+              { type: 'span', content: '1', styles: { key: 'stepNumber' } },
+              { type: 'heading', content: 'Create Account', styles: { key: 'stepTitle' } },
+              { type: 'paragraph', content: 'Sign up in seconds with just your email. No credit card required.', styles: { key: 'stepDescription' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'stepItem' },
+            children: [
+              { type: 'span', content: '2', styles: { key: 'stepNumber' } },
+              { type: 'heading', content: 'Choose a Template', styles: { key: 'stepTitle' } },
+              { type: 'paragraph', content: 'Pick from dozens of professionally designed templates to get started quickly.', styles: { key: 'stepDescription' } },
+            ]
+          },
+          {
+            type: 'div',
+            styles: { key: 'stepItem' },
+            children: [
+              { type: 'span', content: '3', styles: { key: 'stepNumber' } },
+              { type: 'heading', content: 'Publish & Share', styles: { key: 'stepTitle' } },
+              { type: 'paragraph', content: 'Go live with one click and share your site with the world.', styles: { key: 'stepDescription' } },
+            ]
+          },
+        ]
+      }
+    ]
+  },
+
+  // ── Testimonial Slider ────────────────────────────────────────────
+  sectionTwelve: {
+    type: 'section',
+    label: 'Testimonial Slider',
+    styles: {
+      section: {
+        ...defaultSectionStyles.section,
+        backgroundColor: '#F9FAFB',
+        padding: '80px 40px',
+      },
+      content: {
+        ...defaultSectionStyles.contentWrapper,
+        maxWidth: '800px',
+        alignItems: 'center',
+        textAlign: 'center',
+      },
+      heading: {
+        ...defaultSectionStyles.heading,
+        fontSize: '2.5rem',
+        marginBottom: '48px',
+        textAlign: 'center',
+      },
+      carouselWrapper: {
+        width: '100%',
+        maxWidth: '700px',
+      },
+    },
+    children: [
+      {
+        type: 'div',
+        styles: { key: 'content' },
+        children: [
+          { type: 'heading', content: 'What Our Customers Say', styles: { key: 'heading' } },
+        ]
+      },
+      {
+        type: 'carousel',
+        content: JSON.stringify({
+          slides: [
+            { body: '"This platform completely transformed how we build websites. The drag-and-drop interface is incredibly intuitive." — Sarah M., Designer' },
+            { body: '"We shipped our landing page in under an hour. The templates are beautiful and easy to customize." — James T., Startup Founder' },
+            { body: '"Best builder I\'ve used. The Web3 integration was the cherry on top for our DeFi project." — Alex K., Developer' },
+          ],
+          autoPlay: true,
+          interval: 5000,
+        }),
+        styles: { key: 'carouselWrapper' },
+      }
+    ]
+  },
 };

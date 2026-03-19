@@ -1,44 +1,47 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { getModuleLabel as getDefiModuleLabel } from '../../../constants/defiModuleTypes';
 
-const DeFiSectionDragList = ({ moduleOrder, moduleSettings, onDragEnd, onModuleToggle, onModuleRemove }) => {
+const DeFiSectionDragList = ({ moduleOrder, moduleSettings, onDragEnd, onModuleToggle, onModuleRemove, getModuleLabel = getDefiModuleLabel }) => {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="modules">
         {(provided) => (
           <div {...provided.droppableProps} ref={provided.innerRef}>
-            {moduleOrder.map((type, index) => (
-              <Draggable key={type} draggableId={type} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="module-item"
-                  >
-                    <div className="settings-row">
-                      <span style={{ cursor: 'grab', marginRight: '4px' }}>⠿</span>
-                      <span>{type === 'aggregator' ? 'Pool Aggregator' :
-                            type === 'simulation' ? 'Investment Simulator' :
-                            type === 'bridge' ? 'Cross-Chain Bridge' : type}</span>
-                      <input
-                        type="checkbox"
-                        className="settings-switch"
-                        checked={moduleSettings[type]?.enabled}
-                        onChange={e => onModuleToggle(type, e.target.checked)}
-                      />
-                      <button
-                        className="settings-btn-icon"
-                        onClick={() => onModuleRemove(type)}
-                        title="Remove module"
-                      >
-                        ×
-                      </button>
+            {moduleOrder.map((moduleId, index) => {
+              const info = moduleSettings[moduleId];
+              const mType = info?.moduleType || 'aggregator';
+              return (
+                <Draggable key={moduleId} draggableId={moduleId} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="module-item"
+                    >
+                      <div className="settings-row">
+                        <span style={{ cursor: 'grab', marginRight: '4px' }}>⠿</span>
+                        <span>{getModuleLabel(mType)}</span>
+                        <input
+                          type="checkbox"
+                          className="settings-switch"
+                          checked={info?.enabled}
+                          onChange={e => onModuleToggle(moduleId, e.target.checked)}
+                        />
+                        <button
+                          className="settings-btn-icon"
+                          onClick={() => onModuleRemove(moduleId)}
+                          title="Remove module"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
+                  )}
+                </Draggable>
+              );
+            })}
             {provided.placeholder}
           </div>
         )}

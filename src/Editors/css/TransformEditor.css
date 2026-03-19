@@ -1,8 +1,7 @@
 /* TransformEditor.css */
 
 .transform-editor {
-  font-family: Arial, sans-serif;
-  color: var(--white);
+
 }
 
 .transform-row {
@@ -28,7 +27,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   background-color: var(--editor-bg);
-  color: var(--white);
+  color: var(--editor-text);
   font-size: 14px;
   box-sizing: border-box;
   width: 100%;

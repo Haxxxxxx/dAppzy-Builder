@@ -1,15 +1,12 @@
-import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
-import deepMerge from '../../../utils/deepMerge';
+import React, { useContext, useMemo, useRef, forwardRef } from 'react';
+import { useDndIsDragging } from '../../../utils/useDndIsDragging';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
+import useReorderDrop from '../../../utils/useReorderDrop';
 import { heroTwoStyles } from './defaultHeroStyles';
 import { Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { HeroConfiguration } from '../../../configs/heros/HeroConfigurations';
-
-const SectionWithRef = forwardRef((props, ref) => (
-  <Section {...props} ref={ref} />
-));
+import DropInsertionLine from '../../../components/DropInsertionLine';
 
 const HeroTwo = forwardRef(({
   handleSelect,
@@ -18,14 +15,12 @@ const HeroTwo = forwardRef(({
   handleOpenMediaPanel,
 }, ref) => {
   const heroRef = useRef(null);
-  const defaultInjectedRef = useRef(false);
   const {
     elements,
     setElements,
     setSelectedElement,
     findElementById,
     addNewElement,
-    updateStyles,
   } = useContext(EditableContext);
 
   const heroElement = useMemo(
@@ -34,87 +29,6 @@ const HeroTwo = forwardRef(({
   );
 
   const contentContainerId = `${uniqueId}-content`;
-
-  useEffect(() => {
-    if (!heroElement || defaultInjectedRef.current) return;
-
-    // First, ensure the hero has the default styles
-    const mergedHeroStyles = merge({}, heroTwoStyles.heroSection, heroElement.styles);
-    updateStyles(heroElement.id, mergedHeroStyles);
-
-    // Check if content container already exists
-    const contentContainer = findElementById(contentContainerId, elements);
-
-    // Only create container if it doesn't exist
-    if (!contentContainer) {
-      const contentContainer = {
-        id: contentContainerId,
-        type: 'div',
-        styles: {
-          ...heroTwoStyles.heroContent,
-          position: 'relative',
-          boxSizing: 'border-box'
-        },
-        children: [],
-        parentId: uniqueId,
-        isConfigured: true
-      };
-      setElements(prev => [...prev, contentContainer]);
-    }
-
-    // Get default content from configuration
-    const defaultContent = HeroConfiguration.heroTwo.children;
-    const contentElements = defaultContent.filter(child => 
-      child.type !== 'span'
-    );
-
-    // Only create content if container is empty
-    if (contentContainer && (!contentContainer.children || contentContainer.children.length === 0)) {
-      const contentIds = contentElements.map(child => {
-        const newId = addNewElement(child.type, 1, null, contentContainerId, {
-          content: child.content,
-          styles: merge(
-            child.type === 'heading' ? heroTwoStyles.heroTitle :
-            child.type === 'paragraph' ? heroTwoStyles.heroDescription :
-            child.type === 'button' ? heroTwoStyles.primaryButton :
-            child.type === 'image' ? heroTwoStyles.heroImage :
-            {},
-            child.styles || {}
-          ),
-          isConfigured: true,
-          configuration: child.configuration || null,
-          structure: child.structure || null
-        });
-        return newId;
-      });
-
-      // Update content container with content IDs
-      setElements(prev => prev.map(el => {
-        if (el.id === contentContainerId) {
-          return {
-            ...el,
-            children: contentIds
-          };
-        }
-        return el;
-      }));
-    }
-
-    // Update hero's children to only include the content container
-    setElements(prev => prev.map(el => {
-      if (el.id === uniqueId) {
-        return {
-          ...el,
-          children: [contentContainerId],
-          configuration: 'heroTwo',
-          isConfigured: true
-        };
-      }
-      return el;
-    }));
-
-    defaultInjectedRef.current = true;
-  }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
@@ -132,24 +46,56 @@ const HeroTwo = forwardRef(({
     setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
+  const isDndDragging = useDndIsDragging();
+
+  const {
+    activeDrop,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
+    onDragLeave,
+    draggedId,
+    isDragging: isReorderDragging,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+  } = useReorderDrop(findElementById, elements, setElements);
+
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
 
-    return container.children.map((childId) => {
-      const child = findElementById(childId, elements);
-      if (!child) return null;
-      return renderElement(
-        child,
-        elements,
-        null,
-        setSelectedElement,
-        setElements,
-        null,
-        undefined,
-        handleOpenMediaPanel
-      );
-    });
+    const showIndicator = isReorderDragging && dropIndicatorContainerId === containerId;
+
+    return (
+      <>
+        {container.children.map((childId, idx) => {
+          const child = findElementById(childId, elements);
+          if (!child) return null;
+          return (
+            <React.Fragment key={childId}>
+              {showIndicator && dropIndicatorIndex === idx && <DropInsertionLine />}
+              <div
+                draggable={!isDndDragging}
+                onDragStart={!isDndDragging ? (e) => onDragStart(e, childId, containerId) : undefined}
+                onDragEnd={onDragEnd}
+                style={{
+                  cursor: !isDndDragging ? 'grab' : 'default',
+                  opacity: draggedId === childId ? 0.4 : 1,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {renderElement(
+                  child, elements, null, setSelectedElement, setElements,
+                  null, undefined, null, false, handleOpenMediaPanel
+                )}
+              </div>
+            </React.Fragment>
+          );
+        })}
+        {showIndicator && dropIndicatorIndex === container.children.length && <DropInsertionLine />}
+      </>
+    );
   };
 
   // Get the content container element
@@ -170,7 +116,7 @@ const HeroTwo = forwardRef(({
   };
 
   return (
-    <SectionWithRef
+    <Section
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
@@ -178,7 +124,7 @@ const HeroTwo = forwardRef(({
         alignItems: 'center',
         backgroundColor: '#6B7280',
         color: '#fff',
-        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+        ...(isOverCurrent ? { outline: '2px dashed var(--purple, #5C4EFA)' } : {}),
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -203,10 +149,13 @@ const HeroTwo = forwardRef(({
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleHeroDrop(item, contentContainerId)}
         onClick={(e) => handleInnerDivClick(e, contentContainerId)}
+        onDragOver={(e) => onDragOver(e, contentContainerId)}
+        onDrop={(e) => onDrop(e, contentContainerId)}
+        onDragLeave={onDragLeave}
       >
         {renderContainerChildren(contentContainerId)}
       </Div>
-    </SectionWithRef>
+    </Section>
   );
 });
 

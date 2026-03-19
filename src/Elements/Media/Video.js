@@ -24,7 +24,7 @@ const Video = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'video' });
+    setSelectedElement(element || { id, type: 'video' });
   };
 
   return (

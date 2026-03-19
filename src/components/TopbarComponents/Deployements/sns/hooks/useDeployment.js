@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Connection } from '@solana/web3.js';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../../../firebase';
 import { exportAndUploadToIPFS, updateOrCreateIpfsRecord, verifyIpfsRecordUpdate } from '../utils';
@@ -59,40 +60,45 @@ export const useDeployment = (connection, walletAddress, userId, projectId) => {
       
       // Upload to IPFS
       const { ipfsHash, ipfsUrl } = await exportAndUploadToIPFS(
-        elements, 
-        websiteSettings, 
-        userId, 
+        elements,
+        websiteSettings,
+        userId,
         generateFullHtml
       );
-      
-      // Save to Firestore
+
+      // Step 3: Updating SNS record (do this BEFORE Firestore to avoid inconsistent state)
+      setDeploymentProgress(prev => ({ ...prev, updating: true }));
+
+      const signature = await updateOrCreateIpfsRecord(
+        window.solana,
+        formattedDomain,
+        ipfsUrl
+      );
+
+      // Step 4: Confirming transaction — verify the IPFS record was written
+      setDeploymentProgress(prev => ({ ...prev, confirming: true }));
+
+      try {
+        const rpcEndpoint = import.meta.env.VITE_HELIUS_RPC_URL;
+        const verifyConnection = new Connection(rpcEndpoint);
+        const { getDomainKey } = await import('@bonfida/spl-name-service');
+        const { pubkey: domainKey } = await getDomainKey(formattedDomain);
+        await verifyIpfsRecordUpdate(verifyConnection, domainKey, ipfsUrl);
+        debugLog('IPFS record verified successfully');
+      } catch (verifyError) {
+        // Non-fatal: the record may just need time to propagate
+        if (import.meta.env.DEV) console.warn('[useDeployment] IPFS record verification failed (may need time to propagate):', verifyError.message);
+      }
+
+      // Step 5: Complete — update Firestore only AFTER SNS tx confirmed
+      setDeploymentProgress(prev => ({ ...prev, complete: true }));
+
       const projectRef = doc(db, 'projects', userId, 'ProjectRef', projectId);
       await updateDoc(projectRef, {
         'websiteSettings.snsDomain': formattedDomain,
         'websiteSettings.walletAddress': walletAddress,
         'websiteSettings.ipfsCid': ipfsHash,
         'websiteSettings.ipfsUrl': ipfsUrl,
-        'websiteSettings.lastUpdated': serverTimestamp(),
-        'websiteSettings.deploymentStatus': 'pending',
-        'websiteSettings.deploymentTransaction': null,
-        updatedAt: serverTimestamp()
-      });
-      
-      // Step 3: Updating
-      setDeploymentProgress(prev => ({ ...prev, updating: true }));
-      
-      // Update SNS record
-      const signature = await updateOrCreateIpfsRecord(
-        window.solana,  // Pass the full wallet object
-        formattedDomain,
-        ipfsUrl
-      );
-
-      // Step 4: Complete
-      setDeploymentProgress(prev => ({ ...prev, complete: true }));
-      
-      // Update Firestore
-      await updateDoc(projectRef, {
         'websiteSettings.deploymentStatus': 'completed',
         'websiteSettings.deploymentTransaction': signature,
         'websiteSettings.lastUpdated': serverTimestamp(),

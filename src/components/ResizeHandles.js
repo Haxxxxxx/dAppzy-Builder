@@ -24,10 +24,10 @@ const ResizeHandles = ({ onMouseDown }) => {
             position: 'absolute',
             width: HANDLE_SIZE,
             height: HANDLE_SIZE,
-            backgroundColor: '#217bf4',
+            backgroundColor: 'var(--purple, #5C4EFA)',
             border: '1px solid #fff',
             borderRadius: 2,
-            zIndex: 1001,
+            zIndex: 11,
             pointerEvents: 'auto',
             ...style,
           }}

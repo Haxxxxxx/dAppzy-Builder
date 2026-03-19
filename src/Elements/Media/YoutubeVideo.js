@@ -29,7 +29,7 @@ const YouTubeVideo = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'youtubeVideo' });
+    setSelectedElement(element || { id, type: 'youtubeVideo' });
     setShowModal(true);
   };
 

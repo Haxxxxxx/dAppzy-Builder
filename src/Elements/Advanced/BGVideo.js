@@ -12,12 +12,12 @@ const BGVideo = ({ id, handleOpenMediaPanel }) => {
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: containerRef,
-    onDropItem: (item, parentId) => {
+    onDropItem: (item) => {
       // Add a new child element into this bg-video container
-      const newId = addNewElement(item.type, item.level || 1, null, parentId);
+      const newId = addNewElement(item.type, item.level || 1, null, id);
       setElements((prev) =>
         prev.map((el) =>
-          el.id === parentId
+          el.id === id
             ? { ...el, children: [...new Set([...el.children, newId])] }
             : el
         )
@@ -29,7 +29,7 @@ const BGVideo = ({ id, handleOpenMediaPanel }) => {
     // Only select if the user clicked on the BGVideo container itself
     if (e.target === e.currentTarget) {
       e.stopPropagation();
-      setSelectedElement({ id, type: 'bgVideo', styles, backgroundType: 'video'});
+      setSelectedElement(videoElement || { id, type: 'bgVideo', styles, backgroundType: 'video'});
     }
   };
 
@@ -72,11 +72,18 @@ const BGVideo = ({ id, handleOpenMediaPanel }) => {
       {/* Render child elements inside this container */}
       {children.map((childId) => {
         const childElement = elements.find((el) => el.id === childId);
+        if (!childElement) return null;
         return renderElement(
-          { handleOpenMediaPanel },
           childElement,
           elements,
-          selectedElement
+          null,
+          setSelectedElement,
+          setElements,
+          null,
+          selectedElement,
+          null,
+          false,
+          handleOpenMediaPanel
         );
       })}
     </div>

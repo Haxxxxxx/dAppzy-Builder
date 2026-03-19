@@ -1,17 +1,12 @@
-import React, { useContext, useMemo, useRef, useEffect, forwardRef } from 'react';
-import deepMerge from '../../../utils/deepMerge';
+import React, { useContext, useMemo, useRef, forwardRef } from 'react';
+import { useDndIsDragging } from '../../../utils/useDndIsDragging';
 import { EditableContext } from '../../../context/EditableContext';
 import useElementDrop from '../../../utils/useElementDrop';
 import useReorderDrop from '../../../utils/useReorderDrop';
 import { CustomTemplateHeroStyles } from './defaultHeroStyles';
-import { Image, Button, Heading, Paragraph, Section, Div } from '../../SelectableElements';
+import { Section, Div } from '../../SelectableElements';
 import { renderElement } from '../../../utils/LeftBarUtils/RenderUtils';
-import { HeroConfiguration } from '../../../configs/heros/HeroConfigurations';
-
-// Create a forwardRef wrapper for Section
-const SectionWithRef = forwardRef((props, ref) => (
-  <Section {...props} ref={ref} />
-));
+import DropInsertionLine from '../../../components/DropInsertionLine';
 
 const HeroThree = forwardRef(({
   handleSelect,
@@ -21,13 +16,11 @@ const HeroThree = forwardRef(({
   handleOpenMediaPanel,
 }, ref) => {
   const heroRef = useRef(null);
-  const defaultInjectedRef = useRef(false);
   const {
     elements,
     setElements,
     setSelectedElement,
     findElementById,
-    updateStyles,
     addNewElement,
   } = useContext(EditableContext);
 
@@ -38,124 +31,8 @@ const HeroThree = forwardRef(({
 
   const leftContainerId = `${uniqueId}-left`;
   const rightContainerId = `${uniqueId}-right`;
-  const buttonContainerId = `${uniqueId}-button-container`;
-
-  useEffect(() => {
-    if (!heroElement || defaultInjectedRef.current) return;
-
-    // First, ensure the hero has the default styles
-    const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement.styles);
-    updateStyles(heroElement.id, mergedHeroStyles);
-
-    const leftContainerId = `${uniqueId}-left`;
-    const rightContainerId = `${uniqueId}-right`;
-
-    // Check if containers already exist
-    const leftContainer = findElementById(leftContainerId, elements);
-    const rightContainer = findElementById(rightContainerId, elements);
-
-    // Only create containers if they don't exist
-    if (!leftContainer) {
-      const leftContainer = {
-        id: leftContainerId,
-        type: 'div',
-        styles: CustomTemplateHeroStyles.heroContent,
-        children: [],
-        parentId: uniqueId,
-        isConfigured: true
-      };
-      setElements(prev => [...prev, leftContainer]);
-    }
-
-    if (!rightContainer) {
-      const rightContainer = {
-        id: rightContainerId,
-        type: 'div',
-        styles: CustomTemplateHeroStyles.heroImageContainer,
-        children: [],
-        parentId: uniqueId,
-        isConfigured: true
-      };
-      setElements(prev => [...prev, rightContainer]);
-    }
-
-    // Get default content from configuration
-    const defaultContent = HeroConfiguration.heroThree.children;
-    const contentElements = defaultContent.filter(child => 
-      child.type !== 'image' && child.type !== 'span'
-    );
-    const imageContent = defaultContent.find(child => child.type === 'image');
-
-    // Only create content if containers are empty
-    if (leftContainer && (!leftContainer.children || leftContainer.children.length === 0)) {
-      const contentIds = contentElements.map(child => {
-        const newId = addNewElement(child.type, 1, null, leftContainerId, {
-          content: child.content,
-          styles: merge(
-            child.type === 'heading' ? CustomTemplateHeroStyles.heroTitle :
-            child.type === 'paragraph' ? CustomTemplateHeroStyles.heroDescription :
-            child.type === 'button' ? CustomTemplateHeroStyles.primaryButton :
-            {},
-            child.styles || {}
-          ),
-          isConfigured: true,
-          configuration: child.configuration || null,
-          structure: child.structure || null
-        });
-        return newId;
-      });
-
-      // Update left container with content IDs
-      setElements(prev => prev.map(el => {
-        if (el.id === leftContainerId) {
-          return {
-            ...el,
-            children: contentIds
-          };
-        }
-        return el;
-      }));
-    }
-
-    if (rightContainer && (!rightContainer.children || rightContainer.children.length === 0) && imageContent) {
-      const imageId = addNewElement('image', 1, null, rightContainerId, {
-        content: imageContent.content,
-        styles: merge(CustomTemplateHeroStyles.heroImage, imageContent.styles || {}),
-        isConfigured: true,
-        configuration: imageContent.configuration || null,
-        structure: imageContent.structure || null
-      });
-
-      // Update right container with image ID
-      setElements(prev => prev.map(el => {
-        if (el.id === rightContainerId) {
-          return {
-            ...el,
-            children: [imageId]
-          };
-        }
-        return el;
-      }));
-    }
-
-    // Update hero's children to only include the containers
-    setElements(prev => prev.map(el => {
-      if (el.id === uniqueId) {
-        return {
-          ...el,
-          children: [leftContainerId, rightContainerId],
-          configuration: 'heroThree',
-          isConfigured: true
-        };
-      }
-      return el;
-    }));
-
-    defaultInjectedRef.current = true;
-  }, [heroElement, uniqueId, elements, findElementById, setElements, addNewElement, updateStyles]);
 
   const handleHeroDrop = (droppedItem, parentId = uniqueId) => {
-    // Simple drop handler that just adds the element
     addNewElement(droppedItem.type, droppedItem.level || 1, null, parentId);
   };
 
@@ -171,33 +48,56 @@ const HeroThree = forwardRef(({
     setSelectedElement(element || { id: divId, type: 'div', styles: {} });
   };
 
+  const isDndDragging = useDndIsDragging();
+
   const {
     activeDrop,
     onDragStart,
     onDragOver,
     onDrop,
     onDragEnd,
+    onDragLeave,
     draggedId,
+    isDragging: isReorderDragging,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
   } = useReorderDrop(findElementById, elements, setElements);
 
   const renderContainerChildren = (containerId) => {
     const container = findElementById(containerId, elements);
     if (!container || !container.children) return null;
 
-    return container.children.map((childId) => {
-      const child = findElementById(childId, elements);
-      if (!child) return null;
-      return renderElement(
-        child,
-        elements,
-        null,
-        setSelectedElement,
-        setElements,
-        null,
-        undefined,
-        handleOpenMediaPanel
-      );
-    });
+    const showIndicator = isReorderDragging && dropIndicatorContainerId === containerId;
+
+    return (
+      <>
+        {container.children.map((childId, idx) => {
+          const child = findElementById(childId, elements);
+          if (!child) return null;
+          return (
+            <React.Fragment key={childId}>
+              {showIndicator && dropIndicatorIndex === idx && <DropInsertionLine />}
+              <div
+                draggable={!isDndDragging}
+                onDragStart={!isDndDragging ? (e) => onDragStart(e, childId, containerId) : undefined}
+                onDragEnd={onDragEnd}
+                style={{
+                  cursor: !isDndDragging ? 'grab' : 'default',
+                  opacity: draggedId === childId ? 0.4 : 1,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {renderElement(
+                  child, elements, null, setSelectedElement, setElements,
+                  null, undefined, null, false, handleOpenMediaPanel
+                )}
+              </div>
+            </React.Fragment>
+          );
+        })}
+        {showIndicator && dropIndicatorIndex === container.children.length && <DropInsertionLine />}
+      </>
+    );
   };
 
   // Get the container elements
@@ -205,18 +105,18 @@ const HeroThree = forwardRef(({
   const rightContainer = findElementById(rightContainerId, elements);
 
   // Merge styles for containers
-  const leftContainerStyles = merge({}, CustomTemplateHeroStyles.heroContent, leftContainer?.styles || {});
-  const rightContainerStyles = merge({}, CustomTemplateHeroStyles.heroImageContainer, rightContainer?.styles || {});
+  const leftContainerStyles = { ...CustomTemplateHeroStyles.heroContent, ...(leftContainer?.styles || {}) };
+  const rightContainerStyles = { ...CustomTemplateHeroStyles.heroImageContainer, ...(rightContainer?.styles || {}) };
 
   // Merge styles for hero section
-  const mergedHeroStyles = merge({}, CustomTemplateHeroStyles.heroSection, heroElement?.styles || {});
+  const mergedHeroStyles = { ...CustomTemplateHeroStyles.heroSection, ...(heroElement?.styles || {}) };
 
   return (
-    <SectionWithRef
+    <Section
       id={uniqueId}
       style={{
         ...mergedHeroStyles,
-        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {})
+        ...(isOverCurrent ? { outline: '2px dashed var(--purple, #5C4EFA)' } : {})
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -241,6 +141,9 @@ const HeroThree = forwardRef(({
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleHeroDrop(item, leftContainerId)}
         onClick={(e) => handleInnerDivClick(e, leftContainerId)}
+        onDragOver={(e) => onDragOver(e, leftContainerId)}
+        onDrop={(e) => onDrop(e, leftContainerId)}
+        onDragLeave={onDragLeave}
       >
         {renderContainerChildren(leftContainerId)}
       </Div>
@@ -251,10 +154,13 @@ const HeroThree = forwardRef(({
         handleOpenMediaPanel={handleOpenMediaPanel}
         onDropItem={(item) => handleHeroDrop(item, rightContainerId)}
         onClick={(e) => handleInnerDivClick(e, rightContainerId)}
+        onDragOver={(e) => onDragOver(e, rightContainerId)}
+        onDrop={(e) => onDrop(e, rightContainerId)}
+        onDragLeave={onDragLeave}
       >
         {renderContainerChildren(rightContainerId)}
       </Div>
-    </SectionWithRef>
+    </Section>
   );
 });
 

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './css/MediaPanel.css';
 import { MediaItem } from './MediaItem';
-import { auth } from '../../firebase';
-
-const CF_BASE = import.meta.env.VITE_CF_BASE_URL;
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'https://gateway.pinata.cloud/ipfs';
+import {
+  uploadFileToPinata,
+  listPinataMedia,
+  deletePinataMedia,
+  getGatewayUrl,
+} from '../../utils/ipfs';
 
 // Helpers to determine media type
 function getMediaTypeFromFile(file) {
@@ -39,7 +41,7 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
 
   const fileInputRef = useRef(null);
 
-  // Fetch pinned media via CF proxy
+  // Fetch pinned media scoped to this user + project
   const fetchMedia = async () => {
     if (!userId || !projectName.trim()) {
       setMediaItems([]);
@@ -49,24 +51,12 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
     setError(null);
 
     try {
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        setError('Authentication required. Please reconnect your wallet.');
-        return;
-      }
-      const res = await fetch(`${CF_BASE}/listPinataMedia?userId=${encodeURIComponent(userId)}&projectName=${encodeURIComponent(projectName)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        throw new Error(`List media failed: ${res.status} ${res.statusText}`);
-      }
-
-      const { rows } = await res.json();
+      const rows = await listPinataMedia(userId, projectName);
       const files = rows.map(item => ({
         id: item.ipfs_pin_hash,
         type: guessTypeFromExtension(item.metadata.name),
         name: item.metadata.name,
-        src: `${GATEWAY_URL}/${item.ipfs_pin_hash}`,
+        src: getGatewayUrl(item.ipfs_pin_hash),
         ipfsHash: item.ipfs_pin_hash,
       }));
       setMediaItems(files);
@@ -78,39 +68,20 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
     }
   };
 
-  // Upload a single file via CF proxy
-  const uploadFile = async (file) => {
-    const token = await auth.currentUser?.getIdToken();
-    if (!token) throw new Error('Authentication required. Please reconnect your wallet.');
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    formData.append('metadata', JSON.stringify({ name: file.name, keyvalues: { userId, projectName } }));
-
-    const res = await fetch(`${CF_BASE}/uploadToPinata`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Upload failed: ${text}`);
-    }
-    return await res.json();
-  };
-
   // Handle file input or drop uploads
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
     const newItems = [];
     for (const file of files) {
       try {
-        const response = await uploadFile(file);
+        const response = await uploadFileToPinata(file, userId, projectName);
+        const hash = response.ipfsHash || response.IpfsHash;
         newItems.push({
-          id: response.IpfsHash,
+          id: hash,
           type: getMediaTypeFromFile(file),
           name: file.name,
-          src: `${GATEWAY_URL}/${response.IpfsHash}`,
-          ipfsHash: response.IpfsHash,
+          src: getGatewayUrl(hash),
+          ipfsHash: hash,
         });
       } catch (err) {
         setError(`Failed to upload file: ${err.message}`);
@@ -125,22 +96,12 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
   };
   const handleDragOver = (event) => event.preventDefault();
 
-  // Delete a file via CF proxy
+  // Delete a file via centralized utility
   const handleRemoveClick = async (itemId) => {
     const item = mediaItems.find(i => i.id === itemId);
     if (!item) return;
     try {
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        setError('Authentication required. Please reconnect your wallet.');
-        return;
-      }
-      const res = await fetch(`${CF_BASE}/deletePinataMedia`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ hash: item.ipfsHash })
-      });
-      if (!res.ok) throw new Error(res.statusText);
+      await deletePinataMedia(item.ipfsHash);
       setMediaItems(prev => prev.filter(i => i.id !== itemId));
     } catch (err) {
       setError('Failed to delete file. Please try again.');

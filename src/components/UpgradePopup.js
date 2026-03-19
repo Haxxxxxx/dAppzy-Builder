@@ -49,12 +49,8 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const [billingCycle, setBillingCycle] = useState('annual');
   const [step, setStep] = useState('select-plan'); // 'select-plan' | 'form' | 'paying' | 'success' | 'error'
   const [error, setError] = useState('');
-  const [debug, setDebug] = useState('');
   const [displayWallet, setDisplayWallet] = useState(null);
   const [transactionSignature, setTransactionSignature] = useState(null);
-  const [toggleYearly, setToggleYearly] = useState(true);
-  const planBillingCycle = toggleYearly ? 'yearly' : 'monthly';
-  const pioneerPrice = getPlanPrice('pioneer', planBillingCycle) || 20;
   const [solUsd, setSolUsd] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('sol'); // 'sol' | 'usdc'
 
@@ -82,7 +78,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
     return (
       <div className="membership-card-price-row">
         <div className="membership-card-price">
-          <img src='../img/usdc-logo.png' alt="USDC" />
+          <img src='/img/usdc-logo.png' alt="USDC" />
           {price}
         </div>
         <span className="membership-card-currency">/month</span>
@@ -95,12 +91,9 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
     );
   };
 
-  // Calculate prices and discounts
+  // Calculate prices
   const usdcPrice = getPlanPrice('pioneer', billingCycle);
   const solPrice = solUsd ? (usdcPrice / solUsd).toFixed(4) : null;
-  
-  // Discounts must be validated server-side — never trust client-side profile fields
-  const finalSolPrice = solPrice;
 
   // Get Solana wallet address
   const getSolanaWalletAddress = async () => {
@@ -154,14 +147,14 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const getWorkingConnection = async () => {
     for (const endpoint of RPC_ENDPOINTS) {
       try {
-        setDebug(`Trying to connect to ${endpoint}...`);
+        /* debug: trying endpoint */
         const connection = new Connection(endpoint, 'confirmed');
         // Test the connection
         await connection.getLatestBlockhash();
-        setDebug(`Successfully connected to ${endpoint}`);
+        /* debug: connected */
         return connection;
       } catch (error) {
-        setDebug(`Failed to connect to ${endpoint}: ${error.message}`);
+        /* debug: endpoint failed */
         continue;
       }
     }
@@ -172,7 +165,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const handleConfirmUpgrade = async () => {
     setStep('paying');
     setError('');
-    setDebug('');
+
     try {
       if (!displayWallet || !isValidSolanaAddress(displayWallet)) {
         setStep('error');
@@ -426,7 +419,11 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   )}
 
                   <div className="membership-details-card-price-row">
-                    <div className="membership-details-card-price">{renderPrice(selectedPlan, false)}</div>
+                    <div className="membership-details-card-price">
+                      <img src='/img/usdc-logo.png' alt="USDC" />
+                      {getPlanPrice(selectedPlan, billingCycle)}
+                    </div>
+                    <span className="membership-card-currency">/month</span>
                   </div>
                 </div>
                 <ul className='membership-card-details-check-list'>
@@ -472,7 +469,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   <div className="membership-card-title">Monthly</div>
                   <div className="membership-card-price-row">
                     <div className="membership-card-price">
-                      <img src='../img/usdc-logo.png' alt="USDC" />
+                      <img src='/img/usdc-logo.png' alt="USDC" />
                       {getPlanPrice('pioneer', 'monthly')}
                     </div>
                     <span className="membership-card-currency">/month</span>
@@ -492,7 +489,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   </div>
                   <div className="membership-card-price-row">
                     <div className="membership-card-price">
-                      <img src='../img/usdc-logo.png' alt="USDC" />
+                      <img src='/img/usdc-logo.png' alt="USDC" />
                       {getPlanPrice('pioneer', 'annual')}
                     </div>
                     <span className="membership-card-currency">/month</span>
@@ -531,7 +528,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   <div className="membership-card-title">USDC</div>
                   <div className="membership-card-price-row">
                     <div className="membership-card-price">
-                      <img src='../img/usdc-logo.png' alt="USDC" style={{width: '18px', height: '18px'}} />
+                      <img src='/img/usdc-logo.png' alt="USDC" style={{width: '18px', height: '18px'}} />
                       {getPlanPrice('pioneer', billingCycle)} USDC
                     </div>
                   </div>

@@ -1,67 +1,29 @@
 import React, { useContext, useMemo, useRef } from 'react';
-import { useDrag } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import TwoColumnNavbar from '../Sections/Navbars/TwoColumnNavbar';
 import ThreeColumnNavbar from '../Sections/Navbars/ThreeColumnNavbar';
 import CustomTemplateNavbar from '../Sections/Navbars/CustomTemplateNavbar';
 import DeFiNavbar from '../Sections/Navbars/DeFiNavbar';
 import { structureConfigurations } from '../../configs/structureConfigurations.js';
-import { NAVBAR, BUTTON, CONNECT_WALLET_BUTTON } from '../../constants/elementTypes';
+import { NAVBAR, BUTTON, CONNECT_WALLET_BUTTON, ANCHOR, LINK_BLOCK, LINK_BLOCK_CAMEL } from '../../constants/elementTypes';
 import { hasDuplicateElement, DROP_REJECTION_REASONS } from '../../utils/dndUtils';
 import { useToast } from '../../context/ToastContext';
 
+/**
+ * DraggableNavbar — canvas wrapper for navbar sections.
+ * Section creation is handled by LayoutCard → ContentList → buildSectionTree.
+ * This component only handles on-canvas rendering and child-drop logic.
+ */
 const DraggableNavbar = ({
   id,
   configuration,
-  isEditing,
   contentListWidth,
   handlePanelToggle,
   handleOpenMediaPanel,
 }) => {
-  const { generateUniqueId, addNewElement, setElements, elements, findElementById, setSelectedElement } = useContext(EditableContext);
+  const { generateUniqueId, addNewElement, elements, findElementById, setSelectedElement } = useContext(EditableContext);
   const { showToast } = useToast();
   const dropHandledRef = useRef(false);
-
-  // DraggableNavbar.js
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'ELEMENT',
-    item: { 
-      id, 
-      type: NAVBAR,
-      configuration,
-      structure: configuration
-    },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-    end: (item, monitor) => {
-      if (monitor.didDrop() && !isEditing) {
-        const navbarConfig = structureConfigurations[item.configuration];
-        if (navbarConfig) {
-          // Check if a navbar with this configuration already exists in the current section
-          const dropResult = monitor.getDropResult();
-          const targetSectionId = dropResult?.sectionId;
-          
-          if (targetSectionId) {
-            const sectionElement = findElementById(targetSectionId, elements);
-            const existingNavbar = sectionElement?.children
-              ?.map(childId => findElementById(childId, elements))
-              ?.find(el => el?.type === NAVBAR && el?.configuration === item.configuration);
-
-            if (!existingNavbar) {
-              // Only create a new navbar if one doesn't exist in the section
-              addNewElement(NAVBAR, 1, null, targetSectionId, {
-                ...navbarConfig,
-                configuration: item.configuration,
-                structure: item.configuration
-              });
-            }
-          }
-        }
-        setSelectedElement({ id: item.id, type: NAVBAR, configuration: item.configuration });
-      }
-    },
-  }), [configuration, isEditing, elements]);
 
   // Find the current navbar and its children
   const navbar = findElementById(id, elements);
@@ -154,6 +116,29 @@ const DraggableNavbar = ({
         fontWeight: 'bold',
         fontSize: '1.2rem',
         marginLeft: '12px',
+      },
+      anchor: {
+        color: '#5C4EFA',
+        textDecoration: 'none',
+        fontSize: '14px',
+        cursor: 'pointer',
+        padding: '8px 16px',
+      },
+      linkblock: {
+        color: '#5C4EFA',
+        textDecoration: 'none',
+        fontSize: '14px',
+        cursor: 'pointer',
+        padding: '8px 16px',
+        display: 'inline-block',
+      },
+      linkBlock: {
+        color: '#5C4EFA',
+        textDecoration: 'none',
+        fontSize: '14px',
+        cursor: 'pointer',
+        padding: '8px 16px',
+        display: 'inline-block',
       }
     };
 
@@ -175,26 +160,8 @@ const DraggableNavbar = ({
       }
     );
 
-    // Update the parent element's children array
-    setElements(prevElements => {
-      const updatedElements = prevElements.map(el => {
-        if (el.id === id) {
-          // Create a new array for the children, maintaining existing ones
-          const updatedChildren = [...(el.children || [])];
-          
-          // Insert the new element ID at the specified index
-          updatedChildren.splice(index, 0, elementId);
-
-          return {
-            ...el,
-            children: updatedChildren
-          };
-        }
-        return el;
-      });
-
-      return updatedElements;
-    });
+    // addNewElement already updates the parent's children array, so no
+    // second setElements call is needed (it would duplicate the child ref).
 
     // Select the new element
     setSelectedElement({ 

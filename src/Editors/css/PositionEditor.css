@@ -1,8 +1,7 @@
 /* PositionEditor.css */
 
 .position-editor {
-  font-family: Arial, sans-serif;
-  color: var(--white);
+
 }
 
 .position-editor .editor-group {
@@ -24,7 +23,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   background-color: var(--editor-bg);
-  color: var(--white);
+  color: var(--editor-text);
   box-sizing: border-box;
 }
 
@@ -51,8 +50,30 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   background-color: var(--editor-bg);
-  color: var(--white);
+  color: var(--editor-text);
   font-size: 14px;
   box-sizing: border-box;
   width: 100%;
+}
+
+.position-offset-unit {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.position-offset-unit label {
+  font-size: 14px;
+  color: var(--not-selected);
+  margin-bottom: 4px;
+}
+
+.position-offset-unit select {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
+  box-sizing: border-box;
 }

@@ -30,6 +30,7 @@ const TextualSettings = () => {
     };
     setLocalSettings(newSettings);
 
+    if (!selectedElement) return;
     if (name === 'content') {
       updateContent(selectedElement.id, value);
     } else {

@@ -1,14 +1,10 @@
 {
   "projects": {
-    "default": "third--space",
-    "demo": "third--space"
+    "default": "third--space"
   },
   "targets": {
     "third--space": {
       "hosting": {
-        "default": [
-          "3rd-demo"
-        ],
         "builder": [
           "3rd-builder"
         ]

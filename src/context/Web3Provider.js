@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { BrowserProvider } from 'ethers';
 
 const Web3Context = createContext();
 
@@ -28,8 +27,10 @@ const Web3Provider = ({ children }) => {
 
     if (eth) {
       ethRef.current = eth;
-      const browserProvider = new BrowserProvider(eth);
-      setProvider(browserProvider);
+      // Lazy-load ethers only when MetaMask is present
+      import('ethers').then(({ BrowserProvider }) => {
+        setProvider(new BrowserProvider(eth));
+      }).catch(() => {});
 
       // Get initial account and chainId (read-only, no popup)
       const init = async () => {

@@ -3,12 +3,12 @@ import React, { useContext } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 
 const Hr = ({ id }) => {
-  const { selectedElement, setSelectedElement } = useContext(EditableContext);
-  const isSelected = selectedElement?.id === id;
+  const { setSelectedElement, elements } = useContext(EditableContext);
+  const element = elements.find((el) => el.id === id);
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'hr' });
+    setSelectedElement(element || { id, type: 'hr' });
   };
 
   return (

@@ -90,10 +90,22 @@ describe('htmlGenerator', () => {
       expect(html).toContain("default-src 'self' https:");
     });
 
-    it('should allow unsafe-inline for scripts and styles', () => {
+    it('should use nonce for script-src and unsafe-inline only for style-src', () => {
       const html = generateProjectHtml([], defaultSettings);
-      expect(html).toContain("script-src 'self' 'unsafe-inline' https:");
+      expect(html).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' https:/);
+      expect(html).not.toContain("script-src 'self' 'unsafe-inline'");
       expect(html).toContain("style-src 'self' 'unsafe-inline' https:");
+    });
+
+    it('should add nonce attribute to all executable script tags', () => {
+      const html = generateProjectHtml([], defaultSettings);
+      const scriptTags = html.match(/<script[^>]*>/g) || [];
+      expect(scriptTags.length).toBeGreaterThan(0);
+      scriptTags.forEach(tag => {
+        // JSON-LD scripts don't need nonce (not executable)
+        if (tag.includes('application/ld+json')) return;
+        expect(tag).toMatch(/nonce="[A-Za-z0-9+/=]+"/);
+      });
     });
 
     it('should allow data and blob for images', () => {
@@ -215,7 +227,7 @@ describe('htmlGenerator', () => {
       buildElementHierarchy.mockReturnValue([divElement]);
       const html = generateProjectHtml([divElement], defaultSettings);
 
-      expect(renderElementToHtml).toHaveBeenCalledWith(divElement);
+      expect(renderElementToHtml).toHaveBeenCalledWith(divElement, [], expect.objectContaining({ themeColor: expect.any(String) }));
       expect(html).toContain('rendered');
     });
 
@@ -244,6 +256,99 @@ describe('htmlGenerator', () => {
 
       expect(html).toContain('<!DOCTYPE html>');
       expect(html).toContain('<body>');
+    });
+  });
+
+  describe('Google Fonts injection', () => {
+    it('should inject Google Fonts link tags for custom fontFamily values', () => {
+      const elements = [
+        { id: 'h1', type: 'heading', styles: { fontFamily: 'Inter' }, children: [] },
+        { id: 'p1', type: 'paragraph', styles: { fontFamily: 'Poppins' }, children: [] },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      expect(html).toContain('fonts.googleapis.com');
+      expect(html).toContain('fonts.gstatic.com');
+      expect(html).toContain('family=Inter:wght@400;500;600;700');
+      expect(html).toContain('family=Poppins:wght@400;500;600;700');
+      expect(html).toContain('display=swap');
+    });
+
+    it('should not inject Google Fonts link tags for system fonts', () => {
+      const elements = [
+        { id: 'h1', type: 'heading', styles: { fontFamily: 'Arial' }, children: [] },
+        { id: 'p1', type: 'paragraph', styles: { fontFamily: 'Helvetica' }, children: [] },
+        { id: 'p2', type: 'paragraph', styles: { fontFamily: 'sans-serif' }, children: [] },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      expect(html).not.toContain('fonts.googleapis.com/css2?family=');
+    });
+
+    it('should deduplicate font families', () => {
+      const elements = [
+        { id: 'h1', type: 'heading', styles: { fontFamily: 'Inter' }, children: [] },
+        { id: 'h2', type: 'heading', styles: { fontFamily: 'Inter' }, children: [] },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      const matches = html.match(/family=Inter/g);
+      expect(matches).toHaveLength(1);
+    });
+
+    it('should extract font families from breakpointStyles', () => {
+      const elements = [
+        {
+          id: 'h1',
+          type: 'heading',
+          styles: { fontFamily: 'Arial' },
+          breakpointStyles: {
+            tablet: { fontFamily: 'Montserrat' },
+            mobile: { fontFamily: 'Lato' },
+          },
+          children: [],
+        },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      expect(html).toContain('family=Montserrat:wght@400;500;600;700');
+      expect(html).toContain('family=Lato:wght@400;500;600;700');
+    });
+
+    it('should handle comma-separated fontFamily values by using the first entry', () => {
+      const elements = [
+        { id: 'h1', type: 'heading', styles: { fontFamily: "'Playfair Display', serif" }, children: [] },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      expect(html).toContain('family=Playfair+Display:wght@400;500;600;700');
+    });
+
+    it('should produce no font links when no elements have fontFamily', () => {
+      const elements = [
+        { id: 'h1', type: 'heading', styles: { color: 'red' }, children: [] },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      expect(html).not.toContain('fonts.googleapis.com/css2?family=');
+    });
+
+    it('should place font link tags before the style block', () => {
+      const elements = [
+        { id: 'h1', type: 'heading', styles: { fontFamily: 'Inter' }, children: [] },
+      ];
+      buildElementHierarchy.mockReturnValue(elements);
+      const html = generateProjectHtml(elements, defaultSettings);
+
+      const fontLinkIndex = html.indexOf('fonts.googleapis.com/css2?family=');
+      const styleIndex = html.indexOf('<style>');
+      expect(fontLinkIndex).toBeLessThan(styleIndex);
     });
   });
 

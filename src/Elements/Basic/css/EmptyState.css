@@ -1,21 +1,110 @@
+/* ── Empty state: shown when a container has no children ────────── */
 .empty-state-container {
   width: 100%;
+  flex: 1;
   min-height: 100px;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 12px;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
-.add-element-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border-color);
+/* ── Container type badge ──────────────────────────────────────── */
+.empty-state-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--not-selected, #838389);
+  background: var(--option-bg, #e5e8ea);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 4px);
+  pointer-events: none;
+}
+
+/* ── Add element button (pill style, primary) ──────────────────── */
+.add-element-btn {
+  background: var(--purple, #5C4EFA);
+  color: #fff;
+  border: none;
+  border-radius: 40px;
+  padding: 8px 16px;
   cursor: pointer;
   display: flex;
-  justify-content: center;
   align-items: center;
-  background-color: var(--white);
+  gap: 6px;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  font-weight: 500;
+  transition: opacity var(--transition-fast, 0.2s ease);
+}
+
+.add-element-btn:hover {
+  opacity: 0.85;
+}
+
+.add-element-btn:active {
+  transform: scale(0.97);
+}
+
+.add-element-btn .plus-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ── Hint text below the button ────────────────────────────────── */
+.empty-state-hint {
+  font-size: 12px;
+  color: var(--not-selected, #838389);
+  font-family: var(--font-primary);
+}
+
+/* ── Layout options grid (shown on click) ──────────────────────── */
+.layout-options-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+}
+
+.layout-option {
+  cursor: pointer;
+  background: var(--option-bg, #e5e8ea);
+  border-radius: 6px;
+  padding: 8px;
+  min-width: 60px;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--option-border, #e5e8ea);
+  transition: border-color var(--transition-fast, 0.2s ease),
+              transform var(--transition-fast, 0.2s ease);
+}
+
+.layout-option:hover {
+  border-color: var(--option-border-hover, #bfc5c9);
+  transform: scale(1.02);
+}
+
+.layout-option-label {
+  font-size: 11px;
+  color: var(--option-text, #57575B);
+  margin-top: 4px;
+  text-align: center;
+  font-family: var(--font-primary);
+}
+
+/* ── Drop hover state for containers ───────────────────────────── */
+.container-drop-hover {
+  background: var(--drop-hover-bg, rgba(92, 78, 250, 0.06)) !important;
+  outline: 2px dashed var(--drop-hover-outline, rgba(92, 78, 250, 0.5));
 }
 
 .plus-icon {
@@ -23,13 +112,8 @@
   line-height: 1;
 }
 
-/* Hover effect for the container */
-.empty-state-container:hover {
-  background-color: rgba(77, 112, 255, 0.05);
+/* ── Drop insertion line animation ─────────────────────────────── */
+@keyframes dropLinePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
-
-/* Active state for the button */
-.add-element-button:active {
-  transform: scale(0.95);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-} 

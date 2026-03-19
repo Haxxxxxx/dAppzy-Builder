@@ -149,7 +149,7 @@ const useReorderDrop = (findElementById, elements, setElements) => {
       if (!isSameContainer) {
         // Circular reference check: prevent dragging a container into its own descendant
         if (isDescendantOf(id, targetContainer.id, elements)) {
-          console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          if (import.meta.env.DEV) console.warn('[DnD] Blocked: cannot drop element into its own descendant');
           resetDrag();
           return;
         }

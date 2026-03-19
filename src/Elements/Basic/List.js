@@ -11,7 +11,7 @@ const ListItem = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'list-item', parentId });
+    setSelectedElement(element || { id, type: 'list-item', parentId });
   };
 
   const handleBlur = (e) => {
@@ -71,7 +71,7 @@ const List = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'list' });
+    setSelectedElement(listElement || { id, type: 'list' });
   };
 
   const tagName = listType === 'ol' ? 'ol' : 'ul';

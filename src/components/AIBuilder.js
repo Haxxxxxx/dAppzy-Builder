@@ -3,8 +3,6 @@ import { generateProjectFromPrompt } from '../services/aiBuilderService';
 import { buildFlatElements } from '../configs/templates';
 import './css/AIBuilder.css';
 
-const CF_BASE_URL = import.meta.env.VITE_CF_BASE_URL;
-
 const AIBuilder = ({ onProjectGenerated, onClose }) => {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,16 +10,12 @@ const AIBuilder = ({ onProjectGenerated, onClose }) => {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-    if (!CF_BASE_URL) {
-      setError('Cloud Functions URL not configured.');
-      return;
-    }
 
     setLoading(true);
     setError(null);
 
     try {
-      const sections = await generateProjectFromPrompt(prompt.trim(), CF_BASE_URL);
+      const sections = await generateProjectFromPrompt(prompt.trim());
       const elements = buildFlatElements(sections);
       onProjectGenerated({
         elements,

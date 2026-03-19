@@ -10,7 +10,7 @@ const TableCell = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'table-cell' });
+    setSelectedElement(element || { id, type: 'table-cell' });
   };
 
   const handleBlur = (e) => {
@@ -90,7 +90,8 @@ const Table = ({ id }) => {
         )
       );
 
-      setSelectedElement({ id: newCellId, type: 'table-cell' });
+      const newCellElement = { id: newCellId, type: 'table-cell', content: '', parentId: newRowId };
+      setSelectedElement(newCellElement);
     }
   }, [tableElement, id, addNewElement, setElements, setSelectedElement]);
 

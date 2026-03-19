@@ -3,8 +3,7 @@
 /* --- Base Container --- */
 .typography-editor {
   border-radius: var(--radius-md);
-  font-family: Arial, sans-serif;
-  color: var(--white);
+
 }
 
 /* Editor group container */
@@ -33,6 +32,38 @@
   width: 100%;
 }
 
+/* Font size + unit selector compound input */
+.typography-editor .font-size-with-unit {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  overflow: hidden;
+}
+
+.typography-editor .font-size-with-unit .size-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px;
+  font-size: 14px;
+  outline: none;
+  min-width: 0;
+}
+
+.typography-editor .font-size-with-unit .unit-select {
+  border: none;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--editor-bg);
+  padding: 8px 4px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  width: auto;
+  min-width: 48px;
+}
+
 /* Buttons for text decoration or text align, plus the hr between them */
 .typography-editor .text-decoration-group,
 .typography-editor .text-align-group {
@@ -48,7 +79,7 @@
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--white);
+
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -74,7 +105,7 @@
 .typography-editor .custom-rule {
   width: 1px;
   height: 20px;
-  background: var(--black);
+  background: var(--border-color);
   border: none;
   margin: auto 4px;
 }
@@ -96,7 +127,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   background-color: var(--editor-bg);
-  color: var(--white);
+  color: var(--editor-text);
   box-sizing: border-box;
 }
 
@@ -140,7 +171,7 @@
   flex: 1;
   border: none;
   background-color: transparent;
-  color: var(--white);
+  color: var(--editor-text);
   font-size: 14px;
   cursor: default;
   outline: none;

@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './SupportPopup.css';
-import { EditableContext } from '../../context/EditableContext';
+import { useWalletContext } from '../../context/WalletContext';
 import { auth } from '../../firebase';
 import { SOCIAL_ICONS } from '../../configs/assetUrls';
 
@@ -8,7 +8,7 @@ const SupportPopup = ({ onClose }) => {
   const [text, setText] = useState('');
   const [imageBase64, setImageBase64] = useState(null);
   const [status, setStatus] = useState(null);
-  const { userId } = useContext(EditableContext);
+  const { walletAddress: userId } = useWalletContext();
 
   // We use a ref so we can "click" the file input when user clicks the drop zone
   const fileInputRef = useRef(null);

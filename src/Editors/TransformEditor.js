@@ -1,6 +1,5 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext } from "react";
 import { EditableContext } from "../context/EditableContext";
-import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/TransformEditor.css";
 
 function parseTransform(str) {
@@ -32,26 +31,19 @@ function composeTransform(t) {
 
 const TransformEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
-  const debouncedUpdate = useDebouncedStyle(updateStyles);
-  const [transform, setTransform] = useState(parseTransform(null));
-
-  useEffect(() => {
-    if (selectedElement) {
-      setTransform(parseTransform(selectedElement.styles?.transform));
-    }
-  }, [selectedElement]);
 
   if (!selectedElement) return null;
 
+  // Read directly from live selectedElement — no local state needed
+  const s = selectedElement.styles || {};
+  const transform = parseTransform(s.transform);
+
   const update = (key, value) => {
     const next = { ...transform, [key]: Number(value) };
-    setTransform(next);
-    debouncedUpdate(selectedElement.id, { transform: composeTransform(next) });
+    updateStyles(selectedElement.id, { transform: composeTransform(next) });
   };
 
   const reset = () => {
-    const defaults = parseTransform(null);
-    setTransform(defaults);
     updateStyles(selectedElement.id, { transform: "none" });
   };
 

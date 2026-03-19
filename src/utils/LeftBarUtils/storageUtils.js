@@ -30,19 +30,3 @@ export async function renameProjectFolder(oldProjectName, newProjectName, userId
     throw error;
   }
 }
-
-
-export function saveToLocalStorage(key, value) {
-  // If all you want is to store the entire new value:
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-export const loadFromLocalStorage = (key) => {
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    localStorage.removeItem(key);
-    return null;
-  }
-};

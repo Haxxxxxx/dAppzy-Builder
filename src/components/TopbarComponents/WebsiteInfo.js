@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AutoSaveContext } from '../../context/AutoSaveContext';
+import { auth } from '../../firebase';
 
-const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownToggle, isDeployed, snsDomain }) => {
+const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownToggle, isDeployed, snsDomain, onBackToProjects, onProjectNameChange }) => {
   const { saveStatus } = useContext(AutoSaveContext);
   const hasUnsavedChanges = saveStatus && saveStatus !== 'All changes saved';
   const location = useLocation();
@@ -10,6 +11,29 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
   const [projectUrl, setProjectUrl] = useState(url || 'Not deployed yet');
   const [showUrl, setShowUrl] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const nameRef = useRef(null);
+
+  const handleNameBlur = useCallback(() => {
+    if (!nameRef.current || !onProjectNameChange) return;
+    const newName = nameRef.current.innerText.trim();
+    if (newName && newName !== projectName) {
+      onProjectNameChange(newName);
+    } else if (!newName) {
+      // Revert to current name if blank
+      nameRef.current.innerText = projectName;
+    }
+  }, [projectName, onProjectNameChange]);
+
+  const handleNameKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      nameRef.current?.blur();
+    }
+    if (e.key === 'Escape') {
+      nameRef.current.innerText = projectName;
+      nameRef.current?.blur();
+    }
+  }, [projectName]);
 
   // Validate returnUrl to prevent open redirect attacks
   const ALLOWED_RETURN_HOSTS = ['dashboard.dappzy.io', 'dappzy.io', 'www.dappzy.io', 'localhost'];
@@ -46,7 +70,19 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
     }
   }, [url, isDropdownOpen, snsDomain]);
 
-  const handleReturn = () => {
+  const handleReturn = async () => {
+    // Append Firebase ID token for cross-origin auth handoff (builder → dashboard)
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (idToken) {
+        const url = new URL(returnUrl, window.location.origin);
+        url.hash = `token=${idToken}`;
+        window.location.href = url.toString();
+        return;
+      }
+    } catch {
+      // Fall through to plain redirect if token retrieval fails
+    }
     window.location.href = returnUrl;
   };
 
@@ -139,15 +175,36 @@ const WebsiteInfo = ({ projectName, description, faviconUrl, url, onDropdownTogg
 
   return (
     <div className="project-info">
-      <button className="return-button" onClick={handleReturn}>
-        <span className="material-symbols-outlined">
-          arrow_back_ios
-        </span>
+      <button
+        className="return-button"
+        onClick={onBackToProjects || handleReturn}
+        title={onBackToProjects ? 'Back to Projects' : 'Back to Dashboard'}
+      >
+        <span className="material-symbols-outlined">arrow_back_ios</span>
+        {onBackToProjects && (
+          <span style={{
+            fontSize: '13px',
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 500,
+            color: 'inherit',
+          }}>Projects</span>
+        )}
       </button>
       {faviconUrl && <img src={faviconUrl} alt="Favicon" className="favicon" />}
       <div className="project-details" onClick={handleDropdownClick}>
         <span className="project-name">
-          {projectName}
+          <span
+            ref={nameRef}
+            className="project-name-editable"
+            contentEditable
+            suppressContentEditableWarning
+            spellCheck={false}
+            onBlur={handleNameBlur}
+            onKeyDown={handleNameKeyDown}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {projectName}
+          </span>
           {hasUnsavedChanges && (
             <span
               className="unsaved-dot"

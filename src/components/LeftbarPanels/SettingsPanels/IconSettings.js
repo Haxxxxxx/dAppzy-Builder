@@ -1,12 +1,26 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import CollapsibleSection from './LinkSettings/CollapsibleSection';
+import './css/IconSettings.css';
+
+const MATERIAL_ICONS = [
+  'home', 'search', 'menu', 'close', 'settings', 'person', 'email', 'phone',
+  'star', 'favorite', 'add', 'remove', 'edit', 'delete', 'share', 'link',
+  'visibility', 'lock', 'notifications', 'shopping_cart', 'download', 'upload',
+  'arrow_forward', 'arrow_back', 'check_circle', 'error', 'warning', 'info',
+  'help', 'language', 'public', 'code', 'palette', 'brush', 'image', 'videocam',
+  'music_note', 'mic', 'send', 'chat', 'group', 'work', 'school', 'flight',
+  'restaurant', 'local_shipping', 'payments', 'trophy', 'rocket_launch',
+  'auto_awesome', 'magic_button',
+];
 
 const IconSettings = () => {
   const { selectedElement, updateStyles, updateElementProperties } = useContext(EditableContext);
   const [iconSrc, setIconSrc] = useState('');
   const [iconSize, setIconSize] = useState('40');
   const [altText, setAltText] = useState('');
+  const [iconSearch, setIconSearch] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -15,8 +29,25 @@ const IconSettings = () => {
       const styles = selectedElement.styles || {};
       setIconSize(parseInt(styles.maxWidth, 10) || 40);
       setAltText(styles.alt || '');
+      // If the element has a content that matches an icon name, pre-select it
+      const content = selectedElement.content || '';
+      if (MATERIAL_ICONS.includes(content)) {
+        setSelectedIcon(content);
+      } else {
+        setSelectedIcon('');
+      }
     }
   }, [selectedElement]);
+
+  const handleIconSelect = (iconName) => {
+    setSelectedIcon(iconName);
+    if (selectedElement) {
+      updateElementProperties(selectedElement.id, {
+        content: iconName,
+        src: '', // Clear image src when using a Material Symbol
+      });
+    }
+  };
 
   const handleSrcChange = (e) => {
     const src = e.target.value;
@@ -25,7 +56,8 @@ const IconSettings = () => {
 
   const handleSrcBlur = () => {
     if (selectedElement && iconSrc) {
-      updateElementProperties(selectedElement.id, { src: iconSrc });
+      setSelectedIcon(''); // Deselect material icon when using custom URL
+      updateElementProperties(selectedElement.id, { src: iconSrc, content: '' });
     }
   };
 
@@ -34,8 +66,9 @@ const IconSettings = () => {
     if (file) {
       const newSrc = URL.createObjectURL(file);
       setIconSrc(newSrc);
+      setSelectedIcon('');
       if (selectedElement) {
-        updateElementProperties(selectedElement.id, { src: newSrc });
+        updateElementProperties(selectedElement.id, { src: newSrc, content: '' });
       }
     }
   };
@@ -47,6 +80,7 @@ const IconSettings = () => {
       updateStyles(selectedElement.id, {
         maxWidth: val + 'px',
         maxHeight: val + 'px',
+        fontSize: val + 'px',
       });
     }
   };
@@ -59,6 +93,10 @@ const IconSettings = () => {
     }
   };
 
+  const filteredIcons = iconSearch
+    ? MATERIAL_ICONS.filter(name => name.includes(iconSearch.toLowerCase().replace(/\s+/g, '_')))
+    : MATERIAL_ICONS;
+
   if (!selectedElement || selectedElement.type !== 'icon') return null;
 
   return (
@@ -70,7 +108,36 @@ const IconSettings = () => {
       </div>
       <hr />
 
-      <CollapsibleSection title="Icon Settings">
+      <CollapsibleSection title="Material Icons">
+        <div className="icon-picker-container">
+          <input
+            type="text"
+            value={iconSearch}
+            onChange={(e) => setIconSearch(e.target.value)}
+            placeholder="Search icons..."
+            className="settings-input icon-search-input"
+          />
+          <div className="icon-grid">
+            {filteredIcons.map(iconName => (
+              <button
+                key={iconName}
+                className={`icon-grid-item ${selectedIcon === iconName ? 'icon-grid-item--selected' : ''}`}
+                onClick={() => handleIconSelect(iconName)}
+                title={iconName}
+                type="button"
+              >
+                <span className="material-symbols-outlined">{iconName}</span>
+                <span className="icon-grid-label">{iconName.replace(/_/g, ' ')}</span>
+              </button>
+            ))}
+            {filteredIcons.length === 0 && (
+              <p className="icon-grid-empty">No icons match your search.</p>
+            )}
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Custom Image" defaultExpanded={false}>
         <div className="settings-group">
           <label>Icon URL</label>
           <input
@@ -78,6 +145,7 @@ const IconSettings = () => {
             value={iconSrc}
             onChange={handleSrcChange}
             onBlur={handleSrcBlur}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSrcBlur(); }}
             placeholder="Icon image URL"
             className="settings-input"
             style={{ width: '100%' }}
@@ -86,15 +154,7 @@ const IconSettings = () => {
         <div className="settings-group">
           <button
             onClick={() => fileInputRef.current?.click()}
-            style={{
-              padding: '6px 12px',
-              background: 'var(--input-bg, #2a2a3a)',
-              border: '1px solid var(--border-color, #333)',
-              borderRadius: '4px',
-              color: 'var(--editor-text, #fff)',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
+            className="icon-upload-button"
           >
             Upload Icon
           </button>
@@ -106,6 +166,9 @@ const IconSettings = () => {
             onChange={handleFileChange}
           />
         </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Icon Settings">
         <div className="settings-group">
           <label>Size (px)</label>
           <input

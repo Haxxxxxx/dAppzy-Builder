@@ -8,7 +8,7 @@
   font-size: 14px;
 }
 
-/* First dropzone specific styles */
+/* First dropzone specific styles — the empty canvas state */
 .first-dropzone {
   position: absolute;
   height: 100%;
@@ -21,8 +21,18 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  z-index: var(--z-modal);
+  z-index: var(--z-dropzone);
   pointer-events: auto !important;
+  border: none;
+  background-color: transparent;
+}
+
+/* Between-element dropzone — stays in document flow between siblings */
+.between-dropzone {
+  position: relative;
+  width: 100%;
+  min-height: 8px;
+  z-index: 1;
 }
 
 /* Default dropzone styles */
@@ -69,57 +79,161 @@
   gap: 15px;
 }
 
-.dropzone-buttons {
+/* ── Empty canvas state ──────────────────────────────────────────── */
+.empty-canvas-state {
   display: flex;
-  gap: 15px;
-  justify-content: center;
-  width: 100%;
-  max-width: 600px;
-}
-
-.dropzone-button {
-  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 10px;
-  border-radius: 40px;
-  font-size: 14px;
+  pointer-events: auto;
+  max-width: 360px;
+  text-align: center;
+}
+
+.empty-canvas-icon {
+  font-size: 48px;
+  color: var(--purple, #5C4EFA);
+  opacity: 0.7;
+}
+
+.empty-canvas-title {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.empty-canvas-subtitle {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+}
+
+.empty-canvas-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.empty-canvas-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  font-weight: 500;
   cursor: pointer;
   border: none;
   pointer-events: auto !important;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
-.library-button {
-  background-color: var(--border-color);
-  color: #333;
-}
+.empty-canvas-btn:hover { opacity: 0.85; }
+.empty-canvas-btn:active { transform: scale(0.97); }
 
-.library-button:hover {
-  background-color: #bbb;
-}
+.empty-canvas-btn span { font-size: 18px; }
 
-.configure-button {
-  background: var(--purple);
+.empty-canvas-btn-primary {
+  background: var(--purple, #5C4EFA);
   color: var(--white);
 }
 
-.configure-button:hover {
-  opacity: 0.9;
+.empty-canvas-btn-secondary {
+  background: var(--option-bg, #e5e8ea);
+  color: var(--text-primary, #333);
+  border: 1px solid var(--border-color);
 }
 
-.dropzone-button span {
-  font-size: 20px;
+.empty-canvas-hint {
+  margin: 4px 0 0;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  color: var(--not-selected, #838389);
+}
+
+/* ── Div options (layout picker) ─────────────────────────────────── */
+.inline-div-options-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  pointer-events: auto;
+}
+
+.div-options-back {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  font-family: var(--font-primary);
+  font-size: 12px;
+  cursor: pointer;
+  pointer-events: auto !important;
+  padding: 0;
+}
+.div-options-back span { font-size: 16px; }
+.div-options-back:hover { color: var(--text-primary, #333); }
+
+.div-options-heading {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.div-options-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+
+.div-option-card {
+  cursor: pointer;
+  background: var(--option-bg, #e5e8ea);
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s;
+  pointer-events: auto !important;
+}
+.div-option-card:hover {
+  border-color: var(--purple, #5C4EFA);
+  transform: scale(1.03);
+}
+
+.div-option-label {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+  font-family: var(--font-primary);
+  text-align: center;
 }
 
 /* Media queries */
 @media (max-width: 768px) {
-  .dropzone-buttons {
+  .empty-canvas-actions {
     flex-direction: column;
-    padding: 0 20px;
+    width: 100%;
   }
 
-  .dropzone-button {
+  .empty-canvas-btn {
     width: 100%;
     justify-content: center;
   }
@@ -163,7 +277,7 @@
 .section-selection-popup-header-title {
   color: var(--white, #FFF);
   text-align: center;
-  font-family: Satoshi;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
@@ -300,7 +414,7 @@
 background: var(--purple, #5C4EFA);
 color: var(--white, #FFF);
 text-align: center;
-font-family: Satoshi;
+font-family: var(--font-primary);
 font-size: 14px;
 font-style: normal;
 font-weight: 500;

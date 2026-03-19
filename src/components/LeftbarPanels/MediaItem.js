@@ -32,18 +32,25 @@ export const MediaItem = ({
   editingName,
   editingItemId,
 }) => {
+  // Map media panel types to element types accepted by UnifiedDropZone / ContentList
+  const DRAGGABLE_MEDIA = { image: true, video: true, audio: true };
+  const isDraggableType = !!DRAGGABLE_MEDIA[item.type];
+
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'mediaItem',
-    item: {
-      id: item.id,
-      src: item.src,
-      mediaType: item.type,
+    // Use the element type string so UnifiedDropZone's accept list recognises it
+    type: item.type,
+    item: () => {
+      const base = { type: item.type, content: item.src };
+      if (item.type === 'image') {
+        return { ...base, styles: { width: '100%', height: 'auto' } };
+      }
+      return base;
     },
-    canDrag: item.type === "image", // ❌ only allow dragging images
+    canDrag: isDraggableType,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-  }));
+  }), [item.id, item.src, item.type]);
 
   return (
     <div
@@ -52,7 +59,7 @@ export const MediaItem = ({
       ref={drag}
       style={{
         opacity: isDragging ? 0.5 : 1,
-        cursor: item.type === "image" ? "grab" : "not-allowed"
+        cursor: isDraggableType ? "grab" : "default"
       }}
     >
       <div className="media-preview">

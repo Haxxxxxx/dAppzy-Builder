@@ -314,7 +314,7 @@ const BorderEditor = () => {
       borderBottomLeftRadius: "",
     });
     setBorderWidth("");
-    setBorderStyle("none");
+    setBorderStyle("");
     setBorderColor("#000000");
     setBorderRadius("");
     setCornerLinked(true);

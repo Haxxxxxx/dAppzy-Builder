@@ -6,11 +6,6 @@ export const STORAGE_KEYS = {
   // Subscription (localStorage)
   SUBSCRIPTION_STATUS: 'subscriptionStatus',
   SUBSCRIPTION_END_DATE: 'subscriptionEndDate',
-  // Project data (localStorage)
-  ELEMENTS: 'editableElements',
-  ELEMENTS_VERSION: 'elementsVersion',
-  ELEMENTS_CHUNKS: 'editableElements_chunks',
-  WEBSITE_SETTINGS: 'websiteSettings',
   // UI (localStorage)
   COLOR_SWATCHES: 'dappzy_saved_colors',
 };
@@ -45,37 +40,32 @@ export const subscriptionStorage = {
 };
 
 // ── Project ────────────────────────────────────────────────
+// Project data lives in Firestore only. This module provides an
+// in-memory cache for website settings (so existing component reads
+// still work) and a helper to wipe legacy localStorage keys.
+let _websiteSettings = {};
+let _legacyCleaned = false;
+
 export const projectStorage = {
-  getWebsiteSettings: () => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.WEBSITE_SETTINGS) || '{}');
-    } catch {
-      return {};
-    }
-  },
-  setWebsiteSettings: (settings) => {
-    localStorage.setItem(STORAGE_KEYS.WEBSITE_SETTINGS, JSON.stringify(settings));
-  },
-  getElementsVersion: () => localStorage.getItem(STORAGE_KEYS.ELEMENTS_VERSION),
-  setElementsVersion: (version) => localStorage.setItem(STORAGE_KEYS.ELEMENTS_VERSION, version),
-  clearProject: () => {
-    localStorage.removeItem(STORAGE_KEYS.ELEMENTS);
-    localStorage.removeItem(STORAGE_KEYS.ELEMENTS_VERSION);
-    localStorage.removeItem(STORAGE_KEYS.WEBSITE_SETTINGS);
-  },
-  // Chunk helpers
-  getChunkCount: () => parseInt(localStorage.getItem(STORAGE_KEYS.ELEMENTS_CHUNKS) || '0'),
-  getChunk: (index) => localStorage.getItem(`editableElements_chunk_${index}`),
-  setChunk: (key, value) => localStorage.setItem(key, value),
-  removeChunk: (key) => localStorage.removeItem(key),
-  clearChunks: (count) => {
-    for (let i = 0; i < count; i++) {
+  getWebsiteSettings: () => _websiteSettings,
+  setWebsiteSettings: (settings) => { _websiteSettings = settings || {}; },
+  clearLegacyCache: () => {
+    if (_legacyCleaned) return;
+    _legacyCleaned = true;
+    _websiteSettings = {};
+    // Wipe all legacy localStorage keys from previous versions
+    localStorage.removeItem('editableElements');
+    localStorage.removeItem('elementsVersion');
+    localStorage.removeItem('websiteSettings');
+    const chunkCount = parseInt(localStorage.getItem('editableElements_chunks') || '0');
+    for (let i = 0; i < chunkCount; i++) {
       localStorage.removeItem(`editableElements_chunk_${i}`);
     }
-    localStorage.removeItem(STORAGE_KEYS.ELEMENTS_CHUNKS);
+    localStorage.removeItem('editableElements_chunks');
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('image-'))
+      .forEach(k => localStorage.removeItem(k));
   },
-  getElements: () => localStorage.getItem(STORAGE_KEYS.ELEMENTS),
-  removeElements: () => localStorage.removeItem(STORAGE_KEYS.ELEMENTS),
 };
 
 // ── UI Preferences ─────────────────────────────────────────

@@ -1,8 +1,0 @@
-/* Layout utilities */
-.u-relative { position: relative; }
-.u-flex { display: flex; }
-.u-flex-center { display: flex; align-items: center; }
-.u-flex-between { display: flex; justify-content: space-between; align-items: center; }
-.u-flex-col { display: flex; flex-direction: column; }
-.u-flex-col-gap-sm { display: flex; flex-direction: column; gap: var(--space-xs); }
-.u-flex-wrap { display: flex; flex-wrap: wrap; gap: var(--space-md); width: 100%; }

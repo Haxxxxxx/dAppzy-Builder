@@ -20,6 +20,7 @@ const DeploymentScreen = ({
                 error={deploymentError}
                 onClose={onClose}
                 domain={selectedDomain?.name}
+                inline
               />
             ) : (
               <>

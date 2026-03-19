@@ -1,52 +1,30 @@
-import React, { useState, useContext, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import './css/LeftBar.css';
 const SupportPopup = React.lazy(() => import('./LeftbarPanels/SupportPopup'));
 const UpgradePopup = React.lazy(() => import('./UpgradePopup'));
-import { EditableContext } from '../context/EditableContext';
 import { useSubscription } from '../context/SubscriptionContext';
 
-const LeftBar = ({ 
-  openPanel, 
-  onShowSidebar, 
-  onShowStructurePanel, 
-  onShowMediaPanel, 
+const LeftBar = ({
+  openPanel,
+  onShowSidebar,
+  onShowMediaPanel,
+  onShowStructurePanel,
   onShowSettingsPanel,
-  aiChatStarted,
-  onShowAIPanel
+  onShowAIPanel,
 }) => {
-  // Track whether SupportPopup is visible
   const [showSupportPopup, setShowSupportPopup] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
-  const { selectedElement } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
 
-  const handleHelpClick = () => {
-    setShowSupportPopup(true);
-  };
-
-  const handleClosePopup = () => {
-    setShowSupportPopup(false);
-  };
-
-  const handleUpgradeClick = () => {
-    setShowUpgradePopup(true);
-  };
-
-  const handleCloseUpgradePopup = () => {
-    setShowUpgradePopup(false);
-  };
-
-  // Don't render anything while subscription status is loading
-  if (subscriptionLoading) {
-    return null;
-  }
+  if (subscriptionLoading) return null;
 
   return (
     <div className="leftbar">
       <div className="buttons-group">
         <button
           onClick={onShowSidebar}
-          className={`icon-button ${openPanel === 'sidebar' && !selectedElement ? 'active' : ''}`}
+          className={`icon-button ${openPanel === 'sidebar' ? 'active' : ''}`}
+          title="Add Elements"
         >
           <span className="material-symbols-outlined">add</span>
         </button>
@@ -54,18 +32,27 @@ const LeftBar = ({
         <button
           onClick={onShowMediaPanel}
           className={`icon-button ${openPanel === 'media' ? 'active' : ''}`}
+          title="Media Library"
         >
           <span className="material-symbols-outlined">perm_media</span>
         </button>
 
         <button
+          onClick={onShowStructurePanel}
+          className={`icon-button ${openPanel === 'structure' ? 'active' : ''}`}
+          title="Layers"
+        >
+          <span className="material-symbols-outlined">layers</span>
+        </button>
+
+        <button
           onClick={onShowSettingsPanel}
           className={`icon-button ${openPanel === 'settings' ? 'active' : ''}`}
+          title="Site Settings"
         >
           <span className="material-symbols-outlined">settings</span>
         </button>
 
-        {/* AI Agent Button - Only show for pioneer users */}
         {isPioneer && (
           <button
             onClick={onShowAIPanel}
@@ -79,30 +66,28 @@ const LeftBar = ({
 
       <div className="help-center">
         {!isPioneer && (
-          <button 
-            className="upgrade-button" 
-            onClick={handleUpgradeClick}
+          <button
+            className="upgrade-button"
+            onClick={() => setShowUpgradePopup(true)}
             title="Upgrade to Pioneer"
           >
             <span className="material-symbols-outlined">workspace_premium</span>
           </button>
         )}
-        <button className="help-center-button" onClick={handleHelpClick}>
+        <button className="help-center-button" onClick={() => setShowSupportPopup(true)}>
           <span className="material-symbols-outlined">help</span>
         </button>
       </div>
 
-      {/* Conditionally render the SupportPopup */}
       {showSupportPopup && (
         <Suspense fallback={null}>
-          <SupportPopup onClose={handleClosePopup} />
+          <SupportPopup onClose={() => setShowSupportPopup(false)} />
         </Suspense>
       )}
 
-      {/* Conditionally render the UpgradePopup */}
       {showUpgradePopup && (
         <Suspense fallback={null}>
-          <UpgradePopup onClose={handleCloseUpgradePopup} />
+          <UpgradePopup onClose={() => setShowUpgradePopup(false)} />
         </Suspense>
       )}
     </div>

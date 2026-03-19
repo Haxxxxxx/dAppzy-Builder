@@ -16,10 +16,12 @@ export const structureConfigurations = {
   heroOne: HeroConfiguration.heroOne,
   heroTwo: HeroConfiguration.heroTwo,
   heroThree: HeroConfiguration.heroThree,
+  videoHero: HeroConfiguration.videoHero,
 
   // CTA configs
   ctaOne: CtaConfigurations.ctaOne,
   ctaTwo: CtaConfigurations.ctaTwo,
+  ctaThree: CtaConfigurations.ctaThree,
 
   // Footer configs
   simpleFooter: FooterConfigurations.simpleFooter,
@@ -27,9 +29,12 @@ export const structureConfigurations = {
   advancedFooter: FooterConfigurations.advancedFooter,
   defiFooter: FooterConfigurations.defiFooter,
 
-  // Web3 configs
-  mintingSection: Web3Configs.mintingSection,
-  defiSection: Web3Configs.defiSection,
+  // Web3 configs — children are stripped so buildSectionTree creates a bare
+  // section shell.  DraggableDeFi / DraggableMinting drag.end handlers read
+  // from Web3Configs directly and build the content-container → modules
+  // structure (with moduleType, generated IDs, etc.).
+  mintingSection: { ...Web3Configs.mintingSection, children: [] },
+  defiSection: { ...Web3Configs.defiSection, children: [] },
   connectWalletButton: Web3Configs.connectWalletButton,
 
   // Section configs
@@ -37,4 +42,12 @@ export const structureConfigurations = {
   sectionTwo: SectionConfiguration.sectionTwo,
   sectionThree: SectionConfiguration.sectionThree,
   sectionFour: SectionConfiguration.sectionFour,
+  sectionFive: SectionConfiguration.sectionFive,
+  sectionSix: SectionConfiguration.sectionSix,
+  sectionSeven: SectionConfiguration.sectionSeven,
+  sectionEight: SectionConfiguration.sectionEight,
+  sectionNine: SectionConfiguration.sectionNine,
+  sectionTen: SectionConfiguration.sectionTen,
+  sectionEleven: SectionConfiguration.sectionEleven,
+  sectionTwelve: SectionConfiguration.sectionTwelve,
 };

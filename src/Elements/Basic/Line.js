@@ -12,7 +12,7 @@ const Line = ({ id, styles: customStyles }) => {
   // Handle selection
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'line', styles });
+    setSelectedElement(elementData || { id, type: 'line', styles });
   };
 
   // Autofocus when selected

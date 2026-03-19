@@ -1,6 +1,5 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext } from "react";
 import { EditableContext } from "../context/EditableContext";
-import { useDebouncedStyle } from "./useDebouncedStyle";
 import "./css/FilterEditor.css";
 
 const FILTER_DEFAULTS = {
@@ -41,26 +40,19 @@ function buildFilter(values) {
 
 const FilterEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
-  const debouncedUpdate = useDebouncedStyle(updateStyles);
-  const [filters, setFilters] = useState(() => parseFilter(""));
-
-  useEffect(() => {
-    if (selectedElement) {
-      setFilters(parseFilter(selectedElement.styles?.filter));
-    }
-  }, [selectedElement]);
 
   if (!selectedElement) return null;
 
+  // Read directly from live selectedElement — no local state needed
+  const s = selectedElement.styles || {};
+  const filters = parseFilter(s.filter);
+
   const handleChange = (key, value) => {
     const next = { ...filters, [key]: Number(value) };
-    setFilters(next);
-    debouncedUpdate(selectedElement.id, { filter: buildFilter(next) });
+    updateStyles(selectedElement.id, { filter: buildFilter(next) });
   };
 
   const handleReset = () => {
-    const defaults = parseFilter("");
-    setFilters(defaults);
     updateStyles(selectedElement.id, { filter: "none" });
   };
 

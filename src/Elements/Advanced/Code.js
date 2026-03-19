@@ -14,7 +14,7 @@ const Code = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'code' });
+    setSelectedElement(element || { id, type: 'code' });
   };
 
   const handleBlur = (e) => {

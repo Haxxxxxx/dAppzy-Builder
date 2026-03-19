@@ -13,8 +13,13 @@ const Topbar = ({
   onPreviewToggle,
   isPreviewMode,
   pageSettings,
+  setPageSettings,
   userId,
-  projectId
+  projectId,
+  onBackToProjects,
+  onOpenVersionHistory,
+  shareUrl,
+  dashboardData,
 }) => {
   const { elements } = useContext(EditableContext);
 
@@ -25,15 +30,22 @@ const Topbar = ({
         description={pageSettings.description || 'My Website'}
         url={pageSettings.url}
         faviconUrl={pageSettings.faviconUrl}
+        onBackToProjects={onBackToProjects}
+        onProjectNameChange={(newName) => {
+          setPageSettings((prev) => ({ ...prev, siteTitle: newName }));
+        }}
       />
-      <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} />
+      <Visibility onPreviewToggle={onPreviewToggle} isPreviewMode={isPreviewMode} websiteSettings={pageSettings} onOpenVersionHistory={onOpenVersionHistory} dashboardData={dashboardData} />
       <ResizeControls scale={scale} onResize={onResize} onScaleChange={setScale} />
       <Suspense fallback={<div style={{padding: '8px'}}>Loading...</div>}>
         <ExportSection
           elements={elements}
           websiteSettings={pageSettings}
+          setWebsiteSettings={setPageSettings}
           userId={userId}
           projectId={projectId}
+          shareUrl={shareUrl}
+          dashboardData={dashboardData}
         />
       </Suspense>
     </div>

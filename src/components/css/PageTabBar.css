@@ -1,0 +1,155 @@
+/* ── Page Tab Bar ── */
+.page-tab-bar {
+  display: flex;
+  align-items: center;
+  background-color: var(--builder-bg, #1E1E24);
+  border-bottom: 1px solid var(--border-color, #57575B);
+  padding: 0 12px;
+  min-height: 32px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.page-tab-bar::-webkit-scrollbar {
+  height: 2px;
+}
+
+.page-tab-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page-tab-bar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.page-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+}
+
+.page-tab {
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-family: var(--font-primary, sans-serif);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--not-selected, #808080);
+  background: transparent;
+  border: none;
+  white-space: nowrap;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  position: relative;
+  user-select: none;
+}
+
+.page-tab:hover {
+  color: var(--editor-text, #D9D9D9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.page-tab--active {
+  color: var(--editor-text, #D9D9D9);
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.page-tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: var(--purple, #5C4EFA);
+  border-radius: 2px 2px 0 0;
+}
+
+.page-tab--adding {
+  padding: 4px 6px;
+}
+
+.page-tab-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-tab-rename-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--purple, #5C4EFA);
+  border-radius: 3px;
+  color: var(--editor-text, #D9D9D9);
+  font-family: var(--font-primary, sans-serif);
+  font-size: 12px;
+  padding: 2px 6px;
+  width: 90px;
+  outline: none;
+}
+
+.page-tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--not-selected, #808080);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.page-tab-add:hover {
+  color: var(--editor-text, #D9D9D9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Context menu */
+.page-tab-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: var(--panel-bg, #2A2A32);
+  border: 1px solid var(--border-color, #57575B);
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 140px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.page-tab-context-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: var(--editor-text, #D9D9D9);
+  font-family: var(--font-primary, sans-serif);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  text-align: left;
+}
+
+.page-tab-context-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.page-tab-context-item--danger {
+  color: var(--error-red);
+}
+
+.page-tab-context-item--danger:hover {
+  background: rgba(244, 67, 54, 0.12);
+}

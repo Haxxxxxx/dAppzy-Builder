@@ -1,11 +1,13 @@
 import { useDrop } from 'react-dnd';
-import React from 'react';
+import React, { useContext } from 'react';
 import { ALL_DROPPABLE_TYPES } from '../core/elementRegistry';
 import { isDescendantOf, getDropPosition, DROP_REJECTION_REASONS } from './dndUtils';
 import { useToast } from '../context/ToastContext';
+import { EditableContext } from '../context/EditableContext';
 
-const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
+const useElementDrop = ({ id, elementRef, onDropItem }) => {
   const { showToast } = useToast();
+  const { elements } = useContext(EditableContext);
   const [{ isOverCurrent, canDrop }, drop] = useDrop(() => ({
     accept: ALL_DROPPABLE_TYPES,
     drop: (item, monitor) => {
@@ -15,7 +17,7 @@ const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
       // Circular reference guard: block dropping a container into its own descendant
       if (item.id && id && elements) {
         if (isDescendantOf(item.id, id, elements)) {
-          console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          if (import.meta.env.DEV) console.warn('[DnD] Blocked: cannot drop element into its own descendant');
           showToast(DROP_REJECTION_REASONS.CIRCULAR, 'info');
           return;
         }
@@ -44,8 +46,34 @@ const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
       }
 
       if (isWithinBounds) {
+        // Transform saved block items into a normal element config so container
+        // drop handlers (which call addNewElement(item.type, ...)) work correctly.
+        let resolvedItem = item;
+        if (item.type === 'savedBlock' && item.blockElements) {
+          const blockEls = item.blockElements;
+          const rootEl = blockEls.find(el => !el.parentId || !blockEls.some(b => b.id === el.parentId));
+          if (rootEl) {
+            const buildBlockConfig = (el, depth = 0) => {
+              if (depth > 20) return { type: el.type, styles: el.styles || {}, content: el.content || '', children: [] };
+              const config = { ...el };
+              delete config.id;
+              delete config.parentId;
+              if (el.children && el.children.length > 0) {
+                config.children = el.children
+                  .map(childId => blockEls.find(b => b.id === childId))
+                  .filter(Boolean)
+                  .map(child => buildBlockConfig(child, depth + 1));
+              } else {
+                config.children = [];
+              }
+              return config;
+            };
+            resolvedItem = buildBlockConfig(rootEl);
+          }
+        }
+
         // Call onDropItem with the item, index, and position information
-        onDropItem(item, dropIndex, {
+        onDropItem(resolvedItem, dropIndex, {
           x: relativeX,
           y: relativeY,
           targetRect,
@@ -58,10 +86,8 @@ const useElementDrop = ({ id, elementRef, onDropItem, elements }) => {
       // If a nested drop target is handling the hover, do nothing
       if (monitor.didDrop()) return;
 
-      // Use shared bounds-checking utility
-      const pos = getDropPosition(elementRef, monitor);
-      if (!pos) return false;
-      return pos.isWithinBounds;
+      // Evaluate bounds (side-effect only — react-dnd ignores hover return values)
+      getDropPosition(elementRef, monitor);
     },
     collect: (monitor) => ({
       isOverCurrent: monitor.isOver({ shallow: true }),

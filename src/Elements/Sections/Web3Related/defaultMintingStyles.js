@@ -9,9 +9,9 @@ export const defaultMintingStyles = {
     gap: '20px'
   },
   mintingContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '32px',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gap: '24px',
     maxWidth: '1200px',
     margin: '0 auto',
     width: '100%',
@@ -29,18 +29,31 @@ export const defaultMintingStyles = {
     marginBottom: '2rem',
     color: '#e0e0e0'
   },
+  mintingModule: {
+    position: 'relative',
+    boxSizing: 'border-box',
+    backgroundColor: 'rgba(42, 42, 60, 0.6)',
+    borderRadius: '12px',
+    padding: '24px',
+    margin: '0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+  },
   mintingButton: {
-    backgroundColor: '#5C4EFA',
+    background: 'linear-gradient(135deg, #5C4EFA, #7B6CFF)',
     color: '#ffffff',
     padding: '12px 24px',
     borderRadius: '8px',
     fontSize: '1rem',
-    fontWeight: '600',
+    fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     border: 'none',
-    '&:hover': {
-      backgroundColor: '#4338CA'
-    }
+    width: '100%',
   }
 }; 

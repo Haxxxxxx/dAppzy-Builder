@@ -43,12 +43,16 @@
 
   /* Z-Index Scale */
   --z-base: 1;
+  --z-dropzone: 10;           /* Drop zones — just above canvas elements */
   --z-dropdown: 10;
   --z-sidebar: 20;
   --z-sticky: 50;
   --z-overlay: 100;
-  --z-modal: 1000;
-  --z-popover: 1001;
+  --z-panel: 100;             /* Sidebar / right panel */
+  --z-dropdown-menu: 200;     /* Dropdown menus (topbar publish, etc.) */
+  --z-modal: 300;             /* Modals (version history, upgrade, share, confirm) */
+  --z-popover: 301;           /* Popover panels on top of modals */
+  --z-context-menu: 2000;
   --z-tooltip: 9999;
   --z-top: 10000;
 
@@ -68,6 +72,10 @@
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+
+  /* Text Colors */
+  --text-primary: #333;
+  --text-secondary: #888;
 
   /* Extended Neutral Colors */
   --text-muted: #9CA3AF;          /* Muted text/icons */
@@ -104,6 +112,15 @@
   /* Blue Gradient Colors */
   --blue-600: #2563EB;                  /* Upgrade button gradient start */
   --blue-700: #1D4ED8;                  /* Upgrade button gradient end */
+
+  /* Canvas Element States */
+  --drop-hover-bg: rgba(92, 78, 250, 0.06);
+  --drop-hover-outline: rgba(92, 78, 250, 0.5);
+  --option-bg: #e5e8ea;
+  --option-bg-hover: #d4d8dc;
+  --option-border: #e5e8ea;
+  --option-border-hover: #bfc5c9;
+  --option-text: var(--dark-gray);
 }
 
 * {

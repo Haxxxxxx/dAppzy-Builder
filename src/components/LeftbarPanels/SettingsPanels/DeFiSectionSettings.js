@@ -5,9 +5,12 @@ import { useWalletContext } from '../../../context/WalletContext';
 const DeFiSectionDragList = React.lazy(() => import('./DeFiSectionDragList'));
 import './css/DeFiSectionSettings.css';
 import './css/SettingsForm.css';
+import { DEFI_MODULE } from '../../../constants/elementTypes';
+import { getModuleLabel, getModuleDefaults, DEFI_MODULE_TYPE_LIST } from '../../../constants/defiModuleTypes';
+import { defaultDeFiStyles } from '../../../Elements/Sections/Web3Related/defaultDeFiStyles';
 
 const DeFiSectionSettings = () => {
-  const { selectedElement, elements, updateContent } = useContext(EditableContext);
+  const { selectedElement, elements, setElements, addNewElement, updateContent } = useContext(EditableContext);
   const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
 
   // Wallet connection state
@@ -79,7 +82,7 @@ const DeFiSectionSettings = () => {
           ...content,
           settings: updatedSettings
         };
-        updateContent(selectedElement.id, JSON.stringify(updatedContent));
+        updateContent(selectedElement.id, updatedContent);
         setConnectionError(null);
       }
     } catch (error) {
@@ -116,228 +119,103 @@ const DeFiSectionSettings = () => {
   const isConnected = simulateConnected || contextConnected;
   const effectiveIsSigned = requireSignature ? (simulateSigned || isSigned) : true;
 
-  const [moduleSettings, setModuleSettings] = useState({
-    aggregator: {
-      enabled: true,
-      showStats: true,
-      showButton: true,
-      customColor: '#2A2A3C',
-      stats: []
-    },
-    simulation: {
-      enabled: true,
-      showStats: true,
-      showButton: true,
-      customColor: '#2A2A3C',
-      stats: []
-    },
-    bridge: {
-      enabled: true,
-      showStats: true,
-      showButton: true,
-      customColor: '#2A2A3C',
-      stats: []
-    }
-  });
-
-  const [moduleOrder, setModuleOrder] = useState(['aggregator', 'simulation', 'bridge']);
   const [newModuleType, setNewModuleType] = useState('');
 
-  useEffect(() => {
-    if (selectedElement) {
-      const element = elements.find(el => el.id === selectedElement.id);
-      if (element) {
-        const modules = element.children
-          ?.map(childId => elements.find(el => el.id === childId))
-          ?.filter(module => module?.type === 'defiModule') || [];
+  // --- Module management: read from element tree, not content ---
 
-        const newSettings = { ...moduleSettings };
-        const newOrder = [];
+  // Find the content container for this DeFi section
+  const getContentContainer = () => {
+    if (!selectedElement) return null;
+    const containerId = `${selectedElement.id}-content`;
+    return elements.find(el => el.id === containerId);
+  };
 
-        modules.forEach(module => {
-          if (module.content) {
-            try {
-              const moduleData = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-              const moduleType = moduleData.functionality?.type || module.functionality?.type;
-              if (moduleType) {
-                newOrder.push(moduleType);
-                newSettings[moduleType] = {
-                  enabled: moduleData.enabled ?? true,
-                  showStats: moduleData.settings?.showStats ?? true,
-                  showButton: moduleData.settings?.showButton ?? true,
-                  customColor: moduleData.settings?.customColor ?? '#2A2A3C',
-                  stats: moduleData.stats || []
-                };
-              }
-            } catch (e) {
-              if (import.meta.env.DEV) console.error('[DeFiSectionSettings] Failed to parse module content:', e);
-            }
-          }
-        });
+  // Get ordered list of module elements from the content container's children
+  const getModuleElements = () => {
+    const container = getContentContainer();
+    if (!container || !container.children) return [];
+    return container.children
+      .map(childId => elements.find(el => el.id === childId))
+      .filter(el => el && el.type === DEFI_MODULE);
+  };
 
-        setModuleSettings(newSettings);
-        setModuleOrder(newOrder);
+  // Build moduleOrder and moduleSettings from actual element tree
+  // Use element IDs (not moduleType) as keys to support duplicate module types
+  const modules = getModuleElements();
+  const moduleOrder = modules.map(m => m.id);
+  const moduleSettings = {};
+  modules.forEach(m => {
+    const content = typeof m.content === 'string'
+      ? (() => { try { return JSON.parse(m.content); } catch { return {}; } })()
+      : (m.content || {});
+    const settings = content.settings || {};
+    moduleSettings[m.id] = {
+      moduleType: m.moduleType || 'aggregator',
+      enabled: content.enabled ?? true,
+      showStats: settings.showStats ?? true,
+      showButton: settings.showButton ?? true,
+      customColor: settings.customColor ?? '#2A2A3C',
+      stats: content.stats || [],
+    };
+  });
+
+  const handleModuleToggle = (moduleId, value) => {
+    setElements(prev => prev.map(el => {
+      if (el.id === moduleId) {
+        const content = typeof el.content === 'string'
+          ? (() => { try { return JSON.parse(el.content); } catch { return {}; } })()
+          : (el.content || {});
+        return { ...el, content: { ...content, enabled: value } };
       }
-    }
-  }, [selectedElement, elements]);
-
-  const handleModuleToggle = (moduleType, value) => {
-    const element = elements.find(el => el.id === selectedElement.id);
-    if (element) {
-      const modules = element.children
-        ?.map(childId => elements.find(el => el.id === childId))
-        ?.filter(module => module?.type === 'defiModule') || [];
-
-      const moduleIndex = modules.findIndex(m => {
-        try {
-          const moduleContent = m.content ? JSON.parse(m.content) : {};
-          return moduleContent.functionality?.type === moduleType;
-        } catch (e) {
-          return false;
-        }
-      });
-
-      if (moduleIndex !== -1) {
-        const module = modules[moduleIndex];
-        let moduleContent;
-        if (module.content) {
-          try {
-            moduleContent = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-          } catch (e) {
-            moduleContent = {
-              id: module.id,
-              moduleType: moduleType,
-              title: moduleType === 'aggregator' ? 'Pool Aggregator' :
-                     moduleType === 'simulation' ? 'Investment Simulator' :
-                     moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-              stats: [],
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: moduleType,
-                actions: []
-              },
-              enabled: value
-            };
-          }
-        }
-        moduleContent.enabled = value;
-        modules[moduleIndex].content = JSON.stringify(moduleContent);
-        updateContent(selectedElement.id, JSON.stringify(modules));
-        setModuleSettings(prev => ({
-          ...prev,
-          [moduleType]: {
-            ...prev[moduleType],
-            enabled: value
-          }
-        }));
-      }
-    }
+      return el;
+    }));
   };
 
   const handleModuleAdd = (type) => {
-    const element = elements.find(el => el.id === selectedElement.id);
-    if (element) {
-      const newModule = {
-        id: `defiModule-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        type: 'defiModule',
-        parentId: element.id,
-        content: JSON.stringify({
-          id: `defiModule-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          moduleType: type,
-          title: type === 'aggregator' ? 'Pool Aggregator' :
-                 type === 'simulation' ? 'Investment Simulator' :
-                 type === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-          enabled: true,
-          stats: [],
-          settings: {
-            showStats: true,
-            showButton: true,
-            customColor: '#2A2A3C'
-          },
-          functionality: {
-            type: type,
-            actions: []
-          }
-        }),
-        styles: {},
-        configuration: {
-          moduleType: type,
-          enabled: true
-        }
-      };
+    const container = getContentContainer();
+    if (!container) return;
 
-      const modules = element.children
-        ?.map(childId => elements.find(el => el.id === childId))
-        ?.filter(module => module?.type === 'defiModule') || [];
-
-      modules.push(newModule);
-      updateContent(selectedElement.id, JSON.stringify(modules));
-      setModuleOrder(prev => [...prev, type]);
-    }
+    const defaults = getModuleDefaults(type);
+    addNewElement(DEFI_MODULE, 1, null, container.id, {
+      moduleType: type,
+      content: {
+        title: defaults.label,
+        description: defaults.description,
+        stats: defaults.defaultStats,
+        settings: { ...defaults.defaultSettings },
+        enabled: true,
+      },
+      styles: { ...defaultDeFiStyles.defiModule },
+    });
   };
 
-  const handleModuleRemove = (type) => {
-    const element = elements.find(el => el.id === selectedElement.id);
-    if (element) {
-      const modules = element.children
-        ?.map(childId => elements.find(el => el.id === childId))
-        ?.filter(module => module?.type === 'defiModule') || [];
+  const handleModuleRemove = (moduleId) => {
+    const container = getContentContainer();
+    if (!container) return;
 
-      const updatedModules = modules.filter(module => {
-        try {
-          const moduleContent = module.content ? JSON.parse(module.content) : {};
-          return moduleContent.functionality?.type !== type;
-        } catch (e) {
-          return true;
+    setElements(prev => prev
+      .filter(el => el.id !== moduleId)
+      .map(el => {
+        if (el.id === container.id) {
+          return { ...el, children: (el.children || []).filter(c => c !== moduleId) };
         }
-      });
-
-      updateContent(selectedElement.id, JSON.stringify(updatedModules));
-      setModuleOrder(prev => prev.filter(t => t !== type));
-    }
+        return el;
+      })
+    );
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
+    const container = getContentContainer();
+    if (!container) return;
 
-    const items = Array.from(moduleOrder);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    const currentChildren = [...(container.children || [])];
+    const [moved] = currentChildren.splice(result.source.index, 1);
+    currentChildren.splice(result.destination.index, 0, moved);
 
-    setModuleOrder(items);
-
-    // Persist the new order to element content
-    if (selectedElement) {
-      const element = elements.find(el => el.id === selectedElement.id);
-      if (element) {
-        const modules = element.children
-          ?.map(childId => elements.find(el => el.id === childId))
-          ?.filter(module => module?.type === 'defiModule') || [];
-
-        // Build a lookup from moduleType → module
-        const moduleByType = {};
-        modules.forEach(module => {
-          try {
-            const data = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-            const moduleType = data?.functionality?.type || data?.moduleType;
-            if (moduleType) moduleByType[moduleType] = module;
-          } catch (e) {
-            // skip unparseable modules
-          }
-        });
-
-        // Reorder according to items
-        const reorderedModules = items
-          .map(type => moduleByType[type])
-          .filter(Boolean);
-
-        updateContent(selectedElement.id, JSON.stringify(reorderedModules));
-      }
-    }
+    setElements(prev => prev.map(el =>
+      el.id === container.id ? { ...el, children: currentChildren } : el
+    ));
   };
 
   return (
@@ -428,9 +306,9 @@ const DeFiSectionSettings = () => {
           style={{ width: '200px' }}
         >
           <option value="">Select module type</option>
-          <option value="aggregator">Pool Aggregator</option>
-          <option value="simulation">Investment Simulator</option>
-          <option value="bridge">Cross-Chain Bridge</option>
+          {DEFI_MODULE_TYPE_LIST.map(type => (
+            <option key={type} value={type}>{getModuleLabel(type)}</option>
+          ))}
         </select>
         <button
           className="settings-btn"

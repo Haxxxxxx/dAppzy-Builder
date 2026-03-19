@@ -5,7 +5,7 @@ export const PLACEHOLDER_IMAGES = {
 };
 
 export const BRAND_IMAGES = {
-  logo: `${STORAGE_BASE}/ImageWebSite%2F3s-logo.png?alt=media&token=8a69bcce-2e9f-463e-8cba-f4c2fec1a904`,
+  logo: `${STORAGE_BASE}/ImageWebSite%2FPopup%2F3s-logo-picto.png?alt=media&token=eccaecaa-e624-4bb4-a1ad-54f181d09510`,
   phantom: `${STORAGE_BASE}/ImageWebSite%2FPopup%2Fphantom-logo.png?alt=media&token=5ffe611b-3ccd-4663-81e4-59feeb1dbba7`,
   metamask: `${STORAGE_BASE}/ImageWebSite%2FPopup%2Fmetamask-logo.png?alt=media&token=507097be-0cc4-4d93-a87b-99c67d82cfe5`,
   freighter: `${STORAGE_BASE}/ImageWebSite%2FPopup%2Fstellar_logo.png?alt=media&token=320a9042-cb19-4cf9-aab0-3a9b368b5e2c`,

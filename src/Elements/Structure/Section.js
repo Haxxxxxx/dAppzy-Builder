@@ -1,9 +1,13 @@
 import React, { useContext, useRef, forwardRef, useState } from 'react';
+import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
+import useReorderDrop from '../../utils/useReorderDrop';
+import DropInsertionLine from '../../components/DropInsertionLine';
 import '../Basic/css/EmptyState.css';
 import { divConfigurations } from '../../utils/UnifiedDropZone';
+import { VFLEX_LAYOUT } from '../../constants/elementTypes';
 
 const Section = forwardRef(({
   id,
@@ -14,16 +18,34 @@ const Section = forwardRef(({
   onDropItem,
   onClick: extraOnClick,
 }, ref) => {
-  const { selectedElement, setSelectedElement, elements, addNewElement, setElements } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, elements, addNewElement, setElements, findElementById } = useContext(EditableContext);
   const [showDivOptions, setShowDivOptions] = useState(false);
 
   let sectionElement = elements.find((el) => el.id === id);
   const contextStyles = (sectionElement && sectionElement.styles) || {};
   const contextChildren = (sectionElement && sectionElement.children) || [];
 
-  const styles = { ...contextStyles, ...passedStyles };
+  const styles = { ...passedStyles, ...contextStyles };
   const childrenToRender = passedChildren !== undefined ? passedChildren : contextChildren;
   const sectionRef = useRef(null);
+
+  // Reorder drag & drop within this container
+  const {
+    isDragging: isReorderDragging,
+    draggedId: reorderDraggedId,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+    onDragStart: reorderDragStart,
+    onDragOver: reorderDragOver,
+    onDrop: reorderDrop,
+    onDragEnd: reorderDragEnd,
+    onDragLeave: reorderDragLeave,
+  } = useReorderDrop(findElementById, elements, setElements);
+
+  // Use drag layer to check if the currently dragged item is new (react-dnd).
+  const { isDragging } = useDragLayer((monitor) => ({
+    isDragging: monitor.isDragging(),
+  }));
 
   const { isOverCurrent, drop } = useElementDrop({
     id,
@@ -38,13 +60,8 @@ const Section = forwardRef(({
       if (onDropItem) {
         onDropItem(item, id);
       } else {
-        // Create new element and update section's children with its new id
-        const newId = addNewElement(item.type, item.level || 1, null, id);
-        setElements((prev) =>
-          prev.map((el) =>
-            el.id === id ? { ...el, children: [...el.children, newId] } : el
-          )
-        );
+        // addNewElement with parentId already updates the parent's children array
+        addNewElement(item.type, item.level || 1, null, id, item.children ? item : null);
       }
     },
   });
@@ -78,10 +95,10 @@ const Section = forwardRef(({
       if (config.children && config.children.length > 0) {
         config.children.forEach(child => {
           if (child.children) {
-            createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflexLayout' ? 'column' : 'row' }, id);
+            createFlexElement({ ...child, parentType: child.type, direction: child.type === VFLEX_LAYOUT ? 'column' : 'row' }, id);
           } else {
             addNewElement(child.type, 1, 0, id, {
-              styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflexLayout' ? 'column' : 'row' }
+              styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === VFLEX_LAYOUT ? 'column' : 'row' }
             });
           }
         });
@@ -126,6 +143,10 @@ const Section = forwardRef(({
       />
     ) : null;
 
+  // Whether to show the insertion indicator for this container
+  const showIndicator = isReorderDragging && dropIndicatorContainerId === id;
+  const isEmpty = !childrenToRender || (Array.isArray(childrenToRender) && childrenToRender.length === 0);
+
   return (
     <section
       id={id}
@@ -141,88 +162,102 @@ const Section = forwardRef(({
         }
       }}
       onClick={handleSelect}
+      onDragOver={(e) => reorderDragOver(e, id, null, false, sectionRef)}
+      onDrop={(e) => { reorderDrop(e, id); e.stopPropagation(); }}
+      onDragLeave={reorderDragLeave}
+      className={isOverCurrent ? 'container-drop-hover' : ''}
       style={{
         ...styles,
+        ...(isEmpty ? { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' } : {}),
         position: 'relative',
         padding: styles.padding || '10px',
         margin: styles.margin || '0',
-        backgroundColor: isOverCurrent ? 'rgba(92, 78, 250, 0.06)' : styles.backgroundColor || 'transparent',
-        outline: isOverCurrent ? '2px dashed rgba(92, 78, 250, 0.5)' : 'none',
+        boxSizing: 'border-box',
       }}
     >
       {backgroundContent}
       {(!childrenToRender ||
         (Array.isArray(childrenToRender) && childrenToRender.length === 0)) ? (
-        <div
-          className="empty-state-container"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100px',
-            background: isOverCurrent ? 'rgba(92, 78, 250, 0.08)' : 'transparent',
-            outline: isOverCurrent ? '2px dashed rgba(92, 78, 250, 0.5)' : 'none',
-          }}
-        >
+        <div className="empty-state-container">
+          <span className="empty-state-badge">Section</span>
           {showDivOptions ? (
-            <div className="inline-div-options-grid u-flex-wrap" style={{ justifyContent: 'center' }}>
+            <div className="layout-options-grid">
               {divConfigurations.map((config) => (
                 <div
                   key={config.id}
-                  className="inline-div-option"
+                  className="layout-option"
                   onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
-                  style={{
-                    cursor: 'pointer',
-                    background: '#e5e8ea',
-                    borderRadius: '6px',
-                    padding: '8px',
-                    minWidth: '60px',
-                    minHeight: '40px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                    border: '2px solid #e5e8ea',
-                    transition: 'border 0.2s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
-                  onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
                 >
                   {config.preview}
-                  <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
+                  <span className="layout-option-label">{config.name}</span>
                 </div>
               ))}
             </div>
           ) : (
             <button
-              className="add-element-button"
+              className="add-element-btn"
               onClick={handleAddElement}
             >
               <span className="plus-icon">+</span>
+              Add Layout
             </button>
           )}
         </div>
       ) : Array.isArray(childrenToRender) ? (
-        childrenToRender.map((child, index) => {
-          if (React.isValidElement(child)) {
-            return child;
-          } else {
-            const childEl = elements.find((el) => el === child || el.id === child);
-            return renderElement(
-              childEl,
-              elements,
-              null,
-              setSelectedElement,
-              setElements,
-              null,
-              selectedElement,
-              handleOpenMediaPanel
+        childrenToRender.map((child, idx) => {
+          const childEl = React.isValidElement(child) ? null : elements.find((el) => el === child || el.id === child);
+          const childId = childEl?.id || (React.isValidElement(child) ? child.key : null);
+          const rendered = React.isValidElement(child)
+            ? child
+            : renderElement(
+                childEl,
+                elements,
+                null,
+                setSelectedElement,
+                setElements,
+                null,
+                selectedElement,
+                null,
+                true,
+                handleOpenMediaPanel
+              );
+
+          // Pre-rendered React elements passed by a parent component (e.g. HeroOne passing Div nodes)
+          // are not in the element store, so skip the draggable wrapper — the parent owns reordering.
+          if (!childEl && React.isValidElement(child)) {
+            return (
+              <React.Fragment key={childId || idx}>
+                {rendered}
+              </React.Fragment>
             );
           }
+
+          return (
+            <React.Fragment key={childId || idx}>
+              {showIndicator && dropIndicatorIndex === idx && (
+                <DropInsertionLine />
+              )}
+              <div
+                draggable={!!childId && !isDragging}
+                onDragStart={childId && !isDragging ? (e) => reorderDragStart(e, childId, id) : undefined}
+                onDragEnd={reorderDragEnd}
+                style={{
+                  cursor: childId && !isDragging ? 'grab' : 'default',
+                  opacity: reorderDraggedId === childId ? 0.4 : 1,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {rendered}
+              </div>
+            </React.Fragment>
+          );
         })
       ) : (
         childrenToRender
+      )}
+      {/* Indicator at end position */}
+      {showIndicator && dropIndicatorIndex === (Array.isArray(childrenToRender) ? childrenToRender.length : 0) && (
+        <DropInsertionLine />
       )}
     </section>
   );

@@ -109,8 +109,8 @@ export function buildSectionData(sectionId, structureConfigurations, resolveConf
             position: 'relative',
             boxSizing: 'border-box',
           },
-          settings: child.content?.settings || {},
-          configuration: { ...child.content?.settings, enabled: true },
+          settings: child.settings || {},
+          configuration: { ...child.settings, enabled: true },
         };
       }
       return {

@@ -3,9 +3,10 @@ import { EditableContext } from '../context/EditableContext';
 import { AutoSaveContext } from '../context/AutoSaveContext';
 import { useToast } from '../context/ToastContext';
 import { projectStorage } from '../utils/storageManager';
+import { removeElementRecursively } from '../utils/LeftBarUtils/elementUtils';
 
 export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
-  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, handleRemoveElement, updateStyles, selectedElementIds, clearSelection } = useContext(EditableContext);
+  const { undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, elements, setElements, handleRemoveElement, updateStyles, selectedElementIds, clearSelection, copyStyles, pasteStyles, copiedStyles, duplicateElement, pages } = useContext(EditableContext);
   const { forceSave } = useContext(AutoSaveContext);
   const { showToast } = useToast();
 
@@ -53,8 +54,14 @@ export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
         if (el?.settings?.locked || el?.configuration?.locked) return;
         e.preventDefault();
         if (selectedElementIds.length > 1) {
-          // Delete all selected elements
-          selectedElementIds.forEach(id => handleRemoveElement(id));
+          // Batch-delete all selected elements in a single history entry
+          setElements(prev => {
+            let result = prev;
+            selectedElementIds.forEach(id => {
+              result = removeElementRecursively(id, result);
+            });
+            return result;
+          });
           clearSelection();
         } else {
           handleRemoveElement(selectedElement.id);
@@ -69,7 +76,7 @@ export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
         // Ctrl+S — force save
         e.preventDefault();
         const websiteSettings = projectStorage.getWebsiteSettings();
-        forceSave(elements, websiteSettings);
+        forceSave(elements, websiteSettings, pages);
         showToast('Changes saved', 'success');
       } else if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -77,17 +84,31 @@ export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
       } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
         e.preventDefault();
         redo();
+      } else if (e.key === 'C' && e.shiftKey && selectedElement) {
+        // Ctrl+Shift+C — copy styles of selected element
+        e.preventDefault();
+        copyStyles(selectedElement.id);
+        showToast('Styles copied', 'success');
+      } else if (e.key === 'V' && e.shiftKey && selectedElement && copiedStyles) {
+        // Ctrl+Shift+V — paste styles onto selected element
+        e.preventDefault();
+        pasteStyles(selectedElement.id);
+        showToast('Styles pasted', 'success');
       } else if (e.key === 'c' && selectedElement) {
         e.preventDefault();
         copyElement(selectedElement.id);
-      } else if (e.key === 'd' && selectedElement) {
-        // Ctrl+D — duplicate selected element
+      } else if (e.key === 'x' && selectedElement) {
+        // Ctrl+X — cut (copy + delete)
         e.preventDefault();
         copyElement(selectedElement.id);
+        handleRemoveElement(selectedElement.id);
+      } else if (e.key === 'd' && selectedElement) {
+        // Ctrl+D — duplicate selected element (atomic operation, no stale closure)
+        e.preventDefault();
         const parentId = selectedElement.parentId || null;
         const siblings = elements.filter(el => el.parentId === parentId);
         const idx = siblings.findIndex(el => el.id === selectedElement.id);
-        pasteElement(parentId, idx >= 0 ? idx + 1 : 0);
+        duplicateElement(selectedElement.id, parentId, idx >= 0 ? idx + 1 : 0);
       } else if (e.key === 'v' && copiedElement) {
         e.preventDefault();
         const parentId = selectedElement?.parentId || null;
@@ -114,5 +135,5 @@ export default function useKeyboardShortcuts({ onToggleHelp } = {}) {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, handleRemoveElement, elements, updateStyles, forceSave, showToast, selectedElementIds, clearSelection, onToggleHelp]);
+  }, [undo, redo, copyElement, pasteElement, copiedElement, selectedElement, setSelectedElement, setElements, handleRemoveElement, elements, updateStyles, forceSave, showToast, selectedElementIds, clearSelection, onToggleHelp, copyStyles, pasteStyles, copiedStyles, duplicateElement, pages]);
 }

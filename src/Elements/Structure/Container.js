@@ -1,51 +1,55 @@
 import React, { useContext, useRef, useState } from 'react';
+import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
+import useReorderDrop from '../../utils/useReorderDrop';
+import DropInsertionLine from '../../components/DropInsertionLine';
 import '../Basic/css/EmptyState.css';
 import { divConfigurations } from '../../utils/UnifiedDropZone';
 
-// Helper to generate a unique ID based on type
-const generateUniqueId = (type) => {
-  const prefix = type === 'vflexLayout' ? 'vflex' : 
-                type === 'hflexLayout' ? 'hflex' : 
-                type === 'container' ? 'container' : 'div';
-  return `${prefix}-${Math.random().toString(36).substring(2, 11)}`;
-};
-
-const Container = ({ id }) => {
-  const { selectedElement, setSelectedElement, elements, setElements } =
+const Container = ({ id, handleOpenMediaPanel }) => {
+  const { selectedElement, setSelectedElement, elements, setElements, addNewElement, findElementById } =
     useContext(EditableContext);
   const containerElement = elements.find((el) => el.id === id) || {};
   const { styles = {}, children = [] } = containerElement;
   const containerRef = useRef(null);
   const [showDivOptions, setShowDivOptions] = useState(false);
 
+  // Reorder drag & drop within this container
+  const {
+    isDragging: isReorderDragging,
+    draggedId: reorderDraggedId,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+    onDragStart: reorderDragStart,
+    onDragOver: reorderDragOver,
+    onDrop: reorderDrop,
+    onDragEnd: reorderDragEnd,
+    onDragLeave: reorderDragLeave,
+  } = useReorderDrop(findElementById, elements, setElements);
+
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: containerRef,
-    onDropItem: (item, parentId) => {
-      const newId = generateUniqueId(item.type);
-      setElements((prev) => [
-        ...prev.map((el) =>
-          el.id === parentId
-            ? { ...el, children: [...new Set([...el.children, newId])] }
-            : el
-        ),
-        {
-          id: newId,
-          type: item.type,
-          parentId,
-          styles: item.styles || {},
-          children: []
-        }
-      ]);
+    onDropItem: (item) => {
+      if (item.flexConfig) {
+        handleDivSelect(item.flexConfig);
+      } else {
+        addNewElement(item.type, item.level || 1, null, id, item.children ? item : null);
+      }
     },
   });
 
+  // Use drag layer to check if the currently dragged item is new.
+  const { item, isDragging } = useDragLayer((monitor) => ({
+    item: monitor.getItem(),
+    isDragging: monitor.isDragging(),
+  }));
+
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'container', styles });
+    setSelectedElement(containerElement.id ? containerElement : { id, type: 'container', styles, children });
   };
 
   const handleAddElement = (e) => {
@@ -54,31 +58,25 @@ const Container = ({ id }) => {
   };
 
   const handleDivSelect = (config) => {
-    // Create all elements in memory first
-    const newElements = [];
-    const elementMap = new Map();
-    
     // Helper to create an element and its children
     const createElementInMemory = (config, parentId) => {
-      const currentId = generateUniqueId(config.parentType || config.type);
-      const currentElement = {
-        id: currentId,
-        type: config.parentType || config.type,
+      const currentId = addNewElement(
+        config.parentType || config.type,
+        1,
+        null,
         parentId,
-        styles: {
-          flex: 1,
-          gap: '12px',
-          padding: '12px',
-          display: 'flex',
-          flexDirection: config.direction,
-          position: 'relative',
-          boxSizing: 'border-box'
-        },
-        children: []
-      };
-      
-      newElements.push(currentElement);
-      elementMap.set(currentId, currentElement);
+        {
+          styles: {
+            flex: 1,
+            gap: '12px',
+            padding: '12px',
+            display: 'flex',
+            flexDirection: config.direction,
+            position: 'relative',
+            boxSizing: 'border-box'
+          }
+        }
+      );
 
       if (config.children && config.children.length > 0) {
         config.children.forEach(child => {
@@ -87,48 +85,28 @@ const Container = ({ id }) => {
             parentType: child.type,
             direction: child.type === 'vflexLayout' ? 'column' : 'row'
           };
-
-          const childId = createElementInMemory(childConfig, currentId);
-          currentElement.children.push(childId);
+          createElementInMemory(childConfig, currentId);
         });
       }
 
       return currentId;
     };
 
-    // Create the entire structure starting from the container's children
-    const childrenIds = config.children.map(child => {
+    // Create the structure starting from the container's children
+    config.children.forEach(child => {
       const childConfig = {
         ...child,
         parentType: child.type,
         direction: child.type === 'vflexLayout' ? 'column' : 'row'
       };
-      return createElementInMemory(childConfig, id);
+      createElementInMemory(childConfig, id);
     });
-
-    // Update everything in one state update
-    setElements(prev => [
-      ...prev.map(el => el.id === id ? {
-        ...el,
-        type: config.parentType || config.type, // Transform container into flex
-        children: childrenIds,
-        styles: {
-          ...el.styles,
-          display: 'flex',
-          flexDirection: config.direction,
-          gap: '12px',
-          padding: '12px',
-          position: 'relative',
-          boxSizing: 'border-box',
-          margin: el.styles.margin || '10px auto',
-          maxWidth: el.styles.maxWidth || '1200px',
-        }
-      } : el),
-      ...newElements
-    ]);
 
     setShowDivOptions(false);
   };
+
+  // Whether to show the insertion indicator for this container
+  const showIndicator = isReorderDragging && dropIndicatorContainerId === id;
 
   return (
     <div
@@ -138,78 +116,120 @@ const Container = ({ id }) => {
         drop(node);
       }}
       onClick={handleSelect}
+      onDragOver={(e) => reorderDragOver(e, id, null, false, containerRef)}
+      onDrop={(e) => { reorderDrop(e, id); e.stopPropagation(); }}
+      onDragLeave={reorderDragLeave}
+      className={isOverCurrent ? 'container-drop-hover' : ''}
       style={{
         ...styles,
-        display: styles.display || 'block',
+        ...(children.length === 0
+          ? { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }
+          : { display: styles.display || 'block' }),
         position: 'relative',
         padding: styles.padding || '10px',
-        margin: styles.margin || '10px auto',
+        margin: styles.margin || '0 auto',
         maxWidth: styles.maxWidth || '1200px',
+        boxSizing: 'border-box',
       }}
     >
       {children.length === 0 ? (
-        <div
-          className="empty-state-container"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100px',
-            background: isOverCurrent ? 'rgba(92, 78, 250, 0.08)' : 'transparent',
-            outline: isOverCurrent ? '2px dashed rgba(92, 78, 250, 0.5)' : 'none',
-          }}
-        >
+        <div className="empty-state-container">
+          <span className="empty-state-badge">Container</span>
           {showDivOptions ? (
-            <div className="inline-div-options-grid u-flex-wrap" style={{ justifyContent: 'center' }}>
+            <div className="layout-options-grid">
               {divConfigurations.map((config) => (
                 <div
                   key={config.id}
-                  className="inline-div-option"
+                  className="layout-option"
                   onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
-                  style={{
-                    cursor: 'pointer',
-                    background: '#e5e8ea',
-                    borderRadius: '6px',
-                    padding: '8px',
-                    minWidth: '60px',
-                    minHeight: '40px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                    border: '2px solid #e5e8ea',
-                    transition: 'border 0.2s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
-                  onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
                 >
                   {config.preview}
-                  <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
+                  <span className="layout-option-label">{config.name}</span>
                 </div>
               ))}
             </div>
           ) : (
             <button
-              className="add-element-button"
+              className="add-element-btn"
               onClick={handleAddElement}
             >
               <span className="plus-icon">+</span>
+              Add Layout
             </button>
           )}
         </div>
       ) : (
-        children.map((childId) =>
-          renderElement(
-            elements.find((el) => el.id === childId),
+        children.map((childId, idx) => {
+          const childEl = elements.find((el) => el.id === childId);
+          const rendered = renderElement(
+            childEl,
             elements,
             null,
             setSelectedElement,
             setElements,
             null,
-            selectedElement
-          )
-        )
+            selectedElement,
+            null,
+            true,
+            handleOpenMediaPanel
+          );
+
+          return (
+            <React.Fragment key={childId || idx}>
+              {showIndicator && dropIndicatorIndex === idx && (
+                <DropInsertionLine />
+              )}
+              <div
+                draggable={!!childId && !isDragging}
+                onDragStart={childId && !isDragging ? (e) => reorderDragStart(e, childId, id) : undefined}
+                onDragEnd={reorderDragEnd}
+                style={{
+                  cursor: childId && !isDragging ? 'grab' : 'default',
+                  opacity: reorderDraggedId === childId ? 0.4 : 1,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {rendered}
+              </div>
+            </React.Fragment>
+          );
+        })
+      )}
+      {/* Indicator at end position */}
+      {showIndicator && dropIndicatorIndex === children.length && (
+        <DropInsertionLine />
+      )}
+
+      {/* Overlay drop zone for new elements — only when hovering this specific container */}
+      {isDragging && !item?.id && isOverCurrent && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(77, 112, 255, 0.1)',
+            border: '2px dashed var(--purple, #5C4EFA)',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        >
+          <span style={{
+            background: 'var(--purple, #5C4EFA)',
+            color: '#fff',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}>
+            Drop here to add
+          </span>
+        </div>
       )}
     </div>
   );
