@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
+import './CollapsibleSection.css';
 
-const CollapsibleSection = ({ title, children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const CollapsibleSection = ({ title, children, defaultExpanded = true }) => {
+  const [isCollapsed, setIsCollapsed] = useState(!defaultExpanded);
 
   return (
-    <div>
-      <h3
-        className="link-settings-panel-header"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', justifyContent: 'space-between' }}
+    <div className={`collapsible-section ${isCollapsed ? 'collapsed' : ''}`}>
+      <button
+        className="collapsible-header"
+        aria-expanded={!isCollapsed}
+        onClick={() => setIsCollapsed(prev => !prev)}
       >
-        {title}
-        <span>{isCollapsed ? <span className="material-symbols-outlined">
-          keyboard_arrow_down
-        </span> : <span className="material-symbols-outlined">
-          chevron_right
-        </span>}</span>
-      </h3>
-      <hr></hr>
-      {!isCollapsed && <div>{children}</div>}
+        <span className="collapsible-title">{title}</span>
+        <span className="material-symbols-outlined collapsible-chevron">
+          {isCollapsed ? 'chevron_right' : 'keyboard_arrow_down'}
+        </span>
+      </button>
+      {!isCollapsed && (
+        <div className="collapsible-body">{children}</div>
+      )}
     </div>
   );
 };

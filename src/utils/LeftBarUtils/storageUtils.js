@@ -26,19 +26,7 @@ export async function renameProjectFolder(oldProjectName, newProjectName, userId
       return itemRef.name;
     });
     const movedFiles = await Promise.all(promises);
-    console.log("Moved files:", movedFiles);
   } catch (error) {
-    console.error("Error renaming folder:", error);
+    throw error;
   }
 }
-
-
-export function saveToLocalStorage(key, value) {
-  // If all you want is to store the entire new value:
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-export const loadFromLocalStorage = (key) => {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : null;
-};

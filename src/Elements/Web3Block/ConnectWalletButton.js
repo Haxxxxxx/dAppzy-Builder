@@ -1,7 +1,6 @@
 import React, { useContext, useRef, useEffect, useState, useCallback, useMemo, forwardRef } from 'react';
 import { EditableContext } from '../../context/EditableContext';
 import { useWalletContext } from '../../context/WalletContext';
-import { useDappWallet } from '../../context/DappWalletContext';
 import { useWeb3 } from '../../context/Web3Provider';
 import { structureConfigurations } from '../../configs/structureConfigurations';
 import { validateEthAddress } from '../../utils/securityUtils';
@@ -59,13 +58,8 @@ const ConnectWalletButton = ({
   // Determine if we're in builder mode or dapp mode
   const isBuilderMode = !window.location.pathname.includes('/preview') && !window.location.pathname.includes('/export');
   
-  // Always call hooks at the top level
-  const builderWallet = useWalletContext();
-  const dappWallet = useDappWallet();
+  const walletContext = useWalletContext();
   const { account, connect, isConnected: isWeb3Connected, provider } = useWeb3();
-  
-  // Select the appropriate wallet context based on mode
-  const walletContext = isBuilderMode ? builderWallet : dappWallet;
   const { walletAddress, isConnected, disconnect, isLoading: contextIsLoading, walletId, connectWallet, disconnectWallet, error: walletError } = walletContext || {};
 
   const buttonRef = useRef(null);
@@ -85,7 +79,6 @@ const ConnectWalletButton = ({
       { name: 'Solflare', enabled: true, type: 'solana' },
       { name: 'Backpack', enabled: true, type: 'solana' },
       { name: 'Glow', enabled: true, type: 'solana' },
-      { name: 'Slope', enabled: true, type: 'solana' },
       { name: 'MetaMask', enabled: true, type: 'ethereum' },
       { name: 'Freighter', enabled: true, type: 'stellar' },
     ],
@@ -123,7 +116,6 @@ const ConnectWalletButton = ({
       setLocalError(null);
       await connectWallet();
     } catch (error) {
-      console.error('Error connecting wallet:', error);
       setLocalError(error.message || 'Failed to connect wallet');
     }
   }, [connectWallet]);
@@ -134,7 +126,6 @@ const ConnectWalletButton = ({
       setLocalError(null);
       await disconnectWallet();
     } catch (error) {
-      console.error('Error disconnecting wallet:', error);
       setLocalError(error.message || 'Failed to disconnect wallet');
     }
   }, [disconnectWallet]);
@@ -179,7 +170,6 @@ const ConnectWalletButton = ({
 
   // Handle wallet selection from popup
   const handleWalletSelect = async (wallet) => {
-    console.log('Selected wallet:', wallet);
     setIsLoading(true);
     setErrorMessage(null);
     
@@ -193,7 +183,6 @@ const ConnectWalletButton = ({
       switch (wallet.type) {
         case 'ethereum':
           if (window.ethereum) {
-            console.log('Connecting to Ethereum wallet');
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             if (accounts && accounts.length > 0) {
               const signature = await window.ethereum.request({
@@ -201,7 +190,6 @@ const ConnectWalletButton = ({
                 params: ['Please sign this message to verify your wallet connection.', accounts[0]]
               });
               if (signature) {
-                console.log('Ethereum wallet connected successfully');
                 setIsTestConnected(true);
                 setSelectedWallet(wallet);
                 setShowWalletPopup(false);
@@ -220,7 +208,6 @@ const ConnectWalletButton = ({
         case 'solana':
           if (window.solana) {
             try {
-              console.log('Connecting to Solana wallet');
               // Request wallet connection
               const { publicKey } = await window.solana.connect();
               if (publicKey) {
@@ -229,7 +216,6 @@ const ConnectWalletButton = ({
                 const { signature } = await window.solana.signMessage(message);
                 
                 if (signature) {
-                  console.log('Solana wallet connected successfully');
                   setIsTestConnected(true);
                   setSelectedWallet(wallet);
                   setShowWalletPopup(false);
@@ -239,7 +225,6 @@ const ConnectWalletButton = ({
                 }
               }
             } catch (err) {
-              console.error('Solana wallet connection error:', err);
               throw new Error(`Failed to connect to Solana wallet: ${err.message}`);
             }
           } else {
@@ -249,12 +234,10 @@ const ConnectWalletButton = ({
           
         case 'stellar':
           if (window.freighter) {
-            console.log('Connecting to Stellar wallet');
             const publicKey = await window.freighter.getPublicKey();
             if (publicKey) {
               const signature = await window.freighter.signMessage('Please sign this message to verify your wallet connection.');
               if (signature) {
-                console.log('Stellar wallet connected successfully');
                 setIsTestConnected(true);
                 setSelectedWallet(wallet);
                 setShowWalletPopup(false);
@@ -274,7 +257,6 @@ const ConnectWalletButton = ({
           throw new Error(`Unsupported wallet type: ${wallet.type}`);
       }
     } catch (err) {
-      console.error('Wallet connection error:', err);
       setErrorMessage(err.message || 'Failed to connect wallet');
     } finally {
       setIsLoading(false);
@@ -304,9 +286,7 @@ const ConnectWalletButton = ({
       if (content === "Disconnect") {
         updateContent(id, "Connect Wallet");
       }
-      console.log("Successfully disconnected test wallet and reset dashboard data");
     } catch (error) {
-      console.error('Error disconnecting test wallet:', error);
       setErrorMessage(error.message);
     } finally {
       setIsLoading(false);
@@ -363,25 +343,15 @@ const ConnectWalletButton = ({
     outline: isEditing ? '2px solid #3b82f6' : 'none',
   };
 
-  // Determine button text based on mode and connection state
-  const getButtonText = () => {
-    if (isLoading || contextIsLoading) return "Connecting...";
-    if (isBuilderMode) {
-      if (isTestConnected) return "Disconnect";
-      return content || "Connect Wallet";
-    }
-    if (isConnected) return "Disconnect";
-    return content || "Connect Wallet";
-  };
-
   // Get button text based on connection state
+  const connectedText = settings.connectedText;
   const buttonText = useMemo(() => {
     if (isLoading || contextIsLoading) return 'Connecting...';
     if (isConnected && walletAddress) {
-      return `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+      return connectedText || `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
     }
     return content;
-  }, [isLoading, contextIsLoading, isConnected, walletAddress, content]);
+  }, [isLoading, contextIsLoading, isConnected, walletAddress, content, connectedText]);
 
   // Get button styles based on state
   const buttonStyles = useMemo(() => ({
@@ -474,7 +444,6 @@ const ConnectWalletButton = ({
                 <button
                   key={index}
                   onMouseDown={(e) => {
-                    console.log("Wallet button clicked:", wallet.name);
                   e.preventDefault();
                     e.stopPropagation();
                     handleWalletSelect(wallet);

@@ -2,9 +2,8 @@
 
 /* Main container */
 .border-editor {
-    color: #fff;
-    font-family: Arial, sans-serif;
-    margin-top: 3vh;
+
+
 }
 
 /* Spacing for each section */
@@ -21,7 +20,7 @@
 .borders-section label {
     font-size: 14px;
     margin-bottom: 8px;
-    color: #b3b3b3;
+    color: var(--not-selected);
     display: block;
 }
 
@@ -34,15 +33,15 @@
     display: inline-block;
 }
 
-.input-with-suffix input[type="number"] {
+.input-with-suffix input[type=”number”] {
     width: 60px;
     padding: 6px;
     padding-right: 30px;
     /* leaves room for the “PX” text on the right */
-    border: 1px solid #444;
-    border-radius: 4px;
-    background-color: #2a2a2a;
-    color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    color: var(--editor-text);
     box-sizing: border-box;
 }
 
@@ -52,10 +51,66 @@
     /* adjust as needed to position “PX” inside the input */
     top: 50%;
     transform: translateY(-50%);
-    color: #b3b3b3;
+    color: var(--not-selected);
     pointer-events: none;
     /* ignore clicks so user can still edit input */
     font-size: 14px;
+}
+
+/* ---------- RADIUS ---------- */
+
+.radius-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.corner-link-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    color: var(--not-selected);
+}
+
+.corner-link-toggle:hover {
+    color: var(--accent-blue);
+}
+
+.corner-link-toggle .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.corner-radius-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.corner-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.corner-input .corner-label {
+    font-size: 11px;
+    color: var(--not-selected);
+    width: 18px;
+    flex-shrink: 0;
+}
+
+.corner-input input[type="number"] {
+    width: 50px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    color: var(--editor-text);
+    font-size: 13px;
+    box-sizing: border-box;
 }
 
 /* ---------- BORDERS ---------- */
@@ -90,8 +145,8 @@
 .side-button {
     width: 20px;
     height: 20px;
-    background-color: #2a2a2a;
-    border: 1px solid #444;
+    background-color: var(--editor-bg);
+    border: 1px solid var(--border-color);
     border-radius: 2px;
     cursor: pointer;
     outline: none;
@@ -99,8 +154,8 @@
 
 /* Indicate “active” with a highlight color */
 .side-button.active {
-    background-color: #217bf4;
-    border-color: #217bf4;
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
 }
 
 /* The area where style, width, color controls appear side-by-side */
@@ -124,7 +179,7 @@
 .border-width-group label,
 .border-color-group label {
     font-size: 14px;
-    color: #b3b3b3;
+    color: var(--not-selected);
     margin-bottom: 4px;
 }
 
@@ -133,10 +188,10 @@
     width: 100%;
     padding: 6px;
     font-size: 14px;
-    border: 1px solid #444;
-    border-radius: 4px;
-    background-color: #2a2a2a;
-    color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
+    color: var(--editor-text);
     box-sizing: border-box;
 }
 
@@ -144,9 +199,9 @@
 .color-group {
     display: flex;
     align-items: center;
-    border: 1px solid #444;
-    border-radius: 4px;
-    background-color: #2a2a2a;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--editor-bg);
     padding: 0 8px;
     height: 36px;
     box-sizing: border-box;
@@ -178,7 +233,7 @@
     flex: 1;
     border: none;
     background-color: transparent;
-    color: #fff;
+    color: var(--editor-text);
     font-size: 14px;
     cursor: default;
     outline: none;
@@ -192,11 +247,11 @@
     padding: 5px 8px;
     justify-content: center;
     align-items: center;
-    border-radius: 4px;
-    border: 1px solid var(--Not-selectionned, #64748B);
-    background: var(--Not-selectionned, #64748B);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--not-selected, #838389);
+    background: var(--not-selected, #838389);
     width: 50%;
-    color: var(--Texte---diteur, #CBD5E1);
+    color: var(--editor-text, #CBD5E1);
     text-align: center;
     font-style: normal;
     font-weight: 400;

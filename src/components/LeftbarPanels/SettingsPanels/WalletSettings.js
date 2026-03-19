@@ -4,20 +4,23 @@ import './css/ConnectWalletSettings.css';
 import CollapsibleSection from './LinkSettings/CollapsibleSection';
 
 const WalletSettingsPanel = () => {
-  const { selectedElement, updateConfiguration } = useContext(EditableContext);
+  const { selectedElement, updateConfiguration, updateContent } = useContext(EditableContext);
   const [wallets, setWallets] = useState([]);
   const [elementId, setElementId] = useState('');
+  const [buttonText, setButtonText] = useState('Connect Wallet');
+  const [connectedText, setConnectedText] = useState('');
 
   useEffect(() => {
     // Load the selected element's data
     if (selectedElement) {
       setElementId(selectedElement.id || '');
+      setButtonText(selectedElement.content || 'Connect Wallet');
+      setConnectedText(selectedElement.settings?.connectedText || '');
       setWallets(selectedElement.settings?.wallets || [
         { name: 'Phantom', enabled: true, type: 'solana' },
         { name: 'Solflare', enabled: true, type: 'solana' },
         { name: 'Backpack', enabled: true, type: 'solana' },
         { name: 'Glow', enabled: true, type: 'solana' },
-        { name: 'Slope', enabled: true, type: 'solana' },
         { name: 'MetaMask', enabled: false, type: 'ethereum' },
         { name: 'Freighter', enabled: false, type: 'stellar' },
       ]);
@@ -33,6 +36,22 @@ const WalletSettingsPanel = () => {
     // Persist changes to the context
     if (selectedElement) {
       updateConfiguration(selectedElement.id, 'wallets', updatedWallets);
+    }
+  };
+
+  const handleButtonTextChange = (e) => {
+    const text = e.target.value;
+    setButtonText(text);
+    if (selectedElement) {
+      updateContent(selectedElement.id, text || 'Connect Wallet');
+    }
+  };
+
+  const handleConnectedTextChange = (e) => {
+    const text = e.target.value;
+    setConnectedText(text);
+    if (selectedElement) {
+      updateConfiguration(selectedElement.id, 'connectedText', text);
     }
   };
 
@@ -61,6 +80,30 @@ const WalletSettingsPanel = () => {
         />
       </div>
       <hr />
+      <CollapsibleSection title={"Button Text"}>
+        <div className="settings-group">
+          <label htmlFor="buttonText">Button Label</label>
+          <input
+            type="text"
+            id="buttonText"
+            value={buttonText}
+            onChange={handleButtonTextChange}
+            placeholder="Connect Wallet"
+            className="settings-input"
+          />
+        </div>
+        <div className="settings-group">
+          <label htmlFor="connectedText">Connected Label</label>
+          <input
+            type="text"
+            id="connectedText"
+            value={connectedText}
+            onChange={handleConnectedTextChange}
+            placeholder="Leave empty to show address"
+            className="settings-input"
+          />
+        </div>
+      </CollapsibleSection>
       <CollapsibleSection title={"Connect Wallet Settings"}>
         {wallets.map((wallet, index) => (
           <div key={index} className="wallet-setting">
@@ -78,15 +121,7 @@ const WalletSettingsPanel = () => {
           </div>
         ))}
         <p className="upvote-message">
-          Can't find your wallet?{' '}
-          <a
-            href="https://your-feature-request-page.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="upvote-link"
-          >
-            Check our feature upvote page
-          </a>
+          Can't find your wallet? More wallets coming soon!
         </p>
       </CollapsibleSection>
     </div>

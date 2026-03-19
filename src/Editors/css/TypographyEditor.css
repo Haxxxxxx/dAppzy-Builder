@@ -2,9 +2,8 @@
 
 /* --- Base Container --- */
 .typography-editor {
-  border-radius: 8px;
-  font-family: Arial, sans-serif;
-  color: #ffffff;
+  border-radius: var(--radius-md);
+
 }
 
 /* Editor group container */
@@ -18,7 +17,7 @@
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 8px;
-  color: #b3b3b3; /* soft gray */
+  color: var(--not-selected); /* soft gray */
 }
 
 /* Combine weight + size in a row */
@@ -30,7 +29,39 @@
 
 /* Make the size input fill available space if needed */
 .typography-editor .size-input {
-  width: 100% !important;
+  width: 100%;
+}
+
+/* Font size + unit selector compound input */
+.typography-editor .font-size-with-unit {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  overflow: hidden;
+}
+
+.typography-editor .font-size-with-unit .size-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px;
+  font-size: 14px;
+  outline: none;
+  min-width: 0;
+}
+
+.typography-editor .font-size-with-unit .unit-select {
+  border: none;
+  border-left: 1px solid var(--border-color);
+  background-color: var(--editor-bg);
+  padding: 8px 4px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  width: auto;
+  min-width: 48px;
 }
 
 /* Buttons for text decoration or text align, plus the hr between them */
@@ -47,8 +78,8 @@
   height: 36px;
   background: transparent;
   border: none;
-  border-radius: 4px;
-  color: #fff;
+  border-radius: var(--radius-sm);
+
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -58,23 +89,23 @@
 
 .typography-editor .text-decoration-group button.active:hover,
 .typography-editor .text-align-group button.active:hover {
-  background: #217cf4a2;
+  background: var(--accent-blue-hover);
 }
 .typography-editor .text-decoration-group button:hover,
 .typography-editor .text-align-group button:hover {
-  background: #3a3a3a;
+  background: var(--editor-bg-dark);
 }
 .text-decoration-group button.active,
 .text-align-group button.active {
-  background-color: #217bf4;
-  border-color: #217bf4;
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
 }
 
 /* The vertical line between icon buttons */
 .typography-editor .custom-rule {
   width: 1px;
   height: 20px;
-  background: #131313;
+  background: var(--border-color);
   border: none;
   margin: auto 4px;
 }
@@ -93,10 +124,10 @@
 .typography-editor .editor-group input {
   padding: 8px;
   font-size: 14px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background-color: #2a2a2a;
-  color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
   box-sizing: border-box;
 }
 
@@ -108,9 +139,9 @@
 .typography-editor .color-group-combined {
   display: flex;
   align-items: center;
-  border: 1px solid #444;      /* One border around the entire group */
-  border-radius: 4px;
-  background-color: #2a2a2a;   /* match your dark UI */
+  border: 1px solid var(--border-color);      /* One border around the entire group */
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);   /* match your dark UI */
   padding: 8px;              /* some horizontal padding */
   width: 100%;
   box-sizing: border-box;
@@ -140,7 +171,7 @@
   flex: 1;
   border: none;
   background-color: transparent;
-  color: #fff;
+  color: var(--editor-text);
   font-size: 14px;
   cursor: default;
   outline: none;

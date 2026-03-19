@@ -1,15 +1,18 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, Suspense } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
-import { Form, Input, Button, Select, Switch, Space, Divider, Alert } from 'antd';
-import { PlusOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useWalletContext } from '../../../context/WalletContext';
-import './css/DeFiSectionSettings.css';
 
-const DeFiSectionSettings = ({ selectedElement }) => {
-  const { elements, updateContent } = useContext(EditableContext);
+const DeFiSectionDragList = React.lazy(() => import('./DeFiSectionDragList'));
+import './css/DeFiSectionSettings.css';
+import './css/SettingsForm.css';
+import { DEFI_MODULE } from '../../../constants/elementTypes';
+import { getModuleLabel, getModuleDefaults, DEFI_MODULE_TYPE_LIST } from '../../../constants/defiModuleTypes';
+import { defaultDeFiStyles } from '../../../Elements/Sections/Web3Related/defaultDeFiStyles';
+
+const DeFiSectionSettings = () => {
+  const { selectedElement, elements, setElements, addNewElement, updateContent } = useContext(EditableContext);
   const { walletAddress, isConnected: contextConnected, isLoading, walletId } = useWalletContext();
-  
+
   // Wallet connection state
   const [isSigned, setIsSigned] = useState(false);
   const [requireSignature, setRequireSignature] = useState(true);
@@ -48,7 +51,6 @@ const DeFiSectionSettings = ({ selectedElement }) => {
           lastElementId.current = selectedElement.id;
         }
       } catch (error) {
-        console.error('Error loading wallet settings:', error);
         setConnectionError('Failed to load wallet settings');
       }
     }
@@ -80,11 +82,10 @@ const DeFiSectionSettings = ({ selectedElement }) => {
           ...content,
           settings: updatedSettings
         };
-        updateContent(selectedElement.id, JSON.stringify(updatedContent));
+        updateContent(selectedElement.id, updatedContent);
         setConnectionError(null);
       }
     } catch (error) {
-      console.error('Error saving wallet settings:', error);
       setConnectionError('Failed to save wallet settings');
     }
   };
@@ -118,321 +119,211 @@ const DeFiSectionSettings = ({ selectedElement }) => {
   const isConnected = simulateConnected || contextConnected;
   const effectiveIsSigned = requireSignature ? (simulateSigned || isSigned) : true;
 
-  const [moduleSettings, setModuleSettings] = useState({
-    aggregator: { 
-      enabled: true, 
-      showStats: true, 
-      showButton: true, 
-      customColor: '#2A2A3C',
-      stats: []
-    },
-    simulation: { 
-      enabled: true, 
-      showStats: true, 
-      showButton: true, 
-      customColor: '#2A2A3C',
-      stats: []
-    },
-    bridge: { 
-      enabled: true, 
-      showStats: true, 
-      showButton: true, 
-      customColor: '#2A2A3C',
-      stats: []
-    }
+  const [newModuleType, setNewModuleType] = useState('');
+
+  // --- Module management: read from element tree, not content ---
+
+  // Find the content container for this DeFi section
+  const getContentContainer = () => {
+    if (!selectedElement) return null;
+    const containerId = `${selectedElement.id}-content`;
+    return elements.find(el => el.id === containerId);
+  };
+
+  // Get ordered list of module elements from the content container's children
+  const getModuleElements = () => {
+    const container = getContentContainer();
+    if (!container || !container.children) return [];
+    return container.children
+      .map(childId => elements.find(el => el.id === childId))
+      .filter(el => el && el.type === DEFI_MODULE);
+  };
+
+  // Build moduleOrder and moduleSettings from actual element tree
+  // Use element IDs (not moduleType) as keys to support duplicate module types
+  const modules = getModuleElements();
+  const moduleOrder = modules.map(m => m.id);
+  const moduleSettings = {};
+  modules.forEach(m => {
+    const content = typeof m.content === 'string'
+      ? (() => { try { return JSON.parse(m.content); } catch { return {}; } })()
+      : (m.content || {});
+    const settings = content.settings || {};
+    moduleSettings[m.id] = {
+      moduleType: m.moduleType || 'aggregator',
+      enabled: content.enabled ?? true,
+      showStats: settings.showStats ?? true,
+      showButton: settings.showButton ?? true,
+      customColor: settings.customColor ?? '#2A2A3C',
+      stats: content.stats || [],
+    };
   });
 
-  const [moduleOrder, setModuleOrder] = useState(['aggregator', 'simulation', 'bridge']);
-  const [form] = Form.useForm();
-
-  useEffect(() => {
-    if (selectedElement) {
-      const element = elements.find(el => el.id === selectedElement.id);
-      if (element) {
-        const modules = element.children
-          ?.map(childId => elements.find(el => el.id === childId))
-          ?.filter(module => module?.type === 'defiModule') || [];
-        
-        const newSettings = { ...moduleSettings };
-        const newOrder = [];
-        
-        modules.forEach(module => {
-          if (module.content) {
-            try {
-              const moduleData = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-              const moduleType = moduleData.functionality?.type || module.functionality?.type;
-              if (moduleType) {
-                newOrder.push(moduleType);
-                newSettings[moduleType] = {
-                  enabled: moduleData.enabled ?? true,
-                  showStats: moduleData.settings?.showStats ?? true,
-                  showButton: moduleData.settings?.showButton ?? true,
-                  customColor: moduleData.settings?.customColor ?? '#2A2A3C',
-                  stats: moduleData.stats || []
-                };
-              }
-            } catch (e) {
-              console.error('Error parsing module content:', e);
-            }
-          }
-        });
-        
-        setModuleSettings(newSettings);
-        setModuleOrder(newOrder);
+  const handleModuleToggle = (moduleId, value) => {
+    setElements(prev => prev.map(el => {
+      if (el.id === moduleId) {
+        const content = typeof el.content === 'string'
+          ? (() => { try { return JSON.parse(el.content); } catch { return {}; } })()
+          : (el.content || {});
+        return { ...el, content: { ...content, enabled: value } };
       }
-    }
-  }, [selectedElement, elements]);
-
-  const handleModuleToggle = (moduleType, value) => {
-    const element = elements.find(el => el.id === selectedElement.id);
-    if (element) {
-      const modules = element.children
-        ?.map(childId => elements.find(el => el.id === childId))
-        ?.filter(module => module?.type === 'defiModule') || [];
-
-      const moduleIndex = modules.findIndex(m => {
-        const moduleContent = m.content ? JSON.parse(m.content) : {};
-        return moduleContent.functionality?.type === moduleType;
-      });
-
-      if (moduleIndex !== -1) {
-        const module = modules[moduleIndex];
-        let moduleContent;
-        if (module.content) {
-          try {
-            moduleContent = typeof module.content === 'string' ? JSON.parse(module.content) : module.content;
-          } catch (e) {
-            console.error('Error parsing module content:', e);
-            moduleContent = {
-              id: module.id,
-              moduleType: moduleType,
-              title: moduleType === 'aggregator' ? 'Pool Aggregator' :
-                     moduleType === 'simulation' ? 'Investment Simulator' :
-                     moduleType === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-              stats: [],
-              settings: {
-                showStats: true,
-                showButton: true,
-                customColor: '#2A2A3C'
-              },
-              functionality: {
-                type: moduleType,
-                actions: []
-              },
-              enabled: value
-            };
-          }
-        }
-        moduleContent.enabled = value;
-        modules[moduleIndex].content = JSON.stringify(moduleContent);
-        updateContent(selectedElement.id, JSON.stringify(modules));
-        setModuleSettings(prev => ({
-          ...prev,
-          [moduleType]: {
-            ...prev[moduleType],
-            enabled: value
-          }
-        }));
-      }
-    }
+      return el;
+    }));
   };
 
   const handleModuleAdd = (type) => {
-    const element = elements.find(el => el.id === selectedElement.id);
-    if (element) {
-      const newModule = {
-        id: `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-        type: 'defiModule',
-        parentId: element.id,
-        content: JSON.stringify({
-          id: `defiModule-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          moduleType: type,
-          title: type === 'aggregator' ? 'Pool Aggregator' :
-                 type === 'simulation' ? 'Investment Simulator' :
-                 type === 'bridge' ? 'Cross-Chain Bridge' : 'Module Title',
-          enabled: true,
-          stats: [],
-          settings: {
-            showStats: true,
-            showButton: true,
-            customColor: '#2A2A3C'
-          },
-          functionality: {
-            type: type,
-            actions: []
-          }
-        }),
-        styles: {},
-        configuration: {
-          moduleType: type,
-          enabled: true
-        }
-      };
+    const container = getContentContainer();
+    if (!container) return;
 
-      const modules = element.children
-        ?.map(childId => elements.find(el => el.id === childId))
-        ?.filter(module => module?.type === 'defiModule') || [];
-
-      modules.push(newModule);
-      updateContent(selectedElement.id, JSON.stringify(modules));
-      setModuleOrder(prev => [...prev, type]);
-    }
+    const defaults = getModuleDefaults(type);
+    addNewElement(DEFI_MODULE, 1, null, container.id, {
+      moduleType: type,
+      content: {
+        title: defaults.label,
+        description: defaults.description,
+        stats: defaults.defaultStats,
+        settings: { ...defaults.defaultSettings },
+        enabled: true,
+      },
+      styles: { ...defaultDeFiStyles.defiModule },
+    });
   };
 
-  const handleModuleRemove = (type) => {
-    const element = elements.find(el => el.id === selectedElement.id);
-    if (element) {
-      const modules = element.children
-        ?.map(childId => elements.find(el => el.id === childId))
-        ?.filter(module => module?.type === 'defiModule') || [];
+  const handleModuleRemove = (moduleId) => {
+    const container = getContentContainer();
+    if (!container) return;
 
-      const updatedModules = modules.filter(module => {
-        const moduleContent = module.content ? JSON.parse(module.content) : {};
-        return moduleContent.functionality?.type !== type;
-      });
-
-      updateContent(selectedElement.id, JSON.stringify(updatedModules));
-      setModuleOrder(prev => prev.filter(t => t !== type));
-    }
+    setElements(prev => prev
+      .filter(el => el.id !== moduleId)
+      .map(el => {
+        if (el.id === container.id) {
+          return { ...el, children: (el.children || []).filter(c => c !== moduleId) };
+        }
+        return el;
+      })
+    );
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
+    const container = getContentContainer();
+    if (!container) return;
 
-    const items = Array.from(moduleOrder);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    const currentChildren = [...(container.children || [])];
+    const [moved] = currentChildren.splice(result.source.index, 1);
+    currentChildren.splice(result.destination.index, 0, moved);
 
-    setModuleOrder(items);
+    setElements(prev => prev.map(el =>
+      el.id === container.id ? { ...el, children: currentChildren } : el
+    ));
   };
 
   return (
     <div className="settings-panel">
       <h3 className="settings-title">DeFi Dashboard Settings</h3>
-      
+
       {connectionError && (
-        <Alert
-          message="Connection Error"
-          description={connectionError}
-          type="error"
-          showIcon
-          style={{ marginBottom: '1rem' }}
-        />
+        <div className="settings-alert settings-alert-error" style={{ marginBottom: '1rem' }}>
+          <strong>Connection Error:</strong> {connectionError}
+        </div>
       )}
 
-      <Divider orientation="left">Wallet Connection</Divider>
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <div>
-          <span style={{ marginRight: 8 }}>Require Signature to Unlock</span>
-          <Switch 
-            checked={requireSignature} 
-            onChange={handleRequireSignatureChange}
-          />
-        </div>
-        
-        <div>
-          <span style={{ marginRight: 8 }}>Simulate Connected</span>
-          <Switch 
-            checked={simulateConnected} 
-            onChange={handleSimulateConnection}
-            disabled={isLoading}
-          />
-        </div>
+      <hr className="settings-divider" />
+      <div className="settings-field"><label>Wallet Connection</label></div>
 
-        {simulateConnected && (
-          <div>
-            <span style={{ marginRight: 8 }}>Simulate Signed</span>
-            <Switch 
-              checked={simulateSigned} 
-              onChange={handleSimulateSignature}
+      <div className="settings-field">
+        <div className="settings-row">
+          <span>Require Signature to Unlock</span>
+          <input
+            type="checkbox"
+            className="settings-switch"
+            checked={requireSignature}
+            onChange={e => handleRequireSignatureChange(e.target.checked)}
+          />
+        </div>
+      </div>
+
+      <div className="settings-field">
+        <div className="settings-row">
+          <span>Simulate Connected</span>
+          <input
+            type="checkbox"
+            className="settings-switch"
+            checked={simulateConnected}
+            disabled={isLoading}
+            onChange={e => handleSimulateConnection(e.target.checked)}
+          />
+        </div>
+      </div>
+
+      {simulateConnected && (
+        <div className="settings-field">
+          <div className="settings-row">
+            <span>Simulate Signed</span>
+            <input
+              type="checkbox"
+              className="settings-switch"
+              checked={simulateSigned}
               disabled={isLoading}
+              onChange={e => handleSimulateSignature(e.target.checked)}
             />
           </div>
-        )}
-
-        <div>
-          <span>Current Status: </span>
-          <span style={{ 
-            color: isConnected ? '#52c41a' : '#ff4d4f',
-            fontWeight: 'bold'
-          }}>
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </span>
-          {isConnected && (
-            <span style={{ marginLeft: '1rem' }}>
-              {effectiveIsSigned ? '(Signed)' : '(Not Signed)'}
-            </span>
-          )}
         </div>
-      </Space>
+      )}
 
-      <Form form={form} layout="vertical">
-        <Divider orientation="left">Module Management</Divider>
-        
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="modules">
-            {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
-                {moduleOrder.map((type, index) => (
-                  <Draggable key={type} draggableId={type} index={index}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="module-item"
-                      >
-                        <Space>
-                          <DragOutlined />
-                          <span>{type === 'aggregator' ? 'Pool Aggregator' :
-                                type === 'simulation' ? 'Investment Simulator' :
-                                type === 'bridge' ? 'Cross-Chain Bridge' : type}</span>
-                          <Switch
-                            checked={moduleSettings[type]?.enabled}
-                            onChange={(checked) => handleModuleToggle(type, checked)}
-                          />
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleModuleRemove(type)}
-                          />
-                        </Space>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+      <div className="settings-field">
+        <span>Current Status: </span>
+        <span style={{ color: isConnected ? '#52c41a' : '#ff4d4f', fontWeight: 'bold' }}>
+          {isConnected ? 'Connected' : 'Disconnected'}
+        </span>
+        {isConnected && (
+          <span style={{ marginLeft: '1rem' }}>
+            {effectiveIsSigned ? '(Signed)' : '(Not Signed)'}
+          </span>
+        )}
+      </div>
 
-        <Divider orientation="left">Add New Module</Divider>
-        <Space>
-          <Select
-            style={{ width: 200 }}
-            placeholder="Select module type"
-            options={[
-              { value: 'aggregator', label: 'Pool Aggregator' },
-              { value: 'simulation', label: 'Investment Simulator' },
-              { value: 'bridge', label: 'Cross-Chain Bridge' }
-            ]}
-          />
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              const type = form.getFieldValue('newModuleType');
-              if (type) handleModuleAdd(type);
-            }}
-          >
-            Add Module
-          </Button>
-        </Space>
-      </Form>
+      <hr className="settings-divider" />
+      <div className="settings-field"><label>Module Management</label></div>
+
+      <Suspense fallback={<div>Loading...</div>}>
+        <DeFiSectionDragList
+          moduleOrder={moduleOrder}
+          moduleSettings={moduleSettings}
+          onDragEnd={handleDragEnd}
+          onModuleToggle={handleModuleToggle}
+          onModuleRemove={handleModuleRemove}
+        />
+      </Suspense>
+
+      <hr className="settings-divider" />
+      <div className="settings-field"><label>Add New Module</label></div>
+      <div className="settings-row">
+        <select
+          className="settings-select"
+          value={newModuleType}
+          onChange={e => setNewModuleType(e.target.value)}
+          style={{ width: '200px' }}
+        >
+          <option value="">Select module type</option>
+          {DEFI_MODULE_TYPE_LIST.map(type => (
+            <option key={type} value={type}>{getModuleLabel(type)}</option>
+          ))}
+        </select>
+        <button
+          className="settings-btn"
+          onClick={() => {
+            if (newModuleType) {
+              handleModuleAdd(newModuleType);
+              setNewModuleType('');
+            }
+          }}
+        >
+          + Add Module
+        </button>
+      </div>
     </div>
   );
 };
 
-export default DeFiSectionSettings; 
+export default DeFiSectionSettings;

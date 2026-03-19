@@ -5,10 +5,9 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    font-family: Arial, sans-serif;
-    color: #fff;
+    color: var(--white);
   }
-  
+
   /* Each row: typically two columns (except overflow row) */
   .size-row {
     display: flex;
@@ -24,19 +23,19 @@
   
   .editor-group label {
     font-size: 14px;
-    color: #b3b3b3;
+    color: var(--not-selected);
     margin-bottom: 4px;
   }
-  
+
   /* The container that merges the numeric input + unit dropdown
      into one box with one border + background. */
   .size-input-group {
     display: flex;
     align-items: center;
     position: relative;
-    border: 1px solid #444;
-    background-color: #2a2a2a;
-    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--editor-bg);
+    border-radius: var(--radius-sm);
     padding: 0 8px; /* horizontal padding inside the group */
   }
   
@@ -45,7 +44,7 @@
     flex: 1;
     background: transparent;
     border: none;
-    color: #fff;
+    color: var(--white);
     font-size: 14px;
     padding: 6px 0;
     outline: none;
@@ -58,7 +57,7 @@
   .unit-select {
     background: transparent;
     border: none;
-    color: #fff;
+    color: var(--white);
     font-size: 14px;
     outline: none;
     cursor: pointer;
@@ -74,8 +73,8 @@
   
   /* Style the <option> backgrounds in the dropdown */
   .unit-select option {
-    background-color: #2a2a2a;
-    color: #fff;
+    background-color: var(--editor-bg);
+    color: var(--white);
   }
   
   /* The overflow row: label + two buttons for visible/hidden */
@@ -88,9 +87,9 @@
   
   .overflow-row label {
     width: 70px;
-    color: #b3b3b3;
+    color: var(--not-selected);
   }
-  
+
   /* Overflow buttons side by side */
   .overflow-buttons {
     display: flex;
@@ -103,8 +102,8 @@
     height: 36px;
     background: transparent;
     border: none;
-    border-radius: 4px;
-    color: #fff;
+    border-radius: var(--radius-sm);
+    color: var(--white);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -113,12 +112,12 @@
   }
   
   .overflow-btn:hover {
-    background-color: #3a3a3a;
+    background-color: var(--editor-bg-dark);
   }
   
   /* "Active" state if the current overflow matches that button's mode */
   .overflow-btn.active {
-    color: #217bf4;
+    color: var(--accent-blue);
   }
   
   /* Material icon styling */

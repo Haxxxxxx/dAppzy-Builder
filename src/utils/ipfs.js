@@ -1,138 +1,243 @@
-import { pinataConfig, isPinataConfigured } from './configPinata';
+import { getAuth } from 'firebase/auth';
 
-const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+const CF_BASE_URL = import.meta.env.VITE_CF_BASE_URL;
+const BUILDER_CF_BASE_URL = import.meta.env.VITE_BUILDER_CF_BASE_URL;
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'https://gateway.pinata.cloud/ipfs';
 
 /**
- * Validates Pinata configuration before making API calls
- * @throws {Error} If Pinata configuration is invalid
+ * Convert a File/Blob to base64 string
  */
-const validatePinataConfig = () => {
-  if (!isPinataConfigured()) {
-    throw new Error('Invalid Pinata configuration: Please check your environment variables (REACT_APP_PINATA_JWT, REACT_APP_PINATA_KEY, REACT_APP_PINATA_SECRET)');
-  }
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Remove the data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 };
 
 /**
- * Pins a directory of files to IPFS using Pinata
- * @param {Array} files - Array of file objects with {file, fileName} properties
- * @param {Object} metadata - Metadata to attach to the pin
- * @returns {Promise<string>} - The IPFS hash of the pinned content
+ * Get Firebase auth token for CF authentication
  */
-export async function pinDirectoryToPinata(files, metadata) {
-  try {
-    validatePinataConfig();
-    console.log('Starting Pinata upload...');
-    
-    const formData = new FormData();
-    
-    // Append the file (use Blob directly)
-    formData.append('file', files[0].file, files[0].fileName);
-    
-    // Add metadata if provided
-    if (metadata) {
-      formData.append('pinataMetadata', JSON.stringify(metadata));
-    }
+const getAuthToken = async () => {
+  const auth = getAuth();
+  if (!auth.currentUser) return null;
+  return auth.currentUser.getIdToken();
+};
 
-    console.log('Uploading to Pinata:', {
-      fileName: files[0].fileName,
-      fileSize: files[0].file.size,
-      metadata: metadata
-    });
+const ensureConfig = () => {
+  if (!CF_BASE_URL) throw new Error('VITE_CF_BASE_URL not configured');
+};
 
-    const response = await fetch(PINATA_PIN_FILE_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${pinataConfig.jwt}`
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      let errorData = null;
-      try {
-        errorData = await response.json();
-        console.error('Pinata error details:', errorData);
-        
-        if (response.status === 401) {
-          throw new Error('Pinata authentication failed. Please check your API credentials.');
-        } else if (response.status === 413) {
-          throw new Error('File size too large for Pinata upload.');
-        } else if (response.status === 429) {
-          throw new Error('Rate limit exceeded for Pinata API.');
-        }
-      } catch (e) {
-        console.error('Error parsing Pinata response:', e);
-      }
-      throw new Error(`Pinata API error: ${errorData?.error || response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('Pinata upload response:', data);
-
-    if (!data.IpfsHash) {
-      throw new Error('No IPFS hash returned from Pinata');
-    }
-
-    // Return just the hash
-    return data.IpfsHash;
-  } catch (error) {
-    console.error('Error uploading to Pinata:', error);
-    throw error;
-  }
-}
+const ensureAuth = async () => {
+  const token = await getAuthToken();
+  if (!token) throw new Error('Authentication required. Please sign in again.');
+  return token;
+};
 
 /**
- * Uploads a single file to IPFS using Pinata
- * @param {File} file - The file to upload
- * @param {string} walletId - The wallet ID to associate with the upload
- * @param {string} projectName - The project name to associate with the upload
- * @returns {Promise<Object>} - The Pinata response object
+ * Build the user-scoped file name for Pinata storage.
+ * Format: {userId}/{projectName}/{fileName}
  */
-export async function uploadFileToPinata(file, walletId, projectName) {
-  try {
-    validatePinataConfig();
-    const url = PINATA_PIN_FILE_URL;
-    const formData = new FormData();
-    formData.append('file', file);
+export const buildScopedName = (userId, projectName, fileName) =>
+  `${userId}/${projectName}/${fileName}`;
 
-    // Attach metadata
-    const metadata = {
-      name: `${walletId}/${file.name}`,
-      keyvalues: {
-        walletId: walletId,
-        projectName: projectName,
-      },
-    };
-    formData.append('pinataMetadata', JSON.stringify(metadata));
+/**
+ * Build the full gateway URL for an IPFS hash.
+ */
+export const getGatewayUrl = (ipfsHash) => `${GATEWAY_URL}/${ipfsHash}`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${pinataConfig.jwt}`,
-      },
-      body: formData,
-    });
+/**
+ * Pin a directory of files to IPFS via the uploadToPinata CF proxy.
+ * @param {Array<{file: File|Blob, fileName: string}>} files
+ * @param {object} metadata - Pinata metadata (name, keyvalues)
+ * @returns {string} IPFS hash
+ */
+export const pinDirectoryToPinata = async (files, metadata = {}) => {
+  ensureConfig();
+  const token = await ensureAuth();
 
-    if (!response.ok) {
-      let errorData = null;
-      try {
-        errorData = await response.json();
-        console.error('Pinata error details:', errorData);
-        
-        if (response.status === 401) {
-          throw new Error('Pinata authentication failed. Please check your API credentials.');
-        }
-      } catch (e) {
-        console.error('Error parsing Pinata response:', e);
-      }
-      throw new Error(`Pinata API error: ${errorData?.error || response.statusText}`);
-    }
+  const encodedFiles = await Promise.all(
+    files.map(async ({ file, fileName }) => ({
+      name: fileName,
+      content: await fileToBase64(file),
+      contentType: file.type || 'application/octet-stream',
+    }))
+  );
 
-    const data = await response.json();
-    console.log("Pinata upload response:", data);
-    return data;
-  } catch (error) {
-    console.error("Error uploading file to Pinata:", error);
-    throw error;
+  const response = await fetch(`${CF_BASE_URL}/uploadToPinata`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      files: encodedFiles,
+      metadata,
+      options: { wrapWithDirectory: true },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (response.status === 401) throw new Error('Authentication failed. Please sign in again.');
+    if (response.status === 413) throw new Error('Upload too large. Please reduce file sizes.');
+    if (response.status === 429) throw new Error('Rate limit exceeded. Please wait and try again.');
+    throw new Error(errorData.error || `Upload failed: ${response.status}`);
   }
-} 
+
+  const data = await response.json();
+  return data.ipfsHash;
+};
+
+/**
+ * Upload a single file via the Builder-side pinFileToIPFS Cloud Function.
+ * This keeps the Pinata API key server-side only.
+ */
+const uploadViaPinFileToIPFS = async (file, userId, projectName, token) => {
+  const scopedName = buildScopedName(userId, projectName, file.name);
+  const base64Content = await fileToBase64(file);
+
+  const response = await fetch(`${BUILDER_CF_BASE_URL}/pinFileToIPFS`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      fileName: scopedName,
+      content: base64Content,
+      contentType: file.type || 'application/octet-stream',
+      metadata: {
+        name: scopedName,
+        keyvalues: { userId, projectName },
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    if (response.status === 401) throw new Error('Authentication failed. Please sign in again.');
+    if (response.status === 413) throw new Error('Upload too large. Please reduce file size.');
+    if (response.status === 429) throw new Error('Upload limit reached. Please wait and try again.');
+    throw new Error(errorData.error || `Upload failed: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * Upload a single file via the legacy uploadToPinata endpoint (ThirdSpaceCMS).
+ * Used as a fallback when the Builder CF is unavailable.
+ */
+const uploadViaLegacyProxy = async (file, userId, projectName, token) => {
+  const scopedName = buildScopedName(userId, projectName, file.name);
+  const base64Content = await fileToBase64(file);
+
+  const response = await fetch(`${CF_BASE_URL}/uploadToPinata`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      files: [{
+        name: scopedName,
+        content: base64Content,
+        contentType: file.type || 'application/octet-stream',
+      }],
+      metadata: {
+        name: scopedName,
+        keyvalues: { userId, projectName },
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Upload failed: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * Upload a single file to IPFS, scoped to a user + project partition.
+ * Tries the Builder-side pinFileToIPFS CF first; falls back to the legacy
+ * uploadToPinata endpoint for development/testing or if the new CF is down.
+ * @param {File} file
+ * @param {string} userId - Firebase UID or wallet address
+ * @param {string} projectName
+ * @returns {object} { ipfsHash, pinSize }
+ */
+export const uploadFileToPinata = async (file, userId, projectName) => {
+  const token = await ensureAuth();
+
+  // Primary path: Builder-side CF (Pinata key stays server-side)
+  if (BUILDER_CF_BASE_URL) {
+    try {
+      return await uploadViaPinFileToIPFS(file, userId, projectName, token);
+    } catch (err) {
+      // Auth / rate-limit errors should not fall through — re-throw immediately
+      if (err.message.includes('Authentication') || err.message.includes('limit reached')) {
+        throw err;
+      }
+      if (import.meta.env.DEV) console.warn('[ipfs] pinFileToIPFS failed, falling back to legacy proxy:', err.message);
+    }
+  }
+
+  // Fallback: legacy ThirdSpaceCMS proxy
+  ensureConfig();
+  return uploadViaLegacyProxy(file, userId, projectName, token);
+};
+
+/**
+ * List media files pinned for a specific user + project.
+ * @param {string} userId
+ * @param {string} projectName
+ * @returns {Array} rows from Pinata
+ */
+export const listPinataMedia = async (userId, projectName) => {
+  ensureConfig();
+  const token = await ensureAuth();
+
+  const res = await fetch(
+    `${CF_BASE_URL}/listPinataMedia?userId=${encodeURIComponent(userId)}&projectName=${encodeURIComponent(projectName)}`,
+    { headers: { 'Authorization': `Bearer ${token}` } }
+  );
+
+  if (!res.ok) {
+    throw new Error(`List media failed: ${res.status} ${res.statusText}`);
+  }
+
+  const { rows } = await res.json();
+  return rows;
+};
+
+/**
+ * Delete (unpin) a media file from Pinata.
+ * @param {string} ipfsHash
+ */
+export const deletePinataMedia = async (ipfsHash) => {
+  ensureConfig();
+  const token = await ensureAuth();
+
+  const res = await fetch(`${CF_BASE_URL}/deletePinataMedia`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ hash: ipfsHash }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Delete failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+};

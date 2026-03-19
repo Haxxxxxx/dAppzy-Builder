@@ -1,14 +1,14 @@
 /* Base dropzone styles */
 .unified-dropzone {
   position: absolute;
-  transition: all 0.2s ease;
-  border: 1px dashed #ccc;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  border: 1px dashed var(--border-color);
   background-color: #f9f9f9;
   border-radius: 4px;
   font-size: 14px;
 }
 
-/* First dropzone specific styles */
+/* First dropzone specific styles — the empty canvas state */
 .first-dropzone {
   position: absolute;
   height: 100%;
@@ -21,8 +21,18 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  z-index: 1000;
+  z-index: var(--z-dropzone);
   pointer-events: auto !important;
+  border: none;
+  background-color: transparent;
+}
+
+/* Between-element dropzone — stays in document flow between siblings */
+.between-dropzone {
+  position: relative;
+  width: 100%;
+  min-height: 8px;
+  z-index: 1;
 }
 
 /* Default dropzone styles */
@@ -34,10 +44,13 @@
   pointer-events: auto !important;
 }
 
-/* Hover state */
+/* Hover state — visual feedback when dragging over a valid drop target */
 .dropzone-hover {
-  background-color: #f0f0f0;
-  border-color: #999;
+  background-color: rgba(92, 78, 250, 0.08);
+  border-color: var(--purple, #5C4EFA);
+  border-style: dashed;
+  border-width: 2px;
+  box-shadow: inset 0 0 0 1px rgba(92, 78, 250, 0.15);
 }
 
 /* Active state */
@@ -48,15 +61,14 @@
 
 /* Text styles */
 .dropzone-text {
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 14px;
-  color: #5C4EFA;
-  transition: all 0.2s ease;
+  color: var(--purple);
+  transition: font-weight 0.2s ease, transform 0.2s ease;
 }
 
 .dropzone-hover .dropzone-text {
   font-weight: 600;
-  transform: scale(1.05);
 }
 
 /* Dropzone content and buttons */
@@ -67,57 +79,161 @@
   gap: 15px;
 }
 
-.dropzone-buttons {
+/* ── Empty canvas state ──────────────────────────────────────────── */
+.empty-canvas-state {
   display: flex;
-  gap: 15px;
-  justify-content: center;
-  width: 100%;
-  max-width: 600px;
-}
-
-.dropzone-button {
-  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 10px;
-  border-radius: 40px;
-  font-size: 14px;
+  pointer-events: auto;
+  max-width: 360px;
+  text-align: center;
+}
+
+.empty-canvas-icon {
+  font-size: 48px;
+  color: var(--purple, #5C4EFA);
+  opacity: 0.7;
+}
+
+.empty-canvas-title {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.empty-canvas-subtitle {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+}
+
+.empty-canvas-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.empty-canvas-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-primary);
+  font-weight: 500;
   cursor: pointer;
   border: none;
   pointer-events: auto !important;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
 }
 
-.library-button {
-  background-color: #ccc;
-  color: #333;
+.empty-canvas-btn:hover { opacity: 0.85; }
+.empty-canvas-btn:active { transform: scale(0.97); }
+
+.empty-canvas-btn span { font-size: 18px; }
+
+.empty-canvas-btn-primary {
+  background: var(--purple, #5C4EFA);
+  color: var(--white);
 }
 
-.library-button:hover {
-  background-color: #bbb;
+.empty-canvas-btn-secondary {
+  background: var(--option-bg, #e5e8ea);
+  color: var(--text-primary, #333);
+  border: 1px solid var(--border-color);
 }
 
-.configure-button {
-  background: var(--purple);
-  color: #fff;
+.empty-canvas-hint {
+  margin: 4px 0 0;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  color: var(--not-selected, #838389);
 }
 
-.configure-button:hover {
-  opacity: 0.9;
+/* ── Div options (layout picker) ─────────────────────────────────── */
+.inline-div-options-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  pointer-events: auto;
 }
 
-.dropzone-button span {
-  font-size: 20px;
+.div-options-back {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  font-family: var(--font-primary);
+  font-size: 12px;
+  cursor: pointer;
+  pointer-events: auto !important;
+  padding: 0;
+}
+.div-options-back span { font-size: 16px; }
+.div-options-back:hover { color: var(--text-primary, #333); }
+
+.div-options-heading {
+  margin: 0;
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.div-options-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+
+.div-option-card {
+  cursor: pointer;
+  background: var(--option-bg, #e5e8ea);
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s;
+  pointer-events: auto !important;
+}
+.div-option-card:hover {
+  border-color: var(--purple, #5C4EFA);
+  transform: scale(1.03);
+}
+
+.div-option-label {
+  font-size: 11px;
+  color: var(--text-secondary, #666);
+  font-family: var(--font-primary);
+  text-align: center;
 }
 
 /* Media queries */
 @media (max-width: 768px) {
-  .dropzone-buttons {
+  .empty-canvas-actions {
     flex-direction: column;
-    padding: 0 20px;
+    width: 100%;
   }
 
-  .dropzone-button {
+  .empty-canvas-btn {
     width: 100%;
     justify-content: center;
   }
@@ -130,7 +246,7 @@
   width: 100vw;
   height: 100vh;
   background: rgba(20, 20, 20, 0.95);
-  z-index: 99999;
+  z-index: var(--z-tooltip);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -145,7 +261,7 @@
   align-items: flex-start;
   gap: 19px;
   border-radius: 15px;
-  background: #2B2B2B;
+  background: var(--panel-bg);
   overflow: hidden;
 }
 
@@ -161,7 +277,7 @@
 .section-selection-popup-header-title {
   color: var(--white, #FFF);
   text-align: center;
-  font-family: Satoshi;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
@@ -171,7 +287,7 @@
 .section-selection-close-button {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--white);
   font-size: 2rem;
   cursor: pointer;
   padding: 0 8px;
@@ -199,9 +315,9 @@
   align-items: center;
   border-radius: 3px;
   border: 0.7px solid var(--not-selected, #838389);
-  background: #313031;
+  background: var(--builder-bg);
   color: rgba(255, 255, 255, 0.50);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -213,59 +329,75 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   width: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  padding-right: 4px;
+  padding-bottom: 25px;
+}
 
-
+.section-selection-sections-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.section-selection-sections-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.section-selection-sections-grid::-webkit-scrollbar-thumb {
+  background: var(--dark-gray, #57575B);
+  border-radius: 3px;
 }
 
 .section-selection-section-item {
   display: flex;
-  padding: 10px 5px;
+  padding: 0;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 2px;
+  align-items: stretch;
+  border-radius: 6px;
   border: 0.5px solid var(--dark-gray, #57575B);
   position: relative;
 }
 
-
 .section-selection-section-preview {
   width: 100%;
+  height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  border-radius: 6px 6px 0 0;
   background: transparent;
 }
 
 .section-selection-section-preview img {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
-  border-radius: 0;
+  object-fit: contain;
+  object-position: center;
+}
+
+.section-selection-section-name {
+  color: var(--editor-text, #D9D9D9);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 8px;
 }
 
 /* Overlay pour le bouton Insert */
 .section-selection-section-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   display: flex;
-  padding: 0px 10px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.2s;
   z-index: 2;
-  width: 92%;
-  height: 95%;
-  background-color: rgba(0, 0, 0, 0.5);
-  
+  border-radius: 6px;
+  background-color: var(--overlay-dark);
 }
 
 .section-selection-section-item:hover .section-selection-section-overlay {
@@ -282,7 +414,7 @@
 background: var(--purple, #5C4EFA);
 color: var(--white, #FFF);
 text-align: center;
-font-family: Satoshi;
+font-family: var(--font-primary);
 font-size: 14px;
 font-style: normal;
 font-weight: 500;
@@ -297,15 +429,30 @@ border: none;
   cursor: pointer;
 }
 
-.domain-selection-modal-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 99999;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* ── Drop insertion line ──────────────────────────────────────────── */
+@keyframes dropLinePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.drop-insertion-line {
+  height: 3px;
+  background: var(--purple, #5C4EFA);
+  border-radius: 2px;
+  position: relative;
+  margin: 2px 0;
+  pointer-events: none;
+  animation: dropLinePulse 1.2s ease-in-out infinite;
+  z-index: 100;
+}
+
+.drop-insertion-line__dot {
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--purple, #5C4EFA);
 }

@@ -23,20 +23,22 @@ const LayoutReplacementBoundary = ({
       sourceIndex: elementIndex,
       ...layoutData
     };
-    console.log('Starting drag for element:', {
-      id: layoutId,
-      type: layoutType,
-      index: elementIndex
-    });
     e.dataTransfer.setData('application/json', JSON.stringify(dragData));
     e.dataTransfer.effectAllowed = 'move';
   }, [layoutId, layoutType, layoutData, elementIndex]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.stopPropagation();
 
     if (isPreviewMode) return;
+
+    // Only react to section-level drags (application/json from handleDragStart),
+    // not internal element reordering (text/plain from useReorderDrop).
+    if (!e.dataTransfer.types.includes('application/json')) {
+      return;
+    }
+
+    e.stopPropagation();
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -66,12 +68,6 @@ const LayoutReplacementBoundary = ({
       setIsHovering(true);
       e.dataTransfer.dropEffect = "move";
       
-      // Log the potential drop position
-      console.log('Potential drop at element:', {
-        targetId: layoutId,
-        targetIndex: elementIndex,
-        edge: closestEdge.edge
-      });
     } else {
       setDropIndicator(null);
       setIsHovering(false);
@@ -89,6 +85,12 @@ const LayoutReplacementBoundary = ({
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
+
+    // Only handle section-level drops (application/json), let element reorders bubble
+    if (!e.dataTransfer.types.includes('application/json')) {
+      return;
+    }
+
     e.stopPropagation();
 
     if (isPreviewMode || !dropIndicator) return;
@@ -100,14 +102,6 @@ const LayoutReplacementBoundary = ({
       if (dragData.id === layoutId) {
         return;
       }
-
-      console.log('Drop event:', {
-        sourceId: dragData.id,
-        sourceIndex: dragData.sourceIndex,
-        targetId: layoutId,
-        targetIndex: elementIndex,
-        edge: dropIndicator
-      });
 
       onReplace({
         oldLayoutId: dragData.id,
@@ -125,7 +119,7 @@ const LayoutReplacementBoundary = ({
         }
       });
     } catch (err) {
-      console.error('Error handling layout drop:', err);
+      // Layout drop failed — non-critical, drop is cancelled
     }
 
     setIsHovering(false);
@@ -133,17 +127,25 @@ const LayoutReplacementBoundary = ({
   }, [layoutId, elementIndex, dropIndicator, hoverPosition, onReplace, isPreviewMode]);
 
   return (
-    <div 
+    <div
       className={`layout-replacement-boundary ${isHovering ? 'hovering' : ''} ${layoutType}`}
-      onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      draggable={!isPreviewMode}
       data-layout-id={layoutId}
       data-layout-type={layoutType}
       data-element-index={elementIndex}
     >
+      {!isPreviewMode && (
+        <div
+          className="layout-drag-handle"
+          draggable
+          onDragStart={handleDragStart}
+          title="Drag to reorder section"
+        >
+          ⠿
+        </div>
+      )}
       {dropIndicator && (
         <div className={`drop-indicator ${dropIndicator}`} />
       )}

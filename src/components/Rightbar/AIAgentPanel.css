@@ -1,13 +1,15 @@
 /* Minimal AI Panel CSS for easy hand editing */
 .ai-panel {
   width: 280px;
-  height: 100vh;
+  height: 100%;
   background: var(--builder-bg);
   display: flex;
   flex-direction: column;
   font-family: sans-serif;
   color: #d9d9d9;
   padding: 15px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .ai-panel-header {
@@ -27,7 +29,7 @@ background: rgba(255, 255, 255, 0.10);
 }
 .ai-panel-title {
   color: #FFF;
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -54,7 +56,7 @@ background: rgba(255, 255, 255, 0.10);
 
 .ai-message {
   color: rgba(255, 255, 255, 0.70);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -63,10 +65,6 @@ background: rgba(255, 255, 255, 0.10);
   max-width: 250px;
   opacity: 1;
   transition: opacity 0.3s ease;
-}
-
-.ai-message.typing {
-  opacity: 0.7;
 }
 
 .ai-message-user {
@@ -93,33 +91,6 @@ background: rgba(255, 255, 255, 0.10);
   align-self: stretch;
 }
 
-.ai-panel-right-input-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  
-}
-
-.ai-panel-right-input-btn {
-  display: flex;
-  padding: 4px 10px;
-  align-items: center;
-  gap: 5px;
-  border-radius: 5px;
-border: 0.5px solid rgba(255, 255, 255, 0.10);
-background: #4D4D4D;
-color: #FFF;
-font-family: Inter;
-font-size: 12px;
-font-style: normal;
-font-weight: 400;
-line-height: normal;
-cursor: pointer;
-}
-
-.ai-panel-right-input-btn span {
-  font-size: 14px;
-}
 .ai-panel-right-input-prompt-box {
   display: flex;
   width: 280px;
@@ -132,7 +103,7 @@ padding: 5px 5px;
 background: none;
 border: none;
 color: #FFF;
-font-family: Inter;
+font-family: var(--font-secondary);
 font-size: 12px;
 font-style: normal;
 font-weight: 400;
@@ -143,7 +114,7 @@ line-height: normal;
 }
 .ai-panel-right-text-input:placeholder {
   color: rgba(255, 255, 255, 0.70);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -183,32 +154,109 @@ font-size: 18px;
 }
 .ai-panel-history-item.active {
   background: #292929;
-  color: #fff;
+  color: var(--white);
 }
 .ai-panel-history-item:hover {
   background: #292929;
-  color: #fff;
+  color: var(--white);
 }
 
-.ai-compilation-status {
+/* Live command execution preview */
+.ai-live-status {
+  padding: 4px 0;
+}
+
+.ai-thinking {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-  color: #666;
+  gap: 8px;
+  padding: 8px 10px;
 }
 
-.compilation-spinner {
-  margin-top: 15px;
+.ai-thinking-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.ai-thinking-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  animation: thinking-pulse 1.4s infinite ease-in-out both;
+}
+
+.ai-thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+.ai-thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+.ai-thinking-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes thinking-pulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.ai-thinking-text {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-secondary);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Command preview card (shown during execution) */
+.ai-cmd-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(92, 78, 250, 0.12);
+  border-left: 2px solid #5C4EFA;
+  animation: cmd-slide-in 0.2s ease-out;
+}
+
+.ai-cmd-preview.done {
+  border-left-color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.ai-cmd-preview.failed {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+@keyframes cmd-slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.ai-cmd-icon {
+  font-size: 14px;
+  color: #5C4EFA;
+}
+
+.ai-cmd-preview.done .ai-cmd-icon { color: #22c55e; }
+.ai-cmd-preview.failed .ai-cmd-icon { color: #ef4444; }
+
+.ai-cmd-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-secondary);
+  font-size: 11px;
+  font-weight: 400;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-cmd-spinner {
   width: 10px;
   height: 10px;
-  border: 1px solid #f3f3f3;
-  border-top: 1px solid var(--builder-bg);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #5C4EFA;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
 }
 
 @keyframes spin {
@@ -216,21 +264,52 @@ font-size: 18px;
   100% { transform: rotate(360deg); }
 }
 
-.ai-message-typing::after {
-  content: '▋';
-  animation: blink 1s infinite;
+/* Command summary in assistant messages (after execution) */
+.ai-commands-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+.ai-cmd-summary-item {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0;
 }
 
-.ai-compilation-text {
-  color: rgba(255, 255, 255, 0.70);
-  font-family: Inter;
+.ai-cmd-summary-icon {
   font-size: 12px;
-  font-style: normal;
+  color: #22c55e;
+}
+
+.ai-cmd-summary-item.failed .ai-cmd-summary-icon {
+  color: #ef4444;
+}
+
+.ai-cmd-summary-label {
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-secondary);
+  font-size: 10px;
   font-weight: 400;
-  line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-cmd-find-result {
+  display: block;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-secondary);
+  font-size: 10px;
+  font-weight: 400;
+  margin-top: 2px;
+  padding: 3px 6px;
+  background: rgba(92, 78, 250, 0.08);
+  border-radius: 4px;
+  word-break: break-all;
 }

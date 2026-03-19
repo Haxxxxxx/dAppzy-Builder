@@ -1,123 +1,39 @@
-// src/components/LeftbarPanels/WebsiteSettingsPanel.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { projectStorage } from '../../utils/storageManager';
 import '../css/SettingsPanel.css';
-import { ref, listAll, getDownloadURL, uploadBytes, deleteObject } from 'firebase/storage';
-import { storage } from '../../firebase';
-import { pinata, pinataSDK } from '../../utils/configPinata';
+import { uploadFileToPinata, getGatewayUrl } from '../../utils/ipfs';
+import { renameProjectFolder } from '../../utils/LeftBarUtils/storageUtils';
 
-// Replace pinataJwt with pinata.jwt
-const jwt = pinata.pinata_jwt;
+const WebsiteSettingsPanel = ({ onUpdateSettings, userId, onOpenMediaPanel }) => {
+  const FONT_OPTIONS = [
+    '', 'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Poppins',
+    'Nunito', 'Raleway', 'Playfair Display', 'Source Sans Pro', 'DM Sans',
+    'Plus Jakarta Sans',
+  ];
 
-// 1) Helper: get or create Pinata group
-async function getOrCreateGroup(walletId) {
-  try {
-    if (!pinata.groups) {
-      throw new Error("Pinata groups is undefined. Check your SDK version and configuration.");
-    }
-    const groupsResponse = await pinata.groups.list();
-    const existingGroup = groupsResponse.find(group => group.name === walletId);
-    if (existingGroup) {
-      console.log("Found group:", existingGroup);
-      return existingGroup;
-    } else {
-      const newGroup = await pinata.groups.create(walletId);
-      console.log("Created new group:", newGroup);
-      return newGroup;
-    }
-  } catch (error) {
-    console.error("Error fetching or creating group:", error);
-    throw error;
-  }
-}
-
-// 2) Helper: upload file to Pinata
-async function uploadFileToPinata(file, walletId, projectName) {
-  try {
-    const group = await getOrCreateGroup(walletId);
-    const url = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // Attach metadata
-    const metadata = {
-      name: `${walletId}/${file.name}`,
-      keyvalues: {
-        walletId: walletId,
-        projectName: projectName,
-      },
-    };
-    formData.append('pinataMetadata', JSON.stringify(metadata));
-
-    const response = await fetch(`${url}?group=${group.id}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-      },
-      body: formData,
-    });
-    const data = await response.json();
-    console.log("Pinata upload response:", data);
-    return data;
-  } catch (error) {
-    console.error("Error uploading file to Pinata:", error);
-    throw error;
-  }
-}
-
-// 3) Helper: rename folder in Firebase Storage
-async function renameProjectFolder(oldName, newName, userId) {
-  const oldFolderPath = `usersProjectData/${userId}/projects/${oldName}`;
-  const newFolderPath = `usersProjectData/${userId}/projects/${newName}`;
-  const oldFolderRef = ref(storage, oldFolderPath);
-
-  try {
-    const res = await listAll(oldFolderRef);
-    const promises = res.items.map(async (itemRef) => {
-      // Download the file as a Blob
-      const url = await getDownloadURL(itemRef);
-      const response = await fetch(url);
-      const blob = await response.blob();
-
-      // Upload it to the new folder
-      const newFileRef = ref(storage, `${newFolderPath}/${itemRef.name}`);
-      await uploadBytes(newFileRef, blob);
-
-      // Delete the original file
-      await deleteObject(itemRef);
-    });
-    await Promise.all(promises);
-    console.log(`Folder renamed successfully from ${oldName} to ${newName}`);
-  } catch (error) {
-    console.error("Error renaming folder:", error);
-    throw error;
-  }
-}
-
-const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
-  // Default website settings
   const defaultSettings = {
     siteTitle: 'My Website',
     faviconUrl: '',
     description: 'My Project',
     author: '',
+    metaDescription: '',
+    metaKeywords: '',
+    ogImage: '',
+    primaryColor: '#5C4EFA',
+    bodyFont: '',
+    bodyBackgroundColor: '#ffffff',
+    bodyBackgroundImage: '',
+    headInjectCode: '',
   };
 
-  // Load from localStorage or use defaults
   const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('websiteSettings');
-    return saved ? JSON.parse(saved) : defaultSettings;
+    const cached = projectStorage.getWebsiteSettings();
+    return Object.keys(cached).length > 0 ? cached : defaultSettings;
   });
 
-  // Keep track of the original siteTitle for rename
   const initialProjectNameRef = useRef(settings.siteTitle);
+  const [error, setError] = useState('');
 
-  // ============ Favicon Preview states ============
-  // We'll store the uploaded file as a "previewItem" if it's an image
-  const [previewItem, setPreviewItem] = useState(null);
-  const [previewEditingName, setPreviewEditingName] = useState('');
-  const [previewHasChanges, setPreviewHasChanges] = useState(false);
-
-  // ============ 1) Title / Folder rename logic ============
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSettings((prev) => ({ ...prev, [name]: value }));
@@ -126,15 +42,15 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
   const handleSiteTitleBlur = async () => {
     if (initialProjectNameRef.current !== settings.siteTitle) {
       try {
+        setError('');
         await renameProjectFolder(initialProjectNameRef.current, settings.siteTitle, userId);
         initialProjectNameRef.current = settings.siteTitle;
-      } catch (error) {
-        console.error("Folder rename failed:", error);
+      } catch (err) {
+        setError('Failed to rename project. Please try again.');
       }
     }
   };
 
-  // ============ 2) Favicon Upload to Pinata ============
   const fileInputRef = useRef(null);
 
   const handleFaviconClick = () => {
@@ -145,47 +61,42 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      // Upload the file to Pinata
+      setError('');
       const response = await uploadFileToPinata(file, userId, 'favicon');
-      if (response && response.IpfsHash) {
-        const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`;
-        // Save the favicon URL in our settings
+      const hash = response.ipfsHash || response.IpfsHash;
+      if (hash) {
+        const ipfsUrl = getGatewayUrl(hash);
         setSettings((prev) => ({ ...prev, faviconUrl: ipfsUrl }));
-
-        // If it's an image, show a preview modal
-        const extension = file.name.toLowerCase().split('.').pop();
-        const images = ["png", "jpg", "jpeg", "webp", "gif", "svg", "bmp", "ico", "tiff"];
-        if (images.includes(extension)) {
-          setPreviewItem({
-            type: 'image',
-            src: ipfsUrl,
-            name: file.name,
-          });
-          setPreviewEditingName(file.name);
-          setPreviewHasChanges(false);
-        } else {
-          // If not an image, you could handle differently or skip preview
-          setPreviewItem(null);
-        }
       }
-    } catch (error) {
-      console.error("Error uploading favicon via Pinata:", error);
+    } catch (err) {
+      setError('Failed to upload favicon. Please try again.');
     }
   };
 
+  // Auto-save with debounce whenever settings change
+  const isInitialMount = useRef(true);
 
-
-  // ============ 4) Save entire settings to localStorage ============
-  const handleSave = () => {
-    localStorage.setItem('websiteSettings', JSON.stringify(settings));
+  const debouncedSave = useCallback(() => {
+    projectStorage.setWebsiteSettings(settings);
     if (onUpdateSettings) {
       onUpdateSettings(settings);
     }
-  };
+  }, [settings, onUpdateSettings]);
+
+  useEffect(() => {
+    // Skip auto-save on initial mount (already loaded from cache)
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const timer = setTimeout(debouncedSave, 300);
+    return () => clearTimeout(timer);
+  }, [debouncedSave]);
 
   return (
     <div className="settings-panel scrollable-panel">
-      {/* Site Title & Folder Rename */}
+      {error && <div className="settings-error" style={{ color: '#ff4444', fontSize: '12px', padding: '4px 8px' }}>{error}</div>}
       <div className="settings-group">
         <label htmlFor="siteTitle">Title :</label>
         <input
@@ -199,22 +110,17 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
       </div>
       <hr />
 
-      {/* Favicon Upload */}
       <div className="settings-group">
         <label>Favicon :</label>
-                {/* Show a small image preview under the dropzone if we have a faviconUrl */}
                 {settings.faviconUrl && (
           <div className="favicon-preview">
             <div className="favicon-multi-preview">
-              {/* Large */}
               <div className="favicon-size size-large">
                 <img src={settings.faviconUrl} alt="Favicon Large" />
               </div>
-              {/* Medium */}
               <div className="favicon-size size-medium">
                 <img src={settings.faviconUrl} alt="Favicon Medium" />
               </div>
-              {/* Small */}
               <div className="favicon-size size-small">
                 <img src={settings.faviconUrl} alt="Favicon Small" />
               </div>
@@ -236,36 +142,209 @@ const WebsiteSettingsPanel = ({ onUpdateSettings, userId }) => {
             />
           </div>
         </div>
-
-
-
       </div>
+      <hr />
 
-
-      {/* Optional additional fields */}
-      {/* 
       <div className="settings-group">
-        <label>Description:</label>
+        <label htmlFor="metaDescription">Meta Description :</label>
         <textarea
-          name="description"
-          value={settings.description}
+          name="metaDescription"
+          value={settings.metaDescription || ''}
           onChange={handleInputChange}
+          placeholder="Brief description of your website"
+          rows={3}
         />
       </div>
+      <hr />
+
       <div className="settings-group">
-        <label>Author:</label>
+        <label htmlFor="metaKeywords">Meta Keywords :</label>
+        <input
+          type="text"
+          name="metaKeywords"
+          value={settings.metaKeywords || ''}
+          onChange={handleInputChange}
+          placeholder="keyword1, keyword2, keyword3"
+        />
+      </div>
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="author">Author :</label>
         <input
           type="text"
           name="author"
-          value={settings.author}
+          value={settings.author || ''}
           onChange={handleInputChange}
+          placeholder="Author name"
         />
       </div>
-      */}
+      <hr />
 
-      <button onClick={handleSave} className="save-button">
-        Save Settings
-      </button>
+      <div className="settings-group">
+        <label htmlFor="canonicalUrl">Canonical URL :</label>
+        <input
+          type="text"
+          name="canonicalUrl"
+          value={settings.canonicalUrl || ''}
+          onChange={handleInputChange}
+          placeholder="https://example.com/page"
+        />
+      </div>
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="ogImage">OG Image URL :</label>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="text"
+            name="ogImage"
+            value={settings.ogImage || ''}
+            onChange={handleInputChange}
+            placeholder="https://example.com/image.png"
+            style={{ flex: 1 }}
+          />
+          {onOpenMediaPanel && (
+            <button
+              type="button"
+              className="expand-button"
+              onClick={onOpenMediaPanel}
+              title="Open Media Panel"
+            >
+              Media
+            </button>
+          )}
+        </div>
+        {settings.ogImage && (
+          <div className="favicon-preview">
+            <img
+              src={settings.ogImage}
+              alt="OG preview"
+              style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: '5px', marginTop: '4px' }}
+            />
+          </div>
+        )}
+      </div>
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="primaryColor">Theme Color :</label>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="color"
+            name="primaryColor"
+            value={settings.primaryColor || '#5C4EFA'}
+            onChange={handleInputChange}
+            style={{ width: '36px', height: '36px', padding: '2px', cursor: 'pointer' }}
+          />
+          <input
+            type="text"
+            name="primaryColor"
+            value={settings.primaryColor || '#5C4EFA'}
+            onChange={handleInputChange}
+            placeholder="#5C4EFA"
+            style={{ flex: 1 }}
+          />
+        </div>
+      </div>
+
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="bodyFont">Body Font :</label>
+        <select
+          name="bodyFont"
+          value={settings.bodyFont || ''}
+          onChange={handleInputChange}
+        >
+          <option value="">System Default</option>
+          {FONT_OPTIONS.filter(Boolean).map((font) => (
+            <option key={font} value={font} style={{ fontFamily: font }}>
+              {font}
+            </option>
+          ))}
+        </select>
+      </div>
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="bodyBackgroundColor">Background Color :</label>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="color"
+            name="bodyBackgroundColor"
+            value={settings.bodyBackgroundColor || '#ffffff'}
+            onChange={handleInputChange}
+            style={{ width: '36px', height: '36px', padding: '2px', cursor: 'pointer' }}
+          />
+          <input
+            type="text"
+            name="bodyBackgroundColor"
+            value={settings.bodyBackgroundColor || '#ffffff'}
+            onChange={handleInputChange}
+            placeholder="#ffffff"
+            style={{ flex: 1 }}
+          />
+        </div>
+      </div>
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="bodyBackgroundImage">Background Image URL :</label>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="text"
+            name="bodyBackgroundImage"
+            value={settings.bodyBackgroundImage || ''}
+            onChange={handleInputChange}
+            placeholder="https://example.com/bg.jpg"
+            style={{ flex: 1 }}
+          />
+          {onOpenMediaPanel && (
+            <button
+              type="button"
+              className="expand-button"
+              onClick={onOpenMediaPanel}
+              title="Open Media Panel"
+            >
+              Media
+            </button>
+          )}
+        </div>
+        {settings.bodyBackgroundImage && (
+          <div className="favicon-preview">
+            <img
+              src={settings.bodyBackgroundImage}
+              alt="Background preview"
+              style={{ maxWidth: '100%', maxHeight: '80px', borderRadius: '5px', marginTop: '4px', objectFit: 'cover' }}
+            />
+          </div>
+        )}
+      </div>
+      <hr />
+
+      <div className="settings-group">
+        <label htmlFor="headInjectCode">Custom Head Code :</label>
+        <span style={{ fontSize: '11px', color: '#999', lineHeight: '1.3' }}>
+          Add custom code to &lt;head&gt; (analytics, fonts, etc.)
+        </span>
+        <textarea
+          name="headInjectCode"
+          value={settings.headInjectCode || ''}
+          onChange={handleInputChange}
+          placeholder={'<!-- Google Analytics -->\n<script async src="..."></script>'}
+          rows={5}
+          style={{
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            resize: 'vertical',
+          }}
+        />
+        <span style={{ fontSize: '11px', color: '#e8a838', lineHeight: '1.3' }}>
+          ⚠ Code is injected as-is. Use with caution.
+        </span>
+      </div>
 
     </div>
   );

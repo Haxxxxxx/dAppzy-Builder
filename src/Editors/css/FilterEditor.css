@@ -1,0 +1,75 @@
+/* FilterEditor.css */
+
+.filter-editor {
+
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.filter-row label {
+  font-size: 13px;
+  color: var(--not-selected);
+  min-width: 72px;
+  flex-shrink: 0;
+}
+
+.filter-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--editor-bg-dark);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.filter-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-blue);
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  border: none;
+}
+
+.filter-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent-blue);
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  border: none;
+}
+
+.filter-value {
+  font-size: 13px;
+  color: var(--not-selected);
+  min-width: 42px;
+  text-align: right;
+}
+
+.filter-reset {
+  display: flex;
+  padding: 5px 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--not-selected, #838389);
+  background: var(--not-selected, #838389);
+  width: 50%;
+  color: var(--editor-text, #CBD5E1);
+  text-align: center;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 120%;
+  cursor: pointer;
+  margin-top: 8px;
+}

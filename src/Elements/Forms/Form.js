@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { EditableContext } from '../../context/EditableContext';
-import DropZone from '../../utils/DropZone';
+import UnifiedDropZone from '../../utils/UnifiedDropZone';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 
 const Form = ({ id }) => {
@@ -41,7 +41,7 @@ const Form = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'form', styles });
+    setSelectedElement(formElement || { id, type: 'form', styles });
   };
 
   return (
@@ -95,14 +95,14 @@ const Form = ({ id }) => {
                   >
                     {labelText}
                   </label>
-                  {renderElement(childElement, elements)}
+                  {renderElement(childElement, elements, null, setSelectedElement, setElements, null, selectedElement, null, false)}
                 </div>
               );
             }
-            return renderElement(childElement, elements);
+            return renderElement(childElement, elements, null, setSelectedElement, setElements, null, selectedElement, null, false);
           })
         )}
-        <DropZone onDrop={(item) => handleDrop(item, id)} parentId={id} />
+        <UnifiedDropZone onDrop={(item) => handleDrop(item, id)} parentId={id} className="default-dropzone" />
       </form>
     </div>
   );

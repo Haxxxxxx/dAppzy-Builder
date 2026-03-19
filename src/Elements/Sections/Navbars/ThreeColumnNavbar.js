@@ -1,8 +1,11 @@
 // src/components/Elements/Sections/Navbars/ThreeColumnNavbar.js
 import React, { useRef, useState, useEffect, useContext } from 'react';
+import { useDndIsDragging } from '../../../utils/useDndIsDragging';
 import { EditableContext } from '../../../context/EditableContext';
-import { Image, Span, Button, ConnectWalletButton } from '../../SelectableElements';
+import { Image, Span, Button, ConnectWalletButton, Anchor, LinkBlock } from '../../SelectableElements';
 import useElementDrop from '../../../utils/useElementDrop';
+import useReorderDrop from '../../../utils/useReorderDrop';
+import DropInsertionLine from '../../../components/DropInsertionLine';
 import { defaultNavbarStyles } from './DefaultNavbarStyles';
 
 const ThreeColumnNavbar = ({
@@ -17,11 +20,30 @@ const ThreeColumnNavbar = ({
   const [isCompact, setIsCompact] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const { elements, setElements, findElementById } = useContext(EditableContext);
+
   const { isOverCurrent, drop } = useElementDrop({
     id: uniqueId,
     elementRef: navRef,
     onDropItem,
   });
+
+  // Reorder drag & drop within this container
+  const {
+    isDragging: isReorderDragging,
+    draggedId: reorderDraggedId,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+    onDragStart: reorderDragStart,
+    onDragOver: reorderDragOver,
+    onDrop: reorderDrop_,
+    onDragEnd: reorderDragEnd,
+    onDragLeave: reorderDragLeave,
+  } = useReorderDrop(findElementById, elements, setElements);
+
+  const isDndDragging = useDndIsDragging();
+
+  const showIndicator = isReorderDragging && dropIndicatorContainerId === uniqueId;
 
   useEffect(() => {
     setIsCompact(contentListWidth < 768);
@@ -35,6 +57,14 @@ const ThreeColumnNavbar = ({
     }
   };
 
+  const handleElementClick = (e, elementId) => {
+    e.stopPropagation();
+    const element = elements.find(el => el.id === elementId);
+    if (element) {
+      handleSelect(e, element);
+    }
+  };
+
   return (
     <nav
       ref={(node) => {
@@ -43,23 +73,38 @@ const ThreeColumnNavbar = ({
       }}
       style={{
         ...defaultNavbarStyles.nav,
-        borderBottom: isOverCurrent ? '2px solid blue' : defaultNavbarStyles.nav.borderBottom,
+        borderBottom: isOverCurrent ? '2px solid var(--purple, #5C4EFA)' : defaultNavbarStyles.nav.borderBottom,
       }}
       onClick={(e) => handleSelect(e)}
+      onDragOver={(e) => reorderDragOver(e, uniqueId, null, false, navRef)}
+      onDrop={(e) => { reorderDrop_(e, uniqueId); e.stopPropagation(); }}
+      onDragLeave={reorderDragLeave}
     >
       {/* Logo Section */}
       <div style={defaultNavbarStyles.logoContainer}>
         {children
           .filter((child) => child?.type === 'image')
           .map((child) => (
-            <Image
+            <div
               key={child.id}
-              id={child.id}
-              src={child.content || 'Default Logo'}
-              styles={child.styles}
-              handleOpenMediaPanel={handleOpenMediaPanel}
-              handleDrop={handleImageDrop}
-            />
+              draggable={!isDndDragging}
+              onDragStart={(e) => reorderDragStart(e, child.id, uniqueId)}
+              onDragEnd={reorderDragEnd}
+              style={{
+                cursor: !isDndDragging ? 'grab' : 'default',
+                opacity: reorderDraggedId === child.id ? 0.4 : 1,
+                transition: 'opacity 0.15s ease',
+              }}
+            >
+              <Image
+                id={child.id}
+                src={child.content || 'Default Logo'}
+                styles={{ width: '40px', height: '40px', objectFit: 'cover', ...child.styles }}
+                handleOpenMediaPanel={handleOpenMediaPanel}
+                handleDrop={handleImageDrop}
+                onClick={(e) => handleElementClick(e, child.id)}
+              />
+            </div>
           ))}
       </div>
 
@@ -74,15 +119,72 @@ const ThreeColumnNavbar = ({
           </div>
           {isMenuOpen && (
             <div style={defaultNavbarStyles.compactMenu}>
-              {children.map((child) => (
-                <>
-                  {child.type === 'span' && <Span id={child.id} content={child.content} styles={child.styles} />}
-                  {child.type === 'button' && <Button id={child.id} content={child.content} styles={child.styles} />}
-                  {child.type === 'connectWalletButton' && (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+              {children.map((child, idx) => (
+                <React.Fragment key={child.id}>
+                  {showIndicator && dropIndicatorIndex === idx && (
+                    <DropInsertionLine />
                   )}
-                </>
+                  <div
+                    draggable={!isDndDragging}
+                    onDragStart={(e) => reorderDragStart(e, child.id, uniqueId)}
+                    onDragEnd={reorderDragEnd}
+                    style={{
+                      cursor: !isDndDragging ? 'grab' : 'default',
+                      opacity: reorderDraggedId === child.id ? 0.4 : 1,
+                      transition: 'opacity 0.15s ease',
+                    }}
+                  >
+                    {child.type === 'span' && (
+                      <Span
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                      />
+                    )}
+                    {child.type === 'button' && (
+                      <Button
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                      />
+                    )}
+                    {child.type === 'connectWalletButton' && (
+                      <ConnectWalletButton
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                      />
+                    )}
+                    {child.type === 'anchor' && (
+                      <Anchor
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                      />
+                    )}
+                    {(child.type === 'linkblock' || child.type === 'linkBlock') && (
+                      <LinkBlock
+                        id={child.id}
+                        content={child.content}
+                        styles={child.styles}
+                        handleOpenMediaPanel={handleOpenMediaPanel}
+                        onClick={(e) => handleElementClick(e, child.id)}
+                      />
+                    )}
+                  </div>
+                </React.Fragment>
               ))}
+              {showIndicator && dropIndicatorIndex === children.length && (
+                <DropInsertionLine />
+              )}
             </div>
           )}
         </>
@@ -105,9 +207,47 @@ const ThreeColumnNavbar = ({
             gap: '16px'
           }}>
             {children
-              .filter((child) => child?.type === 'span')
+              .filter((child) => child?.type === 'span' || child?.type === 'anchor' || child?.type === 'linkblock' || child?.type === 'linkBlock')
               .map((child) => (
-                <Span key={child.id} id={child.id} content={child.content} styles={child.styles} />
+                <div
+                  key={child.id}
+                  draggable={!isDndDragging}
+                  onDragStart={(e) => reorderDragStart(e, child.id, uniqueId)}
+                  onDragEnd={reorderDragEnd}
+                  style={{
+                    cursor: !isDndDragging ? 'grab' : 'default',
+                    opacity: reorderDraggedId === child.id ? 0.4 : 1,
+                    transition: 'opacity 0.15s ease',
+                  }}
+                >
+                  {child.type === 'span' && (
+                    <Span
+                      id={child.id}
+                      content={child.content}
+                      styles={child.styles}
+                      handleOpenMediaPanel={handleOpenMediaPanel}
+                      onClick={(e) => handleElementClick(e, child.id)}
+                    />
+                  )}
+                  {child.type === 'anchor' && (
+                    <Anchor
+                      id={child.id}
+                      content={child.content}
+                      styles={child.styles}
+                      handleOpenMediaPanel={handleOpenMediaPanel}
+                      onClick={(e) => handleElementClick(e, child.id)}
+                    />
+                  )}
+                  {(child.type === 'linkblock' || child.type === 'linkBlock') && (
+                    <LinkBlock
+                      id={child.id}
+                      content={child.content}
+                      styles={child.styles}
+                      handleOpenMediaPanel={handleOpenMediaPanel}
+                      onClick={(e) => handleElementClick(e, child.id)}
+                    />
+                  )}
+                </div>
               ))}
           </div>
 
@@ -119,13 +259,35 @@ const ThreeColumnNavbar = ({
             {children
               .filter((child) => child?.type === 'button' || child?.type === 'connectWalletButton')
               .map((child) => (
-                <>
+                <div
+                  key={child.id}
+                  draggable={!isDndDragging}
+                  onDragStart={(e) => reorderDragStart(e, child.id, uniqueId)}
+                  onDragEnd={reorderDragEnd}
+                  style={{
+                    cursor: !isDndDragging ? 'grab' : 'default',
+                    opacity: reorderDraggedId === child.id ? 0.4 : 1,
+                    transition: 'opacity 0.15s ease',
+                  }}
+                >
                   {child.type === 'connectWalletButton' ? (
-                    <ConnectWalletButton id={child.id} content={child.content} styles={child.styles} />
+                    <ConnectWalletButton
+                      id={child.id}
+                      content={child.content}
+                      styles={child.styles}
+                      handleOpenMediaPanel={handleOpenMediaPanel}
+                      onClick={(e) => handleElementClick(e, child.id)}
+                    />
                   ) : (
-                    <Button id={child.id} content={child.content} styles={child.styles} />
+                    <Button
+                      id={child.id}
+                      content={child.content}
+                      styles={child.styles}
+                      handleOpenMediaPanel={handleOpenMediaPanel}
+                      onClick={(e) => handleElementClick(e, child.id)}
+                    />
                   )}
-                </>
+                </div>
               ))}
           </div>
         </div>

@@ -4,11 +4,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-dark);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .upgrade-popup.wide {
@@ -22,7 +22,7 @@
   gap: 25px;
   flex-shrink: 0;
   border-radius: 15px;
-  background: #FFF;
+  background: var(--white);
   box-shadow: 0px 0px 2px 0px rgba(175, 178, 206, 0.56), 0px 1px 4px 0px rgba(4, 4, 52, 0.10);
 }
 
@@ -47,7 +47,7 @@
   font-size: 25px;
   cursor: pointer;
   z-index: 2;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   width: 30px;
   height: 30px;
   display: flex;
@@ -57,7 +57,7 @@
 
 .upgrade-title {
   color: var(--black, #131313);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-style: normal;
   font-weight: 500;
@@ -83,7 +83,7 @@
 
 .upgrade-section-label {
   color: var(--dark-gray, #57575B);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 14px;
   font-style: normal;
   font-weight: 600;
@@ -108,7 +108,7 @@
   align-self: stretch;
   border-radius: 10px;
   border: 1px solid rgba(92, 78, 250, 0.20);
-  background: #FFF;
+  background: var(--white);
   box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.15);
   width: 100%;
   cursor: pointer;
@@ -136,7 +136,7 @@
 
 .membership-card-title {
   color: var(--black, #060612);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
@@ -160,7 +160,7 @@
   border-radius: 4.296px;
   background: var(--light-purple, #E4E0F9);
   color: var(--purple, #5C4EFA);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 7.499px;
   font-style: normal;
   font-weight: 300;
@@ -175,7 +175,7 @@
 
 .membership-card-price {
   color: var(--black, #060612);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 16px;
   font-style: normal;
   font-weight: 600;
@@ -197,7 +197,7 @@
 
 .membership-card-currency {
   color: var(--black, #060612);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 10px;
   font-style: normal;
   font-weight: 400;
@@ -218,7 +218,7 @@
 
 .upgrade-total-label {
   color: var(--dark-gray, #57575B);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 14px;
   font-style: normal;
   font-weight: 700;
@@ -227,7 +227,7 @@
 
 .upgrade-total-value {
   color: var(--dark-gray, #57575B);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
@@ -252,7 +252,7 @@
 
 .upgrade-warning-text {
   color: var(--dark-gray, #57575B);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
@@ -266,13 +266,13 @@
   justify-content: center;
   flex-shrink: 0;
   align-self: stretch;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--purple);
   box-shadow: 0px 3px 10px 0px rgba(27, 158, 238, 0.20), 0px -2px 0px 0px rgba(10, 13, 18, 0.05) inset, 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
   transition: background 0.2s;
-  color: #FFF;
+  color: var(--white);
   text-align: center;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
@@ -289,7 +289,7 @@
 .upgrade-terms {
   color: var(--dark-gray, #57575B);
   text-align: center;
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 11px;
   font-style: normal;
   font-weight: 300;
@@ -312,7 +312,7 @@
   background-color: var(--purple);
   color: var(--white);
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   transition: background-color 0.2s ease;
 }
@@ -328,7 +328,7 @@
   height: 40px;
   border: 4px solid rgba(255, 255, 255, 0.1);
   border-left-color: var(--purple);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   animation: spin 1s linear infinite;
 }
 
@@ -360,8 +360,8 @@
 }
 
 .membership-card-details-title {
-  color: #FFF;
-  font-family: Montserrat;
+  color: var(--white);
+  font-family: var(--font-primary);
   font-size: 18px;
   font-style: normal;
   font-weight: 500;
@@ -402,7 +402,7 @@
   width: 10px;
   height: 10px;
   background: #fff;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   transition: transform 0.2s;
   box-shadow: 0 1px 4px #0001;
 }
@@ -418,7 +418,7 @@
 
 .membership-card-details-switchbox-text {
   color: var(--white, #FFF);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 11.667px;
   font-style: normal;
   font-weight: 500;
@@ -434,7 +434,7 @@
   align-self: stretch;
   border-radius: 10px;
   border: 1px solid rgba(92, 78, 250, 0.20);
-  background: #FFF;
+  background: var(--white);
 }
 
 .membership-card-details-price-box {
@@ -452,7 +452,7 @@
 
 .membership-details-card-price {
   color: var(--black, #060612);
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 20px;
   font-style: normal;
   font-weight: 600;
@@ -475,9 +475,9 @@
   align-items: center;
   gap: 6.249px;
   border-radius: 4.296px;
-  background: var(----light-purple, #E4E0F9);
+  background: var(--light-purple, #E4E0F9);
   color: var(--purple, #5C4EFA);
-  font-family: Inter;
+  font-family: var(--font-secondary);
   font-size: 7.499px;
   font-style: normal;
   font-weight: 300;
@@ -515,12 +515,12 @@
   height: 40px;
   flex-shrink: 0;
   align-self: stretch;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--purple);
   box-shadow: 0px 3px 10px 0px rgba(27, 158, 238, 0.20), 0px -2px 0px 0px rgba(10, 13, 18, 0.05) inset, 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
-  color: #FFF;
+  color: var(--white);
   text-align: center;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
@@ -534,12 +534,12 @@
   height: 40px;
   flex-shrink: 0;
   align-self: stretch;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--dark-grey);
   box-shadow: 0px 3px 10px 0px rgba(27, 158, 238, 0.20), 0px -2px 0px 0px rgba(10, 13, 18, 0.05) inset, 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
-  color: #FFF;
+  color: var(--white);
   text-align: center;
-  font-family: Montserrat;
+  font-family: var(--font-primary);
   font-size: 14px;
   font-style: normal;
   font-weight: 500;

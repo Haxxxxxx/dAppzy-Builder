@@ -7,13 +7,8 @@ const Web3Elements = [
     label: 'Connect Wallet',
     description: 'connectWalletButton',
     icon: elementIconPaths.connectWalletButton, // or your chosen icon
+    tags: ['wallet', 'solana', 'web3', 'connect', 'phantom', 'blockchain'],
   },
-  //{
-  //  type: 'transactionButton',
-  //  label: 'blinks',
-  //  description: 'Displays a gallery of NFTs',
-  //  icon: elementIconPaths.transactionButton ,
-  //},
 ];
 
 export default Web3Elements;

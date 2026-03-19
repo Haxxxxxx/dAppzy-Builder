@@ -1,3 +1,5 @@
+import { PLACEHOLDER_IMAGES } from '../assetUrls';
+
 export const Web3Configs = {
     mintingSection: {
         id: 'minting-section',
@@ -11,21 +13,19 @@ export const Web3Configs = {
             padding: '10px',
             margin: '0',
             backgroundColor: 'rgba(42, 42, 60, 0.5)',
-            outline: '2px solid var(--purple, #5C4EFA)',
-            borderInline: '0.5px solid var(--purple, #5C4EFA)',
             borderRadius: '12px',
             backdropFilter: 'blur(10px)'
         },
         children: [
-          { 
+          {
             type: 'mintingModule',
             moduleType: 'minting',
             styles: {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -54,8 +54,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -64,10 +64,10 @@ export const Web3Configs = {
             content: {
               title: 'Rarest Items',
               items: [
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'rare-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'rare-item', content: PLACEHOLDER_IMAGES.builder }
               ],
               settings: {
                 showTitle: true,
@@ -83,8 +83,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -93,9 +93,9 @@ export const Web3Configs = {
             content: {
               title: 'Document Items',
               items: [
-                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' },
-                { type: 'document-item', content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7' }
+                { type: 'document-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'document-item', content: PLACEHOLDER_IMAGES.builder },
+                { type: 'document-item', content: PLACEHOLDER_IMAGES.builder }
               ],
               settings: {
                 showTitle: true,
@@ -118,21 +118,19 @@ export const Web3Configs = {
             padding: '10px',
             margin: '0',
             backgroundColor: 'rgba(42, 42, 60, 0.5)',
-            outline: '2px solid var(--purple, #5C4EFA)',
-            borderInline: '0.5px solid var(--purple, #5C4EFA)',
             borderRadius: '12px',
             backdropFilter: 'blur(10px)'
         },
         children: [
-          { 
+          {
             type: 'defiModule',
             moduleType: 'aggregator',
             styles: {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -161,8 +159,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -190,8 +188,8 @@ export const Web3Configs = {
                 position: 'relative',
                 boxSizing: 'border-box',
                 padding: '10px',
-                margin: '10px 0',
-                backgroundColor: 'rgba(42, 42, 60, 0.5)',
+                margin: '0',
+                backgroundColor: 'rgba(42, 42, 60, 0.6)',
                 borderRadius: '12px',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -237,7 +235,6 @@ export const Web3Configs = {
                 { name: 'Solflare', enabled: true, type: 'solana' },
                 { name: 'Backpack', enabled: true, type: 'solana' },
                 { name: 'Glow', enabled: true, type: 'solana' },
-                { name: 'Slope', enabled: true, type: 'solana' },
                 { name: 'MetaMask', enabled: true, type: 'ethereum' },
                 { name: 'Freighter', enabled: true, type: 'stellar' }
             ]
@@ -248,7 +245,7 @@ export const Web3Configs = {
         // Helius RPC (Primary)
         helius: {
             endpoint: 'https://mainnet.helius-rpc.com',
-            apiKey: process.env.REACT_APP_HELIUS_API_KEY || '',
+            apiKey: import.meta.env.VITE_HELIUS_API_KEY || '',
             getUrl: function() {
                 return this.apiKey ? `${this.endpoint}/?api-key=${this.apiKey}` : null;
             },
@@ -256,14 +253,16 @@ export const Web3Configs = {
             snsConfig: {
                 commitment: 'confirmed',
                 confirmTransactionInitialTimeout: 60000,
-                wsEndpoint: function() {
-                    return this.apiKey ? `wss://mainnet.helius-rpc.com/?api-key=${this.apiKey}` : null;
+                // wsEndpoint needs helius apiKey — use arrow to capture via closure
+                wsEndpoint() {
+                    const apiKey = import.meta.env.VITE_HELIUS_API_KEY || '';
+                    return apiKey ? `wss://mainnet.helius-rpc.com/?api-key=${apiKey}` : null;
                 }
             }
         },
         // Public RPC (Fallback)
         public: {
-            endpoint: 'https://api.devnet-beta.solana.com',
+            endpoint: 'https://api.mainnet-beta.solana.com',
             getUrl: function() {
                 return this.endpoint;
             }

@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './css/MediaPanel.css';
 import { MediaItem } from './MediaItem';
-import { pinataConfig } from '../../utils/configPinata';
+import {
+  uploadFileToPinata,
+  listPinataMedia,
+  deletePinataMedia,
+  getGatewayUrl,
+} from '../../utils/ipfs';
 
 // Helpers to determine media type
 function getMediaTypeFromFile(file) {
@@ -22,18 +27,6 @@ function guessTypeFromExtension(filename) {
   return 'file';
 }
 
-// Pinata API base and auth helper
-const PINATA_BASE_URL = 'https://api.pinata.cloud';
-const getAuthHeaders = () => {
-  if (pinataConfig.pinata_jwt) {
-    return { Authorization: `Bearer ${pinataConfig.pinata_jwt}` };
-  }
-  return {
-    pinata_api_key: pinataConfig.pinata_api_key,
-    pinata_secret_api_key: pinataConfig.pinata_secret_api_key,
-  };
-};
-
 const MediaPanel = ({ projectName, isOpen, userId }) => {
   const [mediaItems, setMediaItems] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
@@ -48,75 +41,31 @@ const MediaPanel = ({ projectName, isOpen, userId }) => {
 
   const fileInputRef = useRef(null);
 
-// Fetch pinned media from Pinata by project & user metadata
-const fetchMedia = async () => {
-  if (!userId || !projectName.trim()) {
-    setMediaItems([]);
-    return;
-  }
-  setIsLoading(true);
-  setError(null);
-
-  try {
-    const params = new URLSearchParams();
-    params.append('status', 'pinned');
-
-    // build keyvalues filters with explicit op "eq"
-    // either of these two approaches works; I prefer separate entries:
-    params.append(
-      'metadata[keyvalues][userId]',
-      JSON.stringify({ value: userId, op: 'eq' })
-    );
-    params.append(
-      'metadata[keyvalues][projectName]',
-      JSON.stringify({ value: projectName, op: 'eq' })
-    );
-
-    const res = await fetch(
-      `${PINATA_BASE_URL}/data/pinList?${params.toString()}`,
-      { headers: getAuthHeaders() }
-    );
-    if (!res.ok) {
-      throw new Error(`Pinata list failed: ${res.status} ${res.statusText}`);
+  // Fetch pinned media scoped to this user + project
+  const fetchMedia = async () => {
+    if (!userId || !projectName.trim()) {
+      setMediaItems([]);
+      return;
     }
+    setIsLoading(true);
+    setError(null);
 
-    const { rows } = await res.json();
-    const files = rows.map(item => ({
-      id: item.ipfs_pin_hash,
-      type: guessTypeFromExtension(item.metadata.name),
-      name: item.metadata.name,
-      src: `https://gateway.pinata.cloud/ipfs/${item.ipfs_pin_hash}`,
-      ipfsHash: item.ipfs_pin_hash,
-    }));
-    setMediaItems(files);
-  } catch (err) {
-    console.error('Error listing files from Pinata:', err);
-    setError('Failed to load media files. Please try again later.');
-    setMediaItems([]);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-  // Upload a single file to Pinata via REST API
-  const uploadFileToPinata = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    formData.append(
-      'pinataMetadata',
-      JSON.stringify({ name: file.name, keyvalues: { userId, projectName } })
-    );
-
-    const res = await fetch(
-      `${PINATA_BASE_URL}/pinning/pinFileToIPFS`,
-      { method: 'POST', headers: getAuthHeaders(), body: formData }
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Pinata upload failed: ${text}`);
+    try {
+      const rows = await listPinataMedia(userId, projectName);
+      const files = rows.map(item => ({
+        id: item.ipfs_pin_hash,
+        type: guessTypeFromExtension(item.metadata.name),
+        name: item.metadata.name,
+        src: getGatewayUrl(item.ipfs_pin_hash),
+        ipfsHash: item.ipfs_pin_hash,
+      }));
+      setMediaItems(files);
+    } catch (err) {
+      setError('Failed to load media files. Please try again later.');
+      setMediaItems([]);
+    } finally {
+      setIsLoading(false);
     }
-    return await res.json();
   };
 
   // Handle file input or drop uploads
@@ -125,16 +74,16 @@ const fetchMedia = async () => {
     const newItems = [];
     for (const file of files) {
       try {
-        const response = await uploadFileToPinata(file);
+        const response = await uploadFileToPinata(file, userId, projectName);
+        const hash = response.ipfsHash || response.IpfsHash;
         newItems.push({
-          id: response.IpfsHash,
+          id: hash,
           type: getMediaTypeFromFile(file),
           name: file.name,
-          src: `https://gateway.pinata.cloud/ipfs/${response.IpfsHash}`,
-          ipfsHash: response.IpfsHash,
+          src: getGatewayUrl(hash),
+          ipfsHash: hash,
         });
       } catch (err) {
-        console.error('Error uploading file to Pinata:', err);
         setError(`Failed to upload file: ${err.message}`);
       }
     }
@@ -147,19 +96,14 @@ const fetchMedia = async () => {
   };
   const handleDragOver = (event) => event.preventDefault();
 
-  // Unpin (delete) a file
+  // Delete a file via centralized utility
   const handleRemoveClick = async (itemId) => {
     const item = mediaItems.find(i => i.id === itemId);
     if (!item) return;
     try {
-      const res = await fetch(
-        `${PINATA_BASE_URL}/pinning/unpin/${item.ipfsHash}`,
-        { method: 'DELETE', headers: getAuthHeaders() }
-      );
-      if (!res.ok) throw new Error(res.statusText);
+      await deletePinataMedia(item.ipfsHash);
       setMediaItems(prev => prev.filter(i => i.id !== itemId));
     } catch (err) {
-      console.error('Error deleting file from Pinata:', err);
       setError('Failed to delete file. Please try again.');
     }
   };

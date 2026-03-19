@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import '../components/css/dropzone.css';
 import '../Root.css';
@@ -6,52 +6,20 @@ import { structureConfigurations } from '../configs/structureConfigurations';
 import { createPortal } from 'react-dom';
 import { defaultNavbarStyles, CustomTemplateNavbarStyles } from '../Elements/Sections/Navbars/DefaultNavbarStyles';
 import { defaultHeroStyles, CustomTemplateHeroStyles, heroTwoStyles } from '../Elements/Sections/Heros/defaultHeroStyles';
+import { sectionPopupConfigs, SECTION_POPUP_CATEGORIES, ALL_DROPPABLE_TYPES, SECTION_TYPES, resolveConfigType } from '../core/elementRegistry';
+import { NAVBAR, HERO, BUTTON, VFLEX_LAYOUT, DIV } from '../constants/elementTypes';
+import { isDescendantOf, buildSectionData, DROP_REJECTION_REASONS } from './dndUtils';
+import { useToast } from '../context/ToastContext';
 
 // Section Selection Popup Component
 const SectionSelectionPopup = ({ onClose, onSelect }) => {
   const defaultPreviewImage = './img/previewcomponent.png';
 
-  // Define section configurations with their preview images
-  const sectionConfigurations = {
-    // Navbar configurations
-    customTemplateNavbar: { name: 'Custom Navbar', previewImage: './img/previsu-custom-navbar.png', category: 'Navbar' },
-    twoColumn: { name: 'Two Columns', previewImage: './img/previsu-two-columns-navbar.png', category: 'Navbar' },
-    defiNavbar: { name: 'DeFi Navbar', previewImage: './img/previsu-defi-navbar.png', category: 'Navbar' },
-
-    // Hero configurations
-    heroOne: { name: 'Basic Hero', previewImage: './img/previsu-basic-hero.png', category: 'Hero' },
-    heroTwo: { name: 'Small Hero', previewImage: './img/previsu-small-hero.png', category: 'Hero' },
-    heroThree: { name: 'Advanced Hero', previewImage: './img/previsu-advanced-hero.png', category: 'Hero' },
-
-    // CTA configurations
-    ctaOne: { name: 'Advanced CTA', previewImage: './img/previsu-advanced-cta.png', category: 'CTA' },
-    ctaTwo: { name: 'Quick CTA', previewImage: './img/previsu-quick-cta.png', category: 'CTA' },
-
-    // Content Section configurations - Using default preview for now as these might not have unique images yet
-    sectionOne: { name: 'Feature Section', previewImage: './img/previsu-feature-section.png', category: 'Content' },
-    sectionTwo: { name: 'Content Grid', previewImage: './img/previsu-content-grid.png', category: 'Content' },
-    sectionThree: { name: 'Testimonial Section', previewImage: './img/previsu-testimonial.png', category: 'Content' },
-    sectionFour: { name: 'Pricing Section', previewImage: './img/previsu-pricing.png', category: 'Content' },
-
-    // Web3 section configurations
-    defiSection: { name: 'DeFi Dashboard', previewImage: './img/previsu-defi-dashboard.png', category: 'Web3' },
-    mintingSection: { name: 'NFT Minting', previewImage: './img/previsu-minting.png', category: 'Web3' },
-  
-    // Footer configurations
-    simpleFooter: { name: 'Simple Footer', previewImage: './img/previsu-simple-footer.png', category: 'Footer' },
-    detailedFooter: { name: 'Detailed Footer', previewImage: './img/previsu-detailed-footer.png', category: 'Footer' },
-    advancedFooter: { name: 'Advanced Footer', previewImage: './img/previsu-advanced-footer.png', category: 'Footer' },
-    defiFooter: { name: 'DeFi Footer', previewImage: './img/previsu-defi-footer.png', category: 'Footer' }
-  };
-
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [imageErrors, setImageErrors] = useState({});
 
-  const categories = ['All', 'Navbar', 'Hero', 'CTA', 'Content', 'Web3', 'Footer'];
-
   const handleImageError = (sectionId) => {
-    console.warn(`Image failed to load for section: ${sectionId}, using default preview`);
     setImageErrors(prev => ({
       ...prev,
       [sectionId]: true
@@ -59,18 +27,18 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
   };
 
   const sections = Object.entries(structureConfigurations)
-    .filter(([key]) => sectionConfigurations[key])
+    .filter(([key]) => sectionPopupConfigs[key])
     .filter(([key]) => {
-      const matchesCategory = selectedCategory === 'All' || sectionConfigurations[key].category === selectedCategory;
+      const matchesCategory = selectedCategory === 'All' || sectionPopupConfigs[key].category === selectedCategory;
       const matchesSearch = searchQuery === '' || 
-        sectionConfigurations[key].name.toLowerCase().includes(searchQuery.toLowerCase());
+        sectionPopupConfigs[key].name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     })
     .map(([key, config]) => ({
       id: key,
-      name: sectionConfigurations[key].name,
-      previewImage: sectionConfigurations[key].previewImage,
-      category: sectionConfigurations[key].category,
+      name: sectionPopupConfigs[key].name,
+      previewImage: sectionPopupConfigs[key].previewImage,
+      category: sectionPopupConfigs[key].category,
       configuration: config
     }));
 
@@ -88,7 +56,7 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="section-selection-category-select"
           >
-            {categories.map(category => (
+            {SECTION_POPUP_CATEGORIES.map(category => (
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
@@ -105,12 +73,6 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
             <div
               key={section.id}
               className="section-selection-section-item"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px'
-              }}
             >
               <div className="section-selection-section-preview">
                 <img
@@ -120,25 +82,9 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
                   onError={() => handleImageError(section.id)}
                 />
               </div>
-              {imageErrors[section.id] && (
-                <div 
-                  className="section-selection-section-name"
-                  style={{
-                    fontSize: '14px',
-                    color: '#666',
-                    textAlign: 'center',
-                    padding: '4px 8px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '4px',
-                    maxWidth: '100%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {section.name}
-                </div>
-              )}
+              <div className="section-selection-section-name">
+                {section.name}
+              </div>
               <div className="section-selection-section-overlay">
                 <button
                   className="section-selection-insert-btn"
@@ -161,7 +107,7 @@ const SectionSelectionPopup = ({ onClose, onSelect }) => {
 
 // Helper to render a mini preview for a config
 function renderPreview(config, depth = 0) {
-  const isVFlex = (config.parentType || config.type) === 'vflexLayout';
+  const isVFlex = (config.parentType || config.type) === VFLEX_LAYOUT;
   const direction = isVFlex ? 'column' : 'row';
   return (
     <div
@@ -209,10 +155,10 @@ function createFlexElement(config, addNewElement, parentId = null) {
   if (config.children && config.children.length > 0) {
     config.children.forEach(child => {
       if (child.children) {
-        createFlexElement({ ...child, parentType: child.type, direction: child.type === 'vflexLayout' ? 'column' : 'row' }, addNewElement, id);
+        createFlexElement({ ...child, parentType: child.type, direction: child.type === VFLEX_LAYOUT ? 'column' : 'row' }, addNewElement, id);
       } else {
         addNewElement(child.type, 1, 0, id, {
-          styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === 'vflexLayout' ? 'column' : 'row' }
+          styles: { flex: 1, gap: '8px', padding: '8px', display: 'flex', flexDirection: child.type === VFLEX_LAYOUT ? 'column' : 'row' }
         });
       }
     });
@@ -319,41 +265,15 @@ const UnifiedDropZone = React.memo(({
   isDragging,
   index,
   onPanelToggle,
-  accept = [
-    // Basic Elements
-    'paragraph', 'heading', 'section', 'div', 'button', 'image', 'form', 'span', 'input',
-    'list', 'listItem', 'table', 'tableRow', 'tableCell',
-    'anchor', 'textarea', 'select', 'video', 'audio', 'iframe',
-    'label', 'fieldset', 'legend', 'progress', 'meter',
-    'blockquote', 'code', 'pre', 'hr', 'caption',
-    
-    // Layout Elements
-    'container', 'gridLayout', 'hflexLayout', 'vflexLayout',
-    'line', 'linkBlock',
-    
-    // Media Elements
-    'youtubeVideo', 'icon', 'bgVideo',
-    
-    // Web3 Elements
-    'defiModule', 'mintingModule',
-    'defiSection', 'mintingSection',
-    'connectWalletButton',
-    
-    // Special Elements
-    'dateComponent',
-    
-    // Legacy/Alternative Types
-    'ELEMENT', 'IMAGE', 'SPAN', 'BUTTON', 'LINK', 'PARAGRAPH', 'HEADING', 'LIST', 'LIST_ITEM',
-    'BLOCKQUOTE', 'CODE', 'PRE', 'CAPTION', 'LEGEND', 'LINK_BLOCK', 'SECTION',
-    'footer', 'navbar', 'hero', 'cta', 'ContentSection'
-  ]
+  accept = ALL_DROPPABLE_TYPES,
+  elements,
 }) => {
   const dropRef = useRef(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [showSectionPopup, setShowSectionPopup] = useState(false);
   const [showDivOptions, setShowDivOptions] = useState(false);
+  const { showToast } = useToast();
 
   const handleInteraction = useCallback((e) => {
     e.preventDefault();
@@ -367,7 +287,6 @@ const UnifiedDropZone = React.memo(({
   const handleLibraryClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Library button clicked');
     setShowSectionPopup(true);
   };
 
@@ -378,87 +297,23 @@ const UnifiedDropZone = React.memo(({
   };
 
   const handleSectionSelect = (section) => {
-    console.log('Section selected:', section);
     if (onDrop) {
-      // Get the section configuration from structureConfigurations
-      const sectionConfig = structureConfigurations[section.id];
-      if (!sectionConfig) {
-        console.error('Section configuration not found:', section.id);
-        return;
-      }
+      const navbarStyles = section.id === 'customTemplateNavbar'
+        ? CustomTemplateNavbarStyles
+        : defaultNavbarStyles;
+      const heroStyles = section.id === 'heroTwo'
+        ? heroTwoStyles
+        : (section.id === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
 
-      // Create a properly structured section object that matches the EditableContext expectations
-      const sectionData = {
-        type: sectionConfig.type || 'section',
-        configuration: section.id,
-        structure: section.id,
-        styles: {
-          ...sectionConfig.styles,
-          position: 'relative',
-          display: 'flex',
-          boxSizing: 'border-box',
-          flexDirection: sectionConfig.direction || 'column',
-        },
-        children: sectionConfig.children.map(child => {
-          // Special handling for navbar elements
-          if (sectionConfig.type === 'navbar') {
-            const navbarStyles = section.id === 'customTemplateNavbar' ? CustomTemplateNavbarStyles : defaultNavbarStyles;
-            
-            // Handle button styles specifically
-            if (child.type === 'button') {
-              return {
-                type: child.type,
-                content: child.content || {},
-                styles: {
-                  ...navbarStyles.buttonContainer,
-                  ...child.styles,
-                  position: 'relative',
-          boxSizing: 'border-box'
-        },
-                settings: child.content?.settings || {},
-                configuration: {
-                  ...child.content?.settings,
-                  enabled: true
-                }
-              };
-            }
-            
-            return {
-              type: child.type,
-              content: child.content || {},
-              styles: {
-                ...navbarStyles[child.type] || {},
-                position: 'relative',
-                boxSizing: 'border-box'
-              },
-              settings: child.content?.settings || {},
-              configuration: {
-                ...child.content?.settings,
-                enabled: true
-              }
-            };
-          }
-          
-          return {
-          type: child.type,
-          content: child.content || {},
-          styles: {
-            ...child.styles,
-            position: 'relative',
-            boxSizing: 'border-box'
-          },
-          settings: child.content?.settings || {},
-          configuration: {
-            ...child.content?.settings,
-            enabled: true
-          }
-          };
-        }),
-        settings: sectionConfig.settings || {},
-        label: sectionConfig.label || section.name
-      };
+      const sectionData = buildSectionData(
+        section.id,
+        structureConfigurations,
+        resolveConfigType,
+        { navbarStyles, heroStyles, NAVBAR, HERO, BUTTON }
+      );
 
-      console.log('Sending section data:', sectionData);
+      if (!sectionData) return;
+
       onDrop(sectionData, parentId);
     }
     setShowSectionPopup(false);
@@ -466,132 +321,45 @@ const UnifiedDropZone = React.memo(({
 
   const handleDivSelect = (config) => {
     if (onDrop && typeof window !== 'undefined') {
-      // Use context's addNewElement for recursive creation
-      const { addNewElement } = require('../context/EditableContext');
-      // But since we don't have context here, pass the config to onDrop and let ContentList/EditableContext handle recursion
       onDrop({ flexConfig: config, isFlexConfig: true }, parentId);
     }
     setShowDivOptions(false);
   };
 
-  const [{ isOver, draggedItem }, drop] = useDrop({
+  const [{ isOver, draggedItem }, drop] = useDrop(() => ({
     accept,
     drop: (item, monitor) => {
       if (monitor.didDrop()) {
         return;
       }
+      // Circular reference guard: block dropping a container into its own descendant
+      if (item.id && parentId && elements) {
+        if (isDescendantOf(item.id, parentId, elements)) {
+          if (import.meta.env.DEV) console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          showToast(DROP_REJECTION_REASONS.CIRCULAR, 'info');
+          return;
+        }
+      }
       if (onDrop) {
         // For sections, ensure we pass the full configuration
-        if (item.type === 'section' || item.type === 'navbar' || item.type === 'hero' || item.type === 'cta' || item.type === 'footer' || item.type === 'defiSection' || item.type === 'mintingSection') {
-          // Get the section configuration from structureConfigurations
-          const sectionConfig = structureConfigurations[item.configuration];
-          if (!sectionConfig) {
-            console.error('Section configuration not found:', item.configuration);
-            return;
-          }
+        if (SECTION_TYPES.has(item.type)) {
+          const navbarStyles = item.configuration === 'customTemplateNavbar'
+            ? CustomTemplateNavbarStyles
+            : defaultNavbarStyles;
+          const heroStyles = item.configuration === 'heroTwo'
+            ? heroTwoStyles
+            : (item.configuration === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
 
-          // Determine the correct type based on the section configuration
-          let type = item.type;
-          if (item.configuration.includes('navbar')) {
-            type = 'navbar';
-          } else if (item.configuration.includes('hero')) {
-            type = 'hero';
-          } else if (item.configuration.includes('cta')) {
-            type = 'cta';
-          } else if (item.configuration.includes('defiSection')) {
-            type = 'defiSection';
-          } else if (item.configuration.includes('mintingSection')) {
-            type = 'mintingSection';
-          } else if (item.configuration.includes('footer')) {
-            type = 'footer';
-          }
+          const sectionData = buildSectionData(
+            item.configuration,
+            structureConfigurations,
+            resolveConfigType,
+            { navbarStyles, heroStyles, NAVBAR, HERO, BUTTON }
+          );
 
-          onDrop({
-            type,
-            configuration: item.configuration,
-            structure: item.configuration,
-            styles: {
-              ...sectionConfig.styles,
-              position: 'relative',
-              display: 'flex',
-              boxSizing: 'border-box'
-            },
-            children: sectionConfig.children.map(child => {
-              // Special handling for navbar elements
-              if (type === 'navbar') {
-                const navbarStyles = item.configuration === 'customTemplateNavbar' ? CustomTemplateNavbarStyles : defaultNavbarStyles;
-                
-                // Handle button styles specifically
-                if (child.type === 'button') {
-                  const buttonStyle = child.content?.settings?.isPrimary ? 
-                    navbarStyles.primaryButton : 
-                    (child.content?.settings?.isSecondary ? navbarStyles.secondaryButton : navbarStyles.button);
-                  
-                  return {
-                    type: child.type,
-                    content: child.content || '',
-                    styles: {
-                      ...navbarStyles.buttonContainer,
-                      ...buttonStyle,
-                      ...child.styles,
-                      position: 'relative',
-                      boxSizing: 'border-box'
-                    },
-                    settings: {
-                      ...child.settings,
-                      isPrimary: child.content?.settings?.isPrimary,
-                      isSecondary: child.content?.settings?.isSecondary
-                    },
-                    children: child.children || []
-                  };
-                }
-                
-                return {
-                  type: child.type,
-                  content: child.content || '',
-                  styles: {
-                    ...navbarStyles[child.type] || {},
-                    position: 'relative',
-                    boxSizing: 'border-box'
-                  },
-                  settings: child.settings || {},
-                  children: child.children || []
-                };
-              }
-              
-              // Special handling for hero elements
-              if (type === 'hero') {
-                const heroStyles = item.configuration === 'heroTwo' ? heroTwoStyles : 
-                                 (item.configuration === 'customTemplateHero' ? CustomTemplateHeroStyles : defaultHeroStyles);
-                
-                return {
-                  type: child.type,
-                  content: child.content || '',
-                  styles: {
-                    ...heroStyles[child.type] || {},
-                    position: 'relative',
-                    boxSizing: 'border-box'
-                  },
-                  settings: child.settings || {},
-                  children: child.children || []
-                };
-              }
-              
-              return {
-              type: child.type,
-              content: child.content || '',
-              styles: {
-                ...child.styles,
-                position: 'relative',
-                boxSizing: 'border-box'
-              },
-              settings: child.settings || {},
-              children: child.children || []
-              };
-            }),
-            settings: sectionConfig.settings || {},
-            label: sectionConfig.label || item.configuration
-          }, parentId);
+          if (!sectionData) return;
+
+          onDrop(sectionData, parentId);
         } else {
           onDrop(item, parentId);
         }
@@ -600,28 +368,10 @@ const UnifiedDropZone = React.memo(({
     hover: (item, monitor) => {
       if (!dropRef.current) return;
 
-      // Don't show dropzone if:
-      // 1. Dragging a section or configured div
-      // 2. Dragging a section into another section's content area
-      const isDraggingSection = item.type === 'section' || item.type === 'navbar' || item.type === 'hero' || item.type === 'cta' || item.type === 'footer' || item.type === 'defiSection' || item.type === 'mintingSection';
-      const isDraggingConfiguredDiv = item.type === 'div' && item.configuration;
-      const isContentSection = parentId && parentId.includes('-content');
-
-      if (isDraggingSection || isDraggingConfiguredDiv || (isDraggingSection && isContentSection)) {
-        setIsVisible(false);
-        return;
-      }
-
-      const hoverBoundingRect = dropRef.current.getBoundingClientRect();
       const clientOffset = monitor.getClientOffset();
-
       if (!clientOffset) return;
 
-      // Calculate the mouse position relative to the drop zone
-      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-
-      // Only update position if we're not already showing the drop zone
+      // Track cursor position for floating dropzone types (non-first, non-default)
       if (!isVisible) {
         setPosition({
           x: clientOffset.x,
@@ -634,24 +384,15 @@ const UnifiedDropZone = React.memo(({
       isOver: monitor.isOver({ shallow: true }),
       draggedItem: monitor.getItem()
     }),
-  });
+  }), [accept, onDrop, parentId]);
 
-  useEffect(() => {
-    if (dropRef.current) {
-      drop(dropRef.current);
-    }
+  // Use callback ref so the drop connector always tracks the current DOM node.
+  // Previously, returning null for section drags unmounted the element, and the
+  // useEffect with [drop] never re-fired on remount — breaking ALL subsequent drops.
+  const setDropRef = useCallback((node) => {
+    dropRef.current = node;
+    drop(node);
   }, [drop]);
-
-  // Don't render if:
-  // 1. Dragging a section or configured div
-  // 2. Dragging a section into another section's content area
-  const isDraggingSection = draggedItem?.type === 'SECTION';
-  const isDraggingConfiguredDiv = draggedItem?.type === 'DIV' && draggedItem?.configuration;
-  const isContentSection = parentId && parentId.includes('-content');
-
-  if (draggedItem && (isDraggingSection || isDraggingConfiguredDiv || (isDraggingSection && isContentSection))) {
-    return null;
-  }
 
   const isFirstDropzone = className === 'first-dropzone';
   const isDefaultDropzone = className === 'default-dropzone';
@@ -659,11 +400,9 @@ const UnifiedDropZone = React.memo(({
   return (
     <>
       <div
-        ref={dropRef}
+        ref={setDropRef}
         className={`unified-dropzone ${className} ${isOver ? 'dropzone-hover' : ''} ${isDragging ? 'dropzone-active' : ''}`}
         onClick={handleInteraction}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         style={{
           position: isFirstDropzone ? 'absolute' : (isDefaultDropzone ? 'static' : 'absolute'),
           left: isFirstDropzone ? '0' : (isDefaultDropzone ? 'auto' : position.x),
@@ -671,7 +410,7 @@ const UnifiedDropZone = React.memo(({
           right: isFirstDropzone ? '0' : 'auto',
           bottom: isFirstDropzone ? '0' : 'auto',
           opacity: isFirstDropzone || isDefaultDropzone ? 1 : (isVisible ? 1 : 0),
-          transition: 'all 0.2s ease',
+          transition: 'opacity 0.2s ease, transform 0.2s ease',
           pointerEvents: isDragging ? 'auto' : 'none',
           transform: isFirstDropzone ? 'none' : (isDefaultDropzone ? 'none' : 'translate(-50%, -50%)'),
           zIndex: 1000,
@@ -685,55 +424,53 @@ const UnifiedDropZone = React.memo(({
         <div className="dropzone-content">
           {(isDefaultDropzone || isFirstDropzone) ? (
             showDivOptions ? (
-              <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%' }}>
-                {divConfigurations.map((config) => (
-                  <div
-                    key={config.id}
-                    className="inline-div-option"
-                    onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
-                    style={{
-                      cursor: 'pointer',
-                      background: '#e5e8ea',
-                      borderRadius: '6px',
-                      padding: '8px',
-                      minWidth: '60px',
-                      minHeight: '40px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                      border: '2px solid #e5e8ea',
-                      transition: 'border 0.2s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.border = '2px solid #bfc5c9'}
-                    onMouseLeave={e => e.currentTarget.style.border = '2px solid #e5e8ea'}
-                  >
-                    {config.preview}
-                    <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
-                  </div>
-                ))}
+              <div className="inline-div-options-grid">
+                <button
+                  className="div-options-back"
+                  onClick={(e) => { e.stopPropagation(); setShowDivOptions(false); }}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Back
+                </button>
+                <p className="div-options-heading">Choose a layout</p>
+                <div className="div-options-cards">
+                  {divConfigurations.map((config) => (
+                    <div
+                      key={config.id}
+                      className="div-option-card"
+                      onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
+                    >
+                      {config.preview}
+                      <span className="div-option-label">{config.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="dropzone-buttons">
-                <button
-                  className="dropzone-button configure-button"
-                  onClick={handleConfigureClick}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined">
-                    add
-                  </span>
-                </button>
-                <button
-                  className="dropzone-button library-button"
-                  onClick={handleLibraryClick}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined">
-                    folder_open
-                  </span>
-                </button>
+              <div className="empty-canvas-state">
+                <span className="material-symbols-outlined empty-canvas-icon">dashboard_customize</span>
+                <h3 className="empty-canvas-title">Start building your page</h3>
+                <p className="empty-canvas-subtitle">Add a layout structure or pick a pre-built section</p>
+                <div className="empty-canvas-actions">
+                  <button
+                    className="empty-canvas-btn empty-canvas-btn-primary"
+                    onClick={handleConfigureClick}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined">add</span>
+                    Add Layout
+                  </button>
+                  <button
+                    className="empty-canvas-btn empty-canvas-btn-secondary"
+                    onClick={handleLibraryClick}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined">folder_open</span>
+                    Sections Library
+                  </button>
+                </div>
+                <p className="empty-canvas-hint">or drag an element from the sidebar</p>
               </div>
             )
           ) : (
@@ -750,13 +487,6 @@ const UnifiedDropZone = React.memo(({
         />
       )}
     </>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.isDragging === nextProps.isDragging &&
-    prevProps.isOver === nextProps.isOver &&
-    prevProps.scale === nextProps.scale &&
-    prevProps.className === nextProps.className
   );
 });
 

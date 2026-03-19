@@ -13,7 +13,6 @@ const Anchor = React.memo(({ id, content: initialContent, styles: customStyles, 
 
   // Ensure content is a string
   if (typeof content !== 'string') {
-    console.warn(`Invalid content type for anchor with ID ${id}. Converting to string.`);
     content = String(content);
   }
 

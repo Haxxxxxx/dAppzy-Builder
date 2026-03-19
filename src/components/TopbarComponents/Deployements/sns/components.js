@@ -2,7 +2,8 @@ import React from 'react';
 import { SnsError, SnsRecordNotInitializedError, SnsOwnershipError, SnsSimulationError } from './errors';
 
 // Error Modal Component
-export const ErrorModal = ({ error, onClose, domain }) => {
+// When `inline` is true, renders without its own overlay (for embedding inside another modal)
+export const ErrorModal = ({ error, onClose, domain, inline = false }) => {
   const getErrorDetails = () => {
     if (error.code === 'INSUFFICIENT_BALANCE') {
       return {
@@ -69,48 +70,56 @@ export const ErrorModal = ({ error, onClose, domain }) => {
 
   const errorDetails = getErrorDetails();
 
+  const content = (
+    <>
+      <div className="error-modal-header">
+        <div className="error-modal-icon">⚠️</div>
+        <h2>{errorDetails.title}</h2>
+      </div>
+
+      <div className="error-modal-content">
+        <p className="error-modal-message">{errorDetails.message}</p>
+
+        <div className="error-modal-domain">
+          <strong>Domain:</strong> {domain}
+        </div>
+
+        <div className="error-modal-steps">
+          <h3>To resolve this issue:</h3>
+          <ol>
+            {errorDetails.steps.map((step, index) => (
+              <li key={index}>{step}</li>
+            ))}
+          </ol>
+        </div>
+
+        {errorDetails.actionUrl && (
+          <a
+            href={errorDetails.actionUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="error-modal-action-button"
+          >
+            {errorDetails.actionText}
+          </a>
+        )}
+
+        <button
+          className="error-modal-retry-button"
+          onClick={onClose}
+        >
+          Try Again
+        </button>
+      </div>
+    </>
+  );
+
+  if (inline) return content;
+
   return (
     <div className="error-modal-overlay">
       <div className="error-modal">
-        <div className="error-modal-header">
-          <div className="error-modal-icon">⚠️</div>
-          <h2>{errorDetails.title}</h2>
-        </div>
-
-        <div className="error-modal-content">
-          <p className="error-modal-message">{errorDetails.message}</p>
-          
-          <div className="error-modal-domain">
-            <strong>Domain:</strong> {domain}
-          </div>
-
-          <div className="error-modal-steps">
-            <h3>To resolve this issue:</h3>
-            <ol>
-              {errorDetails.steps.map((step, index) => (
-                <li key={index}>{step}</li>
-              ))}
-            </ol>
-          </div>
-
-          {errorDetails.actionUrl && (
-            <a 
-              href={errorDetails.actionUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="error-modal-action-button"
-            >
-              {errorDetails.actionText}
-            </a>
-          )}
-
-          <button 
-            className="error-modal-retry-button"
-            onClick={onClose}
-          >
-            Try Again
-          </button>
-        </div>
+        {content}
       </div>
     </div>
   );

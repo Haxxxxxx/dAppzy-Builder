@@ -1,7 +1,38 @@
-import { pinataConfig, isPinataConfigured } from '../../utils/configPinata';
 import { cleanElementData } from './elementUtils';
 import { generateProjectHtml } from './htmlGenerator';
 import { pinDirectoryToPinata } from '../../utils/ipfs';
+
+const isPinataConfigured = () => {
+  // Pinata uploads now go through server-side CF proxy
+  // Just check that the CF base URL is configured
+  return !!import.meta.env.VITE_CF_BASE_URL;
+};
+
+/**
+ * Validates a URL is safe to fetch (prevents SSRF via file:/data:/private IPs)
+ */
+const isAllowedUrl = (url) => {
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    // Block private/internal IP ranges
+    const host = parsed.hostname;
+    if (
+      host === 'localhost' ||
+      host.startsWith('127.') ||
+      host.startsWith('10.') ||
+      host.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      host === '0.0.0.0' ||
+      host === '[::1]' ||
+      host.endsWith('.local')
+    ) return false;
+    return true;
+  } catch (err) {
+    if (import.meta.env.DEV) console.error('[ipfsUtils] URL validation failed:', err);
+    return false;
+  }
+};
 
 /**
  * Validates Pinata configuration before making API calls
@@ -9,7 +40,7 @@ import { pinDirectoryToPinata } from '../../utils/ipfs';
  */
 const validatePinataConfig = () => {
   if (!isPinataConfigured()) {
-    throw new Error('Invalid Pinata configuration: Please check your environment variables (REACT_APP_PINATA_JWT, REACT_APP_PINATA_KEY, REACT_APP_PINATA_SECRET)');
+    throw new Error('IPFS upload not configured: Please check VITE_CF_BASE_URL environment variable');
   }
 };
 
@@ -21,7 +52,7 @@ const validatePinataConfig = () => {
  * @param {Object} websiteSettings - Website settings
  * @returns {Promise<string>} - Preview URL
  */
-export const generatePreviewUrl = async (userId, projectId, elements, websiteSettings) => {
+export const generatePreviewUrl = async (userId, projectId, elements, websiteSettings, projectData) => {
   try {
     if (!userId || !projectId) {
       throw new Error('Missing required parameters: userId and projectId');
@@ -56,17 +87,18 @@ export const generatePreviewUrl = async (userId, projectId, elements, websiteSet
       customScripts: websiteSettings?.customScripts || '',
     };
 
-    const fullHtml = generateProjectHtml(cleanedElements, cleanedWebsiteSettings);
+    const fullHtml = generateProjectHtml(cleanedElements, cleanedWebsiteSettings, projectData);
     const htmlBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-    
+
+    const siteTitle = cleanedWebsiteSettings.siteTitle;
     const files = [{
       file: htmlBlob,
-      fileName: 'index.html',
+      fileName: siteTitle,
       type: 'text/html'
     }];
 
     const metadata = {
-      name: cleanedWebsiteSettings.siteTitle,
+      name: siteTitle,
       keyvalues: {
         userId: sanitizedUserId,
         timestamp: new Date().toISOString(),
@@ -78,14 +110,13 @@ export const generatePreviewUrl = async (userId, projectId, elements, websiteSet
     };
 
     const ipfsHash = await pinDirectoryToPinata(files, metadata);
-    
+
     if (!ipfsHash) {
       throw new Error('No IPFS hash returned from Pinata');
     }
 
-    return `https://ipfs.io/ipfs/${ipfsHash}`;
+    return `https://ipfs.io/ipfs/${ipfsHash}/${encodeURIComponent(siteTitle)}`;
   } catch (error) {
-    console.error('Error generating preview URL:', error);
     throw error;
   }
 };
@@ -98,7 +129,7 @@ export const generatePreviewUrl = async (userId, projectId, elements, websiteSet
  * @param {Object} websiteSettings - Website settings
  * @returns {Promise<{ipfsUrl: string, ipfsHash: string}>} - Deployment result
  */
-export const deployToIPFS = async (userId, projectId, elements, websiteSettings) => {
+export const deployToIPFS = async (userId, projectId, elements, websiteSettings, projectData) => {
   try {
     if (!userId || !projectId) {
       throw new Error('Missing required parameters: userId and projectId');
@@ -139,22 +170,11 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
       author: websiteSettings?.author || 'Dappzy',
     };
 
-    // Generate HTML content
-    const fullHtml = generateProjectHtml(cleanedElements, cleanedWebsiteSettings);
-
     // Create a directory structure for IPFS
     const files = [];
 
-    // Add main HTML file
-    const htmlBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-    files.push({
-      file: htmlBlob,
-      fileName: 'index.html',
-      type: 'text/html'
-    });
-
     // Add favicon if exists
-    if (cleanedWebsiteSettings.faviconUrl) {
+    if (cleanedWebsiteSettings.faviconUrl && isAllowedUrl(cleanedWebsiteSettings.faviconUrl)) {
       try {
         const faviconResponse = await fetch(cleanedWebsiteSettings.faviconUrl);
         const faviconBlob = await faviconResponse.blob();
@@ -164,12 +184,12 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
           type: 'image/x-icon'
         });
       } catch (error) {
-        console.warn('Failed to fetch favicon:', error);
+        // Favicon fetch failed; skip
       }
     }
 
     // Add OG image if exists
-    if (cleanedWebsiteSettings.ogImage) {
+    if (cleanedWebsiteSettings.ogImage && isAllowedUrl(cleanedWebsiteSettings.ogImage)) {
       try {
         const ogImageResponse = await fetch(cleanedWebsiteSettings.ogImage);
         const ogImageBlob = await ogImageResponse.blob();
@@ -179,32 +199,56 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
           type: 'image/jpeg'
         });
       } catch (error) {
-        console.warn('Failed to fetch OG image:', error);
+        // OG image fetch failed; skip
       }
     }
 
-    // Add assets from elements
-    const assetPromises = cleanedElements
-      .filter(element => element.type === 'image' && element.src)
-      .map(async (element) => {
-        try {
-          const response = await fetch(element.src);
-          const blob = await response.blob();
-          const fileName = `assets/${element.id}-${Date.now()}.${blob.type.split('/')[1]}`;
-          files.push({
-            file: blob,
-            fileName,
-            type: blob.type
-          });
-          // Update element src to use IPFS path
-          element.src = `ipfs://${fileName}`;
-        } catch (error) {
-          console.warn(`Failed to fetch asset for element ${element.id}:`, error);
-        }
-      });
+    // Collect ALL image elements from the flat array (children are ID refs at
+    // this stage, so a flat filter catches every image regardless of nesting).
+    const imageElements = cleanedElements
+      .filter(el => el.type === 'image' && el.src && isAllowedUrl(el.src));
 
-    // Wait for all asset uploads to complete
+    // Fetch assets and rewrite element src to IPFS-relative paths
+    // BEFORE generating HTML so the URLs are baked into the output.
+    const assetPromises = imageElements.map(async (element) => {
+      try {
+        const originalSrc = element.src;
+        const response = await fetch(originalSrc);
+        const blob = await response.blob();
+        const ext = (blob.type.split('/')[1] || 'bin').split('+')[0];
+        const fileName = `assets/${element.id}-${Date.now()}.${ext}`;
+        files.push({
+          file: blob,
+          fileName,
+          type: blob.type
+        });
+        const ipfsPath = `ipfs://${fileName}`;
+        // Rewrite src so the HTML generator picks up the IPFS path
+        element.src = ipfsPath;
+        // Also update content for elements that store the image URL in content
+        // (hero/navbar generators read image.content || image.src)
+        if (element.content && element.content === originalSrc) {
+          element.content = ipfsPath;
+        }
+      } catch (error) {
+        // Asset fetch failed; keep original URL
+      }
+    });
+
+    // Wait for all asset rewrites to complete
     await Promise.all(assetPromises);
+
+    // Generate HTML content AFTER asset URLs have been rewritten
+    const fullHtml = generateProjectHtml(cleanedElements, cleanedWebsiteSettings, projectData);
+
+    // Add main HTML file — named after siteTitle so the IPFS path is /<hash>/<siteTitle>
+    const siteTitle = cleanedWebsiteSettings.siteTitle;
+    const htmlBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+    files.push({
+      file: htmlBlob,
+      fileName: siteTitle,
+      type: 'text/html'
+    });
 
     // Add metadata
     const metadata = {
@@ -227,14 +271,13 @@ export const deployToIPFS = async (userId, projectId, elements, websiteSettings)
       throw new Error('No IPFS hash returned from Pinata');
     }
 
-    const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
+    const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}/${encodeURIComponent(siteTitle)}`;
 
     return {
       ipfsUrl,
       ipfsHash
     };
   } catch (error) {
-    console.error('Error deploying to IPFS:', error);
     throw error;
   }
 };
@@ -247,8 +290,8 @@ export function formatIpfsUrl(url) {
   try {
     const hash = url.split('/').pop();
     return `ipfs://${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
-  } catch (error) {
-    console.error('Error formatting IPFS URL:', error);
+  } catch (err) {
+    if (import.meta.env.DEV) console.error('[ipfsUtils] Failed to format IPFS URL:', err);
     return url;
   }
 } 

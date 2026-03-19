@@ -1,60 +1,82 @@
 import { useDrop } from 'react-dnd';
-import React from 'react';
+import React, { useContext } from 'react';
+import { ALL_DROPPABLE_TYPES } from '../core/elementRegistry';
+import { isDescendantOf, getDropPosition, DROP_REJECTION_REASONS } from './dndUtils';
+import { useToast } from '../context/ToastContext';
+import { EditableContext } from '../context/EditableContext';
 
 const useElementDrop = ({ id, elementRef, onDropItem }) => {
-  // Define all possible element types that can be dropped
-  const acceptedTypes = [
-    // Layout elements
-    'navbar', 'hero', 'cta', 'section', 'footer', 'defiSection', 'mintingSection',
-    // Basic elements
-    'div', 'span', 'p', 'heading', 'button', 'image', 'link',
-    // Form elements
-    'form', 'input', 'textarea', 'select', 'label',
-    // List elements
-    'ul', 'ol', 'li',
-    // Media elements
-    'video', 'youtubevideo', 'bgvideo',
-    // Web3 elements
-    'defiModule', 'mintingSection', 'candymachine',
-    // Typography elements
-    'blockquote', 'code', 'pre', 'caption',
-    // Other elements
-    'container', 'gridlayout', 'hflexlayout', 'vflexlayout'
-  ];
-
+  const { showToast } = useToast();
+  const { elements } = useContext(EditableContext);
   const [{ isOverCurrent, canDrop }, drop] = useDrop(() => ({
-    accept: acceptedTypes,
+    accept: ALL_DROPPABLE_TYPES,
     drop: (item, monitor) => {
       // If a nested drop target already handled the drop, do nothing
       if (monitor.didDrop()) return;
 
-      // Get the drop target's position
-      const dropTargetRect = elementRef.current?.getBoundingClientRect();
-      if (!dropTargetRect) return;
+      // Circular reference guard: block dropping a container into its own descendant
+      if (item.id && id && elements) {
+        if (isDescendantOf(item.id, id, elements)) {
+          if (import.meta.env.DEV) console.warn('[DnD] Blocked: cannot drop element into its own descendant');
+          showToast(DROP_REJECTION_REASONS.CIRCULAR, 'info');
+          return;
+        }
+      }
 
-      // Calculate the drop position relative to the target
-      const clientOffset = monitor.getClientOffset();
-      if (!clientOffset) return;
+      // Use shared bounds-checking utility
+      const pos = getDropPosition(elementRef, monitor);
+      if (!pos) return;
 
-      const relativeY = clientOffset.y - dropTargetRect.top;
-      const relativeX = clientOffset.x - dropTargetRect.left;
+      const { relativeX, relativeY, isWithinBounds, targetRect } = pos;
 
-      // Determine if the drop is within the target's bounds
-      const isWithinBounds = 
-        relativeX >= 0 && 
-        relativeX <= dropTargetRect.width && 
-        relativeY >= 0 && 
-        relativeY <= dropTargetRect.height;
-
-      // Calculate the drop index based on position
-      const dropIndex = Math.floor(relativeY / (dropTargetRect.height / (dropTargetRect.children?.length || 1)));
+      // Calculate precise drop index by walking actual DOM children
+      let dropIndex = 0;
+      const containerEl = elementRef.current;
+      if (containerEl) {
+        const clientOffset = monitor.getClientOffset();
+        const children = Array.from(containerEl.children).filter(child =>
+          !child.dataset?.dropIndicator && !child.classList?.contains('drop-insertion-line')
+        );
+        for (let i = 0; i < children.length; i++) {
+          const childRect = children[i].getBoundingClientRect();
+          const midY = childRect.top + childRect.height / 2;
+          if (clientOffset.y < midY) { dropIndex = i; break; }
+          dropIndex = i + 1;
+        }
+      }
 
       if (isWithinBounds) {
+        // Transform saved block items into a normal element config so container
+        // drop handlers (which call addNewElement(item.type, ...)) work correctly.
+        let resolvedItem = item;
+        if (item.type === 'savedBlock' && item.blockElements) {
+          const blockEls = item.blockElements;
+          const rootEl = blockEls.find(el => !el.parentId || !blockEls.some(b => b.id === el.parentId));
+          if (rootEl) {
+            const buildBlockConfig = (el, depth = 0) => {
+              if (depth > 20) return { type: el.type, styles: el.styles || {}, content: el.content || '', children: [] };
+              const config = { ...el };
+              delete config.id;
+              delete config.parentId;
+              if (el.children && el.children.length > 0) {
+                config.children = el.children
+                  .map(childId => blockEls.find(b => b.id === childId))
+                  .filter(Boolean)
+                  .map(child => buildBlockConfig(child, depth + 1));
+              } else {
+                config.children = [];
+              }
+              return config;
+            };
+            resolvedItem = buildBlockConfig(rootEl);
+          }
+        }
+
         // Call onDropItem with the item, index, and position information
-        onDropItem(item, dropIndex, {
+        onDropItem(resolvedItem, dropIndex, {
           x: relativeX,
           y: relativeY,
-          targetRect: dropTargetRect,
+          targetRect,
           isWithinBounds,
           dropIndex
         });
@@ -64,45 +86,14 @@ const useElementDrop = ({ id, elementRef, onDropItem }) => {
       // If a nested drop target is handling the hover, do nothing
       if (monitor.didDrop()) return;
 
-      // Get the drop target's position
-      const dropTargetRect = elementRef.current?.getBoundingClientRect();
-      if (!dropTargetRect) return;
-
-      // Calculate the hover position relative to the target
-      const clientOffset = monitor.getClientOffset();
-      if (!clientOffset) return;
-
-      const relativeY = clientOffset.y - dropTargetRect.top;
-      const relativeX = clientOffset.x - dropTargetRect.left;
-
-      // Determine if the hover is within the target's bounds
-      const isWithinBounds = 
-        relativeX >= 0 && 
-        relativeX <= dropTargetRect.width && 
-        relativeY >= 0 && 
-        relativeY <= dropTargetRect.height;
-
-      // Update cursor style based on whether we can drop
-      if (isWithinBounds) {
-        document.body.style.cursor = 'copy';
-      } else {
-        document.body.style.cursor = 'not-allowed';
-      }
-
-      return isWithinBounds;
+      // Evaluate bounds (side-effect only — react-dnd ignores hover return values)
+      getDropPosition(elementRef, monitor);
     },
     collect: (monitor) => ({
       isOverCurrent: monitor.isOver({ shallow: true }),
       canDrop: monitor.canDrop(),
     }),
-  }), [id, onDropItem, elementRef]);
-
-  // Clean up cursor style when component unmounts
-  React.useEffect(() => {
-    return () => {
-      document.body.style.cursor = 'default';
-    };
-  }, []);
+  }), [id, onDropItem, elementRef, elements, showToast]);
 
   return { isOverCurrent, canDrop, drop };
 };

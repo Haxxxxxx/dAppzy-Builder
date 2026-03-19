@@ -53,6 +53,13 @@ const Button = ({ id, content: initialContent, styles: customStyles }) => {
 
   // Ensure styles are properly merged
   const mergedStyles = {
+    padding: '10px 20px',
+    borderRadius: '6px',
+    fontSize: '14px',
+    fontWeight: '500',
+    backgroundColor: '#3B82F6',
+    color: '#FFFFFF',
+    width: 'fit-content',
     ...styles,
     ...customStyles,
     cursor: 'text',

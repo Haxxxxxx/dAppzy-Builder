@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, arrayUnion, collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { getAuth } from 'firebase/auth';
 import { useSubscription } from '../context/SubscriptionContext';
 import { useWalletContext } from '../context/WalletContext';
 import './css/UpgradePopup.css';
 import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { createTransferInstruction, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { getPlanPrice, PLANS, getPlanFeatures } from '../utils/planConfig';
 
-const ADMIN_WALLET = process.env.REACT_APP_SOLANA_ADMIN_WALLET;
+const ADMIN_WALLET = import.meta.env.VITE_SOLANA_ADMIN_WALLET;
+
+// USDC SPL Token mint address on Solana mainnet
+const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+const USDC_DECIMALS = 6;
 
 // Configure RPC endpoints
-const HELIUS_RPC = process.env.REACT_APP_HELIUS_API_KEY
-  ? `https://mainnet.helius-rpc.com/?api-key=${process.env.REACT_APP_HELIUS_API_KEY}`
+const HELIUS_RPC = import.meta.env.VITE_HELIUS_API_KEY
+  ? `https://mainnet.helius-rpc.com/?api-key=${import.meta.env.VITE_HELIUS_API_KEY}`
   : null;
 
 // Fallback RPC endpoints in case Helius fails
@@ -32,7 +36,8 @@ const isValidSolanaAddress = (address) => {
     if (!address) return false;
     new PublicKey(address);
     return true;
-  } catch {
+  } catch (err) {
+    /* security: fail silently by design */
     return false;
   }
 };
@@ -44,13 +49,10 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const [billingCycle, setBillingCycle] = useState('annual');
   const [step, setStep] = useState('select-plan'); // 'select-plan' | 'form' | 'paying' | 'success' | 'error'
   const [error, setError] = useState('');
-  const [debug, setDebug] = useState('');
   const [displayWallet, setDisplayWallet] = useState(null);
   const [transactionSignature, setTransactionSignature] = useState(null);
-  const [toggleYearly, setToggleYearly] = useState(true);
-  const planBillingCycle = toggleYearly ? 'yearly' : 'monthly';
-  const pioneerPrice = getPlanPrice('pioneer', planBillingCycle) || 20;
   const [solUsd, setSolUsd] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('sol'); // 'sol' | 'usdc'
 
   // Fetch SOL price
   useEffect(() => {
@@ -60,7 +62,6 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
         const data = await res.json();
         setSolUsd(data.solana.usd);
       } catch (err) {
-        console.error('Failed to fetch SOL price:', err);
         setSolUsd(null);
       }
     }
@@ -77,7 +78,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
     return (
       <div className="membership-card-price-row">
         <div className="membership-card-price">
-          <img src='../img/usdc-logo.png' alt="USDC" />
+          <img src='/img/usdc-logo.png' alt="USDC" />
           {price}
         </div>
         <span className="membership-card-currency">/month</span>
@@ -90,16 +91,9 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
     );
   };
 
-  // Calculate prices and discounts
+  // Calculate prices
   const usdcPrice = getPlanPrice('pioneer', billingCycle);
   const solPrice = solUsd ? (usdcPrice / solUsd).toFixed(4) : null;
-  
-  const hasAdminDiscount = userProfile?.community === 'Admin';
-  const hasSuperteamDiscount = userProfile?.community === 'Superteam' && userProfile?.referralCode === 'SUPERTEAM25';
-  
-  const finalSolPrice = hasAdminDiscount ? 0 : 
-                       hasSuperteamDiscount ? (solPrice / 2).toFixed(4) : 
-                       solPrice;
 
   // Get Solana wallet address
   const getSolanaWalletAddress = async () => {
@@ -135,7 +129,6 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
           throw err;
         }
       } catch (error) {
-        console.error('Failed to get wallet address:', error);
         return null;
       }
     }
@@ -154,15 +147,14 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const getWorkingConnection = async () => {
     for (const endpoint of RPC_ENDPOINTS) {
       try {
-        setDebug(`Trying to connect to ${endpoint}...`);
+        /* debug: trying endpoint */
         const connection = new Connection(endpoint, 'confirmed');
         // Test the connection
         await connection.getLatestBlockhash();
-        setDebug(`Successfully connected to ${endpoint}`);
+        /* debug: connected */
         return connection;
       } catch (error) {
-        console.warn(`Failed to connect to ${endpoint}:`, error);
-        setDebug(`Failed to connect to ${endpoint}: ${error.message}`);
+        /* debug: endpoint failed */
         continue;
       }
     }
@@ -173,7 +165,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
   const handleConfirmUpgrade = async () => {
     setStep('paying');
     setError('');
-    setDebug('');
+
     try {
       if (!displayWallet || !isValidSolanaAddress(displayWallet)) {
         setStep('error');
@@ -190,91 +182,121 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
       const fromWallet = new PublicKey(displayWallet);
       const toWallet = new PublicKey(ADMIN_WALLET);
 
-      // Calculate final price with discounts
       const usdcPrice = getPlanPrice('pioneer', billingCycle);
-      const solPrice = solUsd ? (usdcPrice / solUsd) : 0;
-      const hasAdminDiscount = userProfile?.community === 'Admin';
-      const hasSuperteamDiscount = userProfile?.community === 'Superteam' && userProfile?.referralCode === 'SUPERTEAM25';
-      
-      const finalSolPrice = hasAdminDiscount ? 0 : 
-                           hasSuperteamDiscount ? solPrice / 2 : 
-                           solPrice;
+      let sig;
 
-      const lamports = Math.round(finalSolPrice * LAMPORTS_PER_SOL);
+      if (paymentMethod === 'usdc') {
+        // USDC SPL Token transfer
+        const amount = Math.round(usdcPrice * Math.pow(10, USDC_DECIMALS));
 
-      // Check SOL balance
-      const balanceLamports = await connection.getBalance(fromWallet);
-      if (balanceLamports < lamports) {
-        setStep('error');
-        setError(`Insufficient SOL balance. You need ${finalSolPrice.toFixed(4)} SOL.`);
-        return;
+        const fromAta = await getAssociatedTokenAddress(USDC_MINT, fromWallet);
+        const toAta = await getAssociatedTokenAddress(USDC_MINT, toWallet);
+
+        const transaction = new Transaction().add(
+          createTransferInstruction(
+            fromAta,
+            toAta,
+            fromWallet,
+            amount,
+            [],
+            TOKEN_PROGRAM_ID
+          )
+        );
+
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromWallet;
+
+        const signed = await window.solana.signTransaction(transaction);
+        sig = await connection.sendRawTransaction(signed.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
+
+        setTransactionSignature(sig);
+
+        const confirmation = await connection.confirmTransaction({
+          signature: sig, blockhash, lastValidBlockHeight
+        }, 'confirmed');
+
+        if (confirmation.value.err) {
+          throw new Error(`Transaction failed: ${confirmation.value.err}`);
+        }
+      } else {
+        // SOL native transfer (existing flow)
+        const solPrice = solUsd ? (usdcPrice / solUsd) : 0;
+        const lamports = Math.round(solPrice * LAMPORTS_PER_SOL);
+
+        const balanceLamports = await connection.getBalance(fromWallet);
+        if (balanceLamports < lamports) {
+          setStep('error');
+          setError(`Insufficient SOL balance. You need ${solPrice.toFixed(4)} SOL.`);
+          return;
+        }
+
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: fromWallet,
+            toPubkey: toWallet,
+            lamports,
+          })
+        );
+
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = fromWallet;
+
+        const signed = await window.solana.signTransaction(transaction);
+        sig = await connection.sendRawTransaction(signed.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
+
+        setTransactionSignature(sig);
+
+        const confirmation = await connection.confirmTransaction({
+          signature: sig, blockhash, lastValidBlockHeight
+        }, 'confirmed');
+
+        if (confirmation.value.err) {
+          throw new Error(`Transaction failed: ${confirmation.value.err}`);
+        }
       }
 
-      // Create SOL transfer transaction
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: fromWallet,
-          toPubkey: toWallet,
-          lamports,
-        })
-      );
-
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = fromWallet;
-
-      const signed = await window.solana.signTransaction(transaction);
-      const sig = await connection.sendRawTransaction(signed.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-        maxRetries: 3
-      });
-
-      // Store the transaction signature
-      setTransactionSignature(sig);
-
-      const confirmation = await connection.confirmTransaction({
-        signature: sig,
-        blockhash,
-        lastValidBlockHeight
-      }, 'confirmed');
-
-      if (confirmation.value.err) {
-        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      // Verify payment and activate subscription server-side
+      const auth = getAuth();
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      if (!idToken) {
+        throw new Error('Not authenticated. Please sign in again.');
       }
 
-      // Create transaction record
-      const transactionRecord = {
-        walletId: displayWallet,
-        PlanTitle: 'Pioneer Plan',
-        solAmount: finalSolPrice.toFixed(4),
-        solLink: `https://solscan.io/tx/${sig}`,
-        price: `$ ${usdcPrice.toFixed(2)}`,
-        date: new Date().toISOString()
-      };
-
-      // Add transaction to transactions collection
-      await addDoc(collection(db, "transactions"), transactionRecord);
-
-      // Update Firestore with new subscription
-      const userRef = doc(db, 'users', displayWallet);
-      await updateDoc(userRef, {
-        subscriptionStatus: 'pioneer',
-        upgradedAt: new Date().toISOString(),
-        billingCycle,
-        subscriptionStartDate: new Date().toISOString(),
-        subscriptionEndDate: new Date(Date.now() + (billingCycle === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString(),
-        appliedDiscount: hasAdminDiscount ? 'admin' : hasSuperteamDiscount ? 'superteam' : null,
-        originalPrice: usdcPrice,
-        finalPrice: finalSolPrice
+      const cfBaseUrl = import.meta.env.VITE_CF_BASE_URL;
+      const verifyRes = await fetch(`${cfBaseUrl}/verifySubscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          transactionSignature: sig,
+          walletAddress: displayWallet,
+          billingCycle,
+          paymentMethod,
+        }),
       });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) {
+        throw new Error(verifyData.error || 'Server verification failed');
+      }
 
       setSubscriptionStatus('pioneer');
       setStep('success');
     } catch (e) {
       setStep('error');
       setError(`An error occurred while processing your payment: ${e.message}`);
-      console.error('Upgrade payment error:', e);
     }
   };
 
@@ -331,7 +353,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
           <div className='upgrade-popup-title-box-right'>
             <button className="upgrade-popup-close-button" onClick={onClose}>×</button>
           </div>
-          <i class="bi bi-x-circle" style={{ fontSize: '40px', color: 'var(--purple)' }}></i>
+          <i className="bi bi-x-circle" style={{ fontSize: '40px', color: 'var(--purple)' }}></i>
           <h2 className="upgrade-title">Payment Error</h2>
           <div className="upgrade-section-label">{error}</div>
           <button className="upgrade-confirm-btn" onClick={() => setStep('form')}>Try Again</button>
@@ -397,20 +419,24 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   )}
 
                   <div className="membership-details-card-price-row">
-                    <div className="membership-details-card-price">{renderPrice(selectedPlan, false)}</div>
+                    <div className="membership-details-card-price">
+                      <img src='/img/usdc-logo.png' alt="USDC" />
+                      {getPlanPrice(selectedPlan, billingCycle)}
+                    </div>
+                    <span className="membership-card-currency">/month</span>
                   </div>
                 </div>
                 <ul className='membership-card-details-check-list'>
                   {getPlanFeatures(selectedPlan).map((f, i) => (
                     <li key={i} className='membership-card-details-check-item'>
-                      <i class="bi bi-check-circle-fill"></i> {f}
+                      <i className="bi bi-check-circle-fill"></i> {f}
                     </li>
                   ))}
                 </ul>
                 {selectedPlan === 'pioneer' ? (
                   <button className="membership-card-details-purchase-btn" onClick={() => setStep('form')}>Purchase Plan</button>
                 ) : (
-                  <button className="membership-card-details-current-plan-btn" disabled><i class="bi bi-lock-fill"></i>Current Plan</button>
+                  <button className="membership-card-details-current-plan-btn" disabled><i className="bi bi-lock-fill"></i>Current Plan</button>
                 )}
               </div>
             </div>
@@ -443,7 +469,7 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   <div className="membership-card-title">Monthly</div>
                   <div className="membership-card-price-row">
                     <div className="membership-card-price">
-                      <img src='../img/usdc-logo.png' alt="USDC" />
+                      <img src='/img/usdc-logo.png' alt="USDC" />
                       {getPlanPrice('pioneer', 'monthly')}
                     </div>
                     <span className="membership-card-currency">/month</span>
@@ -463,10 +489,48 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
                   </div>
                   <div className="membership-card-price-row">
                     <div className="membership-card-price">
-                      <img src='../img/usdc-logo.png' alt="USDC" />
+                      <img src='/img/usdc-logo.png' alt="USDC" />
                       {getPlanPrice('pioneer', 'annual')}
                     </div>
                     <span className="membership-card-currency">/month</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div className="upgrade-popup-section">
+            <p className="upgrade-section-label">Payment Method</p>
+            <div className="membership-toggle-cards modern">
+              <label className={`membership-card ${paymentMethod === 'sol' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  checked={paymentMethod === 'sol'}
+                  onChange={() => setPaymentMethod('sol')}
+                  name="paymentMethod"
+                />
+                <div className="membership-card-content">
+                  <div className="membership-card-title">SOL</div>
+                  <div className="membership-card-price-row">
+                    <div className="membership-card-price">
+                      {solUsd ? (getPlanPrice('pioneer', billingCycle) / solUsd).toFixed(4) : '...'} SOL
+                    </div>
+                  </div>
+                </div>
+              </label>
+              <label className={`membership-card ${paymentMethod === 'usdc' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  checked={paymentMethod === 'usdc'}
+                  onChange={() => setPaymentMethod('usdc')}
+                  name="paymentMethod"
+                />
+                <div className="membership-card-content">
+                  <div className="membership-card-title">USDC</div>
+                  <div className="membership-card-price-row">
+                    <div className="membership-card-price">
+                      <img src='/img/usdc-logo.png' alt="USDC" style={{width: '18px', height: '18px'}} />
+                      {getPlanPrice('pioneer', billingCycle)} USDC
+                    </div>
                   </div>
                 </div>
               </label>
@@ -478,19 +542,26 @@ const UpgradePopup = ({ onClose, userProfile, userPlan }) => {
             </div>
             <div className="upgrade-total-value">
               <b>
-                {getPlanPrice('pioneer', billingCycle)} USDC
-                <span style={{ margin: '0 8px', color: '#A9A9B3' }}>≈</span>
-                {solUsd ? (getPlanPrice('pioneer', billingCycle) / solUsd).toFixed(4) : '...'} SOL
+                {paymentMethod === 'usdc'
+                  ? `${getPlanPrice('pioneer', billingCycle)} USDC`
+                  : `${solUsd ? (getPlanPrice('pioneer', billingCycle) / solUsd).toFixed(4) : '...'} SOL`
+                }
               </b>
             </div>
           </div>
           <div className="upgrade-warning modern">
-            <i class="bi bi-exclamation-triangle"></i>
+            <i className="bi bi-exclamation-triangle"></i>
             <p className='upgrade-warning-text'>
               To renew your monthly subscription, you will need to manually sign a message directly on the builder. You'll receive an email notification when it's time to renew, and you'll have <b>14 days</b> to complete the signature process to keep your access.
             </p>
           </div>
-          <button className="upgrade-confirm-btn" onClick={handleConfirmUpgrade}>Confirm Upgrade</button>
+          <button
+            className="upgrade-confirm-btn"
+            onClick={handleConfirmUpgrade}
+            disabled={paymentMethod === 'sol' && (!solUsd || solUsd <= 0)}
+          >
+            {paymentMethod === 'sol' && !solUsd ? 'SOL price unavailable — try again later' : 'Confirm Upgrade'}
+          </button>
           <div className="upgrade-terms">
             By clicking "Confirm Upgrade", you agree to our <a href='/terms' className='upgrade-terms-link' target='_blank'>Terms of Service</a>.
           </div>

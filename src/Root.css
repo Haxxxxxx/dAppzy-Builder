@@ -1,14 +1,126 @@
 :root {
+  /* Typography */
+  --font-primary: 'Montserrat', sans-serif;
+  --font-secondary: 'Inter', sans-serif;
 
-  /* Colors */
+  /* Brand Colors */
   --purple: #5C4EFA;
   --purple-hover: #4a3afa;
+  --light-purple: #E4E0F9;
+
+  /* Neutral Colors */
+  --black: #131313;
   --dark-gray: #57575B;
-  --white: #FFF;
-  --editor-text: #D9D9D9;
   --not-selected: #838389;
+  --editor-text: #D9D9D9;
+  --white: #FFF;
+  --light-gray: #FFFFFF;
+
+  /* Surface Colors */
   --builder-bg: #313031;
-  
+  --input-bg: rgba(0, 0, 0, 0.45);
+  --panel-bg: #2B2B2B;
+  --border-color: #444;
+
+  /* Semantic Colors */
+  --error-red: #dc3545;
+  --success-green: #4CAF50;
+  --warning-yellow: #FFC107;
+  --info-blue: #4A90E2;
+
+  /* Editor Colors */
+  --editor-bg: #2a2a2a;           /* Editor panel backgrounds */
+  --editor-bg-dark: #3a3a3a;      /* Darker editor inputs/containers */
+  --accent-blue: #217bf4;         /* Blue accent in editors */
+
+  /* Extended Palette */
+  --purple-dark: #7c3aed;         /* Darker purple variant */
+  --purple-light: #a78bfa;        /* Lighter purple variant */
+  --overlay-dark: rgba(0, 0, 0, 0.5); /* Dark overlay for modals */
+  --error-alt: #FF4747;           /* Alternative error red */
+  --surface-light: #f5f5f5;       /* Light gray surfaces */
+  --border-dark: #555;            /* Darker border color */
+
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-dropzone: 10;           /* Drop zones — just above canvas elements */
+  --z-dropdown: 10;
+  --z-sidebar: 20;
+  --z-sticky: 50;
+  --z-overlay: 100;
+  --z-panel: 100;             /* Sidebar / right panel */
+  --z-dropdown-menu: 200;     /* Dropdown menus (topbar publish, etc.) */
+  --z-modal: 300;             /* Modals (version history, upgrade, share, confirm) */
+  --z-popover: 301;           /* Popover panels on top of modals */
+  --z-context-menu: 2000;
+  --z-tooltip: 9999;
+  --z-top: 10000;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-round: 50%;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+
+  /* Text Colors */
+  --text-primary: #333;
+  --text-secondary: #888;
+
+  /* Extended Neutral Colors */
+  --text-muted: #9CA3AF;          /* Muted text/icons */
+  --container-bg: #e0e0e0;        /* Container placeholder bg */
+  --modal-bg: #1F2937;            /* Modal/popup backgrounds */
+  --tag-bg: #4D4D4D;              /* Tag/chip backgrounds */
+
+  /* Button Colors */
+  --button-blue: #3498db;         /* Blue action buttons */
+  --button-blue-hover: #357ABD;   /* Blue button hover */
+
+  /* Purple Transparent Variants */
+  --purple-10: rgba(92, 78, 250, 0.1);  /* Purple 10% opacity */
+  --purple-20: rgba(92, 78, 250, 0.2);  /* Purple 20% opacity */
+  --white-10: rgba(255, 255, 255, 0.1); /* White 10% opacity */
+
+  /* Login Colors */
+  --login-bg: #030014;
+  --login-text: #F4F0FF;
+  --login-btn-border: #24292E;
+  --login-btn-bg: #1A1D21;
+
+  /* Extended Editor Colors */
+  --accent-blue-hover: #217cf4a2;       /* Blue accent with opacity for hover states */
+  --editor-bg-darker: #1f1f1f;          /* Darkest editor background (padding box) */
+  --surface-dark: #4a4a4a;              /* Dark hover surface */
+
+  /* Extended Purple */
+  --purple-darker: #6d28d9;             /* Darkest purple variant */
+
+  /* Error Variants */
+  --error-400: #ef4444;                 /* Tailwind red-400 */
+
+  /* Blue Gradient Colors */
+  --blue-600: #2563EB;                  /* Upgrade button gradient start */
+  --blue-700: #1D4ED8;                  /* Upgrade button gradient end */
+
+  /* Canvas Element States */
+  --drop-hover-bg: rgba(92, 78, 250, 0.06);
+  --drop-hover-outline: rgba(92, 78, 250, 0.5);
+  --option-bg: #e5e8ea;
+  --option-bg-hover: #d4d8dc;
+  --option-border: #e5e8ea;
+  --option-border-hover: #bfc5c9;
+  --option-text: var(--dark-gray);
 }
 
 * {

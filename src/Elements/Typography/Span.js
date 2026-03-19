@@ -1,10 +1,13 @@
-import React, { useContext, useRef, useEffect } from 'react';
+import React, { useContext, useRef, useEffect, useState, useCallback } from 'react';
 import { EditableContext } from '../../context/EditableContext';
+import RichTextToolbar from '../../components/RichTextToolbar';
 
 const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
   const { selectedElement, setSelectedElement, updateContent, elements, findElementById } =
     useContext(EditableContext);
   const spanRef = useRef(null);
+  const [hasFocus, setHasFocus] = useState(false);
+  const isFocusedRef = useRef(false);
 
   // Get full element data (including settings, configuration, etc.)
   const elementData = findElementById(id, elements) || {};
@@ -12,16 +15,33 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
 
   // When selecting, pass along the full element data
   const handleSelect = (e) => {
-    e.stopPropagation(); // Prevent parent from being selected
+    e.stopPropagation();
     setSelectedElement(elementData);
   };
 
-  // Update content on blur
-  const handleBlur = (e) => {
+  // Update content on blur — save innerHTML for rich text
+  const handleBlur = useCallback((e) => {
+    isFocusedRef.current = false;
+    setHasFocus(false);
     if (selectedElement?.id === id) {
-      updateContent(id, e.target.innerText.trim() || 'Editable Span'); // Default text if empty
+      updateContent(id, e.target.innerHTML.trim() || 'Editable Span');
     }
-  };
+  }, [selectedElement, id, updateContent]);
+
+  const handleFocus = useCallback(() => {
+    isFocusedRef.current = true;
+    setHasFocus(true);
+  }, []);
+
+  // Sync content from props into the DOM only when NOT actively editing
+  useEffect(() => {
+    if (spanRef.current && !isFocusedRef.current) {
+      const incoming = content || 'Editable Span';
+      if (spanRef.current.innerHTML !== incoming) {
+        spanRef.current.innerHTML = incoming;
+      }
+    }
+  }, [content]);
 
   // Autofocus when selected
   useEffect(() => {
@@ -29,6 +49,9 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
       spanRef.current.focus();
     }
   }, [selectedElement, id]);
+
+  const isSelected = selectedElement?.id === id;
+  const showToolbar = isSelected && hasFocus;
 
   if (label) {
     return (
@@ -42,13 +65,15 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
         >
           {label}
         </span>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', position: 'relative' }}>
+          {showToolbar && <RichTextToolbar containerRef={spanRef} />}
           <span
             id={id}
             ref={spanRef}
             onClick={handleSelect}
-            contentEditable={selectedElement?.id === id}
+            contentEditable={isSelected}
             onBlur={handleBlur}
+            onFocus={handleFocus}
             suppressContentEditableWarning={true}
             style={{
               ...styles,
@@ -58,9 +83,7 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
               cursor: 'text',
               wordWrap: 'break-word',
             }}
-          >
-            {content || 'Editable Span'}
-          </span>
+          />
         </div>
       </div>
     );
@@ -68,24 +91,26 @@ const Span = ({ id, content: initialContent, styles: customStyles, label }) => {
 
   // Render content only
   return (
-    <span
-      id={id}
-      ref={spanRef}
-      onClick={handleSelect}
-      contentEditable={selectedElement?.id === id}
-      onBlur={handleBlur}
-      suppressContentEditableWarning={true}
-      style={{
-        ...styles,
-        ...customStyles,
-        cursor: 'text',
-        border: 'none',
-        outline: 'none',
-        display: 'inline-block'
-      }}
-    >
-      {content || 'Editable Span'}
-    </span>
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      {showToolbar && <RichTextToolbar containerRef={spanRef} />}
+      <span
+        id={id}
+        ref={spanRef}
+        onClick={handleSelect}
+        contentEditable={isSelected}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
+        suppressContentEditableWarning={true}
+        style={{
+          ...styles,
+          ...customStyles,
+          cursor: 'text',
+          border: 'none',
+          outline: 'none',
+          display: 'inline-block',
+        }}
+      />
+    </div>
   );
 };
 

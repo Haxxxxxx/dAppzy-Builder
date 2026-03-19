@@ -1,41 +1,19 @@
-import { PublicKey, Transaction, ComputeBudgetProgram, Connection, SystemProgram, LAMPORTS_PER_SOL, sendAndConfirmTransaction, Keypair } from '@solana/web3.js';
-import { 
-  getHashedName, 
-  getNameAccountKey,
-  NameRegistryState,
-  performReverseLookup,
-  createRecordInstruction,
-  updateRecordInstruction,
-  getAllDomains,
-  getDomainInfo as getSnsDomainInfo,
-  getRecordKey,
-  getDomainKey,
-  getRecord,
-  getIpfsRecord,
-  NAME_PROGRAM_ID,
-  getDomainMint,
-  getDomainPriceFromName,
-  getDomainKeySync,
-  getRecordKeySync,
-  getRecordV2,
-  getRecordV2Key,
-  createRecordV2Instruction,
-  updateRecordV2Instruction,
-  deleteRecordV2,
-  RecordVersion
-} from '@bonfida/spl-name-service';
+import { PublicKey, Transaction, Connection } from '@solana/web3.js';
 import { pinDirectoryToPinata } from '../../../../utils/ipfs';
-import { SNS_DOMAIN_PROGRAM } from './constants';
-import { SnsError, SnsSimulationError } from './errors';
+import { SnsError } from './errors';
 
-// Debug logging utility
-export const debugLog = (message, data = null) => {
-  const timestamp = new Date().toISOString();
-  const logMessage = data
-    ? `[SNS Debug ${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`
-    : `[SNS Debug ${timestamp}] ${message}`;
-  console.log(logMessage);
+// Lazy-load @bonfida/spl-name-service to keep it out of the eagerly-loaded topbar chunk.
+// Every function that needs it calls getSns() and awaits the result.
+let _snsPromise = null;
+const getSns = () => {
+  if (!_snsPromise) {
+    _snsPromise = import('@bonfida/spl-name-service');
+  }
+  return _snsPromise;
 };
+
+// Debug logging utility — no-op in production
+export const debugLog = () => {};
 
 // Domain name validation utility
 export const validateAndFormatDomain = (domainName) => {
@@ -86,6 +64,7 @@ export const formatIpfsUrl = (url) => {
 
 // Helper function to get record key
 async function deriveRecordKey(domainKey, recordType) {
+  const { getRecordKeySync } = await getSns();
   const recordTypeBuffer = Buffer.from(recordType);
   return getRecordKeySync(domainKey, recordTypeBuffer);
 }
@@ -122,13 +101,15 @@ export const debugTransaction = (tx, label) => {
   });
 };
 
-// Utility: Get domain state with cache
+// Utility: Get domain state with cache (30s TTL)
+const CACHE_TTL_MS = 30000;
 const domainStateCache = new Map();
 export const getDomainStateWithCache = async (connection, domainKey) => {
   const cacheKey = domainKey.toBase58();
-  if (domainStateCache.has(cacheKey)) {
+  const cached = domainStateCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     debugLog('Returning cached domain state', { domainKey: cacheKey });
-    return domainStateCache.get(cacheKey);
+    return cached.data;
   }
   try {
     // Get account info
@@ -145,6 +126,7 @@ export const getDomainStateWithCache = async (connection, domainKey) => {
       dataLength: accountInfo.data?.length
     });
     // Get domain state
+    const { NameRegistryState, performReverseLookup } = await getSns();
     const domainState = await NameRegistryState.retrieve(connection, domainKey);
     if (!domainState) {
       throw new Error('Domain state not found');
@@ -158,99 +140,12 @@ export const getDomainStateWithCache = async (connection, domainKey) => {
         name
       }
     };
-    domainStateCache.set(cacheKey, state);
+    domainStateCache.set(cacheKey, { data: state, timestamp: Date.now() });
     return state;
   } catch (error) {
     debugLog('Error retrieving domain state', {
       error: error.message,
       domainKey: cacheKey
-    });
-    throw error;
-  }
-};
-
-// Add domain cache
-const domainCache = new Map();
-
-// Get domains by owner
-export const getDomainsByOwner = async (connection, walletAddress) => {
-  try {
-    const walletPubkey = new PublicKey(walletAddress);
-    debugLog('Getting domains for wallet', { wallet: walletAddress });
-
-    // Check cache first
-    const cacheKey = walletAddress;
-    if (domainCache.has(cacheKey)) {
-      debugLog('Returning cached domains', { 
-        count: domainCache.get(cacheKey).length 
-      });
-      return domainCache.get(cacheKey);
-    }
-
-    // Get all domains owned by the wallet
-    const domainKeys = await getAllDomains(connection, walletPubkey);
-    debugLog('Found domain keys', {
-      count: domainKeys.length,
-      keys: domainKeys.map(k => k.toBase58())
-    });
-
-    // Get domain info for each key
-    const domains = await Promise.all(
-      domainKeys.map(async (key) => {
-        try {
-          // Get domain state
-          const domainState = await NameRegistryState.retrieve(connection, key);
-          if (!domainState) {
-            debugLog('No domain state found', { key: key.toBase58() });
-            return null;
-          }
-
-          // Get domain name using reverse lookup
-          const name = await performReverseLookup(connection, key);
-          if (!name) {
-            debugLog('Could not get domain name', { key: key.toBase58() });
-            return null;
-          }
-
-          const owner = domainState.owner?.toBase58();
-          const parent = domainState.parent?.toBase58();
-          const classKey = domainState.class?.toBase58();
-
-          debugLog('Domain info retrieved', {
-            key: key.toBase58(),
-            name,
-            owner,
-            parent,
-            class: classKey
-          });
-
-          return {
-            key: key.toBase58(),
-            name,
-            owner,
-            parent,
-            class: classKey
-          };
-        } catch (error) {
-          debugLog('Error getting domain info', {
-            key: key.toBase58(),
-            error: error.message
-          });
-          return null;
-        }
-      })
-    );
-
-    const validDomains = domains.filter(d => d !== null);
-    
-    // Cache the results
-    domainCache.set(cacheKey, validDomains);
-    
-    return validDomains;
-  } catch (error) {
-    debugLog('Error getting domains by owner', {
-      error: error.message,
-      wallet: walletAddress
     });
     throw error;
   }
@@ -263,16 +158,17 @@ export const exportAndUploadToIPFS = async (elements, websiteSettings, userId, g
   if (!fullHtml || typeof fullHtml !== 'string') {
     throw new Error('Invalid HTML content generated');
   }
-  // 2. Upload to IPFS
+  // 2. Upload to IPFS — fileName = siteTitle so IPFS path is /<hash>/<siteTitle>
+  const siteTitle = websiteSettings.siteTitle || 'My Website';
   const htmlBlob = new Blob([fullHtml], { type: 'text/html' });
-  const files = [{ file: htmlBlob, fileName: 'index.html', type: 'text/html' }];
+  const files = [{ file: htmlBlob, fileName: siteTitle, type: 'text/html' }];
   const metadata = {
-    name: websiteSettings.siteTitle || 'My Website',
+    name: siteTitle,
     keyvalues: { userId, timestamp: new Date().toISOString(), size: htmlBlob.size },
   };
   const ipfsHash = await pinDirectoryToPinata(files, metadata);
   if (!ipfsHash) throw new Error('No IPFS hash returned from Pinata');
-  const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
+  const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}/${encodeURIComponent(siteTitle)}`;
   debugLog('IPFS deployment complete', { cid: ipfsHash, url: ipfsUrl });
   return { ipfsHash, ipfsUrl, fullHtml };
 };
@@ -298,6 +194,7 @@ async function createRecordInstructionWithType(
   );
   
   // Create the instruction
+  const { createRecordInstruction } = await getSns();
   return createRecordInstruction(
     arrayBuffer,  // Pass the ArrayBuffer
     content,
@@ -315,11 +212,10 @@ export async function updateOrCreateIpfsRecord(
   wallet,
   domainName,
   ipfsHash,
-  debugLog = console.log
+  debugLog = () => {}
 ) {
   try {
-    // Ensure debugLog is a function
-    const log = typeof debugLog === 'function' ? debugLog : console.log;
+    const log = typeof debugLog === 'function' ? debugLog : () => {};
 
     // Validate wallet
     if (!wallet || !wallet.publicKey) {
@@ -327,7 +223,7 @@ export async function updateOrCreateIpfsRecord(
     }
 
     // Validate RPC endpoint
-    const rpcEndpoint = process.env.REACT_APP_HELIUS_RPC_URL;
+    const rpcEndpoint = import.meta.env.VITE_HELIUS_RPC_URL;
     if (!rpcEndpoint) {
       throw new Error('RPC endpoint not found in environment variables. Please check your .env file.');
     }
@@ -337,6 +233,15 @@ export async function updateOrCreateIpfsRecord(
     if (!domainName || typeof domainName !== 'string') {
       throw new Error('Invalid domain name provided');
     }
+
+    // Lazy-load SNS helpers needed for this flow
+    const {
+      getDomainKey,
+      NameRegistryState,
+      getRecordKeySync,
+      NAME_PROGRAM_ID,
+      updateRecordInstruction,
+    } = await getSns();
 
     // Ensure domain name is properly formatted
     const formattedDomainName = domainName.endsWith('.sol') ? domainName : `${domainName}.sol`;
@@ -350,23 +255,36 @@ export async function updateOrCreateIpfsRecord(
     const { pubkey: domainKey } = await getDomainKey(formattedDomainName);
     log('Domain key:', domainKey.toBase58());
 
-    // Get domain owner
+    // Get domain state and verify ownership
     const domainInfo = await connection.getAccountInfo(domainKey);
     if (!domainInfo) {
       throw new Error('Domain not found');
     }
-    const ownerKey = new PublicKey(domainInfo.owner);
+    const domainState = await NameRegistryState.retrieve(connection, domainKey);
+    const ownerKey = domainState.owner;
     log('Domain owner:', ownerKey.toBase58());
 
+    // Verify the connected wallet owns this domain
+    if (ownerKey.toBase58() !== wallet.publicKey.toBase58()) {
+      throw new SnsError(
+        `Domain ${formattedDomainName} is not owned by your wallet`,
+        'OWNERSHIP_ERROR',
+        { domain: formattedDomainName, wallet: wallet.publicKey.toBase58() }
+      );
+    }
+
+    // Check SOL balance before proceeding
+    await checkWalletBalance(connection, wallet.publicKey.toBase58());
+
     // Format IPFS URL
-    const formattedIpfsUrl = ipfsHash.startsWith('ipfs://') 
-      ? ipfsHash 
+    const formattedIpfsUrl = ipfsHash.startsWith('ipfs://')
+      ? ipfsHash
       : `ipfs://${ipfsHash.replace('https://ipfs.io/ipfs/', '')}`;
     log('Formatted IPFS URL:', formattedIpfsUrl);
 
-    // Get record key using sync version
+    // Get record key using sync version (must pass Buffer, not string)
     const recordType = 'IPFS';
-    const recordKey = getRecordKeySync(formattedDomainName, recordType);
+    const recordKey = getRecordKeySync(domainKey, Buffer.from(recordType));
     log('Record key:', recordKey.toBase58());
 
     // Check if record exists
@@ -379,8 +297,9 @@ export async function updateOrCreateIpfsRecord(
     const payerKey = wallet.publicKey;
     const programIdKey = NAME_PROGRAM_ID;
 
-    // Calculate space and lamports
-    const space = 1000; // Fixed space for IPFS records
+    // Calculate space dynamically based on content size (min 1000 bytes for future updates)
+    const contentByteLength = Buffer.byteLength(formattedIpfsUrl, 'utf-8');
+    const space = Math.max(contentByteLength + 100, 1000);
     const lamports = await connection.getMinimumBalanceForRentExemption(space);
     log('Space:', space, 'Lamports:', lamports);
 
@@ -472,7 +391,6 @@ export async function updateOrCreateIpfsRecord(
     log('Transaction confirmed:', signature);
     return signature;
   } catch (error) {
-    console.error('Error in updateOrCreateIpfsRecord:', error);
     throw error;
   }
 }
@@ -481,20 +399,21 @@ export async function updateOrCreateIpfsRecord(
 export const verifyIpfsRecordUpdate = async (connection, domainKey, expectedIpfsUrl) => {
   try {
     const formattedExpectedUrl = formatIpfsUrl(expectedIpfsUrl);
-    const recordKey = await deriveRecordKey(domainKey, 'IPFS');
-    const accountInfo = await connection.getAccountInfo(recordKey);
-    
-    if (!accountInfo || !accountInfo.data) {
+
+    // Use getIpfsRecord to properly deserialize SNS record data
+    const { getIpfsRecord } = await getSns();
+    const recordContent = await getIpfsRecord(connection, domainKey);
+
+    if (!recordContent) {
       throw new Error('IPFS record not found after update');
     }
 
-    const recordData = accountInfo.data.toString();
-    const matches = recordData === formattedExpectedUrl;
-    
+    const matches = recordContent === formattedExpectedUrl;
+
     debugLog('IPFS record verification', {
       domainKey: domainKey.toBase58(),
       expected: formattedExpectedUrl,
-      actual: recordData,
+      actual: recordContent,
       matches
     });
 
@@ -512,7 +431,7 @@ export const verifyIpfsRecordUpdate = async (connection, domainKey, expectedIpfs
   }
 };
 
-export async function getDomainsForWallet(connection, walletPublicKey, debugLog = console.log) {
+export async function getDomainsForWallet(connection, walletPublicKey, debugLog = () => {}) {
     try {
         if (!walletPublicKey) {
             throw new Error('Wallet public key is required');
@@ -521,6 +440,9 @@ export async function getDomainsForWallet(connection, walletPublicKey, debugLog 
         debugLog('Getting domains for wallet:', {
             wallet: walletPublicKey.toString()
         });
+
+        // Lazy-load SNS helpers
+        const { getAllDomains, performReverseLookup } = await getSns();
 
         // Get all domains owned by the wallet
         const domainKeys = await getAllDomains(connection, walletPublicKey);

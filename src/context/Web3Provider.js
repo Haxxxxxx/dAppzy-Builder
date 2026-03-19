@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BrowserProvider } from 'ethers';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const Web3Context = createContext();
 
@@ -15,58 +14,69 @@ const Web3Provider = ({ children }) => {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState(null);
   const [chainId, setChainId] = useState(null);
+  const ethRef = useRef(null);
 
   useEffect(() => {
-    if (window.ethereum) {
-      const browserProvider = new BrowserProvider(window.ethereum);
-      setProvider(browserProvider);
+    // Prefer MetaMask's provider if multiple providers exist (EIP-6963)
+    let eth = window.ethereum;
+    if (eth?.providers?.length) {
+      eth = eth.providers.find(p => p.isMetaMask && !p.isPhantom) || null;
+    } else if (eth?.isPhantom) {
+      eth = null; // Skip Phantom's EVM adapter — Solana handled by WalletContext
+    }
 
-      // Get initial account and chainId
+    if (eth) {
+      ethRef.current = eth;
+      // Lazy-load ethers only when MetaMask is present
+      import('ethers').then(({ BrowserProvider }) => {
+        setProvider(new BrowserProvider(eth));
+      }).catch(() => {});
+
+      // Get initial account and chainId (read-only, no popup)
       const init = async () => {
         try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          const accounts = await eth.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
             setAccount(accounts[0]);
           }
-          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          const chainId = await eth.request({ method: 'eth_chainId' });
           setChainId(chainId);
         } catch (error) {
-          console.error('Error initializing Web3:', error);
+          // Silent — Web3 init failure is non-critical
         }
       };
 
       init();
 
       // Listen for account changes
-      window.ethereum.on('accountsChanged', (accounts) => {
+      const handleAccountsChanged = (accounts) => {
         setAccount(accounts[0] || null);
-      });
+      };
+      eth.on('accountsChanged', handleAccountsChanged);
 
       // Listen for chain changes
-      window.ethereum.on('chainChanged', (chainId) => {
-        setChainId(chainId);
-      });
+      const handleChainChanged = (newChainId) => {
+        setChainId(newChainId);
+      };
+      eth.on('chainChanged', handleChainChanged);
 
       return () => {
-        window.ethereum.removeAllListeners();
+        eth.removeListener('accountsChanged', handleAccountsChanged);
+        eth.removeListener('chainChanged', handleChainChanged);
       };
     }
   }, []);
 
   const connect = async () => {
-    if (!window.ethereum) {
-      throw new Error('MetaMask is not installed');
+    const eth = ethRef.current || window.ethereum;
+    if (!eth) {
+      throw new Error('No Ethereum wallet detected');
     }
 
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setAccount(accounts[0]);
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      setChainId(chainId);
-    } catch (error) {
-      console.error('Error connecting to MetaMask:', error);
-      throw error;
-    }
+    const accounts = await eth.request({ method: 'eth_requestAccounts' });
+    setAccount(accounts[0]);
+    const newChainId = await eth.request({ method: 'eth_chainId' });
+    setChainId(newChainId);
   };
 
   const value = {

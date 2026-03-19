@@ -7,8 +7,8 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background: #030014;
-    z-index: 10;
+    background: var(--login-bg);
+    z-index: var(--z-dropdown);
     justify-content: center;
   }
   
@@ -42,7 +42,7 @@
     margin: 10px;
     display: flex;
     justify-content: center;
-    color: #FF4747;
+    color: var(--error-alt);
     text-align: center;
     font-family: Inter, sans-serif;
     font-style: normal;
@@ -53,7 +53,7 @@
   
   /* Wallet Buttons */
   .wallet-btn {
-    color: #F4F0FF;
+    color: var(--login-text);
     font-family: Inter, sans-serif;
     font-size: 16px;
     font-style: normal;
@@ -67,8 +67,8 @@
     width: 100%;
     margin-bottom: 2vh;
     border-radius: 10px;
-    border: 1px solid #24292E;
-    background: #1A1D21;
+    border: 1px solid var(--login-btn-border);
+    background: var(--login-btn-bg);
     overflow: hidden;
   }
   
@@ -92,18 +92,18 @@
   }
   
   .wallet-btn:disabled {
-    background: #1A1D21;
-    border: 1px solid #24292E;
+    background: var(--login-btn-bg);
+    border: 1px solid var(--login-btn-border);
   }
   
   .wallet-btn:disabled:hover {
     cursor: not-allowed;
-    background: #1A1D21;
+    background: var(--login-btn-bg);
   }
   
   /* Typography for H1 in the Popup */
   .popup-content h1 {
-    color: #F4F0FF;
+    color: var(--login-text);
     margin-bottom: 2vh;
     font-family: Inter, sans-serif;
     font-size: 32px;

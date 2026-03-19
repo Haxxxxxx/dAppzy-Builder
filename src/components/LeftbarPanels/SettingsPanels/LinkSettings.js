@@ -80,18 +80,11 @@ const LinkSettings = ({ onUpdateSettings, settings }) => {
     // Merge the dropdownLinks into localSettings
     const updatedSettings = { ...localSettings, dropdownLinks };
     onUpdateSettings(updatedSettings);
-    alert('Link settings saved.');
+    // Settings auto-saved via context
   };
 
   // For buttons, we want to offer "Dropdown" as an additional option.
   const additionalOptions = selectedElement?.type === 'button' ? ['Dropdown'] : [];
-
-  // (Optional) Compute a sample onClick attribute for preview purposes.
-  const computedOnClick = localSettings.targetValue
-    ? localSettings.openInNewTab
-      ? `window.open('${localSettings.targetValue}', '_blank')`
-      : `window.location.href='${localSettings.targetValue}'`
-    : '';
 
   return (
     <div className="settings-panel link-settings-panel">

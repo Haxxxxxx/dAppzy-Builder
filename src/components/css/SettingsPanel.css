@@ -1,13 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 /* Common panel styles */
 .settings-panel {
-  background-color: #313031;
+  background-color: var(--builder-bg);
   max-width: 300px;
   min-width: 200px;
-  color: var(----editor-text, #D9D9D9);
+  color: var(--editor-text, #D9D9D9);
   text-align: left;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-primary);
   font-style: normal;
   font-weight: 500;
   line-height: normal;
@@ -18,10 +16,6 @@
 
 }
 
-.settings-header {
-  margin: 15px 0 15px 0;
-}
-
 /* General settings group styling */
 .settings-group {
   display: flex;
@@ -29,8 +23,8 @@
   gap: 10px;
   justify-content: space-between;
 
-  color: #FFF;
-  font-family: "Montserrat", sans-serif;
+  color: var(--white);
+  font-family: var(--font-primary);
   font-style: normal;
   font-weight: 300;
   line-height: 100%;
@@ -46,20 +40,19 @@
 }
 
 .settings-panel input,
-.settings-panel textarea,
-.settings-panel select {
-  background: transparent;
-  color: #FFF;
-  font-size: 12px;
-  font-family: "Inter", sans-serif;
-
-  padding: 12px;
-  border-radius: 5px;
-  border: 1px solid #CBD5E1;
+.settings-panel select,
+.settings-panel textarea {
+  background: var(--editor-bg, #2a2a2a);
+  color: var(--editor-text, #e0e0e0);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-color, #444);
+  font-family: var(--font-secondary, 'Inter');
+  font-size: 13px;
 }
 
 .settings-panel option{
-  background-color: #57575B;
+  background-color: var(--dark-gray);
 }
 
 
@@ -70,7 +63,7 @@
 }
 
 .settings-panel h3 {
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-primary);
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
@@ -97,17 +90,17 @@
   justify-content: center;
   align-items: center;
   border-radius: 3px;
-  background: var(----dark-gray, #57575B);
+  background: var(--dark-gray, #57575B);
   border: none;
-  color: var(----editor-text, #D9D9D9);
-  font-family: "Montserrat", sans-serif;
+  color: var(--editor-text, #D9D9D9);
+  font-family: var(--font-primary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
 }
 
 .expand-button:hover {
-  background: #0056b3;
+  background: var(--button-blue-hover);
 }
 
 /* Expanded Mode */
@@ -118,17 +111,9 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.8);
-  z-index: 1000;
+  z-index: var(--z-modal);
   padding: 20px;
   overflow: auto;
-}
-
-.code-editor-wrapper {
-  display: flex;
-  gap: 10px;
-  flex-direction: column;
-  align-items: flex-end;
-  width: 100%;
 }
 
 .textual-settings-panel.expanded .code-editor-wrapper {
@@ -139,82 +124,50 @@
   height: 100%;
 }
 
-/* Code Editor */
-.code-editor {
-  display: flex;
-  font-family: monospace;
-  font-size: 14px;
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 0;
-  overflow: hidden;
-  width: 100%;
-}
-
-/* Line Numbers */
-.line-numbers {
-  border-radius: 7px 0 0 7px;
-  background: var(----dark-gray, #57575B);
-  color: #888;
-  padding-top: 10px;
-  text-align: right;
-  user-select: none;
-}
-
-.line-number {
-  padding: 0 8px;
-}
-
-/* Scrollable and Custom Scrollbar for Textarea */
-.code-input {
-  flex: 1;
-  font-family: monospace;
-  font-size: 14px;
-  padding: 8px;
-  border: none;
-  resize: none;
-  outline: none;
-  background: transparent;
-  color: var(----editor-text, #D9D9D9);
-  line-height: 1.4;
-  overflow-y: auto;
-  max-height: 300px;
-}
-
-/* Custom Scrollbar */
-.code-input::-webkit-scrollbar {
-  width: 8px;
-}
-
-.code-input::-webkit-scrollbar-thumb {
-  background-color: rgba(33, 123, 244, 0.7);
-  border-radius: 4px;
-}
-
-.code-input::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(33, 123, 244, 0.9);
-}
-
-.code-input::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
 .settings-panel hr{
   width: 100%;
+}
+
+/* Grid preset buttons (DisplayEditor) */
+.grid-preset-row {
+  display: flex;
+  gap: 6px;
+}
+
+.grid-preset-btn {
+  flex: 1;
+  padding: 6px;
+  cursor: pointer;
+  background: var(--input-bg, #2a2a3c);
+  color: var(--editor-text, #D9D9D9);
+  border: 1px solid var(--border-color, #3a3a4a);
+  border-radius: var(--radius-sm, 4px);
+  font-size: 13px;
+  font-family: var(--font-primary);
+  transition: background 0.15s;
+}
+
+.grid-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.grid-preset-btn.active {
+  background: var(--accent-blue, #217bf4);
+  border-color: var(--accent-blue, #217bf4);
+  color: var(--white);
 }
 
 .save-changes-btn,
 .settings-panel .save-button {
   border-radius: 5px;
-  background: #5C4EFA;
+  background: var(--purple);
   padding: 9px 13px;
-  color: #FFF;
+  color: var(--white);
   border: none;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font-primary);
 
 }
 
@@ -228,7 +181,7 @@
 
 /* Each square: border + center the image */
 .favicon-size {
-  border: 2px solid #C6BAF8;  /* faint purple border */
+  border: 2px solid var(--light-purple);  /* faint purple border */
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -257,4 +210,44 @@
   width: 100%;
   height: 100%;
   object-fit: contain;  /* keeps aspect ratio, no cropping */
+}
+
+/* Merged from HeadingSettings.css */
+.header-settings-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.header-settings-wrapper .content{
+    align-items: flex-start
+}
+
+/* Merged from FormSettings.css */
+.form-settings-panel{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.form-general-settings,
+.form-advanced-settings{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  background: var(--editor-bg, #2a2a2a);
+  color: var(--editor-text, #e0e0e0);
+  border: 1px solid var(--border-color, #444);
+  border-radius: var(--radius-sm, 4px);
+  padding: 8px 10px;
+  font-family: var(--font-secondary, 'Inter');
+  font-size: 13px;
+  line-height: 1.5;
 }

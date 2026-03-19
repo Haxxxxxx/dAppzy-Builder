@@ -1,0 +1,45 @@
+.ctx-menu {
+  position: fixed;
+  z-index: var(--z-context-menu, 2000);
+  background: var(--editor-bg, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 160px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-primary);
+}
+
+.ctx-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  background: none;
+  border: none;
+  color: var(--editor-text, #d9d9d9);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ctx-menu-item:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ctx-menu-item.disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ctx-menu-item .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--editor-muted, #888);
+}
+
+.ctx-menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}

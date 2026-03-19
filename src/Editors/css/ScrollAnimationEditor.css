@@ -1,0 +1,95 @@
+.scroll-animation-editor {
+
+}
+
+.scroll-anim-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.scroll-anim-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-anim-field label {
+  font-size: 14px;
+  color: var(--not-selected);
+  margin-bottom: 4px;
+}
+
+.scroll-anim-field select,
+.scroll-anim-field input[type="number"] {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--input-bg);
+  color: var(--editor-text);
+  font-size: 14px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.scroll-anim-field .input-with-suffix {
+  position: relative;
+  display: flex;
+}
+
+.scroll-anim-field .input-with-suffix input[type="number"] {
+  padding-right: 30px;
+}
+
+.scroll-anim-field .input-with-suffix .suffix {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--not-selected);
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.scroll-anim-toggle-row {
+  display: flex;
+  gap: 4px;
+}
+
+.scroll-anim-toggle-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.scroll-anim-toggle-btn:hover {
+  background: var(--input-bg);
+}
+
+.scroll-anim-toggle-btn.active {
+  background: var(--accent-blue, #217bf4);
+  border-color: var(--accent-blue, #217bf4);
+  color: #fff;
+}
+
+.scroll-anim-remove {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.scroll-anim-remove:hover {
+  background: var(--input-bg);
+}

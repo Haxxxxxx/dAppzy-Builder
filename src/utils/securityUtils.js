@@ -1,32 +1,3 @@
-import CryptoJS from 'crypto-js';
-
-/**
- * Encrypts sensitive data using AES-256-CBC
- * @param {string} data - The data to encrypt
- * @param {string} key - The encryption key (should be from environment variables)
- * @returns {string} The encrypted data
- */
-export const encryptData = (data, key) => {
-  if (!key) {
-    throw new Error('Encryption key is required');
-  }
-  return CryptoJS.AES.encrypt(data, key).toString();
-};
-
-/**
- * Decrypts sensitive data using AES-256-CBC
- * @param {string} encryptedData - The encrypted data
- * @param {string} key - The encryption key (should be from environment variables)
- * @returns {string} The decrypted data
- */
-export const decryptData = (encryptedData, key) => {
-  if (!key) {
-    throw new Error('Encryption key is required');
-  }
-  const bytes = CryptoJS.AES.decrypt(encryptedData, key);
-  return bytes.toString(CryptoJS.enc.Utf8);
-};
-
 /**
  * Encrypts and stores data securely
  * @param {string} key - The key to store the data under
@@ -34,7 +5,7 @@ export const decryptData = (encryptedData, key) => {
  * @throws {Error} If encryption key is not available
  */
 export const secureStore = async (key, data) => {
-  const encryptionKey = process.env.REACT_APP_ENCRYPTION_KEY;
+  const encryptionKey = import.meta.env.VITE_ENCRYPTION_KEY;
   if (!encryptionKey) {
     throw new Error('Encryption key is required for secure storage');
   }
@@ -80,7 +51,6 @@ export const secureStore = async (key, data) => {
       .replace(/=+$/, '');
     localStorage.setItem(key, base64Data);
   } catch (error) {
-    console.error('Error in secureStore:', error);
     throw error;
   }
 };
@@ -91,7 +61,7 @@ export const secureStore = async (key, data) => {
  * @returns {string|null} The decrypted data or null if not found
  */
 export const secureRetrieve = async (key) => {
-  const encryptionKey = process.env.REACT_APP_ENCRYPTION_KEY;
+  const encryptionKey = import.meta.env.VITE_ENCRYPTION_KEY;
   if (!encryptionKey) {
     throw new Error('Encryption key is required for secure retrieval');
   }
@@ -136,11 +106,11 @@ export const secureRetrieve = async (key) => {
     const decodedData = new TextDecoder().decode(decryptedData);
     try {
       return JSON.parse(decodedData);
-    } catch {
+    } catch (_) {
+      /* security: fail silently by design — data is not JSON, return raw string */
       return decodedData;
     }
   } catch (error) {
-    console.error('Error in secureRetrieve:', error);
     return null;
   }
 };

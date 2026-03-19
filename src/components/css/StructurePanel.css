@@ -1,0 +1,128 @@
+.structure-tree-node {
+  padding-left: 16px;
+  border-left: 1px solid #ccc;
+  margin-bottom: 8px;
+}
+
+.structure-tree-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.structure-tree-label.selected {
+  background-color: var(--builder-bg);
+}
+
+.structure-tree-label.hidden-element {
+  opacity: 0.45;
+}
+
+.structure-tree-label.locked-element .structure-tree-text {
+  color: var(--editor-muted, #888);
+  font-style: italic;
+}
+
+.structure-tree-toggle {
+  margin-right: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.structure-tree-children {
+  padding-left: 16px;
+}
+
+/* Search */
+.structure-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.structure-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--white);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.structure-search-input::placeholder {
+  color: var(--not-selected);
+}
+
+.structure-search-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--not-selected);
+  padding: 2px;
+  line-height: 1;
+}
+
+.structure-search-clear .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.structure-search-results {
+  padding-left: 8px;
+}
+
+.structure-no-results {
+  color: var(--not-selected);
+  font-size: 13px;
+  padding: 8px;
+}
+
+/* Reorder */
+.structure-tree-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-reorder-btns {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.structure-tree-label:hover .structure-reorder-btns {
+  opacity: 1;
+}
+
+.reorder-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: var(--not-selected);
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.reorder-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.reorder-btn:hover:not(:disabled) {
+  color: var(--purple);
+}
+
+.reorder-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

@@ -1,9 +1,11 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useRef, useState, useCallback } from 'react';
 import { useDragLayer } from 'react-dnd';
 import { EditableContext } from '../../context/EditableContext';
 import { renderElement } from '../../utils/LeftBarUtils/RenderUtils';
 import useElementDrop from '../../utils/useElementDrop';
+import useReorderDrop from '../../utils/useReorderDrop';
 import { divConfigurations } from '../../utils/UnifiedDropZone';
+import DropInsertionLine from '../../components/DropInsertionLine';
 import './css/EmptyState.css';
 
 const Div = ({
@@ -13,8 +15,12 @@ const Div = ({
   styles: passedStyles = {},
   children: passedChildren,
   onDropItem,
+  onDragOver: propDragOver,
+  onDrop: propDrop,
+  onDragLeave: propDragLeave,
+  onClick: propOnClick,
 }) => {
-  const { selectedElement, setSelectedElement, elements, addNewElement } = useContext(EditableContext);
+  const { selectedElement, setSelectedElement, elements, setElements, addNewElement, findElementById } = useContext(EditableContext);
   const [showDivOptions, setShowDivOptions] = useState(false);
   let divElement = elements.find((el) => el.id === id);
   const contextStyles = (divElement && divElement.styles) || {};
@@ -23,19 +29,31 @@ const Div = ({
   const styles = { ...passedStyles, ...contextStyles };
   const divRef = useRef(null);
 
+  // Reorder drag & drop within this container
+  const {
+    isDragging: isReorderDragging,
+    draggedId: reorderDraggedId,
+    dropIndicatorIndex,
+    dropIndicatorContainerId,
+    onDragStart: reorderDragStart,
+    onDragOver: reorderDragOver,
+    onDrop: reorderDrop,
+    onDragEnd: reorderDragEnd,
+    onDragLeave: reorderDragLeave,
+  } = useReorderDrop(findElementById, elements, setElements);
+
   // Set up drop target.
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: divRef,
     onDropItem: (item) => {
-      console.log('Div drop triggered for id:', id, 'with item:', item);
       if (onDropItem) {
         onDropItem(item, id);
       } else if (item.flexConfig) {
         // Handle flex configuration drops
         handleDivSelect(item.flexConfig);
       } else {
-        addNewElement(item.type, item.level || 1, null, id);
+        addNewElement(item.type, item.level || 1, null, id, item.children ? item : null);
       }
     },
   });
@@ -120,7 +138,6 @@ const Div = ({
           zIndex: -1,
         }}
         onError={(e) => {
-          console.error('Video background failed to load:', e);
           e.target.style.display = 'none';
         }}
       />
@@ -155,6 +172,10 @@ const Div = ({
     setShowDivOptions(true);
   };
 
+  // Whether to show the insertion indicator for this container
+  const showIndicator = isReorderDragging && dropIndicatorContainerId === id;
+  const isEmpty = !childrenToRender || (Array.isArray(childrenToRender) && nonPlaceholderChildren.length === 0);
+
   return (
     <div
       id={id}
@@ -162,118 +183,97 @@ const Div = ({
         divRef.current = node;
         drop(node);
       }}
-      onClick={handleSelect}
-      onDrop={(e) => e.stopPropagation()}
+      onClick={propOnClick || handleSelect}
+      onDragOver={propDragOver || ((e) => reorderDragOver(e, id, null, false, divRef))}
+      onDrop={propDrop || ((e) => { reorderDrop(e, id); e.stopPropagation(); })}
+      onDragLeave={propDragLeave || reorderDragLeave}
+      className={isOverCurrent ? 'container-drop-hover' : ''}
       style={{
         ...styles,
+        ...(isEmpty ? { display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' } : {}),
         padding: styles.padding || '10px',
-        margin: styles.margin || '10px 0',
+        margin: styles.margin || '0',
         position: 'relative',
-        ...(isOverCurrent ? { outline: '2px dashed #4D70FF' } : {}),
+        boxSizing: 'border-box',
       }}
     >
       {backgroundStyle}
       {(!childrenToRender ||
         (Array.isArray(childrenToRender) && nonPlaceholderChildren.length === 0)) ? (
-        <div
-          className="empty-state-container"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100px',
-            background: isOverCurrent ? '#f0f0f0' : 'transparent',
-            flexDirection: 'column',
-            gap: '16px'
-          }}
-        >
+        <div className="empty-state-container">
+          <span className="empty-state-badge">Div</span>
           {showDivOptions ? (
-            <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%', padding: '16px' }}>
+            <div className="layout-options-grid">
               {divConfigurations.map((config) => (
                 <div
                   key={config.id}
-                  className="inline-div-option"
+                  className="layout-option"
                   onClick={(e) => { e.stopPropagation(); handleDivSelect(config); }}
-                  style={{
-                    cursor: 'pointer',
-                    background: '#e5e8ea',
-                    borderRadius: '6px',
-                    padding: '8px',
-                    minWidth: '60px',
-                    minHeight: '40px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                    border: '2px solid #e5e8ea',
-                    transition: 'border 0.2s, transform 0.2s',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.border = '2px solid #bfc5c9';
-                    e.currentTarget.style.transform = 'scale(1.02)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.border = '2px solid #e5e8ea';
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
                 >
                   {config.preview}
-                  <div style={{ fontSize: '11px', color: '#555', marginTop: '4px', textAlign: 'center' }}>{config.name}</div>
+                  <div className="layout-option-label">{config.name}</div>
                 </div>
               ))}
             </div>
           ) : (
             <>
-              <button
-                className="add-element-button"
-                onClick={handleAddElement}
-                style={{
-                  background: 'var(--purple)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '40px',
-                  padding: '10px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '14px',
-                  transition: 'transform 0.2s, opacity 0.2s',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.opacity = '0.9';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.opacity = '1';
-                }}
-              >
+              <button className="add-element-btn" onClick={handleAddElement}>
                 <span className="plus-icon">+</span>
                 <span>Add Layout</span>
               </button>
-              <div style={{ fontSize: '12px', color: '#666' }}>
-                or drag and drop elements here
-              </div>
+              <div className="empty-state-hint">or drag and drop elements here</div>
             </>
           )}
         </div>
       ) : Array.isArray(childrenToRender) ? (
-        childrenToRender.map(child => {
-          if (React.isValidElement(child)) {
-            return child;
-          } else {
-            const childEl = elements.find(el => el === child || el.id === child);
-            return renderElement({ handleOpenMediaPanel }, childEl, elements, selectedElement);
-          }
+        childrenToRender.map((child, idx) => {
+          const childEl = React.isValidElement(child) ? null : elements.find(el => el === child || el.id === child);
+          const childId = childEl?.id || (React.isValidElement(child) ? child.key : null);
+          const rendered = React.isValidElement(child)
+            ? child
+            : renderElement(
+                childEl,
+                elements,
+                null,
+                setSelectedElement,
+                setElements,
+                null,
+                selectedElement,
+                null,
+                true,
+                handleOpenMediaPanel
+              );
+
+          return (
+            <React.Fragment key={childId || idx}>
+              {showIndicator && dropIndicatorIndex === idx && (
+                <DropInsertionLine />
+              )}
+              <div
+                draggable={!!childId && !isDragging}
+                onDragStart={childId && !isDragging ? (e) => reorderDragStart(e, childId, id) : undefined}
+                onDragEnd={reorderDragEnd}
+                style={{
+                  cursor: childId && !isDragging ? 'grab' : 'default',
+                  opacity: reorderDraggedId === childId ? 0.4 : 1,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                {rendered}
+              </div>
+            </React.Fragment>
+          );
         })
       ) : (
         childrenToRender
       )}
+      {/* Indicator at end position */}
+      {showIndicator && dropIndicatorIndex === (Array.isArray(childrenToRender) ? childrenToRender.length : 0) && (
+        <DropInsertionLine />
+      )}
 
-      {/* Overlay drop zone for new elements */}
-      {isDragging && !item?.id && (
+      {/* Overlay drop zone for new elements — only when hovering this specific container */}
+      {isDragging && !item?.id && isOverCurrent && (
         <div
           style={{
             position: 'absolute',
@@ -282,17 +282,17 @@ const Div = ({
             right: 0,
             bottom: 0,
             background: 'rgba(77, 112, 255, 0.1)',
-            border: '2px dashed #4D70FF',
+            border: '2px dashed var(--purple, #5C4EFA)',
             borderRadius: '4px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             pointerEvents: 'none',
-            zIndex: 1000,
+            zIndex: 5,
           }}
         >
           <span style={{ 
-            background: '#4D70FF',
+            background: 'var(--purple, #5C4EFA)',
             color: '#fff',
             padding: '8px 16px',
             borderRadius: '20px',

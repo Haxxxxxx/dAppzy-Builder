@@ -9,7 +9,7 @@ const Input = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'input', styles });
+    setSelectedElement(inputElement || { id, type: 'input', styles });
   };
 
   const handleChange = (e) => {

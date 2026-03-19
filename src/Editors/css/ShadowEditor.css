@@ -1,0 +1,188 @@
+/* ShadowEditor.css */
+
+.shadow-editor {
+
+}
+
+.shadow-preview-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  margin-bottom: 12px;
+  background: var(--editor-bg, #1e1e1e);
+  border-radius: var(--radius-sm);
+}
+
+.shadow-preview-box {
+  width: 60px;
+  height: 40px;
+  background: var(--container-bg);
+  border-radius: 4px;
+}
+
+.shadow-layer {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shadow-layer:last-of-type {
+  border-bottom: none;
+}
+
+.shadow-layer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.shadow-layer-label {
+  font-size: 12px;
+  color: var(--not-selected);
+  font-weight: 500;
+}
+
+.shadow-layer-remove {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.shadow-layer-remove:hover {
+  background: var(--editor-bg-dark);
+  color: var(--error-red);
+}
+
+.shadow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.shadow-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.shadow-field label {
+  font-size: 14px;
+  color: var(--not-selected);
+  margin-bottom: 4px;
+}
+
+.shadow-field input[type="number"] {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
+  font-size: 14px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.shadow-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shadow-color-row input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.shadow-color-row input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.shadow-color-row input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.shadow-color-row .color-hex {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
+  font-size: 14px;
+}
+
+.shadow-color-row button {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.shadow-color-row button:hover {
+  background: var(--editor-bg-dark);
+}
+
+.shadow-color-row button.active {
+  background-color: var(--accent-blue);
+  border-color: var(--accent-blue);
+
+}
+
+.shadow-add {
+  width: 100%;
+  padding: 6px;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.shadow-add:hover {
+  background: var(--editor-bg-dark);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.shadow-clear {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.shadow-clear:hover {
+  background: var(--editor-bg-dark);
+}

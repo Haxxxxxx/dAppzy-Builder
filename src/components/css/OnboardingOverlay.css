@@ -1,0 +1,115 @@
+/* Onboarding Overlay */
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: auto;
+  transition: opacity 0.3s ease;
+}
+
+.onboarding-backdrop--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Full-screen shadow layer with a transparent "hole" via box-shadow */
+.onboarding-spotlight {
+  position: fixed;
+  border-radius: 8px;
+  z-index: 10001;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  transition: top 0.35s ease, left 0.35s ease, width 0.35s ease, height 0.35s ease;
+  pointer-events: none;
+}
+
+/* Tooltip container */
+.onboarding-tooltip {
+  position: fixed;
+  z-index: 10002;
+  background: #1a1a2e;
+  border: 1px solid rgba(92, 78, 250, 0.4);
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 320px;
+  color: var(--white);
+  font-family: var(--font-primary, 'Montserrat', sans-serif);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: top 0.35s ease, left 0.35s ease, opacity 0.25s ease;
+}
+
+.onboarding-tooltip-text {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.onboarding-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.onboarding-step-counter {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.onboarding-tooltip-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.onboarding-skip-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-family: var(--font-primary, 'Montserrat', sans-serif);
+  transition: color 0.15s ease;
+}
+
+.onboarding-skip-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.onboarding-next-btn {
+  background: var(--purple, #5C4EFA);
+  color: var(--white);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-primary, 'Montserrat', sans-serif);
+  transition: background-color 0.15s ease;
+}
+
+.onboarding-next-btn:hover {
+  background: var(--purple-hover, #4a3ee0);
+}
+
+/* Progress dots */
+.onboarding-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.onboarding-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.onboarding-dot--active {
+  background: var(--purple, #5C4EFA);
+  transform: scale(1.3);
+}

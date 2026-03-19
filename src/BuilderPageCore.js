@@ -1,21 +1,30 @@
 // BuilderPageCore.js
-import React, { useRef, useEffect, useContext, useState } from "react";
+import React, { useRef, useEffect, useContext, useState, Suspense } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import "./BuilderPage.css";
 import LeftBar from "./components/LeftBar";
-import StructurePanel from "./components/LeftbarPanels/StructurePanel";
-import MediaPanel from "./components/LeftbarPanels/MediaPanel";
-import WebsiteSettingsPanel from "./components/LeftbarPanels/WebsiteSettingsPanel";
+const StructurePanel = React.lazy(() => import("./components/LeftbarPanels/StructurePanel"));
+const MediaPanel = React.lazy(() => import("./components/LeftbarPanels/MediaPanel"));
+const WebsiteSettingsPanel = React.lazy(() => import("./components/LeftbarPanels/WebsiteSettingsPanel"));
 import ContentList from "./components/ContentList";
 import { EditableContext } from "./context/EditableContext";
 import { useSubscription } from "./context/SubscriptionContext";
 import Topbar from "./components/TopBar";
-import SideBar from './components/SideBar';
-import AIAgentPanel from "./components/Rightbar/AIAgentPanel";
+const SideBar = React.lazy(() => import('./components/SideBar'));
+const AIAgentPanel = React.lazy(() => import("./components/Rightbar/AIAgentPanel"));
 import AIFloatingButton from "./components/AIFloatingButton";
-import { Web3Configs } from "./configs/Web3/Web3Configs";
 import { useWalletContext } from "./context/WalletContext";
+// Project data persisted via Firestore (AutoSaveContext)
+import ErrorBoundary from "./components/ErrorBoundary";
+import { sendChatMessage, resetChatSession } from "./services/aiBuilderService";
+import { TEMPLATES } from "./configs/templates";
+import useKeyboardShortcuts from "./hooks/useKeyboardShortcuts";
+const KeyboardShortcutsHelp = React.lazy(() => import("./components/KeyboardShortcutsHelp"));
+const OnboardingOverlay = React.lazy(() => import("./components/OnboardingOverlay"));
+const VersionHistory = React.lazy(() => import("./components/VersionHistory"));
+import CanvasBreadcrumb from "./components/CanvasBreadcrumb";
+import PageTabBar from "./components/PageTabBar";
 
 const BuilderPageCore = ({
   userId,
@@ -25,7 +34,6 @@ const BuilderPageCore = ({
   setOpenPanel,
   contentListWidth,
   setContentListWidth,
-  projects,
   activeProjectId,
   setActiveProjectId,
   pageSettings,
@@ -36,51 +44,43 @@ const BuilderPageCore = ({
   setIsPreviewMode,
   availableCanvasWidth,
   setAvailableCanvasWidth,
-  saveUserProject,
+  onBackToProjects,
+  shareUrl,
+  dashboardData,
 }) => {
   const contentRef = useRef(null);
   const mainContentRef = useRef(null);
-  const { setSelectedElement, handleAICommand, elements, selectedElement } = useContext(EditableContext);
+  const { setSelectedElement, handleAICommand, elements, selectedElement, recordElementsUpdate, pages, activePageIndex, addPage, switchPage, renamePage, removePage } = useContext(EditableContext);
   const { isPioneer, isLoading: subscriptionLoading } = useSubscription();
-  const { isConnected, walletAddress } = useWalletContext();
-  const [showAIInputBar, setShowAIInputBar] = useState(false);
-  const [initialAIMessages, setInitialAIMessages] = useState(null);
-  const [aiChatStarted, setAIChatStarted] = useState(false);
-  const [lastNavbarId, setLastNavbarId] = useState(null);
-  const [lastDefiId, setLastDefiId] = useState(null);
-  const [lastFooterId, setLastFooterId] = useState(null);
-  const [lastNavbarSpanId, setLastNavbarSpanId] = useState(null);
-  const [lastFooterSpanId, setLastFooterSpanId] = useState(null);
+  const { isConnected, walletAddress, isDevnet } = useWalletContext();
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return !localStorage.getItem('dappzy_onboarding_done'); } catch { return false; }
+  });
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  useKeyboardShortcuts({ onToggleHelp: () => setShowShortcutsHelp((v) => !v) });
   const [messages, setMessages] = useState([]);
   const [conversations, setConversations] = useState([
     { id: 1, name: 'Conversation 1', messages: [] }
   ]);
   const [activeConversationId, setActiveConversationId] = useState(1);
 
-  // Check URL parameters on mount
+  // Check URL parameters on mount — only use if authenticated
   useEffect(() => {
+    if (!isConnected || !walletAddress) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const urlUserId = urlParams.get('userId');
     const urlProjectId = urlParams.get('projectId');
 
-    if (urlUserId && !userId) {
+    // Only accept URL userId if it matches the authenticated wallet
+    if (urlUserId && urlUserId === walletAddress && !userId) {
       setUserId(urlUserId);
     }
     if (urlProjectId && !activeProjectId) {
       setActiveProjectId(urlProjectId);
     }
-  }, [userId, activeProjectId, setUserId, setActiveProjectId]);
-
-  // Skip authentication if userId is present in URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlUserId = urlParams.get('userId');
-    
-    if (urlUserId && !isConnected) {
-      // If we have userId in URL but not connected, we'll let the WalletContext handle it
-      console.log('Using URL userId for authentication:', urlUserId);
-    }
-  }, [isConnected]);
+  }, [userId, activeProjectId, setUserId, setActiveProjectId, isConnected, walletAddress]);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId) || conversations[0];
 
@@ -98,651 +98,136 @@ const BuilderPageCore = ({
     }
   };
 
-  const handleAIFloatingButtonClick = () => {
-    if (!isPioneer) {
-      // Show upgrade popup or message for non-pioneer users
-      return;
-    }
+  const handleOpenAIPanel = () => {
+    if (!isPioneer) return;
+    setOpenPanel("ai");
+  };
 
-    if (!aiChatStarted) {
-      setShowAIInputBar(true);
-      setOpenPanel("");
-    } else {
-      setOpenPanel("ai");
-      setShowAIInputBar(false);
+  // Execute a single AI command — handles both element-level and page-level actions
+  const executeAICommand = async (cmd) => {
+    switch (cmd.action) {
+      case 'updateWebsiteSettings': {
+        if (cmd.settings && typeof cmd.settings === 'object') {
+          const updated = { ...pageSettings, ...cmd.settings };
+          setPageSettings(updated);
+          // Settings saved to Firestore via AutoSaveContext
+        }
+        return;
+      }
+
+      case 'loadTemplate': {
+        const template = TEMPLATES.find(
+          t => t.name.toLowerCase() === (cmd.template || '').toLowerCase()
+        );
+        if (!template) return;
+
+        const newElements = template.elements;
+        if (newElements && newElements.length > 0) {
+          recordElementsUpdate(() => newElements);
+        }
+        if (template.websiteSettings) {
+          const updated = { ...pageSettings, ...template.websiteSettings };
+          setPageSettings(updated);
+          // Settings saved to Firestore via AutoSaveContext
+        }
+        return;
+      }
+
+      case 'createPage': {
+        const pageId = addPage(cmd.name || 'New Page', cmd.slug || '/new-page');
+        return pageId;
+      }
+
+      case 'switchPage': {
+        if (cmd.pageIndex !== undefined) {
+          switchPage(cmd.pageIndex);
+        }
+        return;
+      }
+
+      case 'renamePage': {
+        if (cmd.pageId) {
+          renamePage(cmd.pageId, cmd.name, cmd.slug);
+        }
+        return;
+      }
+
+      case 'removePage': {
+        if (cmd.pageId) {
+          removePage(cmd.pageId);
+        }
+        return;
+      }
+
+      default:
+        // Element-level commands go to EditableContext
+        return handleAICommand(cmd);
     }
   };
 
-  const handleFirstPrompt = async (userMessage) => {
+  // Single AI prompt handler — sends to Gemini, executes returned commands
+  // onCommandStatus callback reports each command as it executes (for live preview)
+  const handleAIPrompt = async (userMessage, onCommandStatus) => {
     setOpenPanel("ai");
 
     try {
-      setShowAIInputBar(false);
-      setAIChatStarted(true);
+      onCommandStatus?.({ phase: 'thinking' });
 
-      // First, show the AI response
-      const aiAnswer = {
-        role: 'assistant',
-        content: 'Creating a complete DeFi dashboard with a web3-styled navbar, comprehensive dashboard section, and footer...'
-      };
-
-      // Create new messages array and update the chat immediately
-      const newMessages = [userMessage, aiAnswer];
-      setConversations(prev => {
-        const updatedConversations = prev.map(c =>
-          c.id === activeConversationId
-            ? { ...c, messages: newMessages }
-            : c
-        );
-        return updatedConversations;
-      });
-      setMessages(newMessages);
-
-      // Then proceed with element creation
-      // Create Navbar
-      const navbarCommand = {
-        action: 'add',
-        elementType: 'navbar',
-        properties: {
-          configuration: "defiNavbar",
-          styles: {
-            backgroundColor: '#ffffff',
-            color: '#1a1a1a',
-            borderBottom: '1px solid #e5e7eb',
-            padding: '16px 24px'
-          }
-        }
-      };
-      const navbarId = await handleAICommand(navbarCommand);
-
-      // Wait for the elements to be updated in the context
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Store the navbar span ID
-      const navbar = elements.find(el => el.id === navbarId);
-      if (navbar && navbar.children) {
-        const navbarChildren = elements.filter(el => navbar.children.includes(el.id));
-        const spanElement = navbarChildren.find(el => el.type === 'span');
-        if (spanElement) {
-          setLastNavbarSpanId(spanElement.id);
-        }
-      }
-
-      // Create DeFi dashboard section
-      const defiCommand = {
-        action: 'add',
-        elementType: 'defiSection',
-        properties: {
-          configuration: 'defiSection',
-          styles: {
-            backgroundColor: '#2a2a2a',
-            color: '#fff',
-            padding: '40px',
-          },
-          children: [
-            {
-              type: 'title',
-              content: 'DeFi Dashboard',
-              styles: {
-                fontSize: '2rem',
-                color: '#fff',
-                marginBottom: '16px'
-              }
-            },
-            {
-              type: 'description',
-              content: 'Monitor your assets and track performance',
-              styles: {
-                color: '#bbb',
-                fontSize: '1.1rem',
-                marginBottom: '32px'
-              }
-            },
-            {
-              type: 'module',
-              content: 'Portfolio Overview',
-              styles: {
-                backgroundColor: '#2a2a2a',
-                borderRadius: '8px',
-                padding: '20px',
-                marginBottom: '16px'
-              },
-              children: [
-                { type: 'heading', content: 'Total Value', styles: { color: '#fff', fontSize: '1.5rem' } },
-                { type: 'value', content: '$0.00', styles: { color: '#4A90E2', fontSize: '2rem', fontWeight: 'bold' } }
-              ]
-            },
-            {
-              type: 'module',
-              content: 'Asset Allocation',
-              styles: {
-                backgroundColor: '#2a2a2a',
-                borderRadius: '8px',
-                padding: '20px',
-                marginBottom: '16px'
-              },
-              children: [
-                { type: 'heading', content: 'Asset Distribution', styles: { color: '#fff', fontSize: '1.5rem' } },
-                { type: 'chart', content: 'Pie Chart Placeholder', styles: { height: '200px' } }
-              ]
-            },
-            {
-              type: 'module',
-              content: 'Transaction History',
-              styles: {
-                backgroundColor: '#2a2a2a',
-                borderRadius: '8px',
-                padding: '20px'
-              },
-              children: [
-                { type: 'heading', content: 'Recent Transactions', styles: { color: '#fff', fontSize: '1.5rem' } },
-                { type: 'table', content: 'Transaction Table Placeholder', styles: { width: '100%' } }
-              ]
-            }
-          ]
-        },
-        position: { index: 1 }
-      };
-
-      // Create footer
-      const footerCommand = {
-        action: 'add',
-        elementType: 'footer',
-        properties: {
-          configuration: 'defiFooter',
-          styles: {
-            backgroundColor: '#ffffff',
-            color: '#1a1a1a',
-            borderTop: '1px solid #e5e5e5',
-            padding: '12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-            boxSizing: 'border-box',
-          },
-          children: [
-            {
-              type: 'image',
-              content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
-              styles: {
-                width: '32px',
-                height: '32px',
-                objectFit: 'cover',
-                borderRadius: '8px',
-              }
-            },
-            {
-              type: 'span',
-              content: '© 2024 DeFi Project',
-              styles: {
-                color: '#1a1a1a',
-                fontSize: '14px',
-                fontWeight: '400',
-                display: 'inline-block',
-                margin: '0',
-                padding: '0',
-              }
-            },
-            {
-              type: 'link',
-              content: 'Whitepaper',
-              styles: {
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'inline-block',
-                margin: '0',
-                padding: '0',
-                ':hover': {
-                  color: '#5C4EFA',
-                },
-              }
-            },
-            {
-              type: 'link',
-              content: 'Audit',
-              styles: {
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'inline-block',
-                margin: '0',
-                padding: '0',
-                ':hover': {
-                  color: '#5C4EFA',
-                },
-              }
-            },
-            {
-              type: 'link',
-              content: 'Governance',
-              styles: {
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'inline-block',
-                margin: '0',
-                padding: '0',
-                ':hover': {
-                  color: '#5C4EFA',
-                },
-              }
-            },
-            {
-              type: 'link',
-              content: 'Docs',
-              styles: {
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'inline-block',
-                margin: '0',
-                padding: '0',
-                ':hover': {
-                  color: '#5C4EFA',
-                },
-              }
-            },
-            {
-              type: 'link',
-              content: 'Connect Wallet',
-              styles: {
-                color: '#1a1a1a',
-                textDecoration: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                display: 'inline-block',
-                margin: '0',
-                padding: '0',
-                ':hover': {
-                  color: '#5C4EFA',
-                },
-              }
-            }
-          ]
-        },
-        position: { index: 2 }
-      };
-
-      const defiId = await handleAICommand(defiCommand);
-      const footerId = await handleAICommand(footerCommand);
-
-      // Wait for the elements to be updated in the context
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Store the footer span ID
-      const footer = elements.find(el => el.id === footerId);
-      if (footer && footer.children) {
-        const footerChildren = elements.filter(el => footer.children.includes(el.id));
-        const spanElement = footerChildren.find(el => el.type === 'span');
-        if (spanElement) {
-          setLastFooterSpanId(spanElement.id);
-        }
-      }
-
-      setLastNavbarId(navbarId);
-      setLastDefiId(defiId);
-      setLastFooterId(footerId);
-
-    } catch (err) {
-      console.error('[handleFirstPrompt] error:', err);
-    }
-  };
-
-  const handleSecondPrompt = async (userMessage) => {
-    // Remove or comment out these console logs
-    // console.log('Updating navbar span with ID:', lastNavbarSpanId);
-    // console.log('Updating footer span with ID:', lastFooterSpanId);
-
-    // Edit Navbar
-    await handleAICommand({
-      action: 'edit',
-      targetId: lastNavbarId,
-      properties: {
-        styles: {
-          backgroundColor: '#1a1a1a',
-          color: '#ffffff',
-          borderBottom: '1px solid #333',
-          padding: '16px 24px'
-        },
-        children: [
-          {
-            type: 'image',
-            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
-            styles: { width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }
-          },
-          {
-            type: 'span',
-            content: 'DeFi Dashboard',
-            styles: { color: '#ffffff', fontSize: '1.1rem', fontWeight: '500' }
-          },
-          {
-            type: 'button',
-            content: 'Connect Wallet',
-            styles: {
-              backgroundColor: '#5C4EFA',
-              color: '#ffffff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              fontWeight: '500',
-              border: 'none',
-              cursor: 'pointer'
-            }
-          }
-        ]
-      }
-    });
-
-    // Edit DeFi Section
-    await handleAICommand({
-      action: 'edit',
-      targetId: lastDefiId,
-      properties: {
-        styles: {
-          backgroundColor: '#1a1a1a',
-          color: '#ffffff',
-          padding: '40px',
-        }
-      }
-    });
-
-    // Edit Footer
-    await handleAICommand({
-      action: 'edit',
-      targetId: lastFooterId,
-      properties: {
-        styles: {
-          backgroundColor: '#1a1a1a',
-          color: '#ffffff',
-          borderTop: '1px solid #333',
-          padding: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          boxSizing: 'border-box',
-        },
-        children: [
-          {
-            type: 'image',
-            content: 'https://firebasestorage.googleapis.com/v0/b/third--space.appspot.com/o/Placeholders%2FBuilder%2FplaceholderImage.png?alt=media&token=974633ab-eda1-4a0e-a911-1eb3f48f1ca7',
-            styles: {
-              width: '32px',
-              height: '32px',
-              objectFit: 'cover',
-              borderRadius: '8px',
-            }
-          },
-          {
-            type: 'span',
-            content: '© 2024 DeFi Project',
-            styles: {
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: '400',
-            }
-          },
-          {
-            type: 'link',
-            content: 'Whitepaper',
-            styles: {
-              color: '#ffffff',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '500',
-              ':hover': {
-                color: '#5C4EFA',
-              },
-            }
-          },
-          {
-            type: 'link',
-            content: 'Audit',
-            styles: {
-              color: '#ffffff',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '500',
-              ':hover': {
-                color: '#5C4EFA',
-              },
-            }
-          },
-          {
-            type: 'link',
-            content: 'Governance',
-            styles: {
-              color: '#ffffff',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '500',
-              ':hover': {
-                color: '#5C4EFA',
-              },
-            }
-          },
-          {
-            type: 'link',
-            content: 'Docs',
-            styles: {
-              color: '#ffffff',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '500',
-              ':hover': {
-                color: '#5C4EFA',
-              },
-            }
-          },
-          {
-            type: 'link',
-            content: 'Connect Wallet',
-            styles: {
-              color: '#ffffff',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '500',
-              ':hover': {
-                color: '#5C4EFA',
-              },
-            }
-          }
-        ]
-      }
-    });
-
-    const aiAnswer = {
-      role: 'assistant',
-      content: 'I\'ve updated the theme to dark mode with the following changes:\n\n' +
-        '1. Navbar:\n' +
-        '   - Changed background to dark (#1a1a1a)\n' +
-        '   - Updated text color to white\n' +
-        '   - Added dark border\n\n' +
-        '2. DeFi Section:\n' +
-        '   - Set dark background (#1a1a1a)\n' +
-        '   - Updated text color to white\n' +
-        '   - Maintained rounded corners and padding\n\n' +
-        '3. Footer:\n' +
-        '   - Matched dark theme (#1a1a1a)\n' +
-        '   - Updated all text and links to white\n' +
-        '   - Added dark border\n\n' +
-        'All text content is now white for better contrast against the dark background.'
-    };
-
-    // Create new messages array
-    const newMessages = [...messages, userMessage, aiAnswer];
-
-    // Update conversations first
-    setConversations(prev => {
-      const updatedConversations = prev.map(c =>
-        c.id === activeConversationId
-          ? { ...c, messages: newMessages }
-          : c
+      const result = await sendChatMessage(
+        userMessage.content,
+        elements,
+        selectedElement,
+        pageSettings,
+        pages,
+        activePageIndex
       );
-      return updatedConversations;
-    });
 
-    // Then update parent's messages state
-    setMessages(newMessages);
+      const executedCommands = [];
 
-    setOpenPanel("ai");
-    setAIChatStarted(true);
-    return aiAnswer;
+      // Execute all commands and report each one live
+      for (let i = 0; i < result.commands.length; i++) {
+        const cmd = result.commands[i];
+        onCommandStatus?.({
+          phase: 'executing',
+          current: i + 1,
+          total: result.commands.length,
+          command: cmd,
+        });
+
+        try {
+          const result = await executeAICommand(cmd);
+          executedCommands.push({ ...cmd, status: 'done', result });
+        } catch (cmdErr) {
+          executedCommands.push({ ...cmd, status: 'failed', error: cmdErr?.message || 'Unknown error' });
+          if (import.meta.env.DEV) console.error('[AI] Command failed:', cmd, cmdErr);
+        }
+
+        // Small delay between commands to let state settle
+        if (result.commands.length > 1) {
+          await new Promise(resolve => setTimeout(resolve, 80));
+        }
+      }
+
+      onCommandStatus?.({ phase: 'done' });
+
+      return {
+        role: 'assistant',
+        content: result.message,
+        commands: executedCommands,
+      };
+    } catch (err) {
+      const errorMsg = err?.message || 'Unknown error';
+      if (import.meta.env.DEV) console.error('[AI] Prompt failed:', err);
+      onCommandStatus?.({ phase: 'done' });
+      return {
+        role: 'assistant',
+        content: `Sorry, I couldn't process that request. ${errorMsg.includes('quota') || errorMsg.includes('429') ? 'Rate limit reached — try again in a few minutes.' : 'Please try again.'}`,
+      };
+    }
   };
 
   const handleCloseAIPanel = () => {
     setOpenPanel("");
-    setShowAIInputBar(false);
-  };
-
-  const handleElementSelect = (element) => {
-    setSelectedElement(element);
-    setOpenPanel("settings");
-  };
-
-  const handleShowAIPanel = () => {
-    setOpenPanel("ai");
-    setShowAIInputBar(false);
-  };
-
-  const handleSelectedElementEdit = async (userMessage) => {
-    if (!selectedElement) {
-      return {
-        role: 'assistant',
-        content: 'No element is currently selected. Please select an element to edit.'
-      };
-    }
-
-    // Create edit command for the selected element
-    const editCommand = {
-      action: 'edit',
-      targetId: selectedElement.id,
-      properties: {
-        styles: {
-          ...selectedElement.styles,
-          // Add any style changes based on user message
-          // This is a placeholder - we'll need to parse the user message
-          // to determine what changes to make
-        }
-      }
-    };
-
-    try {
-      await handleAICommand(editCommand);
-
-      return {
-        role: 'assistant',
-        content: `I've updated the ${selectedElement.type} element as requested.`
-      };
-    } catch (error) {
-      console.error('Error editing element:', error);
-      return {
-        role: 'assistant',
-        content: 'Sorry, there was an error updating the element. Please try again.'
-      };
-    }
-  };
-
-  const handleThirdPrompt = async (userMessage) => {
-    if (!selectedElement || selectedElement.type !== 'defiSection') {
-      return {
-        role: 'assistant',
-        content: 'Please select a DeFi Dashboard section to edit its display.'
-      };
-    }
-
-    try {
-      // Parse the user's message to determine what changes to make
-      const message = userMessage.content.toLowerCase();
-      let editCommand = {
-        action: 'edit',
-        targetId: selectedElement.id,
-        properties: {
-          styles: { ...selectedElement.styles }
-        }
-      };
-
-      // Handle different customization requests
-      if (message.includes('dark') || message.includes('black')) {
-        editCommand.properties.styles = {
-          ...editCommand.properties.styles,
-          backgroundColor: '#1a1a1a',
-          color: '#ffffff'
-        };
-      } else if (message.includes('light') || message.includes('white')) {
-        editCommand.properties.styles = {
-          ...editCommand.properties.styles,
-          backgroundColor: '#ffffff',
-          color: '#1a1a1a'
-        };
-      } else if (message.includes('blue') || message.includes('ocean')) {
-        editCommand.properties.styles = {
-          ...editCommand.properties.styles,
-          backgroundColor: '#1a2a3a',
-          color: '#ffffff'
-        };
-      } else if (message.includes('purple') || message.includes('violet')) {
-        editCommand.properties.styles = {
-          ...editCommand.properties.styles,
-          backgroundColor: '#2a1a3a',
-          color: '#ffffff'
-        };
-      }
-
-      // Handle padding adjustments
-      if (message.includes('more space') || message.includes('larger padding')) {
-        editCommand.properties.styles.padding = '60px';
-      } else if (message.includes('less space') || message.includes('smaller padding')) {
-        editCommand.properties.styles.padding = '20px';
-      }
-
-      // Handle border radius
-      if (message.includes('rounded') || message.includes('soft corners')) {
-        editCommand.properties.styles.borderRadius = '16px';
-      } else if (message.includes('sharp') || message.includes('square')) {
-        editCommand.properties.styles.borderRadius = '0';
-      }
-
-      // Handle margin adjustments
-      if (message.includes('more margin') || message.includes('more space around')) {
-        editCommand.properties.styles.margin = '40px 0';
-      } else if (message.includes('less margin') || message.includes('less space around')) {
-        editCommand.properties.styles.margin = '10px 0';
-      }
-
-      // Ensure we have all required style properties
-      editCommand.properties.styles = {
-        ...editCommand.properties.styles,
-        backgroundColor: editCommand.properties.styles.backgroundColor || '#1D1C2B',
-        color: editCommand.properties.styles.color || '#ffffff',
-        padding: editCommand.properties.styles.padding || '2rem',
-        borderRadius: editCommand.properties.styles.borderRadius || '16px',
-        margin: editCommand.properties.styles.margin || '0'
-      };
-
-      await handleAICommand(editCommand);
-
-      return {
-        role: 'assistant',
-        content: `I've updated the DeFi Dashboard section with your requested changes. The section now has a ${editCommand.properties.styles.backgroundColor === '#1a1a1a' ? 'dark' :
-          editCommand.properties.styles.backgroundColor === '#ffffff' ? 'light' :
-            editCommand.properties.styles.backgroundColor === '#1a2a3a' ? 'blue' :
-              editCommand.properties.styles.backgroundColor === '#2a1a3a' ? 'purple' : 'custom'} theme, ${editCommand.properties.styles.padding === '60px' ? 'more' :
-                editCommand.properties.styles.padding === '20px' ? 'less' : 'standard'} padding, and ${editCommand.properties.styles.borderRadius === '16px' ? 'rounded' :
-                  editCommand.properties.styles.borderRadius === '0' ? 'sharp' : 'standard'} corners.`
-      };
-    } catch (error) {
-      console.error('Error updating DeFi section:', error);
-      return {
-        role: 'assistant',
-        content: 'There was an error updating the DeFi Dashboard section. Please try again with a different request.'
-      };
-    }
   };
 
   const handleSelectConversation = (id) => {
@@ -771,6 +256,7 @@ const BuilderPageCore = ({
   };
 
   const handleNewChat = () => {
+    resetChatSession();
     const newId = Date.now();
     const newConv = {
       id: newId,
@@ -791,18 +277,14 @@ const BuilderPageCore = ({
     setMessages([]);
   };
 
-  // Effects
+  // Auto-open sidebar when an element is selected
   useEffect(() => {
-    if (conversations.length === 0) {
-      setConversations([{
-        id: 1,
-        name: 'Conversation 1',
-        messages: []
-      }]);
-      setActiveConversationId(1);
+    if (selectedElement && openPanel !== 'sidebar') {
+      setOpenPanel('sidebar');
     }
-  }, []);
+  }, [selectedElement?.id]);
 
+  // Effects
   useEffect(() => {
     if (openPanel === "ai") {
       const currentConv = conversations.find(c => c.id === activeConversationId);
@@ -810,7 +292,7 @@ const BuilderPageCore = ({
         setMessages([...currentConv.messages]);
       }
     }
-  }, [openPanel, activeConversationId]);
+  }, [openPanel, activeConversationId, conversations]);
 
   useEffect(() => {
     const updateCanvasWidth = () => {
@@ -828,150 +310,159 @@ const BuilderPageCore = ({
     <DndProvider backend={HTML5Backend}>
       <div className="layout">
         <LeftBar
-          userId={userId} 
           openPanel={openPanel}
           onShowSidebar={() => handlePanelToggle("sidebar")}
-          onShowStructurePanel={() => handlePanelToggle("structure")}
           onShowMediaPanel={() => handlePanelToggle("media")}
+          onShowStructurePanel={() => handlePanelToggle("structure")}
           onShowSettingsPanel={() => handlePanelToggle("settings")}
-          onShowAIPanel={() => handleAIFloatingButtonClick()}
-          isPioneer={isPioneer}
+          onShowAIPanel={handleOpenAIPanel}
         />
         <div className="app">
-          <Topbar
-            onResize={(size) => setContentListWidth(size)}
-            scale={scale}
-            setScale={setScale}
-            isPreviewMode={isPreviewMode}
-            onPreviewToggle={() => setIsPreviewMode((prev) => !prev)}
-            pageSettings={pageSettings}
-            userId={userId}
-            projectId={projectId}
-            isPioneer={isPioneer}
-          />
+          <ErrorBoundary name="Topbar">
+            <Topbar
+              onResize={(size) => setContentListWidth(size)}
+              scale={scale}
+              setScale={setScale}
+              isPreviewMode={isPreviewMode}
+              onPreviewToggle={() => setIsPreviewMode((prev) => !prev)}
+              pageSettings={pageSettings}
+              setPageSettings={setPageSettings}
+              userId={userId}
+              projectId={projectId}
+              onBackToProjects={onBackToProjects}
+              onOpenVersionHistory={() => setShowVersionHistory(true)}
+              shareUrl={shareUrl}
+              dashboardData={dashboardData}
+            />
+          </ErrorBoundary>
+          <PageTabBar />
+          {isDevnet && (
+            <div className="devnet-banner">
+              You're on Solana devnet — set VITE_SOLANA_RPC_URL for mainnet
+            </div>
+          )}
           <div className="content-container">
-            {openPanel === "sidebar" && (
-              <div className="sidebar" id="sidebar">
-                <SideBar contentListWidth={contentListWidth} pageSettings={pageSettings} isPioneer={isPioneer} />
-              </div>
-            )}
+            <div className="sidebar" id="sidebar" style={{ display: openPanel === 'sidebar' ? 'flex' : 'none' }}>
+              <ErrorBoundary name="Sidebar">
+                <Suspense fallback={null}>
+                  <SideBar pageSettings={pageSettings} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
             {openPanel === "structure" && (
               <div id="structure-panel">
-                <StructurePanel isPioneer={isPioneer} />
+                <ErrorBoundary name="Structure Panel">
+                  <Suspense fallback={null}>
+                    <StructurePanel isPioneer={isPioneer} />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             )}
             {openPanel === "media" && (
               <div id="media-panel">
-                <MediaPanel
-                  projectName={pageSettings.siteTitle}
-                  isOpen={openPanel}
-                  userId={userId}
-                  isPioneer={isPioneer}
-                />
+                <ErrorBoundary name="Media Panel">
+                  <Suspense fallback={null}>
+                    <MediaPanel
+                      projectName={pageSettings.siteTitle}
+                      isOpen={openPanel}
+                      userId={userId}
+                      isPioneer={isPioneer}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             )}
             {openPanel === "settings" && (
               <div id="settings-panel">
-                <WebsiteSettingsPanel
-                  onUpdateSettings={(updatedSettings) => {
-                    setPageSettings(updatedSettings);
-                    localStorage.setItem("websiteSettings", JSON.stringify(updatedSettings));
-                  }}
-                  userId={userId}
-                  isPioneer={isPioneer}
-                />
+                <ErrorBoundary name="Settings Panel">
+                  <Suspense fallback={null}>
+                    <WebsiteSettingsPanel
+                      onUpdateSettings={(updatedSettings) => {
+                        setPageSettings(updatedSettings);
+                      }}
+                      userId={userId}
+                      isPioneer={isPioneer}
+                      onOpenMediaPanel={handleOpenMediaPanel}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             )}
-            <div className="main-content" ref={mainContentRef} onClick={handleMainContentClick}>
-              <ContentList
-                contentListWidth={contentListWidth}
-                canvasWidth={availableCanvasWidth}
-                isSideBarVisible={openPanel === "sidebar"}
-                leftBarWidth={40}
-                handlePanelToggle={handlePanelToggle}
-                ref={contentRef}
-                scale={scale}
-                setScale={setScale}
-                isPreviewMode={isPreviewMode}
-                handleOpenMediaPanel={handleOpenMediaPanel}
-                websiteSettings={pageSettings}
-                isPioneer={isPioneer}
-              />
-            </div>
-            {showAIInputBar && !openPanel && isPioneer ? (
-              <div className="ai-absolute-input-bar-container">
-                <form className="ai-absolute-input-bar" onSubmit={async (e) => {
-                  e.preventDefault();
-                  const input = e.target.querySelector('input');
-                  if (input.value.trim()) {
-                    await handleFirstPrompt({ role: 'user', content: input.value });
-                    input.value = '';
-                  }
-                }}>
-                  <div className="ai-input-bar-content">
-                    {/*<div className="ai-input-bar-header">
-                      <div className="ai-input-img-label">
-                        <div className="ai-input-img-label-content">
-                          <span class="material-symbols-outlined">
-                            image
-                          </span>
-                          <p className="ai-input-img-label-text">Image.png</p>
-                        </div>
-                        <a href="" className="ai-input-img-label-close"><span class="material-symbols-outlined">
-                          close
-                        </span></a>
-                      </div>
-
-                    </div>*/}
-                    <div className="ai-input-bar-row">
-                      <div className="ai-input-bar-row-left">
-                        <span className="material-symbols-outlined ai-input-icon-left">auto_awesome</span>
-                        <input
-                          type="text"
-                          placeholder="Ask anything"
-                          className="ai-absolute-input"
-                        />
-                      </div>
-                      <div className="ai-input-bar-row-right">
-                        <a href="" className="ai-input-icon-right"><span className="material-symbols-outlined">
-                          attach_file
-                        </span></a>
-                        <button type="submit" className="ai-input-send-btn">
-                          <span class="material-symbols-outlined">
-                            arrow_forward
-                          </span>
-                        </button>
-                      </div>
-
-
-                    </div>
-                  </div>
-                </form>
-              </div>
-            ) : openPanel === "ai" && isPioneer && (
-              <div className="right-panel" id="ai-panel">
-                <AIAgentPanel
-                  messages={activeConversation.messages}
-                  conversations={conversations}
-                  activeConversationId={activeConversationId}
-                  onSelectConversation={handleSelectConversation}
-                  onNewChat={handleNewChat}
-                  setMessages={handleSetMessages}
-                  lastNavbarId={lastNavbarId}
-                  lastDefiId={lastDefiId}
-                  onClosePanel={handleCloseAIPanel}
-                  onFirstPrompt={handleFirstPrompt}
-                  onSecondPrompt={handleSecondPrompt}
-                  onSelectedElementEdit={handleSelectedElementEdit}
-                  onThirdPrompt={handleThirdPrompt}
+            <div
+              className="main-content"
+              ref={mainContentRef}
+              onClick={handleMainContentClick}
+              style={{
+                '--primary-color': pageSettings.primaryColor || '#5C4EFA',
+                fontFamily: pageSettings.bodyFont || 'inherit',
+                backgroundColor: pageSettings.bodyBackgroundColor || undefined,
+                backgroundImage: pageSettings.bodyBackgroundImage ? `url('${pageSettings.bodyBackgroundImage}')` : undefined,
+                backgroundSize: pageSettings.bodyBackgroundImage ? 'cover' : undefined,
+                backgroundPosition: pageSettings.bodyBackgroundImage ? 'center' : undefined,
+                backgroundAttachment: pageSettings.bodyBackgroundImage ? 'fixed' : undefined,
+              }}
+            >
+              <ErrorBoundary name="Canvas">
+                <ContentList
+                  contentListWidth={contentListWidth}
+                  canvasWidth={availableCanvasWidth}
+                  isSideBarVisible={openPanel === "sidebar"}
+                  leftBarWidth={40}
+                  handlePanelToggle={handlePanelToggle}
+                  ref={contentRef}
+                  scale={scale}
+                  setScale={setScale}
+                  isPreviewMode={isPreviewMode}
+                  handleOpenMediaPanel={handleOpenMediaPanel}
+                  websiteSettings={pageSettings}
                   isPioneer={isPioneer}
                 />
+              </ErrorBoundary>
+              {!isPreviewMode && <CanvasBreadcrumb />}
+            </div>
+            {openPanel === "ai" && isPioneer && (
+              <div className="right-panel" id="ai-panel">
+                <ErrorBoundary name="Editor Panel">
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <AIAgentPanel
+                      messages={activeConversation.messages}
+                      conversations={conversations}
+                      activeConversationId={activeConversationId}
+                      onSelectConversation={handleSelectConversation}
+                      onNewChat={handleNewChat}
+                      setMessages={handleSetMessages}
+                      onClosePanel={handleCloseAIPanel}
+                      onPrompt={handleAIPrompt}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             )}
           </div>
         </div>
-        {!(showAIInputBar || openPanel === "ai") && isPioneer && (
-          <AIFloatingButton onClick={handleAIFloatingButtonClick} />
+        {openPanel !== "ai" && isPioneer && (
+          <AIFloatingButton onClick={handleOpenAIPanel} />
+        )}
+        {showShortcutsHelp && (
+          <Suspense fallback={null}>
+            <KeyboardShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />
+          </Suspense>
+        )}
+        {showOnboarding && (
+          <Suspense fallback={null}>
+            <OnboardingOverlay onComplete={() => setShowOnboarding(false)} />
+          </Suspense>
+        )}
+        {showVersionHistory && (
+          <Suspense fallback={null}>
+            <VersionHistory
+              userId={userId}
+              projectId={projectId}
+              pageSettings={pageSettings}
+              setPageSettings={setPageSettings}
+              onClose={() => setShowVersionHistory(false)}
+            />
+          </Suspense>
         )}
       </div>
     </DndProvider>

@@ -1,9 +1,12 @@
 import React, { useContext, useState } from 'react';
 import { EditableContext } from '../../context/EditableContext';
+import { buildHierarchy } from '../../utils/LeftBarUtils/elementUtils';
+import '../css/StructurePanel.css';
 
 const StructurePanel = () => {
-  const { elements, buildHierarchy, selectedElement, setSelectedElement } = useContext(EditableContext);
+  const { elements, selectedElement, setSelectedElement, setElements, copyElement, pasteElement, updateStyles, updateConfiguration } = useContext(EditableContext);
   const nestedElements = buildHierarchy(elements);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Define a mapping for friendly labels for each type
   const typeToLabel = {
@@ -56,55 +59,126 @@ const StructurePanel = () => {
     }));
   };
 
+  const toggleVisibility = (element) => {
+    const isHidden = element.configuration?.hidden || element.settings?.hidden;
+    if (isHidden) {
+      updateStyles(element.id, { display: element.configuration?.previousDisplay || '' });
+      updateConfiguration(element.id, 'hidden', false);
+    } else {
+      const prev = element.styles?.display || '';
+      updateConfiguration(element.id, 'previousDisplay', prev);
+      updateConfiguration(element.id, 'hidden', true);
+      updateStyles(element.id, { display: 'none' });
+    }
+  };
+
+  // Reorder an element among its siblings
+  const reorderElement = (elementId, direction) => {
+    setElements((prev) => {
+      const el = prev.find((e) => e.id === elementId);
+      if (!el) return prev;
+      const parent = prev.find((e) => e.id === el.parentId);
+      if (!parent || !parent.children) return prev;
+      const idx = parent.children.indexOf(elementId);
+      if (idx < 0) return prev;
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= parent.children.length) return prev;
+      const newChildren = [...parent.children];
+      [newChildren[idx], newChildren[newIdx]] = [newChildren[newIdx], newChildren[idx]];
+      return prev.map((e) => e.id === parent.id ? { ...e, children: newChildren } : e);
+    });
+  };
+
   // Recursive function to render structure
-  const renderStructure = (elements) => {
-    return elements
-      .filter((element) => element) // Ensure the element is valid
-      .map((element) => {
+  const renderStructure = (elems) => {
+    const valid = elems.filter((element) => element);
+    return valid.map((element, idx) => {
         const isExpanded = expandedElements[element.id] || false;
+        const isFirst = idx === 0;
+        const isLast = idx === valid.length - 1;
+        const hasParent = !!element.parentId;
+        const isHidden = element.configuration?.hidden || element.settings?.hidden;
+        const isLocked = element.configuration?.locked || element.settings?.locked;
 
         return (
           <div
             key={element.id}
-            style={{
-              paddingLeft: '16px',
-              borderLeft: '1px solid #ccc',
-              marginBottom: '8px',
-            }}
+            className="structure-tree-node"
           >
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedElement({ id: element.id, type: element.type });
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                backgroundColor: selectedElement?.id === element.id ? '#313031' : 'transparent',
-                padding: '4px 8px',
-                borderRadius: '4px',
-              }}
+              className={`structure-tree-label${selectedElement?.id === element.id ? ' selected' : ''}${isHidden ? ' hidden-element' : ''}${isLocked ? ' locked-element' : ''}`}
             >
               {element.children && element.children.length > 0 && (
                 <span
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering parent onClick
+                    e.stopPropagation();
                     toggleExpand(element.id);
                   }}
-                  style={{
-                    marginRight: '8px',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                  }}
+                  className="structure-tree-toggle"
                 >
                   {isExpanded ? '▼' : '▶'}
                 </span>
               )}
-              {getFriendlyLabel(element.type, element.content || element.label || element.id)}
+              <span className="structure-tree-text">
+                {getFriendlyLabel(element.type, element.content || element.label || element.id)}
+              </span>
+              <span className="structure-reorder-btns">
+                  <button
+                    className="reorder-btn"
+                    onClick={(e) => { e.stopPropagation(); updateConfiguration(element.id, 'locked', !isLocked); }}
+                    title={isLocked ? 'Unlock element' : 'Lock element'}
+                  >
+                    <span className="material-symbols-outlined">{isLocked ? 'lock' : 'lock_open'}</span>
+                  </button>
+                  <button
+                    className="reorder-btn"
+                    onClick={(e) => { e.stopPropagation(); toggleVisibility(element); }}
+                    title={isHidden ? 'Show element' : 'Hide element'}
+                  >
+                    <span className="material-symbols-outlined">{isHidden ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                  <button
+                    className="reorder-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyElement(element.id);
+                      const parentId = element.parentId || null;
+                      const siblings = elements.filter(el => el.parentId === parentId);
+                      const idx = siblings.findIndex(el => el.id === element.id);
+                      pasteElement(parentId, idx >= 0 ? idx + 1 : siblings.length);
+                    }}
+                    title="Duplicate"
+                  >
+                    <span className="material-symbols-outlined">content_copy</span>
+                  </button>
+                  {hasParent && (
+                    <>
+                      <button
+                        className="reorder-btn"
+                        disabled={isFirst}
+                        onClick={(e) => { e.stopPropagation(); reorderElement(element.id, -1); }}
+                        title="Move up"
+                      >
+                        <span className="material-symbols-outlined">arrow_upward</span>
+                      </button>
+                      <button
+                        className="reorder-btn"
+                        disabled={isLast}
+                        onClick={(e) => { e.stopPropagation(); reorderElement(element.id, 1); }}
+                        title="Move down"
+                      >
+                        <span className="material-symbols-outlined">arrow_downward</span>
+                      </button>
+                    </>
+                  )}
+                </span>
             </div>
             {isExpanded && element.children && element.children.length > 0 && (
-              <div style={{ paddingLeft: '16px' }}>
+              <div className="structure-tree-children">
                 {renderStructure(element.children)}
               </div>
             )}
@@ -113,10 +187,50 @@ const StructurePanel = () => {
       });
   };
 
+  const filteredElements = searchQuery.trim()
+    ? elements.filter((el) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (el.label && el.label.toLowerCase().includes(q)) ||
+          (el.type && el.type.toLowerCase().includes(q)) ||
+          (el.content && typeof el.content === 'string' && el.content.toLowerCase().includes(q))
+        );
+      })
+    : null;
+
   return (
     <div className="structure-panel">
       <h3>Page Structure</h3>
-      {renderStructure(nestedElements)}
+      <div className="structure-search">
+        <input
+          type="text"
+          placeholder="Search elements..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="structure-search-input"
+        />
+        {searchQuery && (
+          <button className="structure-search-clear" onClick={() => setSearchQuery('')}>
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        )}
+      </div>
+      {filteredElements ? (
+        <div className="structure-search-results">
+          {filteredElements.length === 0 && <p className="structure-no-results">No elements found</p>}
+          {filteredElements.map((el) => (
+            <div
+              key={el.id}
+              className={`structure-tree-label${selectedElement?.id === el.id ? ' selected' : ''}`}
+              onClick={() => setSelectedElement({ id: el.id, type: el.type })}
+            >
+              {getFriendlyLabel(el.type, el.content || el.label || el.id)}
+            </div>
+          ))}
+        </div>
+      ) : (
+        renderStructure(nestedElements)
+      )}
     </div>
   );
 };

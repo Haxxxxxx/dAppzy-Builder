@@ -6,7 +6,7 @@ import '../Basic/css/EmptyState.css';
 
 // Helper to generate a unique ID
 const generateUniqueId = () => {
-  return 'div-' + Math.random().toString(36).substr(2, 9);
+  return 'div-' + Math.random().toString(36).substring(2, 11);
 };
 
 // Helper to render a grid preview
@@ -107,7 +107,7 @@ const gridConfigurations = [
   }
 ];
 
-const GridLayout = ({ id }) => {
+const GridLayout = ({ id, handleOpenMediaPanel }) => {
   const { selectedElement, setSelectedElement, elements, setElements } =
     useContext(EditableContext);
   const gridElement = elements.find((el) => el.id === id) || {};
@@ -118,18 +118,18 @@ const GridLayout = ({ id }) => {
   const { isOverCurrent, drop } = useElementDrop({
     id,
     elementRef: gridRef,
-    onDropItem: (item, parentId) => {
+    onDropItem: (item) => {
       const newId = generateUniqueId();
       setElements((prev) => [
         ...prev.map((el) =>
-          el.id === parentId
+          el.id === id
             ? { ...el, children: [...new Set([...el.children, newId])] }
             : el
         ),
         {
           id: newId,
           type: item.type,
-          parentId,
+          parentId: id,
           styles: item.styles || {},
           children: []
         }
@@ -139,7 +139,7 @@ const GridLayout = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'gridLayout', styles });
+    setSelectedElement(gridElement.id ? gridElement : { id, type: 'gridLayout', styles });
   };
 
   const handleAddElement = (e) => {
@@ -211,75 +211,39 @@ const GridLayout = ({ id }) => {
         ...styles,
         display: 'grid',
         gridTemplateColumns: styles.gridTemplateColumns || 'repeat(4, 1fr)',
-        gridGap: styles.gridGap || '1.5rem',
+        gap: styles.gap || styles.gridGap || '1.5rem',
         padding: styles.padding || '10px',
         width: '100%',
-        position: 'relative'
+        position: 'relative',
+        boxSizing: 'border-box',
       }}
     >
       {children.length === 0 ? (
         <div
-          className="empty-state-container"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100px',
-            background: isOverCurrent ? '#f0f0f0' : 'transparent',
-            gridColumn: '1 / -1'
-          }}
+          className={`empty-state-container${isOverCurrent ? ' container-drop-hover' : ''}`}
+          style={{ gridColumn: '1 / -1' }}
         >
+          <span className="empty-state-badge">Grid</span>
           {showDivOptions ? (
-            <div className="inline-div-options-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', width: '100%', padding: '16px' }}>
+            <div className="layout-options-grid">
               {gridConfigurations.map((config) => (
                 <div
                   key={config.id}
-                  className="inline-div-option"
+                  className="layout-option"
                   onClick={(e) => { e.stopPropagation(); handleGridSelect(config); }}
-                  style={{
-                    cursor: 'pointer',
-                    background: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    minWidth: '80px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    border: '2px solid #e5e8ea',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.border = '2px solid #bfc5c9';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.border = '2px solid #e5e8ea';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                  }}
                 >
                   {config.preview}
-                  <div style={{ 
-                    fontSize: '12px', 
-                    color: '#666', 
-                    marginTop: '8px', 
-                    textAlign: 'center',
-                    fontWeight: '500'
-                  }}>
-                    {config.name}
-                  </div>
+                  <span className="layout-option-label">{config.name}</span>
                 </div>
               ))}
             </div>
           ) : (
             <button
-              className="add-element-button"
+              className="add-element-btn"
               onClick={handleAddElement}
             >
               <span className="plus-icon">+</span>
+              Add Layout
             </button>
           )}
         </div>
@@ -292,7 +256,10 @@ const GridLayout = ({ id }) => {
             setSelectedElement,
             setElements,
             null,
-            selectedElement
+            selectedElement,
+            null,
+            true,
+            handleOpenMediaPanel
           )
         )
       )}

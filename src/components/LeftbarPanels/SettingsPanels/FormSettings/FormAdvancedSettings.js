@@ -1,51 +1,63 @@
 import React, { useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { EditableContext } from '../../../../context/EditableContext';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { encryptData } from '../../../../utils/securityUtils';
-
-const schema = yup.object().shape({
-  password: yup
-    .string()
-    .required('Password is required')
-    .min(8, 'Password must be at least 8 characters')
-    .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
-    ),
-});
+import CollapsibleSection from '../LinkSettings/CollapsibleSection';
 
 const FormAdvancedSettings = ({ localSettings, handleInputChange, setElements }) => {
-  const { addNewElement, updateConfiguration } = useContext(EditableContext);
+  const { selectedElement, addNewElement, updateConfiguration } = useContext(EditableContext);
   const [selectedStructure, setSelectedStructure] = useState('');
   const appliedStructureRef = useRef(null);
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(schema)
-  });
+
+  // Local state for form action / method
+  const [formAction, setFormAction] = useState('');
+  const [formMethod, setFormMethod] = useState('POST');
+
+  // Sync when selected element changes
+  useEffect(() => {
+    if (selectedElement) {
+      const settings = selectedElement.settings || selectedElement.configuration || {};
+      setFormAction(settings.action || '');
+      setFormMethod(settings.method || 'POST');
+    }
+  }, [selectedElement]);
+
+  const handleActionChange = (e) => {
+    const value = e.target.value;
+    setFormAction(value);
+    if (selectedElement) {
+      updateConfiguration(selectedElement.id, 'action', value);
+    }
+  };
+
+  const handleMethodChange = (e) => {
+    const value = e.target.value;
+    setFormMethod(value);
+    if (selectedElement) {
+      updateConfiguration(selectedElement.id, 'method', value);
+    }
+  };
 
   // Predefined form structures (stabilized with useMemo)
   const formStructures = useMemo(() => [
-    { 
-      id: 'basic', 
-      label: 'Basic Form', 
+    {
+      id: 'basic',
+      label: 'Basic Form',
       fields: [
         { type: 'text', label: 'Text:' },
         { type: 'email', label: 'Email:' }
       ]
     },
-    { 
-      id: 'registration', 
-      label: 'Registration Form', 
+    {
+      id: 'registration',
+      label: 'Registration Form',
       fields: [
         { type: 'text', label: 'Name:' },
         { type: 'email', label: 'Email:' },
         { type: 'password', label: 'Password:' }
       ]
     },
-    { 
-      id: 'contact', 
-      label: 'Contact Form', 
+    {
+      id: 'contact',
+      label: 'Contact Form',
       fields: [
         { type: 'text', label: 'Name:' },
         { type: 'email', label: 'Email:' },
@@ -90,83 +102,61 @@ const FormAdvancedSettings = ({ localSettings, handleInputChange, setElements })
     handleInputChange(prev => ({ ...prev, fields: structure.fields }));
   }, [selectedStructure, localSettings.id, addNewElement, setElements, handleInputChange, formStructures, updateConfiguration]);
 
-  // Live update the label for a given field.
-  const handleLiveLabelChange = (index, newLabel) => {
-    handleInputChange(prev => {
-      const updatedFields = prev.fields.map((field, idx) =>
-        idx === index ? { ...field, label: newLabel } : field
-      );
-      return { ...prev, fields: updatedFields };
-    });
-    // Update the corresponding child element's configuration.
-    setElements(prevElements =>
-      prevElements.map(el => {
-        if (el.id === localSettings.id && Array.isArray(el.children) && el.children[index]) {
-          updateConfiguration(el.children[index], 'label', newLabel);
-        }
-        return el;
-      })
-    );
-  };
-
-  const onSubmit = async (data) => {
-    try {
-      // Encrypt password before storage
-      const encryptedPassword = encryptData(data.password, process.env.REACT_APP_ENCRYPTION_KEY);
-      // Handle the encrypted password
-      // ... rest of the code
-    } catch (error) {
-      console.error('Password encryption failed:', error);
-    }
-  };
-
   return (
     <div className="form-advanced-settings">
-      <h3>Form Structure Settings</h3>
-      <div className="settings-group">
-        <span>Select a predefined structure:</span>
-        {formStructures.map(structure => (
-          <label key={structure.id} style={{ marginRight: '15px' }}>
-            <input
-              type="radio"
-              name="form-structure"
-              value={structure.id}
-              onChange={(e) => setSelectedStructure(e.target.value)}
-              checked={selectedStructure === structure.id}
-            />
-            {structure.label}
-          </label>
-        ))}
-      </div>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            {...register('password')}
-            autoComplete="new-password"
-          />
-          {errors.password && <p>{errors.password.message}</p>}
-        </div>
-      </form>
-      {/* {selectedStructure && localSettings.fields && (
+      <CollapsibleSection title="Form Action" defaultExpanded={true}>
         <div className="settings-group">
-          <h4>Edit Field Labels</h4>
-          {localSettings.fields.map((field, index) => (
-            <div key={index} style={{ marginBottom: '8px' }}>
-              <label>
-                {field.type} Label:
-                <input 
-                  type="text"
-                  value={field.label}
-                  onChange={(e) => handleLiveLabelChange(index, e.target.value)}
-                  style={{ marginLeft: '5px' }}
-                />
-              </label>
-            </div>
+          <label>Submission URL</label>
+          <input
+            type="text"
+            value={formAction}
+            onChange={handleActionChange}
+            placeholder="https://formspree.io/f/YOUR_ID"
+            className="settings-input"
+          />
+        </div>
+        <div className="settings-group">
+          <label>Method</label>
+          <select
+            value={formMethod}
+            onChange={handleMethodChange}
+            className="settings-input"
+          >
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+          </select>
+        </div>
+        <div style={{
+          padding: '8px 10px',
+          backgroundColor: 'rgba(92, 78, 250, 0.08)',
+          border: '1px solid rgba(92, 78, 250, 0.2)',
+          borderRadius: '6px',
+          fontSize: '11px',
+          color: '#888',
+          lineHeight: 1.5,
+          marginTop: '4px',
+        }}>
+          Leave empty for client-side only. Use https://formspree.io/f/YOUR_ID for email submissions.
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Form Structure" defaultExpanded={false}>
+        <div className="settings-group">
+          <span>Select a predefined structure:</span>
+          {formStructures.map(structure => (
+            <label key={structure.id} style={{ marginRight: '15px' }}>
+              <input
+                type="radio"
+                name="form-structure"
+                value={structure.id}
+                onChange={(e) => setSelectedStructure(e.target.value)}
+                checked={selectedStructure === structure.id}
+              />
+              {structure.label}
+            </label>
           ))}
         </div>
-      )} */}
+      </CollapsibleSection>
     </div>
   );
 };

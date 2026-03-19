@@ -5,6 +5,14 @@ import CollapsibleSection from "./LinkSettings/CollapsibleSection";
 import VideoSettings from "./VideoSettings/VideoSettings";
 import PlaybackSettings from "./VideoSettings/PlaybackSettings";
 
+const MEDIA_PANEL_TYPES = new Set(["video", "audio", "bgVideo"]);
+
+const DEFAULT_SRC = {
+  audio: "https://www.w3schools.com/html/horse.mp3",
+  video: "https://www.w3schools.com/html/mov_bbb.mp4",
+  bgVideo: "https://www.w3schools.com/html/mov_bbb.mp4",
+};
+
 const VideoSettingsPanel = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
   const [videoId, setVideoId] = useState("");
@@ -15,9 +23,12 @@ const VideoSettingsPanel = () => {
   const [videoStartTime, setVideoStartTime] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isAutoplay, setIsAutoplay] = useState(false);
+  const [isLoop, setIsLoop] = useState(false);
   const [showControls, setShowControls] = useState(true);
 
   const fileInputRef = useRef(null);
+
+  const isAudio = selectedElement?.type === "audio";
 
   const fetchVideoProperties = (src) => {
     if (!src) return;
@@ -31,16 +42,21 @@ const VideoSettingsPanel = () => {
   };
 
   useEffect(() => {
-    if (selectedElement?.type === "video") {
-      const { id, styles = {} } = selectedElement;
+    if (selectedElement && MEDIA_PANEL_TYPES.has(selectedElement.type)) {
+      const { id, type, styles = {} } = selectedElement;
+      const defaultSrc = DEFAULT_SRC[type] || DEFAULT_SRC.video;
       setVideoId(id || "No ID");
-      setVideoSrc(styles.src || "https://www.w3schools.com/html/mov_bbb.mp4");
-      setVideoAlt(styles.alt || "Default video description");
+      setVideoSrc(styles.src || defaultSrc);
+      const isAudioType = type === "audio";
+      setVideoAlt(styles.alt || (isAudioType ? "Audio description" : "Default video description"));
       setVideoStartTime(styles.startTime || 0);
       setIsMuted(styles.muted || false);
       setIsAutoplay(styles.autoplay || false);
+      setIsLoop(styles.loop || false);
       setShowControls(styles.controls ?? true);
-      fetchVideoProperties(styles.src || "https://www.w3schools.com/html/mov_bbb.mp4");
+      if (!isAudioType) {
+        fetchVideoProperties(styles.src || defaultSrc);
+      }
     }
   }, [selectedElement]);
 
@@ -75,8 +91,8 @@ const VideoSettingsPanel = () => {
       </div>
       <hr />
 
-      {/* Video Settings */}
-      <CollapsibleSection title="Video Settings">
+      {/* Video / Audio Settings */}
+      <CollapsibleSection title={isAudio ? "Audio Settings" : "Video Settings"}>
         <VideoSettings
           videoSrc={videoSrc}
           videoWidth={videoWidth}
@@ -88,6 +104,7 @@ const VideoSettingsPanel = () => {
           updateStyles={updateStyles}
           selectedElement={selectedElement}
           fileInputRef={fileInputRef}
+          isAudio={isAudio}
         />
       </CollapsibleSection>
 
@@ -96,13 +113,16 @@ const VideoSettingsPanel = () => {
         <PlaybackSettings
           isMuted={isMuted}
           isAutoplay={isAutoplay}
+          isLoop={isLoop}
           showControls={showControls}
+          isAudio={isAudio}
           handlePlaybackChange={(setting, value) => {
             if (selectedElement) {
               updateStyles(selectedElement.id, { [setting]: value });
             }
             if (setting === "muted") setIsMuted(value);
             if (setting === "autoplay") setIsAutoplay(value);
+            if (setting === "loop") setIsLoop(value);
             if (setting === "controls") setShowControls(value);
           }}
         />

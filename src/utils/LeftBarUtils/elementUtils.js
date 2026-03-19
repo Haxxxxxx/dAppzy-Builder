@@ -4,13 +4,12 @@ let elementCounter = 0;
 
 export const generateUniqueId = (type = 'element') => {
   if (!type) {
-    console.warn('generateUniqueId called without type, using default "element"');
     type = 'element';
   }
   
   elementCounter += 1;
   const timestamp = Date.now();
-  const randomPart = Math.random().toString(36).substr(2, 5);
+  const randomPart = Math.random().toString(36).substring(2, 7);
   return `${type}-${timestamp}-${randomPart}-${elementCounter}`;
 };
 
@@ -42,7 +41,6 @@ export const buildHierarchy = (elements) => {
     .filter((el) => !el.parentId)
     .filter((el) => el.children.length > 0 || el.content || el.structure);
 
-  console.log('Generated hierarchy:', hierarchy);
   return hierarchy;
 };
 
@@ -55,17 +53,16 @@ export const findElementById = (id, elements) => {
  * Leaves the child's objects in the array if they exist.
  */
 export const removeElementById = (id, elements) => {
-  const updatedElements = elements.filter((el) => el.id !== id);
-
-  // Remove references from parent's children arrays, if they exist
-  updatedElements.forEach((el) => {
-    if (el.children) {
-      el.children = el.children.filter((childId) => childId !== id);
-    }
-  });
-
-  console.info(`Element with id ${id} has been removed.`);
-  return updatedElements;
+  // Filter out the element, then create new objects only for parents that
+  // referenced the removed element — avoids mutating shared history snapshots.
+  return elements
+    .filter((el) => el.id !== id)
+    .map((el) => {
+      if (el.children && el.children.includes(id)) {
+        return { ...el, children: el.children.filter((childId) => childId !== id) };
+      }
+      return el;
+    });
 };
 
 /**

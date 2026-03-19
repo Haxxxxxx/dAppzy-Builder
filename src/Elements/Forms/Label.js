@@ -10,7 +10,7 @@ const Label = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'label' });
+    setSelectedElement(element || { id, type: 'label' });
   };
 
   const handleBlur = (e) => {

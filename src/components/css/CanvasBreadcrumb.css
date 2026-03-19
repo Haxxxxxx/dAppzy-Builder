@@ -1,0 +1,77 @@
+/* Canvas Breadcrumb — floating hierarchy bar at the bottom of the canvas */
+
+.canvas-breadcrumb {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-overlay, 100);
+
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  background: rgba(26, 26, 46, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 5px 12px;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+
+  font-family: var(--font-primary, 'Montserrat', sans-serif);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: auto;
+  max-width: 70vw;
+  overflow: hidden;
+}
+
+/* Separator chevron between segments */
+.canvas-breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 13px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Clickable ancestor segment */
+.canvas-breadcrumb-segment {
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm, 4px);
+  transition: color var(--transition-fast, 0.2s ease),
+              background var(--transition-fast, 0.2s ease);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.canvas-breadcrumb-segment:hover {
+  color: #fff;
+  background: rgba(92, 78, 250, 0.25);
+}
+
+/* Currently selected (last) segment */
+.canvas-breadcrumb-current {
+  color: var(--purple, #5C4EFA);
+  font-weight: 600;
+  cursor: default;
+}
+
+.canvas-breadcrumb-current:hover {
+  background: none;
+  color: var(--purple, #5C4EFA);
+}
+
+/* Ellipsis placeholder (non-interactive) */
+.canvas-breadcrumb-ellipsis {
+  cursor: default;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.canvas-breadcrumb-ellipsis:hover {
+  background: none;
+  color: rgba(255, 255, 255, 0.35);
+}

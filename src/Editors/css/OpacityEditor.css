@@ -1,0 +1,49 @@
+/* OpacityEditor.css */
+
+.opacity-editor {
+
+}
+
+.opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.opacity-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--editor-bg-dark);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.opacity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-blue);
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  border: none;
+}
+
+.opacity-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--accent-blue);
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  border: none;
+}
+
+.opacity-value {
+  font-size: 14px;
+  color: var(--not-selected);
+  min-width: 36px;
+  text-align: right;
+}

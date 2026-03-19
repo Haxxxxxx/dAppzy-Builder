@@ -1,8 +1,44 @@
 .layout-replacement-boundary {
   position: relative;
   width: 100%;
-  cursor: move;
-  transition: all 0.3s ease;
+  cursor: default;
+  transition: outline 0.2s ease, background-color 0.2s ease;
+}
+
+/* Drag handle — visible on hover, initiates section reorder */
+.layout-drag-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 200;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: var(--builder-bg, #313031);
+  border: 1px solid var(--border-color, #333);
+  color: var(--editor-text, #aaa);
+  font-size: 14px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  user-select: none;
+}
+
+.layout-replacement-boundary:hover > .layout-drag-handle {
+  opacity: 0.8;
+}
+
+.layout-drag-handle:hover {
+  opacity: 1 !important;
+  background: var(--purple, #5C4EFA);
+  color: var(--white);
+}
+
+.layout-drag-handle:active {
+  cursor: grabbing;
 }
 
 .layout-replacement-boundary.hovering {
@@ -10,19 +46,10 @@
   background-color: rgba(92, 78, 250, 0.05);
 }
 
-.layout-replacement-boundary[draggable="true"]:hover {
-  outline: 2px solid rgba(92, 78, 250, 0.3);
-}
-
-.layout-replacement-boundary[draggable="true"]:active {
-  cursor: grabbing;
-  opacity: 0.8;
-}
-
 .drop-indicator {
   position: absolute;
-  background-color: #5C4EFA;
-  z-index: 1000;
+  background-color: var(--purple);
+  z-index: var(--z-dropzone);
   pointer-events: none;
   transition: all 0.2s ease;
   box-shadow: 0 0 8px rgba(92, 78, 250, 0.5);

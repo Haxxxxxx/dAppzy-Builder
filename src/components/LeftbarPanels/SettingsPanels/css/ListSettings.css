@@ -16,7 +16,7 @@ gap: 15px;
 
 .add-item-button {
     display: flex;
-    color: var(----editor-text, #D9D9D9);
+    color: var(--editor-text, #D9D9D9);
     background-color: transparent;
     text-align: center;
     font-family: Montserrat;
@@ -24,7 +24,7 @@ gap: 15px;
     font-weight: 500;
     line-height: normal;
     border:none;    
-    background-color: var(----not-selected, #838389);
+    background-color: var(--not-selected, #838389);
     width: fit-content;
     justify-content: left;
     align-items: center;
@@ -36,7 +36,7 @@ gap: 15px;
 .add-item-button button{
     background-color: transparent;
     border: none;
-    color: var(----editor-text, #D9D9D9);
+    color: var(--editor-text, #D9D9D9);
     text-align: center;
     font-family: Montserrat;
     font-style: normal;
@@ -87,7 +87,7 @@ gap: 15px;
     width: 100%;
     /* Ensures full width inside the container */
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
     text-align: left;
     /* Aligns text to the left */
@@ -114,7 +114,7 @@ textarea::placeholder {
 .list-item-container textarea::-webkit-scrollbar-thumb {
     background: #ccc;
     /* Color of the scrollbar thumb */
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     /* Round edges */
 }
 
@@ -126,17 +126,17 @@ textarea::placeholder {
 .list-item-container textarea::-webkit-scrollbar-track {
     background: #f0f0f0;
     /* Background of the scrollbar track */
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 
 
 .custom-list-style-checkbox {
-    width: 16px !important;
+    width: 16px;
     height: 16px;
     appearance: none;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: #fff;
     cursor: pointer;
     margin-right: 8px;

@@ -1,13 +1,79 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useCallback } from "react";
 import { EditableContext } from "../context/EditableContext";
+import ColorPicker from "../components/ColorPicker";
 import "./css/TypographyEditor.css";
+
+const FONT_UNITS = ["px", "rem", "em", "vw", "%"];
+
+// Parse a CSS font-size value into { value, unit }
+const parseFontSize = (fontSize) => {
+  if (!fontSize) return { value: 16, unit: "px" };
+  const match = fontSize.match(/^([\d.]+)\s*(px|rem|em|vw|%)$/);
+  if (match) return { value: parseFloat(match[1]), unit: match[2] };
+  const num = parseFloat(fontSize);
+  return { value: isNaN(num) ? 16 : num, unit: "px" };
+};
+
+// Convert font-size numeric value when switching units
+const convertFontValue = (numericValue, fromUnit, toUnit) => {
+  if (fromUnit === toUnit) return numericValue;
+  if (fromUnit === "px" && toUnit === "rem") return parseFloat((numericValue / 16).toFixed(3));
+  if (fromUnit === "rem" && toUnit === "px") return Math.round(numericValue * 16);
+  return numericValue;
+};
+
+const SYSTEM_FONTS = [
+  "Arial",
+  "Courier New",
+  "Georgia",
+  "Helvetica",
+  "system-ui",
+  "Times New Roman",
+  "Verdana",
+];
+
+const GOOGLE_FONTS = [
+  "DM Sans",
+  "Inter",
+  "Lato",
+  "Merriweather",
+  "Montserrat",
+  "Nunito",
+  "Open Sans",
+  "Oswald",
+  "Playfair Display",
+  "Plus Jakarta Sans",
+  "Poppins",
+  "PT Sans",
+  "Raleway",
+  "Roboto",
+  "Roboto Condensed",
+  "Roboto Mono",
+  "Rubik",
+  "Source Code Pro",
+  "Source Sans Pro",
+  "Space Grotesk",
+  "Work Sans",
+];
+
+/** Inject a Google Fonts <link> into <head> if not already present. */
+function loadGoogleFont(fontName) {
+  const href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, "+")}:wght@400;500;600;700&display=swap`;
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
 
 const TypographyEditor = () => {
   const { selectedElement, updateStyles } = useContext(EditableContext);
 
   // Utility: Convert "rgb(r,g,b)" to "#rrggbb"
   function rgbToHex(rgb) {
-    const result = rgb.match(/\d+/g).map(Number);
+    const matches = rgb.match(/\d+/g);
+    if (!matches) return rgb;
+    const result = matches.map(Number);
     return `#${result.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
   }
 
@@ -34,47 +100,54 @@ const TypographyEditor = () => {
     return Math.round(size);
   }
 
-  // Local state for typography controls.
-  const [styles, setStyles] = useState({
-    fontSize: "",
-    fontFamily: "Arial",
-    fontWeight: "normal",
-    fontStyle: "normal", // For italic toggling.
-    color: "#217BF4",
-    textAlign: "left",
-    textDecoration: "none",
-  });
+  // Read styles directly from the live selectedElement (explicit values),
+  // falling back to DOM computed styles for inherited properties.
+  const elStyles = selectedElement?.styles || {};
 
-  // When a new element is selected, read its computed styles into local state.
-  useEffect(() => {
-    if (selectedElement) {
-      const element = document.getElementById(selectedElement.id);
-      if (element) {
-        const computedStyles = getComputedStyle(element);
-        const pixelFontSize = convertToPx(element, computedStyles.fontSize);
-        const hexColor = rgbToHex(computedStyles.color);
-        setStyles({
-          fontSize: pixelFontSize + "px",
-          fontFamily: computedStyles.fontFamily || "Arial",
-          fontWeight: computedStyles.fontWeight || "normal",
-          fontStyle: computedStyles.fontStyle || "normal",
-          color: hexColor || "#217BF4",
-          textAlign: computedStyles.textAlign || "left",
-          textDecoration: computedStyles.textDecoration.includes("underline")
-            ? "underline"
-            : computedStyles.textDecoration.includes("line-through")
-              ? "line-through"
-              : "none",
-        });
-      }
-    }
-  }, [selectedElement]);
+  // Read from explicit element styles with sensible defaults — no DOM reads
+  const styles = {
+    fontSize: elStyles.fontSize || "16px",
+    fontFamily: elStyles.fontFamily || "Arial",
+    fontWeight: ({ normal: "400", bold: "700", lighter: "300", bolder: "700" }[elStyles.fontWeight] || elStyles.fontWeight) || "400",
+    fontStyle: elStyles.fontStyle || "normal",
+    color: elStyles.color || "#217BF4",
+    textAlign: elStyles.textAlign || "left",
+    textDecoration: elStyles.textDecoration || "none",
+    lineHeight: elStyles.lineHeight || "normal",
+    letterSpacing: elStyles.letterSpacing || "0px",
+    textTransform: elStyles.textTransform || "none",
+  };
 
-  // Update both local state and global context.
+  // Update global context — live selectedElement re-derives automatically
   const handleStyleChange = (styleKey, value) => {
-    setStyles((prev) => ({ ...prev, [styleKey]: value }));
     updateStyles(selectedElement.id, { [styleKey]: value });
   };
+
+  // Parsed font-size for the unit selector
+  const { value: fontSizeValue, unit: fontSizeUnit } = parseFontSize(styles.fontSize);
+
+  const handleFontSizeChange = (numericValue) => {
+    const val = fontSizeUnit === "px" ? Math.round(numericValue) : numericValue;
+    handleStyleChange("fontSize", `${val}${fontSizeUnit}`);
+  };
+
+  const handleFontUnitChange = (newUnit) => {
+    const converted = convertFontValue(fontSizeValue, fontSizeUnit, newUnit);
+    const val = newUnit === "px" ? Math.round(converted) : converted;
+    handleStyleChange("fontSize", `${val}${newUnit}`);
+  };
+
+  /** When the user picks a font, load the Google Font stylesheet if needed. */
+  const handleFontFamilyChange = useCallback(
+    (fontName) => {
+      if (GOOGLE_FONTS.includes(fontName)) {
+        loadGoogleFont(fontName);
+      }
+      handleStyleChange("fontFamily", fontName);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedElement?.id]
+  );
 
   if (!selectedElement) return null;
 
@@ -85,14 +158,18 @@ const TypographyEditor = () => {
         <label>Font Family</label>
         <select
           value={styles.fontFamily}
-          onChange={(e) => handleStyleChange("fontFamily", e.target.value)}
+          onChange={(e) => handleFontFamilyChange(e.target.value)}
         >
-          <option value="Arial">Arial</option>
-          <option value="Helvetica">Helvetica</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Verdana">Verdana</option>
+          <optgroup label="System Fonts">
+            {SYSTEM_FONTS.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </optgroup>
+          <optgroup label="Google Fonts">
+            {GOOGLE_FONTS.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </optgroup>
         </select>
       </div>
 
@@ -104,40 +181,48 @@ const TypographyEditor = () => {
             value={styles.fontWeight}
             onChange={(e) => handleStyleChange("fontWeight", e.target.value)}
           >
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="lighter">Lighter</option>
-            <option value="bolder">Bolder</option>
-            <option value="600">Semi Bold (600)</option>
-            <option value="700">Extra Bold (700)</option>
+            <option value="100">100 (Thin)</option>
+            <option value="200">200 (Extra Light)</option>
+            <option value="300">300 (Light)</option>
+            <option value="400">400 (Regular)</option>
+            <option value="500">500 (Medium)</option>
+            <option value="600">600 (Semi Bold)</option>
+            <option value="700">700 (Bold)</option>
+            <option value="800">800 (Extra Bold)</option>
+            <option value="900">900 (Black)</option>
           </select>
         </div>
 
         <div className="editor-group">
           <label>Size</label>
-          <input
-            className="size-input"
-            type="number"
-            value={styles.fontSize !== "" ? parseFloat(styles.fontSize) : ""}
-            onChange={(e) =>
-              // Round the value before appending "px"
-              handleStyleChange("fontSize", Math.round(e.target.value) + "px")
-            }
-          />
+          <div className="font-size-with-unit">
+            <input
+              className="size-input"
+              type="number"
+              step={fontSizeUnit === "px" ? 1 : 0.1}
+              value={fontSizeValue}
+              onChange={(e) => handleFontSizeChange(Number(e.target.value))}
+            />
+            <select
+              className="unit-select"
+              value={fontSizeUnit}
+              onChange={(e) => handleFontUnitChange(e.target.value)}
+            >
+              {FONT_UNITS.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Color Picker + Hex Value */}
       <div className="editor-group">
         <label>Color</label>
-        <div className="color-group-combined">
-          <input
-            type="color"
-            value={styles.color}
-            onChange={(e) => handleStyleChange("color", e.target.value)}
-          />
-          <input type="text" value={styles.color} readOnly className="color-hex" />
-        </div>
+        <ColorPicker
+          value={styles.color}
+          onChange={(color) => handleStyleChange("color", color)}
+        />
       </div>
 
       {/* Text Decoration */}
@@ -223,6 +308,75 @@ const TypographyEditor = () => {
             onClick={() => handleStyleChange("textAlign", "justify")}
           >
             <span className="material-symbols-outlined">format_align_justify</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Line Height + Letter Spacing */}
+      <div className="editor-regroup">
+        <div className="editor-group">
+          <label>Line Height</label>
+          <input
+            className="size-input"
+            type="number"
+            step="0.1"
+            min="0"
+            value={styles.lineHeight === "normal" ? "" : parseFloat(styles.lineHeight)}
+            placeholder="auto"
+            onChange={(e) => {
+              const val = e.target.value;
+              handleStyleChange("lineHeight", val === "" ? "normal" : val);
+            }}
+          />
+        </div>
+        <div className="editor-group">
+          <label>Letter Spacing</label>
+          <input
+            className="size-input"
+            type="number"
+            step="0.5"
+            value={parseFloat(styles.letterSpacing) || 0}
+            onChange={(e) =>
+              handleStyleChange("letterSpacing", e.target.value + "px")
+            }
+          />
+        </div>
+      </div>
+
+      {/* Text Transform */}
+      <div className="editor-group">
+        <label>Text Transform</label>
+        <div className="text-align-group">
+          <button
+            className={styles.textTransform === "none" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "none")}
+            title="None"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>&mdash;</span>
+          </button>
+          <hr className="custom-rule" />
+          <button
+            className={styles.textTransform === "capitalize" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "capitalize")}
+            title="Capitalize"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>Aa</span>
+          </button>
+          <hr className="custom-rule" />
+          <button
+            className={styles.textTransform === "uppercase" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "uppercase")}
+            title="Uppercase"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>AA</span>
+          </button>
+          <hr className="custom-rule" />
+          <button
+            className={styles.textTransform === "lowercase" ? "active" : ""}
+            onClick={() => handleStyleChange("textTransform", "lowercase")}
+            title="Lowercase"
+          >
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>aa</span>
           </button>
         </div>
       </div>

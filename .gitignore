@@ -22,6 +22,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firebase-debug.log
+firebase-debug.*.log
 
 # keys
 cdp_api_key.json
@@ -32,3 +34,13 @@ admin-keypair.json
 .env
 .env.local
 .env.*.local
+
+# bundle analysis
+bundle-stats.html
+
+# fix plans (operational files)
+fix_plan*.md
+
+# ralph agent
+.ralph/
+.ralphrc

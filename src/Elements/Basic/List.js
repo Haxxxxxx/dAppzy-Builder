@@ -11,7 +11,7 @@ const ListItem = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'list-item', parentId });
+    setSelectedElement(element || { id, type: 'list-item', parentId });
   };
 
   const handleBlur = (e) => {
@@ -24,7 +24,6 @@ const ListItem = ({ id }) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (!parentId) {
-        console.error(`Parent ID for element ${id} not found.`);
         return;
       }
       const newId = addNewElement('list-item', 1, null, parentId);
@@ -72,7 +71,7 @@ const List = ({ id }) => {
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    setSelectedElement({ id, type: 'list' });
+    setSelectedElement(listElement || { id, type: 'list' });
   };
 
   const tagName = listType === 'ol' ? 'ol' : 'ul';
@@ -91,18 +90,19 @@ const List = ({ id }) => {
     </li>
   );
 
-  return React.createElement(
-    tagName,
-    {
-      id,
-      onClick: handleSelect,
-      style: {
+  const Tag = tagName;
+  return (
+    <Tag
+      id={id}
+      onClick={handleSelect}
+      style={{
         listStyleType: listType === 'ol' ? (listStyleType || 'decimal') : (listStyleType || 'disc'),
-      },
-      start: listType === 'ol' ? start : undefined,
-      reversed: listType === 'ol' ? reversed : undefined,
-    },
-    children.length === 0 ? placeholderItem : children.map((childId) => <ListItem key={childId} id={childId} />)
+      }}
+      start={listType === 'ol' ? start : undefined}
+      reversed={listType === 'ol' ? reversed : undefined}
+    >
+      {children.length === 0 ? placeholderItem : children.map((childId) => <ListItem key={childId} id={childId} />)}
+    </Tag>
   );
 };
 

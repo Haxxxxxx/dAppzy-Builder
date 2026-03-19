@@ -1,251 +1,221 @@
-import React, { useState, useContext } from 'react';
-import NewElementPanel from './LeftbarPanels/NewElementPanel';
-import EditorPanel from './LeftbarPanels/EditorPanel';
+import React, { useState, useContext, Suspense } from 'react';
 import { EditableContext } from '../context/EditableContext';
-import SpacingEditor from '../Editors/SpacingEditor';
-import DisplayEditor from '../Editors/DisplayEditor';
 import './css/Sidebar.css';
+import './css/SettingsPanel.css';
 import CollapsibleSection from './LeftbarPanels/SettingsPanels/LinkSettings/CollapsibleSection';
-import TextualSettings from './LeftbarPanels/SettingsPanels/TextualSettings';
-import './LeftbarPanels/SettingsPanels/css/ImageSettings.css';
-import LinkSettings from './LeftbarPanels/SettingsPanels/LinkSettings';
-import WalletSettingsPanel from './LeftbarPanels/SettingsPanels/WalletSettings';
-import ImageSettings from './LeftbarPanels/SettingsPanels/ImageSettings';
-import FormSettings from './LeftbarPanels/SettingsPanels/FormSettings';
-import ListSettings from './LeftbarPanels/SettingsPanels/ListSettings';
-import VideoSettings from './LeftbarPanels/SettingsPanels/VideoSettings';
-import DeFiSectionSettings from './LeftbarPanels/SettingsPanels/DeFiSectionSettings';
-import DeFiModuleSettings from './LeftbarPanels/SettingsPanels/DeFiModuleSettings';
-import BackgroundSettings from './LeftbarPanels/SettingsPanels/BackgroundSettings';
-import CandyMachineSettings from './LeftbarPanels/SettingsPanels/CandyMachineSettings';
+import settingsRegistry from './LeftbarPanels/SettingsPanels/settingsRegistry';
+import {
+  LINK_TYPES, FORM_TYPES, LIST_TYPES,
+  VIDEO_TYPES, TABLE_TYPES,
+  isTextual, getMeta,
+} from '../core/elementRegistry';
 
-const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpenMediaPanel }) => {
-  // State for when no element is selected
+// Eagerly import editors shown on the default Content tab —
+// React.lazy + Suspense can render with a stale context snapshot on first mount.
+import DisplayEditor from '../Editors/DisplayEditor';
+import SpacingEditor from '../Editors/SpacingEditor';
+
+// Types that show content editing (not display/layout) on the first tab
+const CONTENT_CATEGORIES = new Set([
+  'textual', 'image', 'video', 'youtube', 'icon', 'form', 'list', 'table', 'defi', 'interactive',
+]);
+
+const NewElementPanel = React.lazy(() => import('./LeftbarPanels/NewElementPanel'));
+const EditorPanel = React.lazy(() => import('./LeftbarPanels/EditorPanel'));
+
+const SideBar = ({ pageSettings }) => {
   const [sidebarViewMode, setSidebarViewMode] = useState('elements');
-  // State for when an element is selected (editor panel)
   const [editorViewMode, setEditorViewMode] = useState('content');
   const [searchQuery, setSearchQuery] = useState('');
-  const { selectedElement, updateContent, updateConfiguration, updateStyles } = useContext(EditableContext);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const { selectedElement, updateElementProperties } = useContext(EditableContext);
 
-  // Helper function to determine if element is a form element
-  const isFormElement = (element) => {
-    const formElements = ['form', 'input', 'textarea', 'select', 'label', 'fieldset', 'legend'];
-    return formElements.includes(element.type);
-  };
-
-  // Helper function to determine if element is a list element
-  const isListElement = (element) => {
-    const listElements = ['ul', 'ol', 'li'];
-    return listElements.includes(element.type);
-  };
-
-  // Helper function to determine if element is a video element
-  const isVideoElement = (element) => {
-    const videoElements = ['video', 'youtubevideo', 'bgvideo'];
-    return videoElements.includes(element.type);
-  };
-
-  // Helper function to determine if element is a DeFi element
-  const isDeFiElement = (element) => {
-    const defiElements = ['defiSection', 'defiModule', 'mintingSection'];
-    return defiElements.includes(element.type?.toLowerCase());
-  };
-
-  // Helper function to determine if element is a layout element
-  const isLayoutElement = (element) => {
-    const layoutElements = ['navbar', 'hero', 'cta', 'section', 'footer', 'defiSection', 'mintingSection'];
-    return layoutElements.includes(element.type?.toLowerCase());
-  };
-
-  const isTextualElement = (element) => {
-    if (!element || !element.type) return false;
-
-    const textualElements = [
-      // Basic text elements
-      'title', 'description', 'paragraph', 'p', 'blockquote',
-      'code', 'pre', 'caption', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      // Link elements
-      'a', 'link', 'linkblock', 'anchor',
-      // Button elements
-      'button', 'connectWalletButton',
-      // Other text containers
-      'label', 'legend', 'figcaption', 'cite', 'q', 'em', 'strong', 'mark',
-      'small', 'sub', 'sup', 'time', 'abbr', 'dfn', 'kbd', 'samp', 'var'
-    ];
-
-    return textualElements.includes(element.type);
-  };
-
-  const shouldShowDisplaySettings = (element) => {
-    // Early return if element is null or undefined
-    if (!element || !element.type) return false;
-
-    // Elements that should have display settings
-    const displayElements = {
-      // Layout & Structure Elements
-      layout: [
-        'div', 'section', 'container', 'gridlayout', 'hflexlayout', 'vflexlayout',
-        'navbar', 'footer', 'hero', 'cta', 'contentsections', 'defiSection', 'mintingSection',
-      ],
-      // Form Elements
-      form: [
-        'form', 'fieldset'
-      ],
-      // List Elements
-      list: [
-        'ul', 'ol'
-      ],
-      // Table Elements
-      table: [
-        'table', 'tablerow', 'tablecell'
-      ],
-      // Web3 Elements
-      web3: [
-        'defiSection', 'defiModule', 'mintingSection'
-      ],
-      // Media Containers
-      media: [
-        'bgvideo'
-      ]
-    };
-
-    try {
-      // Flatten all categories into a single array
-      const allDisplayElements = Object.values(displayElements).flat();
-
-      // Get the element type and convert to lowercase, with fallback to empty string
-      const elementType = (element.type || '').toLowerCase();
-
-      // Check if the element type is in any of the categories
-      return allDisplayElements.includes(elementType);
-    } catch (error) {
-      console.error('Error in shouldShowDisplaySettings:', error);
-      return false;
+  // Reset to Content/Display tab whenever the selected element changes
+  const prevSelectedId = React.useRef(selectedElement?.id);
+  React.useEffect(() => {
+    if (selectedElement?.id !== prevSelectedId.current) {
+      prevSelectedId.current = selectedElement?.id;
+      setEditorViewMode('content');
     }
-  };
+  }, [selectedElement?.id]);
 
-  const renderDisplayView = () => {
-    if (!selectedElement) {
-      return <p>Select an element to edit its settings.</p>;
+  // ── Content / Display tab ───────────────────────────────────────
+  // Shows content editing (text, image source, video URL) or
+  // layout controls (display, spacing) for structural elements.
+  const renderContentTab = () => {
+    if (!selectedElement) return <p className="sidebar-empty-hint">Select an element to edit.</p>;
+
+    const type = selectedElement.type;
+
+    // Text elements — inline text editor
+    if (isTextual(selectedElement)) {
+      return (
+        <Suspense fallback={null}>
+          <settingsRegistry.TextualSettings />
+        </Suspense>
+      );
     }
 
-    // Handle DeFi elements first
-    if (isDeFiElement(selectedElement)) {
-      if (selectedElement.type === 'defiSection') {
-        return (
-          <>
-            <CollapsibleSection title="Layout Settings">
-              <DisplayEditor />
-              <SpacingEditor />
-            </CollapsibleSection>
-            <DeFiSectionSettings selectedElement={selectedElement} />
-          </>
-        );
-      } else if (selectedElement.type === 'defiModule') {
-        return <DeFiModuleSettings selectedElement={selectedElement} />;
-      } else if (selectedElement.type === 'mintingSection') {
-        return (
-          <>
-            <CollapsibleSection title="Layout Settings">
-              <DisplayEditor />
-              <SpacingEditor />
-            </CollapsibleSection>
-            <DeFiSectionSettings selectedElement={selectedElement} />
-          </>
-        );
-      }
+    // Image
+    if (type === 'image') {
+      return <Suspense fallback={null}><settingsRegistry.ImageSettings /></Suspense>;
     }
 
-    // Handle layout elements
-    if (isLayoutElement(selectedElement)) {
+    // Video
+    if (VIDEO_TYPES.has(type)) {
+      return <Suspense fallback={null}><settingsRegistry.VideoSettings /></Suspense>;
+    }
+    if (type === 'youtubeVideo') {
+      return <Suspense fallback={null}><settingsRegistry.YoutubeSettings /></Suspense>;
+    }
+
+    // Icon
+    if (type === 'icon') {
+      return <Suspense fallback={null}><settingsRegistry.IconSettings /></Suspense>;
+    }
+
+    // DeFi module — no layout, just its config
+    if (type === 'defiModule') {
+      return <Suspense fallback={null}><settingsRegistry.DeFiModuleSettings /></Suspense>;
+    }
+
+    // Minting module — no layout, just its config
+    if (type === 'mintingModule') {
+      return <Suspense fallback={null}><settingsRegistry.MintingModuleSettings /></Suspense>;
+    }
+
+    // DeFi section — layout + module management
+    if (type === 'defiSection') {
       return (
         <>
-          <CollapsibleSection title="Layout Settings">
+          <CollapsibleSection title="Layout">
             <DisplayEditor />
             <SpacingEditor />
           </CollapsibleSection>
-          <CollapsibleSection title="Content Settings">
-            {selectedElement.children?.map((childId, index) => (
-              <div key={childId} className="child-element-settings">
-                <h4>Element {index + 1}</h4>
-                <TextualSettings elementId={childId} />
-              </div>
-            ))}
-          </CollapsibleSection>
+          <Suspense fallback={null}>
+            <settingsRegistry.DeFiSectionSettings />
+          </Suspense>
         </>
       );
     }
 
-    // Always show TextualSettings for textual elements
-    if (isTextualElement(selectedElement)) {
+    // Minting section — layout + module management
+    if (type === 'mintingSection') {
       return (
         <>
-          <TextualSettings />
-          {/* Show specific settings based on element type */}
-          {selectedElement.type === 'button' || selectedElement.type === 'a' || selectedElement.type === 'link' || selectedElement.type === 'linkblock' ? (
-            <LinkSettings />
-          ) : selectedElement.type === 'connectWalletButton' ? (
-            <WalletSettingsPanel />
-          ) : null}
+          <CollapsibleSection title="Layout">
+            <DisplayEditor />
+            <SpacingEditor />
+          </CollapsibleSection>
+          <Suspense fallback={null}>
+            <settingsRegistry.MintingSectionSettings />
+          </Suspense>
         </>
       );
     }
 
-    // Handle form elements
-    if (isFormElement(selectedElement)) {
-      return <FormSettings />;
+    // Form
+    if (FORM_TYPES.has(type)) {
+      return <Suspense fallback={null}><settingsRegistry.FormSettings /></Suspense>;
     }
 
-    // Handle list elements
-    if (isListElement(selectedElement)) {
-      return <ListSettings />;
+    // List
+    if (LIST_TYPES.has(type)) {
+      return <Suspense fallback={null}><settingsRegistry.ListSettings /></Suspense>;
     }
 
-    // Handle video elements
-    if (isVideoElement(selectedElement)) {
-      return <VideoSettings />;
+    // Table
+    if (TABLE_TYPES.has(type)) {
+      return <Suspense fallback={null}><settingsRegistry.TableSettings /></Suspense>;
     }
 
-    // Handle image elements
-    if (selectedElement.type === 'image') {
-      return <ImageSettings />;
+    // Interactive elements (tabs, accordion, modal, carousel, tooltip, dropdown,
+    // breadcrumb, progress, iframe, checkbox, radio, toggle, etc.)
+    if (getMeta(type)?.sidebarCategory === 'interactive') {
+      return <Suspense fallback={null}><settingsRegistry.InteractiveSettings /></Suspense>;
     }
 
-    // Handle background elements
-    if (selectedElement.type === 'bgvideo') {
-      return <BackgroundSettings />;
-    }
-
-    // Handle candy machine elements
-    if (selectedElement.type === 'candymachine') {
-      return <CandyMachineSettings />;
-    }
-
-    // For other elements (like containers, etc.)
+    // Default: structural / container — show display + spacing
     return (
       <>
-        <CollapsibleSection title="Display Settings">
+        <CollapsibleSection title="Display">
           <DisplayEditor />
         </CollapsibleSection>
-        <CollapsibleSection title="Spacing Settings">
+        <CollapsibleSection title="Spacing">
           <SpacingEditor />
         </CollapsibleSection>
       </>
     );
   };
 
+  // ── Settings tab ────────────────────────────────────────────────
+  // Element metadata + type-specific configuration (link URL,
+  // wallet config, DeFi params, etc.)
+  const renderSettingsTab = () => {
+    if (!selectedElement) return <p className="sidebar-empty-hint">Select an element to edit.</p>;
+
+    const type = selectedElement.type;
+
+    return (
+      <div className="settings-panel">
+        {/* Element info — always visible */}
+        <CollapsibleSection title="Element Information">
+          <div className="settings-wrapper">
+            <div className="settings-field">
+              <label>Element ID</label>
+              <input type="text" value={selectedElement.id || ''} readOnly className="settings-input" />
+            </div>
+            <div className="settings-field">
+              <label>CSS Class</label>
+              <input
+                type="text"
+                value={selectedElement.className || ''}
+                placeholder="e.g. hero-title fade-in"
+                className="settings-input"
+                onChange={(e) => updateElementProperties(selectedElement.id, { className: e.target.value })}
+              />
+            </div>
+            <div className="settings-field">
+              <label>Type</label>
+              <input type="text" value={type || ''} readOnly className="settings-input" />
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* Link / button settings */}
+        {LINK_TYPES.has(type) && (
+          <CollapsibleSection title="Link Settings">
+            <Suspense fallback={null}>
+              <settingsRegistry.LinkSettings settings={selectedElement.settings || {}} />
+            </Suspense>
+          </CollapsibleSection>
+        )}
+
+        {/* Wallet button config */}
+        {type === 'connectWalletButton' && (
+          <CollapsibleSection title="Wallet Settings">
+            <Suspense fallback={null}>
+              <settingsRegistry.WalletSettings />
+            </Suspense>
+          </CollapsibleSection>
+        )}
+
+        {/* Type-specific settings are shown on the Content tab.
+           The Settings tab only shows metadata (Element Info, Link, Wallet)
+           that isn't duplicated elsewhere. */}
+
+      </div>
+    );
+  };
+
   return (
     <div className="sidebar-container">
       {selectedElement ? (
-        // Editor toggle buttons: content/display vs. style vs. settings
         <div className="sidebar-toggle-buttons">
           <button
             onClick={() => setEditorViewMode('content')}
             className={editorViewMode === 'content' ? 'active' : ''}
           >
-            {isTextualElement(selectedElement) ? 'Content' : 'Display'}
+            {CONTENT_CATEGORIES.has(getMeta(selectedElement.type)?.sidebarCategory) ? 'Content' : 'Display'}
           </button>
           <button
             onClick={() => setEditorViewMode('style')}
@@ -261,7 +231,6 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
           </button>
         </div>
       ) : (
-        // Sidebar toggle buttons: layout vs. elements
         <>
           <div className="sidebar-toggle-buttons">
             <button
@@ -289,66 +258,26 @@ const SideBar = ({ contentListWidth, pageSettings, handlePanelToggle, handleOpen
         </>
       )}
 
-      {/* Render panel based on whether an element is selected */}
       {selectedElement ? (
-        <div className="editor-panel-container">
+        <div className="editor-panel-container" key={selectedElement.id}>
           {editorViewMode === 'content' ? (
-            renderDisplayView()
+            renderContentTab()
           ) : editorViewMode === 'settings' ? (
-            <div className="settings-panel">
-              {isDeFiElement(selectedElement) ? (
-                selectedElement.type === 'defiSection' ? (
-                  <DeFiSectionSettings selectedElement={selectedElement} />
-                ) : selectedElement.type === 'defiModule' ? (
-                  <DeFiModuleSettings selectedElement={selectedElement} />
-                ) : null
-              ) : (
-              <CollapsibleSection
-                title="Element Information"
-                className="element-info-section"
-                defaultExpanded={true}
-              >
-                <div className="settings-wrapper">
-                  <div className="element-id-display">
-                    <label>Element ID:</label>
-                    <input
-                      type="text"
-                      value={selectedElement.id || ''}
-                      readOnly
-                      className="settings-input"
-                    />
-                  </div>
-                  <div className="element-type-display">
-                    <label>Element Type:</label>
-                    <input
-                      type="text"
-                      value={selectedElement.type || ''}
-                      readOnly
-                      className="settings-input"
-                    />
-                  </div>
-                </div>
-              </CollapsibleSection>
-              )}
-            </div>
+            renderSettingsTab()
           ) : (
-            <EditorPanel
-              searchQuery={searchQuery}
-              pageSettings={pageSettings}
-              viewMode={editorViewMode}
-              setViewMode={setEditorViewMode}
-            />
+            <Suspense fallback={null}>
+              <EditorPanel pageSettings={pageSettings} />
+            </Suspense>
           )}
         </div>
       ) : (
         <div className="default-sidebar-container">
-          <NewElementPanel
-            viewMode={sidebarViewMode}
-            contentListWidth={contentListWidth}
-            searchQuery={searchQuery}
-            handlePanelToggle={handlePanelToggle}
-            handleOpenMediaPanel={handleOpenMediaPanel}
-          />
+          <Suspense fallback={null}>
+            <NewElementPanel
+              viewMode={sidebarViewMode}
+              searchQuery={searchQuery}
+            />
+          </Suspense>
         </div>
       )}
     </div>

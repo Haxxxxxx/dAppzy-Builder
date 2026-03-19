@@ -2,10 +2,13 @@ import React, { useState, useEffect, useContext } from 'react';
 import { EditableContext } from '../../../context/EditableContext';
 import FormAdvancedSettings from './FormSettings/FormAdvancedSettings';
 import FormFieldsManager from './FormSettings/FormFieldsManager';
+import CollapsibleSection from './LinkSettings/CollapsibleSection';
 import '../../css/SettingsPanel.css';
-import './css/FormSettings.css';
 
-const FormSettings = ({ onUpdateSettings }) => {
+// Element types that support the "required" attribute
+const REQUIRED_CAPABLE_TYPES = new Set(['input', 'textarea', 'select']);
+
+const FormSettings = () => {
   const { selectedElement, elements, updateConfiguration, setElements } = useContext(EditableContext);
 
   const [localSettings, setLocalSettings] = useState({
@@ -41,16 +44,75 @@ const FormSettings = ({ onUpdateSettings }) => {
     if (typeof eOrUpdater === 'function') {
       setLocalSettings((prev) => {
         const updated = eOrUpdater(prev);
-        // Optionally update configuration (e.g., updateConfiguration(updated.id, 'fields', updated.fields));
         return updated;
       });
     } else {
       const { name, value } = eOrUpdater.target;
       setLocalSettings((prev) => ({ ...prev, [name]: value }));
-      updateConfiguration(localSettings.id, name, value);
+      updateConfiguration(selectedElement.id, name, value);
     }
   };
 
+  // For input/textarea/select — show field-level settings (required, name, placeholder)
+  if (selectedElement && REQUIRED_CAPABLE_TYPES.has(selectedElement.type)) {
+    const settings = selectedElement.settings || selectedElement.configuration || {};
+    const isRequired = !!settings.required;
+
+    const handleRequiredToggle = (e) => {
+      updateConfiguration(selectedElement.id, 'required', e.target.checked);
+    };
+
+    const handleNameChange = (e) => {
+      updateConfiguration(selectedElement.id, 'name', e.target.value);
+    };
+
+    const handlePlaceholderChange = (e) => {
+      updateConfiguration(selectedElement.id, 'placeholder', e.target.value);
+    };
+
+    return (
+      <div className="settings-panel form-settings-panel">
+        <CollapsibleSection title="Field Settings" defaultExpanded={true}>
+          <div className="settings-group">
+            <label>Field Name</label>
+            <input
+              type="text"
+              value={settings.name || ''}
+              onChange={handleNameChange}
+              placeholder="e.g. email, name, message"
+              className="settings-input"
+            />
+          </div>
+          {selectedElement.type !== 'select' && (
+            <div className="settings-group">
+              <label>Placeholder</label>
+              <input
+                type="text"
+                value={settings.placeholder || ''}
+                onChange={handlePlaceholderChange}
+                placeholder="Placeholder text..."
+                className="settings-input"
+              />
+            </div>
+          )}
+          <div className="settings-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              id="required-toggle"
+              checked={isRequired}
+              onChange={handleRequiredToggle}
+              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <label htmlFor="required-toggle" style={{ cursor: 'pointer', margin: 0 }}>
+              Required
+            </label>
+          </div>
+        </CollapsibleSection>
+      </div>
+    );
+  }
+
+  // For form elements — show form-level settings
   return (
     <div className="settings-panel form-settings-panel">
       <FormAdvancedSettings

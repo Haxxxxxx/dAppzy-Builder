@@ -36,8 +36,8 @@
     content: '';
     width: 16px;
     height: 16px;
-    background-color: var(----purple, #5C4EFA);
-    border-radius: 50%;
+    background-color: var(--purple, #5C4EFA);
+    border-radius: var(--radius-round);
     position: absolute;
     top: 2px;
     left: 2px;
@@ -46,7 +46,7 @@
 
 /* Active state */
 .switch-input:checked+.switch-slider {
-    background: var(----purple, #5C4EFA);
+    background: var(--purple, #5C4EFA);
 }
 
 .switch-input:checked+.switch-slider::before {
@@ -65,8 +65,8 @@
     align-self: stretch;
 
     border-radius: 3px;
-    background: var(----dark-gray, #57575B);
-    color: var(----editor-text, #D9D9D9);
+    background: var(--dark-gray, #57575B);
+    color: var(--editor-text, #D9D9D9);
     font-family: Montserrat;
     font-style: normal;
     font-weight: 500;
@@ -90,7 +90,7 @@
 .link-item {
     position: relative;
     padding: 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;

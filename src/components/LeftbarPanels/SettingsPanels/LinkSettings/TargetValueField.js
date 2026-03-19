@@ -1,14 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { ref, uploadBytesResumable, getDownloadURL, listAll } from "firebase/storage";
 import { storage } from "../../../../firebase";
+import { authStorage, projectStorage } from "../../../../utils/storageManager";
+import { EditableContext } from "../../../../context/EditableContext";
+
+// Section-level element types whose IDs can be scroll targets
+const SCROLLABLE_SECTION_TYPES = new Set([
+  'navbar', 'hero', 'footer', 'cta', 'ContentSection',
+  'defiSection', 'mintingSection', 'section',
+]);
+
+/**
+ * Convert a page slug to the filename used in multi-page export.
+ * "/" -> "index.html", "/about" -> "about.html"
+ */
+const slugToFilename = (slug) => {
+  if (!slug || slug === '/') return 'index.html';
+  const clean = slug.replace(/^\//, '').replace(/\/$/, '');
+  return `${clean}.html`;
+};
 
 const TargetValueField = ({
   actionType,
   targetValue,
   onChange,
-  updateStyles,
   settings = {}
 }) => {
+  const { elements, pages } = useContext(EditableContext);
   const [pdfFiles, setPdfFiles] = useState([]);
 
   /**
@@ -17,9 +35,9 @@ const TargetValueField = ({
    */
   const fetchExistingPDFFiles = async () => {
     try {
-      const userId = sessionStorage.getItem("userAccount");
+      const userId = authStorage.getUserAccount();
       if (!userId) return;
-      const websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+      const websiteSettings = projectStorage.getWebsiteSettings();
       const projectName = websiteSettings.siteTitle || "DefaultProject";
 
       // Path to your user’s project folder
@@ -48,7 +66,7 @@ const TargetValueField = ({
       const actualPDFs = pdfResults.filter(Boolean);
       setPdfFiles(actualPDFs);
     } catch (error) {
-      console.error("Error fetching PDF files:", error);
+      // PDF fetch failed — non-critical, list stays empty
     }
   };
 
@@ -58,8 +76,8 @@ const TargetValueField = ({
    */
   const uploadFile = async (file) => {
     try {
-      const userId = sessionStorage.getItem("userAccount");
-      const websiteSettings = JSON.parse(localStorage.getItem("websiteSettings") || "{}");
+      const userId = authStorage.getUserAccount();
+      const websiteSettings = projectStorage.getWebsiteSettings();
       const projectName = websiteSettings.siteTitle || "DefaultProject";
       const storagePath = `usersProjectData/${userId}/projects/${projectName}/${file.name}`;
       const storageRef = ref(storage, storagePath);
@@ -72,7 +90,6 @@ const TargetValueField = ({
             // Optional: track progress if needed.
           },
           (error) => {
-            console.error("Error uploading file:", error);
             reject(null);
           },
           async () => {
@@ -82,7 +99,6 @@ const TargetValueField = ({
         );
       });
     } catch (error) {
-      console.error("Error in uploadFile:", error);
       return null;
     }
   };
@@ -107,7 +123,7 @@ const TargetValueField = ({
         return "Twitter";
       } else if (hostname.includes("instagram.com")) {
         return "Instagram";
-      }else if (hostname.includes("X.com")) {
+      } else if (hostname.includes("x.com")) {
         return "X";
       } else if (hostname.includes("facebook.com")) {
         return "Facebook";
@@ -129,7 +145,32 @@ const TargetValueField = ({
   
   const renderField = () => {
     switch (actionType) {
-      case "pageSection":
+      case "page": {
+        // Show a dropdown of all pages in the project
+        return (
+          <div>
+            <select
+              name="targetValue"
+              value={targetValue}
+              onChange={onChange}
+              className="settings-input"
+              style={{ width: "100%" }}
+            >
+              <option value="">Select a page</option>
+              {(pages || []).map((page) => (
+                <option key={page.id} value={slugToFilename(page.slug)}>
+                  {page.name} ({page.slug})
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      }
+
+      case "pageSection": {
+        const sectionElements = (elements || []).filter(
+          (el) => SCROLLABLE_SECTION_TYPES.has(el.type)
+        );
         return (
           <div>
             <select
@@ -140,10 +181,20 @@ const TargetValueField = ({
               style={{ width: "100%" }}
             >
               <option value="">Select a page section</option>
-              {/* If you have pageSections, map them here */}
+              {sectionElements.map((el) => {
+                const displayName =
+                  el.label ||
+                  `${el.type}${el.configuration ? ` — ${el.configuration}` : ''}`;
+                return (
+                  <option key={el.id} value={`#${el.id}`}>
+                    {displayName}
+                  </option>
+                );
+              })}
             </select>
           </div>
         );
+      }
 
       case "URL": {
         const platform = analyzeURL(targetValue);
@@ -255,6 +306,30 @@ const TargetValueField = ({
               </div>
             )}
           </>
+        );
+
+      case "mailto":
+        return (
+          <input
+            type="email"
+            name="targetValue"
+            value={targetValue}
+            onChange={onChange}
+            placeholder="email@example.com"
+            className="settings-input"
+          />
+        );
+
+      case "tel":
+        return (
+          <input
+            type="tel"
+            name="targetValue"
+            value={targetValue}
+            onChange={onChange}
+            placeholder="+1234567890"
+            className="settings-input"
+          />
         );
 
       default:

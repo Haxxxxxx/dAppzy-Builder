@@ -1,15 +1,24 @@
 // src/components/ResizeControls.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { EditableContext } from '../../context/EditableContext';
 import '../css/Topbar.css';
 
 const ResizeControls = ({ scale, onResize, onScaleChange }) => {
   const [customSize, setCustomSize] = useState('');
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(1440);
+  const { setActiveBreakpoint } = useContext(EditableContext);
+
+  const sizeToBreakpoint = (size) => {
+    if (size <= 480) return 'mobile';
+    if (size <= 768) return 'tablet';
+    return 'desktop';
+  };
 
   const handleResize = (size) => {
     if (onResize) onResize(size);
     setSelectedSize(size);
     setCustomSize(size);
+    setActiveBreakpoint(sizeToBreakpoint(size));
   };
 
   const handleCustomResize = (e) => {
@@ -61,8 +70,16 @@ const ResizeControls = ({ scale, onResize, onScaleChange }) => {
         onKeyDown={handleCustomResize}
       />
       <div className="scale-control">
-      <span className="scale-percentage">Scale: {Math.round(scale * 100)}%</span>
-        
+        <button className="zoom-btn" onClick={() => onScaleChange(Math.round(Math.max(0.25, scale - 0.1) * 10) / 10)} title="Zoom out">
+          <span className="material-symbols-outlined">remove</span>
+        </button>
+        <span className="scale-percentage">{Math.round(scale * 100)}%</span>
+        <button className="zoom-btn" onClick={() => onScaleChange(Math.round(Math.min(2, scale + 0.1) * 10) / 10)} title="Zoom in">
+          <span className="material-symbols-outlined">add</span>
+        </button>
+        <button className="zoom-btn" onClick={() => onScaleChange(1)} title="Reset zoom">
+          <span className="material-symbols-outlined">fit_screen</span>
+        </button>
       </div>
     </div>
   );

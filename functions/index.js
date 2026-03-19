@@ -1,197 +1,283 @@
-// Use Firebase Functions v2
+// Builder-specific Cloud Functions (codebase: default)
+// Auth, wallet verification, and shared functions live in ThirdSpaceCMS (codebase: cms)
 const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
-const nacl = require("tweetnacl");
-const { PublicKey } = require("@solana/web3.js");
 const fetch = require("node-fetch");
-const cors = require("cors")({ origin: true }); // For manual CORS handling
-const nodemailer = require("nodemailer");
+const FormData = require("form-data");
 
-// 1) Define your secret using firebase-functions/params
-const udJwt = defineSecret("UD_JWT");
-const EMAIL_USER = defineSecret("EMAIL_USER");
-const EMAIL_PASS = defineSecret("EMAIL_PASS");
-// 2) Initialize Firebase Admin
+const ALLOWED_ORIGINS = [
+  "https://builder.dappzy.io",
+  "https://dappzy.io",
+  "https://www.dappzy.io",
+  "https://3rd-builder.web.app",
+];
+if (process.env.FUNCTIONS_EMULATOR) {
+  ALLOWED_ORIGINS.push("http://localhost:3000");
+}
+
+const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
+const PINATA_API_KEY = defineSecret("PINATA_API_KEY");
+
 admin.initializeApp();
-const db = admin.firestore(); // Firestore instance
 
-exports.sendSupportEmail = onRequest(
+// --- Rate Limiters ---
+// NOTE: These are in-memory rate limiters — they reset on every function cold
+// start and are not shared across Cloud Functions instances. For stricter
+// enforcement, consider using Firestore or Redis.
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+// AI rate limiter (15 per hour, keyed by IP)
+const aiRateLimitMap = new Map();
+const AI_RATE_LIMIT_MAX = 15;
+
+function checkAIRateLimit(ip) {
+  const now = Date.now();
+  const entry = aiRateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    aiRateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return true;
+  }
+  entry.count++;
+  if (entry.count > AI_RATE_LIMIT_MAX) return false;
+  return true;
+}
+
+// Upload rate limiter (30 per hour, keyed by Firebase UID)
+const uploadRateLimitMap = new Map();
+const UPLOAD_RATE_LIMIT_MAX = 30;
+
+function checkUploadRateLimit(uid) {
+  const now = Date.now();
+  const entry = uploadRateLimitMap.get(uid);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    uploadRateLimitMap.set(uid, { windowStart: now, count: 1 });
+    return true;
+  }
+  entry.count++;
+  if (entry.count > UPLOAD_RATE_LIMIT_MAX) return false;
+  return true;
+}
+
+// AI Project Generation — proxies to Claude API
+exports.generateAIProject = onRequest(
   {
-    secrets: [EMAIL_USER, EMAIL_PASS],
-    cors: true,
+    secrets: [ANTHROPIC_API_KEY],
+    cors: ALLOWED_ORIGINS,
     invoker: "public",
-  },
-  async (req, res) => {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method Not Allowed" });
-    }
-
-    try {
-      const { text, imageBase64, userId } = req.body;
-
-      // Validate
-      if (!text || text.trim().length === 0) {
-        return res.status(400).json({ error: "Message text is required" });
-      }
-
-      // 3) Store the text in Firestore (no image)
-      await db.collection("supportRequests").add({
-        message: text,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        userId:userId,
-      });
-
-      // 4) Create a Nodemailer transporter
-      let transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: EMAIL_USER.value(),
-          pass: EMAIL_PASS.value(),
-        },
-      });
-
-      // 5) Build mail options
-      const mailOptions = {
-        from: EMAIL_USER.value(),
-        to: "vcharles@dappzy.io",  // The developer's address
-        subject: "New Support Request",
-        text: text,
-      };
-
-      // 6) Attach the image if present
-      if (imageBase64) {
-        const base64Data = imageBase64.split("base64,")[1];
-        mailOptions.attachments = [
-          {
-            filename: "screenshot.png",
-            content: base64Data,
-            encoding: "base64",
-          },
-        ];
-      }
-
-      // 7) Send the email
-      await transporter.sendMail(mailOptions);
-
-      // 8) Respond success
-      return res.json({ success: true, message: "Email sent & Firestore updated" });
-    } catch (error) {
-      console.error("Error sending support email:", error);
-      return res.status(500).json({ error: error.message });
-    }
-  }
-);
-// 3) Reverse Lookup Function
-exports.reverseLookup = onRequest(
-  {
-    // This ensures the function can read your UD_JWT secret
-    secrets: [udJwt],
-    // You can also specify region, e.g. region: "us-central1",
-    cors: true,           // Tells Functions v2 to handle OPTIONS automatically
-    invoker: "public",    // Let it be publicly callable
-  },
-  (req, res) => {
-    // Use the cors middleware
-    cors(req, res, async () => {
-      if (req.method !== "GET") {
-        return res.status(405).json({ error: "Method Not Allowed" });
-      }
-
-      try {
-        // 4) Retrieve the secret value (JWT)
-        const jwtValue = udJwt.value();
-        if (!jwtValue) {
-          return res.status(500).json({ error: "UD JWT not configured" });
-        }
-
-        // Check query param
-        const address = req.query.address;
-        if (!address) {
-          return res.status(400).json({ error: "Missing address parameter" });
-        }
-
-        // Build the UD Partner API URL
-        const apiUrl = `https://api.unstoppabledomains.com/partner/v3/owners/${address}/domains`;
-        const queryParams = new URLSearchParams({ "$expand": "records" }).toString();
-        const fullUrl = `${apiUrl}?${queryParams}`;
-
-        // 5) Make the request
-        const response = await fetch(fullUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${jwtValue}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Error fetching domain data from UD API:", response.status, errorText);
-          return res.status(response.status).json({
-            error: "Error fetching domain data from UD API",
-            details: errorText,
-          });
-        }
-
-        const data = await response.json();
-        return res.json(data);
-      } catch (error) {
-        console.error("Error in reverseLookup:", error);
-        return res.status(500).json({ error: error.message });
-      }
-    });
-  }
-);
-
-// 6) Existing Phantom verification endpoint (unchanged)
-exports.verifyPhantomV2 = onRequest(
-  {
     region: "us-central1",
-    cors: true,
-    invoker: "public",
+    timeoutSeconds: 120,
+    memory: "512MiB",
   },
   async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method Not Allowed" });
     }
 
+    // Require Firebase Auth
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized — missing auth token" });
+    }
     try {
-      const { publicKey, signature } = req.body;
-      if (!publicKey || !signature) {
-        return res.status(400).json({ error: "Missing parameters" });
+      await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+    } catch (authError) {
+      return res.status(401).json({ error: "Unauthorized — invalid auth token" });
+    }
+
+    // AI-specific rate limit (15 per hour)
+    const clientIp = req.ip || "unknown";
+    if (!checkAIRateLimit(clientIp)) {
+      return res.status(429).json({ error: "AI generation limit reached (15 per hour). Try again later." });
+    }
+
+    try {
+      const { prompt, systemPrompt } = req.body;
+
+      if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+      if (prompt.length > 2000) {
+        return res.status(400).json({ error: "Prompt too long (max 2000 chars)" });
       }
 
-      const signatureBuffer = Buffer.from(signature, "base64");
-      const messageBuffer = Buffer.from(
-        "Lets create your beta accout reserved for testing issues ! Thanks for your QA and enjoy your time."
-      );
-
-      const pubKey = new PublicKey(publicKey);
-      const pubKeyBytes = pubKey.toBytes();
-
-      const isVerified = nacl.sign.detached.verify(
-        messageBuffer,
-        signatureBuffer,
-        pubKeyBytes
-      );
-      if (!isVerified) {
-        return res.status(401).json({ error: "Signature verification failed" });
+      const apiKey = ANTHROPIC_API_KEY.value();
+      if (!apiKey) {
+        return res.status(500).json({ error: "AI service not configured" });
       }
 
-      const customToken = await admin.auth().createCustomToken(publicKey, {
-        walletType: "Phantom",
+      // Call Claude API
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4096,
+          system: systemPrompt || "You are a web page builder AI. Return only valid JSON arrays.",
+          messages: [
+            { role: "user", content: prompt },
+          ],
+        }),
       });
 
-      return res.json({ customToken });
+      if (!anthropicRes.ok) {
+        const errText = await anthropicRes.text();
+        console.error("Anthropic API error:", anthropicRes.status, errText);
+        return res.status(502).json({ error: "AI service error" });
+      }
+
+      const anthropicData = await anthropicRes.json();
+      const aiText = anthropicData.content?.[0]?.text || "";
+
+      // Parse the AI response as JSON
+      let sections;
+      try {
+        sections = JSON.parse(aiText);
+      } catch (parseErr) {
+        console.error("AI response not valid JSON:", aiText.substring(0, 500));
+        return res.status(400).json({ error: "AI returned invalid JSON. Please try a different prompt." });
+      }
+
+      // Validate structure
+      if (!Array.isArray(sections) || sections.length === 0) {
+        return res.status(400).json({ error: "AI returned empty or non-array response." });
+      }
+
+      for (const section of sections) {
+        if (!section.type) {
+          return res.status(400).json({ error: "AI returned a section without a type." });
+        }
+        if (!section.styles || typeof section.styles !== "object") {
+          section.styles = {};
+        }
+      }
+
+      return res.json({ sections });
     } catch (error) {
-      console.error("Error in verifyPhantomV2:", error);
-      return res.status(500).json({ error: error.message });
+      console.error("Error in generateAIProject:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );
 
+// --- IPFS Upload Proxy ---
+// Proxies file uploads to Pinata so the API key never touches the client.
+// Accepts JSON with base64-encoded file content (same shape the client already sends).
+// Max 10 MB payload (Cloud Functions default for JSON bodies).
+const PINATA_API_URL = "https://api.pinata.cloud";
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
+exports.pinFileToIPFS = onRequest(
+  {
+    secrets: [PINATA_API_KEY],
+    cors: ALLOWED_ORIGINS,
+    invoker: "public",
+    region: "us-central1",
+    timeoutSeconds: 120,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    // --- Auth ---
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized — missing auth token" });
+    }
+    let uid;
+    try {
+      const decoded = await admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+      uid = decoded.uid;
+    } catch (authError) {
+      return res.status(401).json({ error: "Unauthorized — invalid auth token" });
+    }
+
+    // --- Rate limit (30 per hour per user) ---
+    if (!checkUploadRateLimit(uid)) {
+      return res.status(429).json({ error: "Upload limit reached (30 per hour). Try again later." });
+    }
+
+    try {
+      const { fileName, content, contentType, metadata } = req.body;
+
+      // --- Validate inputs ---
+      if (!fileName || typeof fileName !== "string") {
+        return res.status(400).json({ error: "fileName is required" });
+      }
+      if (!content || typeof content !== "string") {
+        return res.status(400).json({ error: "Base64 file content is required" });
+      }
+
+      const fileBuffer = Buffer.from(content, "base64");
+      if (fileBuffer.length === 0) {
+        return res.status(400).json({ error: "File content is empty" });
+      }
+      if (fileBuffer.length > MAX_FILE_SIZE_BYTES) {
+        return res.status(413).json({ error: `File too large (max ${MAX_FILE_SIZE_BYTES / 1024 / 1024} MB)` });
+      }
+
+      const apiKey = PINATA_API_KEY.value();
+      if (!apiKey) {
+        return res.status(500).json({ error: "IPFS service not configured" });
+      }
+
+      // --- Build multipart form for Pinata ---
+      const form = new FormData();
+      form.append("file", fileBuffer, {
+        filename: fileName,
+        contentType: contentType || "application/octet-stream",
+      });
+
+      // Pinata metadata (name + keyvalues)
+      if (metadata && typeof metadata === "object") {
+        form.append("pinataMetadata", JSON.stringify({
+          name: metadata.name || fileName,
+          keyvalues: metadata.keyvalues || {},
+        }));
+      }
+
+      // Pinata options
+      form.append("pinataOptions", JSON.stringify({ cidVersion: 1 }));
+
+      // --- Forward to Pinata ---
+      const pinataRes = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          ...form.getHeaders(),
+        },
+        body: form,
+      });
+
+      if (!pinataRes.ok) {
+        const errText = await pinataRes.text();
+        console.error("Pinata API error:", pinataRes.status, errText);
+        if (pinataRes.status === 401 || pinataRes.status === 403) {
+          return res.status(502).json({ error: "IPFS service authentication failed" });
+        }
+        return res.status(502).json({ error: "IPFS upload failed" });
+      }
+
+      const pinataData = await pinataRes.json();
+
+      // Return the same shape Pinata returns: { IpfsHash, PinSize, Timestamp }
+      return res.json({
+        IpfsHash: pinataData.IpfsHash,
+        PinSize: pinataData.PinSize,
+        Timestamp: pinataData.Timestamp,
+        // Also return normalised keys for convenience
+        ipfsHash: pinataData.IpfsHash,
+        pinSize: pinataData.PinSize,
+      });
+    } catch (error) {
+      console.error("Error in pinFileToIPFS:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);

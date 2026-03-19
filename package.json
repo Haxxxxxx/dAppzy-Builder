@@ -1,79 +1,41 @@
 {
-  "name": "libraryelements",
+  "name": "dappzy-builder",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
-    "@bonfida/spl-name-service": "3.0.11",
-    "@coinbase/wallet-sdk": "4.3.2",
-    "@craco/craco": "7.1.0",
-    "@hookform/resolvers": "5.0.1",
-    "@metaplex-foundation/js": "0.20.1",
-    "@pinata/sdk": "2.1.0",
-    "@solana/codecs": "2.0.0-rc.1",
+    "@bonfida/spl-name-service": "^3.0.19",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@sentry/react": "^9.0.0",
     "@solana/spl-token": "^0.4.13",
-    "@solana/wallet-adapter-base": "0.9.23",
-    "@solana/wallet-adapter-react": "0.15.38",
-    "@solana/wallet-adapter-wallets": "0.19.36",
     "@solana/web3.js": "^1.98.2",
     "@stellar/freighter-api": "4.1.0",
-    "@testing-library/jest-dom": "6.6.3",
-    "@testing-library/react": "16.3.0",
-    "@testing-library/user-event": "14.6.1",
     "@uauth/js": "3.0.1",
-    "@web3-react/core": "8.2.3",
-    "antd": "5.25.3",
-    "assert": "2.1.0",
-    "axios": "1.9.0",
-    "buffer": "6.0.3",
-    "cors": "2.8.5",
-    "crypto-browserify": "3.12.1",
-    "dompurify": "3.2.6",
-    "ethers": "6.14.3",
-    "events": "3.3.0",
-    "firebase": "11.8.1",
-    "firebase-tools": "14.4.0",
-    "https-browserify": "1.0.0",
-    "ipfs-http-client": "60.0.1",
-    "jszip": "3.10.1",
-    "nodemailer": "7.0.3",
-    "os-browserify": "0.3.0",
-    "path-browserify": "1.0.1",
-    "pinata": "2.4.2",
-    "process": "0.11.10",
-    "react": "18.2.0",
-    "react-beautiful-dnd": "13.1.1",
-    "react-datepicker": "8.4.0",
+    "dompurify": "^3.3.2",
+    "ethers": "^6.16.0",
+    "firebase": "^12.10.0",
+"react": "18.2.0",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
     "react-dom": "18.2.0",
-    "react-dropzone": "14.3.8",
-    "react-hook-form": "7.56.4",
-    "react-router-dom": "7.6.1",
-    "react-scripts": "5.0.1",
-    "stream-browserify": "3.0.0",
-    "stream-http": "3.2.0",
-    "timers-browserify": "2.0.12",
-    "url": "0.11.4",
-    "util": "0.12.5",
-    "web-vitals": "5.0.1",
-    "web3": "4.16.0",
-    "yup": "1.6.1"
+    "react-router-dom": "^7.13.1"
   },
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
-    "dev": "npm install && craco start",
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject",
-    "deploy": "craco build && firebase deploy",
-    "deploy-test": "craco build && firebase deploy --only hosting:3rd-demo",
-    "clean": "npm cache clean --force && rimraf node_modules package-lock.json && npm install && npm run build && npm start"
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && firebase deploy",
+    "deploy-test": "vite build && firebase deploy --only hosting:3rd-demo",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "npm cache clean --force && rimraf node_modules package-lock.json && npm install && npm run build"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ],
     "rules": {
       "array-callback-return": "warn",
@@ -81,26 +43,17 @@
       "no-console": "warn"
     }
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
-    "dotenv-webpack": "^8.1.0",
-    "node-polyfill-webpack-plugin": "^4.1.0",
-    "npm-force-resolutions": "^0.0.10",
+    "@axe-core/react": "^4.11.1",
+    "@vitejs/plugin-react": "^4.3.0",
+    "jsdom": "^28.1.0",
     "rimraf": "^6.0.1",
-    "typescript": "4.9.5"
+    "rollup-plugin-visualizer": "^7.0.1",
+    "vite": "^6.0.0",
+    "vite-plugin-node-polyfills": "^0.25.0",
+    "vitest": "^4.0.18"
   },
-  "resolutions": {
-    "@solana/spl-token": "0.4.13"
+  "overrides": {
+    "@solana/spl-token": "$@solana/spl-token"
   }
 }

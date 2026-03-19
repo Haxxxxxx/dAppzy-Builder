@@ -1,60 +1,270 @@
 // src/context/EditableContext.js
 
-import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useCallback, useMemo, useRef } from 'react';
 import {
   generateUniqueId,
-  buildHierarchy,
-  findElementById,
   removeElementRecursively,
 } from '../utils/LeftBarUtils/elementUtils';
-import {
-  saveToLocalStorage,
-  loadFromLocalStorage,
-} from '../utils/LeftBarUtils/storageUtils';
 import { structureConfigurations } from '../configs/structureConfigurations';
+import { mergeStyles as sharedMergeStyles } from '../core/configs/elementConfigs';
+import { useToast } from './ToastContext';
 
 export const EditableContext = createContext();
-export const ELEMENTS_VERSION = '1.0.0'; // Define the version constant
 
 export const EditableProvider = ({ children, userId }) => {
+  const { showToast } = useToast();
+
   // Initialize state first
   const [elements, setElements] = useState([]); // Start with empty array instead of loading from localStorage
 
-  const [selectedElement, setSelectedElement] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [forceBorder, setForceBorder] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState(null);
+  // ── Multi-page state ──
+  const [pages, setPages] = useState([
+    { id: 'page-home', name: 'Home', slug: '/', elements: [] }
+  ]);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const pagesRef = useRef(pages);
+  pagesRef.current = pages;
+  const activePageIndexRef = useRef(activePageIndex);
+  activePageIndexRef.current = activePageIndex;
 
-  // Define findElementById function
-  const findElementById = useCallback((id, elementsList = elements) => {
-    return elementsList.find(el => el.id === id);
-  }, [elements]);
+  const [_selectedRef, _setSelectedRef] = useState(null);
+  const [history, setHistory] = useState([{ elements: [], selectedElement: null }]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [copiedElement, setCopiedElement] = useState(null);
+  const [copiedStyles, setCopiedStyles] = useState(null);
+  const [styleEditingMode, setStyleEditingMode] = useState('normal'); // 'normal' | 'hover' | 'focus'
+  const [activeBreakpoint, setActiveBreakpoint] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
+  const [selectedElementIds, setSelectedElementIds] = useState([]); // Multi-select foundation
+  const [previewMode, setPreviewMode] = useState(false);
 
-  // Initialize functions after state
+  // ── Multi-page operations ──
+  // Sync current elements into the active page's slot whenever elements change.
+  // This keeps pages[activePageIndex].elements always in sync without requiring
+  // every element mutation to be aware of pages.
+  const syncElementsToActivePage = useCallback((currentElements) => {
+    setPages(prev => {
+      const idx = activePageIndexRef.current;
+      if (prev[idx] && prev[idx].elements !== currentElements) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], elements: currentElements };
+        return updated;
+      }
+      return prev;
+    });
+  }, []);
+
+  // Add a new page with the given name and slug
+  const addPage = useCallback((name, slug) => {
+    const pageId = `page-${Date.now()}`;
+    const normalizedSlug = slug.startsWith('/') ? slug : `/${slug}`;
+    setPages(prev => [
+      ...prev,
+      { id: pageId, name, slug: normalizedSlug, elements: [] }
+    ]);
+    return pageId;
+  }, []);
+
+  // Remove a page by its ID (cannot remove the last page)
+  const removePage = useCallback((pageId) => {
+    setPages(prevPages => {
+      if (prevPages.length <= 1) return prevPages; // can't remove last page
+      const removeIndex = prevPages.findIndex(p => p.id === pageId);
+      if (removeIndex === -1) return prevPages;
+      const updated = prevPages.filter(p => p.id !== pageId);
+      // If we removed the active page, switch to the previous page (or first)
+      if (removeIndex === activePageIndexRef.current) {
+        const newIndex = Math.min(removeIndex, updated.length - 1);
+        setActivePageIndex(newIndex);
+        setElements(updated[newIndex].elements);
+        // Clear selection when switching pages
+        _setSelectedRef(null);
+        setSelectedElementIds([]);
+        // Reset history for the new page
+        setHistory([{ elements: updated[newIndex].elements }]);
+        setCurrentIndex(0);
+      } else if (removeIndex < activePageIndexRef.current) {
+        // Shift active index down since a page before it was removed
+        setActivePageIndex(idx => idx - 1);
+      }
+      return updated;
+    });
+  }, []);
+
+  // Rename a page (update name and/or slug)
+  const renamePage = useCallback((pageId, name, slug) => {
+    setPages(prev => prev.map(p => {
+      if (p.id !== pageId) return p;
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (slug !== undefined) updates.slug = slug.startsWith('/') ? slug : `/${slug}`;
+      return { ...p, ...updates };
+    }));
+  }, []);
+
+  // Switch to a different page by index.
+  // Saves current elements into current page, loads the new page's elements.
+  const switchPage = useCallback((newIndex) => {
+    if (newIndex === activePageIndexRef.current) return;
+    setPages(prevPages => {
+      if (newIndex < 0 || newIndex >= prevPages.length) return prevPages;
+      const currentIdx = activePageIndexRef.current;
+      const updated = [...prevPages];
+      // Save current elements into the current page
+      updated[currentIdx] = { ...updated[currentIdx], elements: elementsRef.current };
+      // Load elements from the target page
+      const targetPage = updated[newIndex];
+      setElements(targetPage.elements || []);
+      setActivePageIndex(newIndex);
+      // Clear selection and reset history for the new page
+      _setSelectedRef(null);
+      setSelectedElementIds([]);
+      setHistory([{ elements: targetPage.elements || [] }]);
+      setCurrentIndex(0);
+      return updated;
+    });
+  }, []);
+
+  // Wrap _setSelectedRef to reset style editing mode and clear multi-select
+  const selectElement = useCallback((el) => {
+    _setSelectedRef(el);
+    setSelectedElementIds(el ? [el.id] : []);
+    setStyleEditingMode('normal');
+  }, []);
+
+  // Toggle an element in the multi-selection set (for Shift+Click)
+  const toggleElementSelection = useCallback((id) => {
+    setSelectedElementIds(prev => {
+      if (prev.includes(id)) {
+        const updated = prev.filter(eid => eid !== id);
+        // If we deselected the current selectedElement, update it
+        if (updated.length > 0) {
+          const lastId = updated[updated.length - 1];
+          const el = elementsRef.current.find(e => e.id === lastId);
+          if (el) _setSelectedRef({ id: el.id, type: el.type });
+        } else {
+          _setSelectedRef(null);
+        }
+        return updated;
+      }
+      const updated = [...prev, id];
+      const el = elementsRef.current.find(e => e.id === id);
+      if (el) _setSelectedRef({ id: el.id, type: el.type });
+      return updated;
+    });
+  }, []);
+
+  // Clear all selection
+  const clearSelection = useCallback(() => {
+    _setSelectedRef(null);
+    setSelectedElementIds([]);
+    setStyleEditingMode('normal');
+  }, []);
+
+  // Keep a ref to elements for use in handlers that need fresh state mid-execution
+  const elementsRef = useRef(elements);
+  elementsRef.current = elements;
+
+  // O(1) lookup map — avoids O(n) .find() calls in render paths and callbacks
+  const elementsMap = useMemo(() => new Map(elements.map(el => [el.id, el])), [elements]);
+
+  // Derive a live selectedElement that always has fresh styles/content from the elements array.
+  // Editors read selectedElement.styles — this ensures they see the latest values.
+  // Dep on the specific element reference (not entire map) so we only re-derive when
+  // the selected element itself changes, not on every unrelated element update.
+  const _liveElement = _selectedRef?.id ? elementsMap.get(_selectedRef.id) : undefined;
+  const selectedElement = useMemo(() => {
+    if (!_selectedRef?.id) return null;
+    if (!_liveElement) return _selectedRef; // element was deleted — keep ref until cleared
+    let merged = { ..._selectedRef, ..._liveElement };
+
+    // When viewing a non-desktop breakpoint, layer breakpoint overrides on top
+    // of base styles so editors see (and populate their fields from) the
+    // effective values for the active breakpoint.
+    if (activeBreakpoint !== 'desktop' && merged.breakpointStyles?.[activeBreakpoint]) {
+      merged = { ...merged, styles: { ...(merged.styles || {}), ...merged.breakpointStyles[activeBreakpoint] } };
+    }
+
+    // When editing hover/focus state, expose those styles as .styles so editors
+    // read/write the correct values without needing individual changes.
+    if (styleEditingMode === 'hover' && merged.hoverStyles) {
+      return { ...merged, styles: { ...(merged.styles || {}), ...merged.hoverStyles } };
+    }
+    if (styleEditingMode === 'focus' && merged.focusStyles) {
+      return { ...merged, styles: { ...(merged.styles || {}), ...merged.focusStyles } };
+    }
+    return merged;
+  }, [_selectedRef, _liveElement, styleEditingMode, activeBreakpoint]);
+
+  // Define findElementById function — uses Map for O(1) when searching current elements.
+  // Uses elementsRef instead of closing over `elements` so this callback doesn't get
+  // recreated on every elements change (which would cascade to updateStyles, handleAICommand,
+  // and the entire contextValue).
+  const findElementById = useCallback((id, elementsList) => {
+    if (!elementsList || elementsList === elementsRef.current) return elementsMap.get(id) || null;
+    return elementsList.find(el => el.id === id) || null;
+  }, [elementsMap]);
+
+  const MAX_HISTORY = 50;
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
+
+  // Uses functional setHistory to avoid stale closure over history/currentIndex.
+  // Only creates a new history entry if elements actually changed (prevents bloat
+  // from selection-only changes eating into the 50-entry undo depth).
   const pushToHistory = useCallback((newElements) => {
-    const truncatedHistory = history.slice(0, currentIndex + 1);
-    const updatedHistory = [...truncatedHistory, newElements];
-    setHistory(updatedHistory);
-    setCurrentIndex(updatedHistory.length - 1);
-  }, [history, currentIndex]);
+    setHistory((prev) => {
+      const currentEntry = prev[currentIndexRef.current];
+      // Skip if elements haven't changed (same reference = no mutation)
+      if (currentEntry && currentEntry.elements === newElements) {
+        return prev;
+      }
+      const truncated = prev.slice(0, currentIndexRef.current + 1);
+      const updated = [...truncated, { elements: newElements }];
+      // Cap history to prevent unbounded growth
+      if (updated.length > MAX_HISTORY) {
+        const trimmed = updated.slice(updated.length - MAX_HISTORY);
+        setCurrentIndex(trimmed.length - 1);
+        return trimmed;
+      }
+      setCurrentIndex(updated.length - 1);
+      return updated;
+    });
+  }, []);
+
+  // Reset history to contain only the given elements snapshot.
+  // Used after loading a project to avoid an empty undo snapshot.
+  const resetHistory = useCallback((loadedElements) => {
+    setHistory([{ elements: loadedElements }]);
+    setCurrentIndex(0);
+    currentIndexRef.current = 0;
+  }, []);
 
   const recordElementsUpdate = useCallback((updater) => {
     setElements((prev) => {
       const newElements = typeof updater === 'function' ? updater(prev) : updater;
-      saveToLocalStorage('editableElements', newElements);
       pushToHistory(newElements);
+      // Keep the active page's elements in sync
+      syncElementsToActivePage(newElements);
       return newElements;
     });
-  }, [pushToHistory]);
+  }, [pushToHistory, syncElementsToActivePage]);
 
-  const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
-    // Generate unique ID for parent element
+  // Build an element and its children into a flat array without recording to history.
+  // Returns { id, allElements } where allElements is the flat list of all created elements.
+  const buildElementTree = useCallback((type, parentId, config, existingIds, depth = 0) => {
+    if (depth > 20) {
+      // Prevent stack overflow from deeply nested elements
+      const safeId = generateUniqueId(type);
+      existingIds.add(safeId);
+      return { id: safeId, allElements: [{ id: safeId, type, styles: {}, content: '', children: [], parentId, settings: {} }] };
+    }
     let newId = generateUniqueId(type);
-    while (elements.some((el) => el.id === newId)) {
+    while (existingIds.has(newId)) {
       newId = generateUniqueId(type);
     }
-  
+    existingIds.add(newId);
+
+    let resolvedType = type;
     let configuration = null;
     let structure = null;
     if (typeof config === 'string' && structureConfigurations[config]) {
@@ -63,29 +273,25 @@ export const EditableProvider = ({ children, userId }) => {
     } else if (config && typeof config === 'object') {
       configuration = config.configuration || config;
       structure = config.structure || config.configuration || config;
-      type = config.type || type;
+      resolvedType = config.type || type;
     }
-  
+
     const configStyles = structure && structureConfigurations[structure]?.styles || {};
     const elementStyles = config?.styles || {};
 
-    // Recursively create children if present
-    let childrenIds = [];
-    if (config && config.children && Array.isArray(config.children)) {
-      childrenIds = config.children.map(childConfig => {
-        // Generate unique ID for each child
-        const childId = generateUniqueId(childConfig.type);
-        const childWithId = {
-          ...childConfig,
-          id: childId
-        };
-        return addNewElement(childConfig.type, 1, 0, newId, childWithId);
-      });
-    }
-    
+    const childConfigs = config?.children || [];
+
+    // Recursively build children
+    const allElements = [];
+    const childrenIds = childConfigs.map(childConfig => {
+      const result = buildElementTree(childConfig.type, newId, childConfig, existingIds, depth + 1);
+      allElements.push(...result.allElements);
+      return result.id;
+    });
+
     const baseElement = {
       id: newId,
-      type,
+      type: resolvedType,
       configuration,
       structure,
       styles: { ...configStyles, ...elementStyles },
@@ -96,44 +302,77 @@ export const EditableProvider = ({ children, userId }) => {
       children: childrenIds,
     };
 
-    if (!parentId) {
-      recordElementsUpdate((prev) => {
-        const newElements = [...prev];
-        newElements.splice(index || 0, 0, baseElement);
-        return newElements;
-      });
-    } else {
-      recordElementsUpdate((prev) => [...prev, baseElement]);
-    }
-  
-    // After adding the new element, if it has a parentId, update the parent's children array
-    if (parentId) {
-      setElements(prev =>
-        prev.map(el =>
-          el.id === parentId
-            ? { ...el, children: [...(el.children || []), newId] }
-            : el
-        )
-      );
-    }
-  
-    return newId;
-  }, [recordElementsUpdate, setElements, elements]);
+    allElements.push(baseElement);
+    return { id: newId, allElements };
+  }, []);
 
-  const moveElement = useCallback((id, newIndex) => {
+  const addNewElement = useCallback((type, level = 1, index = 0, parentId = null, config = null) => {
+    // Collect existing IDs for collision checking
+    const existingIds = new Set(elementsRef.current.map(el => el.id));
+    const { id: newId, allElements } = buildElementTree(type, parentId, config, existingIds);
+
+    // Single recordElementsUpdate for the entire tree (one history entry, one save)
+    recordElementsUpdate((prev) => {
+      let newElements;
+      if (!parentId) {
+        newElements = [...prev];
+        newElements.splice(index || 0, 0, ...allElements);
+      } else {
+        // Add all elements AND update parent's children array in a single pass
+        newElements = [...prev, ...allElements].map(el => {
+          if (el.id === parentId) {
+            const updatedChildren = [...(el.children || [])];
+            // Insert at the specified index instead of always appending
+            const insertAt = Math.min(index || updatedChildren.length, updatedChildren.length);
+            updatedChildren.splice(insertAt, 0, newId);
+            return { ...el, children: updatedChildren };
+          }
+          return el;
+        });
+      }
+      return newElements;
+    });
+
+    return newId;
+  }, [recordElementsUpdate, buildElementTree]);
+
+  const moveElement = useCallback((id, newIndex, newParentId) => {
     recordElementsUpdate((prevElements) => {
       const index = prevElements.findIndex((el) => el.id === id);
       if (index === -1) return prevElements;
       const element = prevElements[index];
-      const newElements = [...prevElements];
+      const oldParentId = element.parentId;
+
+      let newElements = [...prevElements];
       newElements.splice(index, 1);
       newElements.splice(newIndex, 0, element);
+
+      // Update parentId and parent children arrays when reparenting
+      if (newParentId !== undefined && newParentId !== oldParentId) {
+        newElements = newElements.map(el => {
+          if (el.id === id) {
+            return { ...el, parentId: newParentId };
+          }
+          // Remove from old parent's children
+          if (el.id === oldParentId && el.children) {
+            return { ...el, children: el.children.filter(cid => cid !== id) };
+          }
+          // Add to new parent's children (dedupe to prevent duplicates)
+          if (el.id === newParentId && el.children) {
+            const filtered = el.children.filter(cid => cid !== id);
+            return { ...el, children: [...filtered, id] };
+          }
+          return el;
+        });
+      }
+
       return newElements;
     });
   }, [recordElementsUpdate]);
 
   const handleRemoveElement = useCallback((id) => {
-    setSelectedElement(null);
+    _setSelectedRef(null);
+    setSelectedElementIds(prev => prev.filter(eid => eid !== id));
     recordElementsUpdate((prevElements) => removeElementRecursively(id, prevElements));
   }, [recordElementsUpdate]);
 
@@ -144,28 +383,46 @@ export const EditableProvider = ({ children, userId }) => {
   }, [recordElementsUpdate]);
 
   const updateStyles = useCallback((id, newStyles) => {
-    setElements(prev => {
+    // When editing hover/focus state, route to the correct state key
+    if (styleEditingMode !== 'normal') {
+      const stateKey = styleEditingMode === 'hover' ? 'hoverStyles' : 'focusStyles';
+      recordElementsUpdate(prev =>
+        prev.map(el =>
+          el.id === id
+            ? { ...el, [stateKey]: { ...(el[stateKey] || {}), ...newStyles } }
+            : el
+        )
+      );
+      return;
+    }
+
+    recordElementsUpdate(prev => {
       const element = findElementById(id, prev);
       if (!element) return prev;
 
-      // Get the configuration styles if available
-      const configStyles = element.configuration && structureConfigurations[element.configuration]?.styles;
-      
-      // Merge styles in the correct order: base styles -> config styles -> new styles
-      const mergedStyles = {
-        ...(configStyles?.[element.type] || {}), // Base styles from configuration
-        ...(element.styles || {}), // Existing styles
-        ...newStyles // New styles override everything
-      };
-
-      // Handle nested styles (like img styles for images)
-      if (element.type === 'image' && configStyles?.image?.img) {
-        mergedStyles.img = {
-          ...(configStyles.image.img || {}), // Base img styles from configuration
-          ...(element.styles?.img || {}), // Existing img styles
-          ...(newStyles?.img || {}) // New img styles override everything
-        };
+      // When editing a non-desktop breakpoint, store overrides in breakpointStyles
+      if (activeBreakpoint !== 'desktop') {
+        const bpKey = activeBreakpoint; // 'tablet' or 'mobile'
+        const existingBp = element.breakpointStyles || {};
+        const existingBpStyles = existingBp[bpKey] || {};
+        return prev.map(el =>
+          el.id === id
+            ? {
+                ...el,
+                breakpointStyles: {
+                  ...existingBp,
+                  [bpKey]: { ...existingBpStyles, ...newStyles },
+                },
+              }
+            : el
+        );
       }
+
+      // Merge styles: existing user styles + new overrides.
+      const mergedStyles = {
+        ...(element.styles || {}),
+        ...newStyles,
+      };
 
       return prev.map(el =>
         el.id === id
@@ -173,47 +430,23 @@ export const EditableProvider = ({ children, userId }) => {
           : el
       );
     });
-  }, [findElementById]);
+  }, [findElementById, recordElementsUpdate, activeBreakpoint, styleEditingMode]);
+
+  const updateStateStyles = useCallback((id, stateName, newStyles) => {
+    const stateKey = stateName === 'hover' ? 'hoverStyles' : 'focusStyles';
+    recordElementsUpdate(prev =>
+      prev.map(el =>
+        el.id === id
+          ? { ...el, [stateKey]: { ...(el[stateKey] || {}), ...newStyles } }
+          : el
+      )
+    );
+  }, [recordElementsUpdate]);
 
   const updateElementProperties = useCallback((id, newProperties) => {
     recordElementsUpdate((prev) =>
       prev.map((el) => (el.id === id ? { ...el, ...newProperties } : el))
     );
-  }, [recordElementsUpdate]);
-
-  const saveSectionToLocalStorage = useCallback((sectionId) => {
-    const section = findElementById(sectionId, elements);
-    if (section) {
-      const buildNestedStructure = (parentId) => {
-        const parent = findElementById(parentId, elements);
-        if (!parent) return null;
-        const children = parent.children.map((childId) => buildNestedStructure(childId));
-        return {
-          id: parent.id,
-          type: parent.type,
-          styles: parent.styles,
-          content: parent.content,
-          children,
-        };
-      };
-      const navbarHierarchy = buildNestedStructure(sectionId);
-      saveToLocalStorage(`section-${sectionId}`, navbarHierarchy);
-    }
-  }, [elements]);
-
-  const loadSectionFromLocalStorage = useCallback((sectionId) => {
-    const savedSection = loadFromLocalStorage(`section-${sectionId}`);
-    if (savedSection) {
-      const flattenNestedStructure = (node, accumulator = []) => {
-        if (!node) return accumulator;
-        const { children, ...rest } = node;
-        accumulator.push(rest);
-        children.forEach((child) => flattenNestedStructure(child, accumulator));
-        return accumulator;
-      };
-      const flattenedElements = flattenNestedStructure(savedSection);
-      recordElementsUpdate(flattenedElements);
-    }
   }, [recordElementsUpdate]);
 
   const updateConfiguration = useCallback((id, key, value) => {
@@ -240,60 +473,197 @@ export const EditableProvider = ({ children, userId }) => {
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
       setCurrentIndex(newIndex);
-      setElements(history[newIndex]);
-      saveToLocalStorage('editableElements', history[newIndex]);
+      const snapshot = history[newIndex];
+      const restoredElements = snapshot.elements || snapshot;
+      setElements(restoredElements);
+      // Clear selection to prevent ghost references to deleted elements
+      _setSelectedRef(null);
+      setSelectedElementIds([]);
+      showToast('Undo', 'info', 1500);
     }
-  }, [currentIndex, history]);
+  }, [currentIndex, history, showToast]);
 
   const redo = useCallback(() => {
     if (currentIndex < history.length - 1) {
       const newIndex = currentIndex + 1;
       setCurrentIndex(newIndex);
-      setElements(history[newIndex]);
-      saveToLocalStorage('editableElements', history[newIndex]);
+      const snapshot = history[newIndex];
+      const restoredElements = snapshot.elements || snapshot;
+      setElements(restoredElements);
+      // Clear selection to prevent ghost references to deleted elements
+      _setSelectedRef(null);
+      setSelectedElementIds([]);
+      showToast('Redo', 'info', 1500);
     }
-  }, [currentIndex, history]);
+  }, [currentIndex, history, showToast]);
+
+  const copyElement = useCallback((elementId) => {
+    const allElements = elementsRef.current;
+    const root = allElements.find(el => el.id === elementId);
+    if (!root) return;
+
+    // Build a deep config tree from the flat elements array so that
+    // buildElementTree (which expects child config objects) can recreate the full tree.
+    const buildConfigTree = (el, depth = 0) => {
+      const { id, ...config } = el;
+      if (depth > 20) {
+        config.children = [];
+        return config;
+      }
+      if (el.children && el.children.length > 0) {
+        config.children = el.children
+          .map(childId => allElements.find(c => c.id === childId))
+          .filter(Boolean)
+          .map(child => buildConfigTree(child, depth + 1));
+      } else {
+        config.children = [];
+      }
+      return config;
+    };
+
+    const configTree = buildConfigTree(root);
+    setCopiedElement(configTree);
+
+    // Also write to system clipboard for cross-project paste
+    if (navigator.clipboard?.writeText) {
+      const payload = JSON.stringify({ __dappzyElement: true, ...configTree });
+      navigator.clipboard.writeText(payload).catch(() => {
+        // Clipboard write failed (permissions / insecure context) — in-memory copy still works
+      });
+    }
+  }, []);
+
+  const pasteElement = useCallback((parentId, index) => {
+    // Helper to perform the actual paste from a config object
+    const doPaste = (config) => {
+      addNewElement(config.type, config.level || 0, index, parentId, config);
+    };
+
+    // Try reading from system clipboard first (enables cross-project paste)
+    if (navigator.clipboard?.readText) {
+      navigator.clipboard.readText().then((text) => {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed && parsed.__dappzyElement && parsed.type) {
+            // Valid dAppzy element from clipboard — strip the marker and paste
+            const { __dappzyElement, ...config } = parsed;
+            doPaste(config);
+            return;
+          }
+        } catch {
+          // Not valid JSON or not a dAppzy element — fall through
+        }
+        // Clipboard didn't contain a valid element — fall back to in-memory
+        if (copiedElement) {
+          doPaste(copiedElement);
+        }
+      }).catch(() => {
+        // Clipboard read failed — fall back to in-memory
+        if (copiedElement) {
+          doPaste(copiedElement);
+        }
+      });
+    } else {
+      // Clipboard API unavailable — use in-memory
+      if (copiedElement) {
+        doPaste(copiedElement);
+      }
+    }
+  }, [copiedElement, addNewElement]);
+
+  const copyStyles = useCallback((elementId) => {
+    const element = elementsRef.current.find(el => el.id === elementId);
+    if (!element) return;
+    setCopiedStyles({ ...(element.styles || {}) });
+  }, []);
+
+  const pasteStyles = useCallback((elementId) => {
+    if (!copiedStyles) return;
+    updateStyles(elementId, copiedStyles);
+  }, [copiedStyles, updateStyles]);
+
+  // Serialize an element and all its descendants into a portable config tree.
+  // Each element in the returned array is self-contained (root + descendants)
+  // with IDs stripped so new unique IDs are generated on re-insertion.
+  const serializeElementTree = useCallback((rootId) => {
+    const allElements = elementsRef.current;
+    const root = allElements.find(el => el.id === rootId);
+    if (!root) return null;
+
+    const collectDescendants = (id, depth = 0) => {
+      if (depth > 20) return [];
+      const el = allElements.find(e => e.id === id);
+      if (!el) return [];
+      const result = [{ ...el }];
+      if (el.children && el.children.length > 0) {
+        for (const childId of el.children) {
+          result.push(...collectDescendants(childId, depth + 1));
+        }
+      }
+      return result;
+    };
+
+    return collectDescendants(rootId);
+  }, []);
+
+  // Atomic duplicate: builds config tree and pastes in one call, avoiding the
+  // stale-closure race condition of calling copyElement + pasteElement sequentially.
+  const duplicateElement = useCallback((elementId, parentId, index) => {
+    const allElements = elementsRef.current;
+    const root = allElements.find(el => el.id === elementId);
+    if (!root) return;
+    const buildConfigTree = (el, depth = 0) => {
+      const { id, ...config } = el;
+      if (depth > 20) { config.children = []; return config; }
+      if (el.children && el.children.length > 0) {
+        config.children = el.children
+          .map(childId => allElements.find(c => c.id === childId))
+          .filter(Boolean)
+          .map(child => buildConfigTree(child, depth + 1));
+      } else {
+        config.children = [];
+      }
+      return config;
+    };
+    const config = buildConfigTree(root);
+    setCopiedElement(config);
+    addNewElement(config.type, config.level || 0, index, parentId, config);
+  }, [addNewElement]);
 
   const handleAICommand = useCallback((command) => {
     if (!command || !command.action) {
-      console.warn('Invalid AI command:', command);
-      return;
+      return null;
     }
 
-    // Helper function to merge styles with proper inheritance
-    const mergeStyles = (baseStyles, existingStyles, newStyles) => {
-      const merged = {
-        ...baseStyles,
-        ...existingStyles,
-        ...newStyles
-      };
-
-      // Handle hover states separately
-      if (newStyles?.hover || existingStyles?.hover) {
-        merged.hover = {
-          ...(baseStyles?.hover || {}),
-          ...(existingStyles?.hover || {}),
-          ...(newStyles?.hover || {})
-        };
-      }
-
-      // Remove undefined values
-      Object.keys(merged).forEach(key => {
-        if (merged[key] === undefined) {
-          delete merged[key];
-        }
-      });
-
-      return merged;
+    // Helper: build a config tree (for duplicate) from a flat element ID
+    const buildConfigTreeFromId = (id, depth = 0) => {
+      if (depth > 20) return [];
+      const el = elementsRef.current.find(e => e.id === id);
+      if (!el) return [];
+      const { id: _id, ...config } = el;
+      config.children = (el.children || [])
+        .map(childId => {
+          const child = elementsRef.current.find(c => c.id === childId);
+          if (!child) return null;
+          const { id: _cid, ...childConfig } = child;
+          childConfig.children = buildConfigTreeFromId(childId, depth + 1);
+          return childConfig;
+        })
+        .filter(Boolean);
+      return config;
     };
+
+    // Use shared mergeStyles from elementConfigs
+    const mergeStyles = sharedMergeStyles;
 
     // Helper function to handle style inheritance for children
     const applyChildStyles = (parentId, parentStyles, children, config) => {
-      const parent = findElementById(parentId, elements);
+      const currentElements = elementsRef.current;
+      const parent = currentElements.find(el => el.id === parentId);
       if (!parent?.children) return;
 
       parent.children.forEach((childId, index) => {
-        const child = elements.find(el => el.id === childId);
+        const child = currentElements.find(el => el.id === childId);
         const childConfig = config?.children?.[index];
         
         if (child && childConfig) {
@@ -314,11 +684,10 @@ export const EditableProvider = ({ children, userId }) => {
 
     switch (command.action) {
       case 'add': {
-        // Handle structured elements (navbar, footer)
-        if ((command.elementType === 'navbar' || command.elementType === 'footer') && command.properties?.configuration) {
+        // Handle structured elements (any section type with a configuration)
+        if (command.properties?.configuration && structureConfigurations[command.properties.configuration]) {
           const structureConfig = structureConfigurations[command.properties.configuration];
           if (!structureConfig) {
-            console.warn(`Configuration not found for ${command.properties.configuration}`);
             return;
           }
 
@@ -361,85 +730,132 @@ export const EditableProvider = ({ children, userId }) => {
       }
 
       case 'edit': {
-        const { children, styles, ...otherProps } = command.properties || {};
-        const targetElement = findElementById(command.targetId, elements);
-        
+        const { children: childEdits, styles, ...otherProps } = command.properties || {};
+        const targetElement = elementsRef.current.find(el => el.id === command.targetId);
+
         if (!targetElement) {
-          console.warn(`Element not found: ${command.targetId}`);
-          return;
-        }
-        
-        // Update element properties
-        if (Object.keys(otherProps).length > 0) {
-          updateElementProperties(command.targetId, otherProps);
+          return null;
         }
 
-        // Update styles if provided
-        if (styles) {
-          const structureConfig = targetElement.configuration ? 
-            structureConfigurations[targetElement.configuration] : null;
+        // Batch all mutations into a single history entry
+        recordElementsUpdate((prev) => {
+          let updated = [...prev];
 
-          const mergedStyles = mergeStyles(
-            structureConfig?.styles || {},
-            targetElement.styles,
-            styles
-          );
-
-          updateStyles(command.targetId, mergedStyles);
-
-          // Update child styles if this is a structured element
-          if (structureConfig) {
-            applyChildStyles(command.targetId, mergedStyles, children, structureConfig);
+          // Apply element properties
+          if (Object.keys(otherProps).length > 0) {
+            updated = updated.map(el =>
+              el.id === command.targetId ? { ...el, ...otherProps } : el
+            );
           }
-        }
 
-        // Handle child updates
-        if (children && targetElement.children) {
-          children.forEach((childEdit, index) => {
-            if (!childEdit?.type) return;
+          // Apply styles to target
+          if (styles) {
+            const structureConfig = targetElement.configuration ?
+              structureConfigurations[targetElement.configuration] : null;
 
-            const childId = targetElement.children[index];
-            if (!childId) return;
+            const mergedStyles = mergeStyles(
+              structureConfig?.styles || {},
+              targetElement.styles,
+              styles
+            );
 
-            const child = elements.find(el => el.id === childId);
-            if (!child) return;
+            updated = updated.map(el =>
+              el.id === command.targetId ? { ...el, styles: mergedStyles } : el
+            );
 
-            // Update child content
-                if (childEdit.content !== undefined) {
-              updateContent(childId, childEdit.content);
+            // Apply child styles if structured element
+            if (structureConfig && targetElement.children) {
+              targetElement.children.forEach((childId, index) => {
+                const child = prev.find(el => el.id === childId);
+                const childConfig = structureConfig.children?.[index];
+                if (child && childConfig) {
+                  const baseStyles = {
+                    color: mergedStyles?.color || structureConfig.styles?.color
+                  };
+                  const childMergedStyles = mergeStyles(baseStyles, child.styles, childConfig.styles);
+                  updated = updated.map(el =>
+                    el.id === childId ? { ...el, styles: childMergedStyles } : el
+                  );
                 }
-                
-            // Update child styles
-                if (childEdit.styles) {
-              const structureConfig = targetElement.configuration ? 
-                structureConfigurations[targetElement.configuration] : null;
-              const childConfig = structureConfig?.children?.[index];
+              });
+            }
+          }
 
-              const mergedStyles = mergeStyles(
-                childConfig?.styles || {},
-                child.styles,
-                childEdit.styles
-              );
+          // Handle child updates (matched by index position)
+          if (childEdits && targetElement.children) {
+            childEdits.forEach((childEdit, index) => {
+              if (!childEdit || typeof childEdit !== 'object') return;
+              const childId = targetElement.children[index];
+              if (!childId) return;
+              const child = prev.find(el => el.id === childId);
+              if (!child) return;
 
-              updateStyles(childId, mergedStyles);
+              const mutations = {};
+              if (childEdit.content !== undefined) {
+                mutations.content = childEdit.content;
+              }
+              if (childEdit.label !== undefined) {
+                mutations.label = childEdit.label;
+              }
+              if (childEdit.settings && typeof childEdit.settings === 'object') {
+                mutations.settings = { ...(child.settings || {}), ...childEdit.settings };
+              }
+              if (childEdit.styles) {
+                const structureConfig = targetElement.configuration ?
+                  structureConfigurations[targetElement.configuration] : null;
+                const childConfig = structureConfig?.children?.[index];
+                mutations.styles = mergeStyles(
+                  childConfig?.styles || {},
+                  child.styles,
+                  childEdit.styles
+                );
+              }
+
+              if (Object.keys(mutations).length > 0) {
+                updated = updated.map(el =>
+                  el.id === childId ? { ...el, ...mutations } : el
+                );
               }
             });
-        }
-        break;
+          }
+
+          return updated;
+        });
+        return command.targetId;
       }
 
       case 'updateContent':
         updateContent(command.targetId, command.content);
-        break;
+        return command.targetId;
 
       case 'updateStyles': {
-        const targetElement = findElementById(command.targetId, elements);
+        const targetElement = elementsRef.current.find(el => el.id === command.targetId);
         if (!targetElement) {
-          console.warn(`Element not found: ${command.targetId}`);
-          return;
+          return null;
         }
 
-        const structureConfig = targetElement.configuration ? 
+        // Handle breakpoint-specific styles directly (bypass activeBreakpoint)
+        if (command.breakpoint && command.breakpoint !== 'desktop') {
+          const bpKey = command.breakpoint; // 'tablet' or 'mobile'
+          const existingBp = targetElement.breakpointStyles || {};
+          const existingBpStyles = existingBp[bpKey] || {};
+          recordElementsUpdate(prev =>
+            prev.map(el =>
+              el.id === command.targetId
+                ? {
+                    ...el,
+                    breakpointStyles: {
+                      ...existingBp,
+                      [bpKey]: { ...existingBpStyles, ...command.styles },
+                    },
+                  }
+                : el
+            )
+          );
+          return command.targetId;
+        }
+
+        const structureConfig = targetElement.configuration ?
           structureConfigurations[targetElement.configuration] : null;
 
         const mergedStyles = mergeStyles(
@@ -449,28 +865,185 @@ export const EditableProvider = ({ children, userId }) => {
         );
 
         updateStyles(command.targetId, mergedStyles);
-        break;
+        return command.targetId;
+      }
+
+      case 'updateStateStyles': {
+        // Set hover or focus styles on an element
+        const target = elementsRef.current.find(el => el.id === command.targetId);
+        if (!target) return null;
+        const state = command.state || 'hover'; // 'hover' or 'focus'
+        updateStateStyles(command.targetId, state, command.styles);
+        return command.targetId;
+      }
+
+      case 'addChild': {
+        // Add a child element (with optional nested children) to an existing parent
+        const parentElement = elementsRef.current.find(el => el.id === command.targetId);
+        if (!parentElement) return null;
+
+        const childId = addNewElement(
+          command.elementType,
+          (parentElement.level || 1) + 1,
+          command.position?.index ?? (parentElement.children?.length || 0),
+          command.targetId,
+          command.properties
+        );
+
+        // Recursively create nested children if provided
+        if (command.properties?.children && Array.isArray(command.properties.children)) {
+          command.properties.children.forEach((childConfig, idx) => {
+            addNewElement(
+              childConfig.type || childConfig.elementType || 'div',
+              (parentElement.level || 1) + 2,
+              idx,
+              childId,
+              {
+                content: childConfig.content || '',
+                styles: childConfig.styles || {},
+                ...(childConfig.properties || {}),
+              }
+            );
+          });
+        }
+
+        return childId;
+      }
+
+      case 'updateSettings': {
+        // Update element configuration/settings (e.g., Web3 module settings, form fields)
+        const target = elementsRef.current.find(el => el.id === command.targetId);
+        if (!target) return null;
+
+        if (command.settings && typeof command.settings === 'object') {
+          // Apply each setting individually via updateConfiguration
+          // which updates both .configuration and .settings on the element
+          Object.entries(command.settings).forEach(([key, value]) => {
+            updateConfiguration(command.targetId, key, value);
+          });
+        }
+
+        // Also support updating content alongside settings
+        if (command.content !== undefined) {
+          updateContent(command.targetId, command.content);
+        }
+
+        return command.targetId;
       }
 
       case 'delete':
         handleRemoveElement(command.targetId);
-        break;
+        return command.targetId;
 
       case 'move':
-        moveElement(command.targetId, command.newIndex);
-        break;
+        moveElement(command.targetId, command.newIndex, command.newParentId);
+        return command.targetId;
+
+      case 'select': {
+        const target = elementsRef.current.find(el => el.id === command.targetId);
+        if (target) {
+          selectElement(target);
+        }
+        return command.targetId;
+      }
+
+      case 'undo':
+        undo();
+        return 'undo';
+
+      case 'redo':
+        redo();
+        return 'redo';
+
+      case 'duplicate': {
+        const source = elementsRef.current.find(el => el.id === command.targetId);
+        if (!source) return null;
+
+        // Build a deep config tree for duplication (strips IDs, preserves children)
+        const configTree = buildConfigTreeFromId(command.targetId);
+        const count = command.count || 1;
+        let lastId = null;
+        const parentId = source.parentId || null;
+
+        for (let i = 0; i < count; i++) {
+          const siblings = parentId
+            ? (elementsRef.current.find(el => el.id === parentId)?.children || [])
+            : elementsRef.current.filter(el => !el.parentId).map(el => el.id);
+          const sourceIndex = siblings.indexOf(command.targetId);
+          lastId = addNewElement(
+            source.type,
+            source.level || 1,
+            sourceIndex + 1 + i,
+            parentId,
+            configTree
+          );
+        }
+        return lastId;
+      }
+
+      case 'batchUpdateStyles': {
+        const ids = command.targetIds;
+        if (!Array.isArray(ids) || ids.length === 0) return null;
+
+        recordElementsUpdate(prev => {
+          let updated = [...prev];
+          for (const id of ids) {
+            const el = updated.find(e => e.id === id);
+            if (!el) continue;
+
+            if (command.breakpoint && command.breakpoint !== 'desktop') {
+              const bpKey = command.breakpoint;
+              const existingBp = el.breakpointStyles || {};
+              const existingBpStyles = existingBp[bpKey] || {};
+              updated = updated.map(e =>
+                e.id === id
+                  ? { ...e, breakpointStyles: { ...existingBp, [bpKey]: { ...existingBpStyles, ...command.styles } } }
+                  : e
+              );
+            } else {
+              updated = updated.map(e =>
+                e.id === id
+                  ? { ...e, styles: { ...(e.styles || {}), ...command.styles } }
+                  : e
+              );
+            }
+          }
+          return updated;
+        });
+        return ids;
+      }
+
+      case 'find': {
+        // Search elements by type, content, or styles — returns matching IDs
+        const results = elementsRef.current.filter(el => {
+          if (command.elementType && el.type !== command.elementType) return false;
+          if (command.contentContains && typeof el.content === 'string') {
+            if (!el.content.toLowerCase().includes(command.contentContains.toLowerCase())) return false;
+          } else if (command.contentContains) {
+            return false;
+          }
+          if (command.hasStyle) {
+            const styleKey = Object.keys(command.hasStyle)[0];
+            if (!styleKey || el.styles?.[styleKey] !== command.hasStyle[styleKey]) return false;
+          }
+          if (command.parentId && el.parentId !== command.parentId) return false;
+          return true;
+        });
+        return results.map(el => ({ id: el.id, type: el.type, content: typeof el.content === 'string' ? el.content.slice(0, 50) : '' }));
+      }
 
       default:
-        console.warn('Unknown AI command:', command);
+        return null;
     }
-  }, [elements, addNewElement, updateStyles, findElementById]);
+  }, [addNewElement, updateStyles, updateContent, updateElementProperties, updateConfiguration, updateStateStyles, recordElementsUpdate, handleRemoveElement, moveElement, selectElement, undo, redo, copyElement]);
 
   // Memoize context value after all state and functions are defined
   const contextValue = useMemo(() => ({
     elements,
+    elementsMap,
     setElements: recordElementsUpdate,
     selectedElement,
-    setSelectedElement,
+    setSelectedElement: selectElement,
     addNewElement,
     updateContent,
     updateStyles,
@@ -480,21 +1053,44 @@ export const EditableProvider = ({ children, userId }) => {
     moveElement,
     undo,
     redo,
-    forceBorder,
-    setForceBorder,
-    selectedStyle,
-    setSelectedStyle,
     handleAICommand,
-    saveSectionToLocalStorage,
-    loadSectionFromLocalStorage,
     findElementById,
-    generateUniqueId
+    generateUniqueId,
+    copiedElement,
+    copyElement,
+    pasteElement,
+    duplicateElement,
+    serializeElementTree,
+    copiedStyles,
+    copyStyles,
+    pasteStyles,
+    styleEditingMode,
+    setStyleEditingMode,
+    updateStateStyles,
+    activeBreakpoint,
+    setActiveBreakpoint,
+    selectedElementIds,
+    toggleElementSelection,
+    clearSelection,
+    previewMode,
+    setPreviewMode,
+    canUndo: currentIndex > 0,
+    canRedo: currentIndex < history.length - 1,
+    // ── Multi-page ──
+    pages,
+    setPages,
+    activePageIndex,
+    addPage,
+    removePage,
+    renamePage,
+    switchPage,
+    resetHistory,
   }), [
     elements,
+    elementsMap,
     selectedElement,
-    forceBorder,
-    selectedStyle,
     recordElementsUpdate,
+    selectElement,
     addNewElement,
     updateContent,
     updateStyles,
@@ -505,16 +1101,36 @@ export const EditableProvider = ({ children, userId }) => {
     undo,
     redo,
     handleAICommand,
-    saveSectionToLocalStorage,
-    loadSectionFromLocalStorage,
-    findElementById
+    findElementById,
+    copiedElement,
+    copyElement,
+    pasteElement,
+    duplicateElement,
+    serializeElementTree,
+    copiedStyles,
+    copyStyles,
+    pasteStyles,
+    styleEditingMode,
+    updateStateStyles,
+    activeBreakpoint,
+    selectedElementIds,
+    toggleElementSelection,
+    clearSelection,
+    previewMode,
+    currentIndex,
+    // ── Multi-page deps ──
+    pages,
+    activePageIndex,
+    addPage,
+    removePage,
+    renamePage,
+    switchPage,
+    resetHistory,
+    // Use history.length (not the full array) so context only re-renders when
+    // the number of snapshots changes — not on every edit that pushes a snapshot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    history.length,
   ]);
-
-  // Initialize history on mount
-  useEffect(() => {
-    pushToHistory(elements);
-    localStorage.setItem('elementsVersion', ELEMENTS_VERSION);
-  }, []);
 
   return (
     <EditableContext.Provider value={contextValue}>

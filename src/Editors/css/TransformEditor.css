@@ -1,0 +1,69 @@
+/* TransformEditor.css */
+
+.transform-editor {
+
+}
+
+.transform-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.transform-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.transform-field label {
+  font-size: 14px;
+  color: var(--not-selected);
+  margin-bottom: 4px;
+}
+
+.transform-field input[type="number"] {
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--editor-bg);
+  color: var(--editor-text);
+  font-size: 14px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.transform-field .input-with-suffix {
+  position: relative;
+  display: flex;
+}
+
+.transform-field .input-with-suffix input[type="number"] {
+  padding-right: 30px;
+}
+
+.transform-field .input-with-suffix .suffix {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--not-selected);
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.transform-reset {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--not-selected);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.transform-reset:hover {
+  background: var(--editor-bg-dark);
+}

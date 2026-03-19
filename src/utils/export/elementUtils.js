@@ -1,5 +1,6 @@
-import { elementTypes } from '../../core/configs/elementConfigs';
-import { structureConfigurations, mergeStyles } from '../../core/configs/elementConfigs';
+import { elementTypes, mergeStyles } from '../../core/configs/elementConfigs';
+import { structureConfigurations } from '../../configs/structureConfigurations';
+import { SECTION_TYPES } from '../../core/elementRegistry';
 
 // Import default styles
 import { ctaOneStyles, ctaTwoStyles } from '../../Elements/Sections/CTAs/defaultCtaStyles';
@@ -18,108 +19,58 @@ export const cleanElementData = (element) => {
     return null;
   }
 
-  // Handle different element types
-  switch (element.type) {
-    // Section Components
-    case 'hero':
-    case 'navbar':
-    case 'footer':
-    case 'cta':
-    case 'contentSection':
-    case 'defiSection':
-    case 'mintingSection':
-      return {
-        id: element.id,
-        type: element.type,
-        configuration: element.configuration,
-        styles: processElementStyles(element),
-        children: (element.children || []).map(cleanElementData).filter(Boolean),
-        content: element.content || {}
-      };
-
-    // Basic Elements
-    case 'heading':
-    case 'paragraph':
-    case 'span':
-    case 'button':
-      return {
-        id: element.id,
-        type: element.type,
-        content: element.content || '',
-        styles: processElementStyles(element)
-      };
-
-    // Media Elements
-    case 'image':
-      return {
-        id: element.id,
-        type: 'image',
-        src: element.src || element.content || '',
-        alt: element.alt || '',
-        styles: processElementStyles(element)
-      };
-
-    // Interactive Elements
-    case 'icon':
-      return {
-        id: element.id,
-        type: 'icon',
-        name: element.name || element.content || '',
-        styles: processElementStyles(element)
-      };
-
-    case 'linkBlock':
-      return {
-        id: element.id,
-        type: 'linkBlock',
-        content: element.content || '',
-        href: element.href || '#',
-        styles: processElementStyles(element)
-      };
-
-    // Container Elements
-    case 'div':
-      return {
-        id: element.id,
-        type: 'div',
-        className: element.className || '',
-        styles: processElementStyles(element),
-        children: (element.children || []).map(cleanElementData).filter(Boolean)
-      };
-
-    // Web3 Related Elements
-    case 'defiModule':
-      return {
-        id: element.id,
-        type: 'defiModule',
-        configuration: element.configuration,
-        styles: processElementStyles(element),
-        children: (element.children || []).map(cleanElementData).filter(Boolean),
-        content: {
-          title: element.content?.title || '',
-          description: element.content?.description || '',
-          ...element.content
-        }
-      };
-
-    case 'mintingModule':
-      return {
-        id: element.id,
-        type: 'mintingModule',
-        configuration: element.configuration,
-        styles: processElementStyles(element),
-        children: (element.children || []).map(cleanElementData).filter(Boolean),
-        content: {
-          title: element.content?.title || '',
-          description: element.content?.description || '',
-          ...element.content
-        }
-      };
-
-    default:
-      console.warn(`Invalid element type: ${element.type}`);
-      return null;
+  if (!element.id || !element.type) {
+    return null;
   }
+
+  // Children are stored as ID strings in the flat array — pass them through as-is.
+  // buildElementHierarchy resolves them to objects later.
+  const children = Array.isArray(element.children) ? element.children : [];
+
+  // Base cleaned element — all types get these properties
+  const cleaned = {
+    id: element.id,
+    type: element.type,
+    content: element.content || '',
+    styles: processElementStyles(element),
+    children,
+    parentId: element.parentId || null,
+  };
+
+  // Preserve configuration if present
+  if (element.configuration) {
+    cleaned.configuration = element.configuration;
+  }
+
+  // Preserve interactive settings (targetValue, actionType, openInNewTab, etc.)
+  if (element.settings && Object.keys(element.settings).length > 0) {
+    cleaned.settings = element.settings;
+  }
+
+  // Preserve state styles for CSS generation
+  if (element.hoverStyles && Object.keys(element.hoverStyles).length > 0) {
+    cleaned.hoverStyles = element.hoverStyles;
+  }
+  if (element.focusStyles && Object.keys(element.focusStyles).length > 0) {
+    cleaned.focusStyles = element.focusStyles;
+  }
+  if (element.breakpointStyles) {
+    const hasTablet = element.breakpointStyles.tablet && Object.keys(element.breakpointStyles.tablet).length > 0;
+    const hasMobile = element.breakpointStyles.mobile && Object.keys(element.breakpointStyles.mobile).length > 0;
+    if (hasTablet || hasMobile) {
+      cleaned.breakpointStyles = element.breakpointStyles;
+    }
+  }
+
+  // Preserve link-specific properties
+  if (element.href) cleaned.href = element.href;
+  if (element.label) cleaned.label = element.label;
+  if (element.alt) cleaned.alt = element.alt;
+  if (element.src) cleaned.src = element.src;
+  if (element.className) cleaned.className = element.className;
+
+  // Strip editor-only properties (outline, boxShadow already handled by processElementStyles)
+  return cleaned;
 };
 
 /**
@@ -134,7 +85,7 @@ const getDefaultStyles = (element) => {
     case 'cta':
       return configuration === 'ctaTwo' ? ctaTwoStyles : ctaOneStyles;
     
-    case 'contentSection':
+    case 'ContentSection':
       switch (configuration) {
         case 'sectionTwo': return sectionTwoStyles;
         case 'sectionThree': return sectionThreeStyles;
@@ -144,9 +95,10 @@ const getDefaultStyles = (element) => {
     
     case 'footer':
       switch (configuration) {
-        case 'detailed': return DetailedFooterStyles;
-        case 'template': return TemplateFooterStyles;
-        case 'defi': return DeFiFooterStyles;
+        case 'detailedFooter': return DetailedFooterStyles;
+        case 'advancedFooter':
+        case 'templateFooter': return TemplateFooterStyles;
+        case 'defiFooter': return DeFiFooterStyles;
         default: return SimplefooterStyles;
       }
     
@@ -184,7 +136,7 @@ export const processElementStyles = (element) => {
   const structureStyles = structureConfig?.styles || {};
 
   // Special handling for sections and navbars
-  const isSection = ['section', 'defiNavbar', 'navbar', 'hero', 'footer', 'cta', 'contentSection'].includes(element.type);
+  const isSection = SECTION_TYPES.has(element.type);
   
   if (isSection) {
     // Get the appropriate section styles based on configuration
@@ -197,17 +149,10 @@ export const processElementStyles = (element) => {
       ...structureStyles
     };
 
-    // Remove any conflicting styles from user styles
-    const userStyles = { ...element.styles };
-    delete userStyles.backgroundColor;
-    delete userStyles.width;
-    delete userStyles.position;
-    delete userStyles.justifyContent;
-    delete userStyles.alignItems;
-
+    // Merge base styles with user styles — user styles take precedence
     return mergeStyles(
       baseStyles,
-      userStyles || {},
+      element.styles || {},
       element.inlineStyles || {}
     );
   }
@@ -227,7 +172,7 @@ export const processElementStyles = (element) => {
     element.inlineStyles || {}
   );
 
-  const { outline, boxShadow, ...productionStyles } = mergedStyles;
+  const { outline, ...productionStyles } = mergedStyles;
 
   // Format color values
   Object.entries(productionStyles).forEach(([key, value]) => {
@@ -266,17 +211,18 @@ export const buildElementHierarchy = (elements) => {
   const elementMap = new Map();
   const rootElements = [];
 
-  // First pass: Create map of all elements
+  // First pass: Create map of all elements, storing original children ID array for ordering
   elements.forEach(element => {
     if (element && element.id) {
       elementMap.set(element.id, {
         ...element,
+        _storedChildrenOrder: Array.isArray(element.children) ? element.children : [],
         children: []
       });
     }
   });
 
-  // Second pass: Build hierarchy
+  // Second pass: Build hierarchy using parentId
   elements.forEach(element => {
     if (!element || !element.id) return;
 
@@ -284,9 +230,25 @@ export const buildElementHierarchy = (elements) => {
     if (parentId && elementMap.has(parentId)) {
       const parent = elementMap.get(parentId);
       parent.children.push(elementMap.get(element.id));
-    } else {
+    } else if (!parentId) {
+      // Only treat as root if it genuinely has no parent.
+      // Elements with a parentId pointing to a missing parent are orphans
+      // (e.g. hero children whose parent section was deleted) — skip them.
       rootElements.push(elementMap.get(element.id));
     }
+  });
+
+  // Third pass: Sort children by stored order (preserves user's drag-and-drop arrangement)
+  elementMap.forEach(node => {
+    if (node._storedChildrenOrder.length > 0 && node.children.length > 1) {
+      const orderMap = new Map(node._storedChildrenOrder.map((id, idx) => [id, idx]));
+      node.children.sort((a, b) => {
+        const aIdx = orderMap.has(a.id) ? orderMap.get(a.id) : Infinity;
+        const bIdx = orderMap.has(b.id) ? orderMap.get(b.id) : Infinity;
+        return aIdx - bIdx;
+      });
+    }
+    delete node._storedChildrenOrder;
   });
 
   return rootElements;

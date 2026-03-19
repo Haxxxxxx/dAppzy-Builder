@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users can read their own user document; writes restricted to non-sensitive fields
+    // subscriptionStatus, subscriptionPlan, subscriptionExpiry are admin-only (Cloud Functions)
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['subscriptionStatus', 'subscriptionPlan', 'subscriptionExpiry']);
+      allow create: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.keys()
+            .hasAny(['subscriptionStatus', 'subscriptionPlan', 'subscriptionExpiry']);
+    }
+
+    // Users can read/write only their own projects
+    match /projects/{userId}/ProjectRef/{projectId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Transactions: authenticated users can read their own; writes are server-only (admin SDK)
+    match /transactions/{txId} {
+      allow read: if request.auth != null && resource.data.walletId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Processed transactions: server-only (admin SDK) — prevents replay attacks
+    match /processedTransactions/{txSig} {
+      allow read, write: if false;
+    }
+
+    // Wallets: users can read/write only their own wallet doc
+    match /wallets/{walletId} {
+      allow read, write: if request.auth != null && request.auth.uid == walletId;
+    }
+
+    // Support requests: all client access denied — writes go through CF admin SDK
+    match /supportRequests/{requestId} {
+      allow read, write: if false;
+    }
+
+    // Candy machine IDs: scoped to owner
+    match /candyMachineIds/{docId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Images: scoped to owner
+    match /images/{imageId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}

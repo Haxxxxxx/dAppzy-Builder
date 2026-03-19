@@ -21,7 +21,7 @@ const DomainSelectorHeader = ({
       <div className="domain-selection-modal-header-bot-container">
         <img 
           className='domain-selection-modal-header-bot-img' 
-          src='../img/sns-icon.png' 
+          src='/img/sns-icon.png'
           alt="SNS" 
         />
         <p className="domain-selection-modal-header-bot-text">powered by SNS</p>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "./firebase";
+import { doc, getDoc, collectionGroup, query, where, getDocs } from "firebase/firestore";
+import DOMPurify from "dompurify";
+import { db, auth } from "./firebase";
 
 const PreviewPage = () => {
   // Destructure userId, projectId, and projectName from URL parameters.
@@ -18,8 +19,8 @@ const PreviewPage = () => {
         if (userId && projectId) {
           projectRef = doc(db, "projects", userId, "ProjectRef", projectId);
         } else {
-          // If using custom URL, fetch based on `customUrl` (if needed).
-          const q = query(collection(db, "projects"), where("customUrl", "==", userId)); // Adjust if necessary
+          // Custom URL lookup across all users' ProjectRef subcollections
+          const q = query(collectionGroup(db, "ProjectRef"), where("customUrl", "==", userId));
           const querySnapshot = await getDocs(q);
 
           if (!querySnapshot.empty) {
@@ -39,8 +40,11 @@ const PreviewPage = () => {
           setError("Project not found.");
         }
       } catch (err) {
-        console.error("Error fetching project:", err);
-        setError("Failed to load project.");
+        if (err.code === "permission-denied" && !auth.currentUser) {
+          setError("Sign in to preview this project.");
+        } else {
+          setError("Failed to load project.");
+        }
       }
     };
 
@@ -53,7 +57,10 @@ const PreviewPage = () => {
         <h2>{error}</h2>
       ) : (
         <div
-          dangerouslySetInnerHTML={{ __html: projectHtml }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(projectHtml, {
+            ADD_ATTR: ['style', 'target'],
+            ALLOW_DATA_ATTR: false,
+          }) }}
           style={{ width: "100vw", height: "100vh", overflow: "auto" }}
         />
       )}
