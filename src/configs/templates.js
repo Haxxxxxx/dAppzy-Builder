@@ -237,7 +237,7 @@ export const TEMPLATES = [
     get elements() {
       return buildFlatElements([
         {
-          type: 'defiNavbar',
+          type: 'navbar',
           configuration: 'defiNavbar',
           structure: 'defiNavbar',
           styles: {
@@ -475,7 +475,7 @@ export const TEMPLATES = [
       return buildFlatElements([
         // DeFi Navbar
         {
-          type: 'defiNavbar',
+          type: 'navbar',
           configuration: 'defiNavbar',
           structure: 'defiNavbar',
           styles: {
